@@ -1,0 +1,128 @@
+const ws = require('ws');
+const readline = require('readline');
+const TurtleWS = require('./entities/turtleWS');
+const { EventEmitter } = require('events');
+const TurtlesDB = require('./db/turtlesDB');
+const WorldDB = require('./db/worldDB');
+const TurtleController = require('./turtleController');
+const Turtle = require('./entities/turtle');
+
+console.info('Starting up...');
+
+const updateEmitter = new EventEmitter();
+const turtlesDB = new TurtlesDB();
+const worldDB = new WorldDB();
+
+const setAllTurtlesToOffline = () => {
+    const turtles = turtlesDB.getTurtles();
+    Object.keys(turtles).forEach((key) => {
+        turtlesDB.updateOnlineStatus(key, false);
+    });
+};
+
+setAllTurtlesToOffline();
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: false,
+});
+
+const wss = new ws.Server({ port: 5757 });
+wss.on('connection', (ws) => {
+    console.info('Incoming connection...');
+    const websocketTurtle = new TurtleWS(ws);
+    const handshake = async (turtleFromWS) => {
+        const turtleFromDB = turtlesDB.getTurtle(turtleFromWS.id);
+        const {
+            id,
+            name = turtleFromDB.name,
+            isOnline,
+            fuelLevel,
+            fuelLimit,
+            location,
+            direction,
+            selectedSlot,
+            inventory,
+            stepsSinceLastRecharge = turtleFromDB.stepsSinceLastRecharge,
+            state = turtleFromDB.state,
+        } = turtleFromWS;
+        const turtle = new Turtle(
+            id,
+            name,
+            isOnline,
+            fuelLevel,
+            fuelLimit,
+            location,
+            direction,
+            selectedSlot,
+            inventory,
+            (stepsSinceLastRecharge || 0) + 1,
+            state,
+        );
+
+        turtlesDB.addTurtle(turtle);
+        updateEmitter.emit('tconnect', turtle);
+        websocketTurtle.off('handshake', handshake);
+        const turtleController = new TurtleController(turtlesDB, worldDB, websocketTurtle, turtle);
+        turtleController.on('update', (turtle) => {
+            updateEmitter.emit('tconnect', turtle);
+        });
+        turtleController.on('location', (turtle) => {
+            updateEmitter.emit('tlocation', turtle);
+        });
+
+        turtleController.ai();
+    };
+    websocketTurtle.on('handshake', handshake);
+
+    const tDisconnect = (id) => {
+        turtlesDB.updateOnlineStatus(id, false);
+        updateEmitter.emit('tdisconnect', id);
+        websocketTurtle.off('disconnect', tDisconnect);
+    };
+    websocketTurtle.on('disconnect', tDisconnect);
+
+    rl.on('line', (line) => {
+        if (line === 'disconnect') {
+            ws.send(JSON.stringify({ type: 'DISCONNECT' }));
+        } else if (line === 'reboot') {
+            ws.send(JSON.stringify({ type: 'REBOOT' }));
+        } else {
+            ws.send(JSON.stringify({ type: 'EVAL', function: `return ${line}` }));
+        }
+    });
+});
+
+const wssWebsite = new ws.Server({ port: 6868 });
+wssWebsite.on('connection', (ws) => {
+    ws.on('message', (msg) => {
+        const obj = JSON.parse(msg);
+        switch (obj.type) {
+            case 'HANDSHAKE':
+                ws.send(JSON.stringify({ type: 'TUPDATE', message: { turtles: turtlesDB.getTurtles() } }));
+        }
+    });
+
+    const tconnect = (turtle) => {
+        ws.send(JSON.stringify({ type: 'TCONNECT', message: { turtle } }));
+    };
+    updateEmitter.on('tconnect', tconnect);
+
+    const tdisconnect = (id) => {
+        ws.send(JSON.stringify({ type: 'TDISCONNECT', message: { id } }));
+    };
+    updateEmitter.on('tdisconnect', tdisconnect);
+
+    const tlocation = (turtle) => {
+        ws.send(JSON.stringify({ type: 'TLOCATION', message: { turtle } }));
+    };
+    updateEmitter.on('tlocation', tlocation);
+
+    ws.on('close', () => {
+        updateEmitter.off('tconnect', tconnect);
+        updateEmitter.off('tdisconnect', tdisconnect);
+    });
+});
+
+console.info('Server started!');

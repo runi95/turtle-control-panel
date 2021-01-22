@@ -1,0 +1,21 @@
+{
+  "name": "turtle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra": "^9.1.0",
+    "heap": "^0.2.6",
+    "node-json-db": "^1.1.0",
+    "uuid4": "^2.0.2",
+    "websocket": "^1.0.33",
+    "ws": "^7.4.2"
+  }
+}
