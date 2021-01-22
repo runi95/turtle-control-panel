@@ -148,11 +148,10 @@ module.exports = class DStarLite {
     ComputeShortestPath() {
         let loop = 0;
         while (this.U.TopKey().CompareTo(this.CalculateKey(this.sstart)) < 0 || this.sstart.rhs != this.sstart.g) {
-            // if (loop > 15000) {
-            //     throw new Error("Can't find path");
-            // }
+            if (loop > 15000) {
+                throw new Error("Can't find path");
+            }
 
-            console.log(loop);
             const kold = this.U.TopKey();
             const u = this.U.Pop();
             if (u == undefined) break;
