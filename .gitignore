@@ -1,3 +1,5 @@
 node_modules/
 /world.json
 /turtles.json
+
+.eslintcache
