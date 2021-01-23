@@ -7,7 +7,7 @@ import FuelInfo from './FuelInfo';
 
 const stateToString = (state) => {
     if (state === undefined) {
-        return 'standby';
+        return 'idle';
     }
 
     return state.name;

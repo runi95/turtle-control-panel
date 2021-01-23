@@ -5,60 +5,87 @@ import SpriteTable from '../SpriteTable.json';
 import FuelInfo from './FuelInfo';
 import Canvas from './Canvas';
 
+const canvasSize = 160;
+const canvasRadius = 0.5 * canvasSize;
+const circleSizeMul = 0.35;
+const spriteSize = 10;
+const spriteRadius = 0.5 * spriteSize;
+const mul = canvasSize / spriteSize;
+const centerX = 0.5 * spriteSize * mul;
+const centerY = 0.5 * spriteSize * mul;
+
 class Turtle extends Component {
     directionToString(direction) {
         return ['W', 'N', 'E', 'S'][direction - 1];
     }
 
     draw(ctx) {
-        if (!this.props.location || !this.props.visited || !this.props.queue) {
+        if (!this.props.turtles || !this.props.turtles[this.props.selectedTurtle] || !this.props.world) {
             return;
         }
 
-        const mul = 16;
+        const turtle = this.props.turtles[this.props.selectedTurtle];
+        const { x, y, z } = turtle.location;
 
         // Clear
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-        // Draw visited
-        const keys = Object.keys(this.props.visited);
-        for (let i = 0; i < keys.length; i++) {
-            const keySplit = keys[i].split(',');
-            const kX = keySplit[0];
-            const kZ = keySplit[2];
-
-            ctx.fillStyle = 'black';
-            ctx.fillRect((Number.parseInt(kX) - 439) * mul, (Number.parseInt(kZ) + 613) * mul, mul, mul);
+        // Draw blocks
+        const drawRange = 0.5 * mul;
+        for (let i = -drawRange; i <= drawRange; i++) {
+            for (let j = -drawRange; j <= drawRange; j++) {
+                const wX = x + i;
+                const wZ = z + j;
+                if (this.props.world[`${wX},${y},${wZ}`] !== undefined) {
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(
+                        (i + drawRange) * spriteSize - spriteRadius,
+                        (j + drawRange) * spriteSize - spriteRadius,
+                        spriteSize,
+                        spriteSize,
+                    );
+                }
+            }
         }
 
-        for (let i = 0; i < this.props.queue.length; i++) {
-            const qX = this.props.queue[i].x;
-            const qZ = this.props.queue[i].z;
-            ctx.globalAlpha = 0.5;
-            ctx.fillStyle = 'teal';
-            ctx.fillRect((qX - 439) * mul, (qZ + 613) * mul, mul, mul);
+        // Draw other turtles
+        const keys = Object.keys(this.props.turtles);
+        for (let key of keys) {
+            if (key !== turtle.id.toString()) {
+                const otherTurtle = this.props.turtles[key];
+                if (otherTurtle.location.y === turtle.location.y) {
+                    ctx.beginPath();
+                    ctx.fillStyle = otherTurtle.isOnline ? 'white' : '#696969';
+                    const posX = (otherTurtle.location.x - turtle.location.x) * spriteSize + centerX;
+                    const posY = (otherTurtle.location.z - turtle.location.z) * spriteSize + centerY;
+                    ctx.arc(posX, posY, circleSizeMul * spriteSize, 0, 2 * Math.PI, false);
+                    ctx.fill();
+
+                    ctx.textAlign = 'center';
+                    ctx.strokeStyle = 'black';
+                    ctx.font = '10px Ariel';
+                    ctx.lineWidth = 4;
+                    ctx.strokeText(otherTurtle.name, posX, posY - spriteRadius);
+                    ctx.fillText(otherTurtle.name, posX, posY - spriteRadius);
+                }
+            }
         }
 
-        ctx.globalAlpha = 1;
-
-        // Draw goal
-        ctx.fillStyle = '#6bc158';
-        ctx.fillRect((459 - 439) * mul, (-601 + 613) * mul, mul, mul);
-
-        // Draw position
-        const posX = (this.props.location.x - 439) * mul;
-        const posY = (this.props.location.z + 613) * mul;
+        // Draw current turtle
         ctx.beginPath();
-        ctx.globalAlpha = 0.85;
         ctx.fillStyle = 'yellow';
-        const circleSizeMul = 0.35;
-        ctx.arc(posX + 0.5 * mul, posY + 0.5 * mul, circleSizeMul * mul, 0, 2 * Math.PI, false);
+        ctx.arc(centerX, centerY, circleSizeMul * spriteSize, 0, 2 * Math.PI, false);
         ctx.fill();
 
-        return;
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = 'black';
+        ctx.font = '10px Ariel';
+        ctx.lineWidth = 4;
+        ctx.strokeText(turtle.name, centerX, centerY - spriteRadius);
+        ctx.fillText(turtle.name, centerX, centerY - spriteRadius);
     }
 
-    renderInventory(inventory) {
+    renderInventory(inventory, selectedSlot) {
         if (inventory === undefined) {
             return <div></div>;
         }
@@ -67,7 +94,7 @@ class Turtle extends Component {
             <InventoryGrid>
                 {Array.from(Array(16), (_, i) => i).map((i) => {
                     const itemIndex = i + 1;
-                    const ItemSlotStyle = itemIndex === this.props.selectedSlot ? SelectedItemSlot : ItemSlot;
+                    const ItemSlotStyle = itemIndex === selectedSlot ? SelectedItemSlot : ItemSlot;
                     if (inventory[itemIndex] === undefined) {
                         return (
                             <ItemSlotStyle key={i}>
@@ -105,31 +132,32 @@ class Turtle extends Component {
     }
 
     render() {
+        const turtle = this.props.turtles ? this.props.turtles[this.props.selectedTurtle] || {} : {};
         return (
             <div className="container-fluid">
                 <br />
                 <h3>
-                    {this.props.name || 'Unknown Turtle'}
-                    {this.props.isOnline ? <GreenOnlineBox /> : <GreyOnlineBox />}
+                    {turtle.name || 'Unknown Turtle'}
+                    {turtle.isOnline ? <GreenOnlineBox /> : <GreyOnlineBox />}
                 </h3>
                 <PositionText>
-                    {this.props.direction ? `${this.directionToString(this.props.direction)}` : '_'} (
-                    {this.props.location ? `${this.props.location.x}, ${this.props.location.y}, ${this.props.location.z}` : '?, ?, ?'})
+                    {turtle.direction ? `${this.directionToString(turtle.direction)}` : '_'} (
+                    {turtle.location ? `${turtle.location.x}, ${turtle.location.y}, ${turtle.location.z}` : '?, ?, ?'})
                 </PositionText>
-                <FuelInfo {...this.props} />
+                <FuelInfo {...turtle} />
                 <hr />
-                {this.renderInventory(this.props.inventory)}
+                {this.renderInventory(turtle.inventory, turtle.selectedSlot)}
                 <br />
                 <Canvas
                     draw={(ctx, frameCount) => this.draw(ctx, frameCount)}
-                    style={{ border: '1px solid #fff' }}
-                    width="700"
-                    height="700"
+                    style={{ border: '1px solid #fff', borderRadius: canvasRadius }}
+                    width={canvasSize}
+                    height={canvasSize}
                 />
                 <br />
                 <ul>
-                    {this.props.queue &&
-                        this.props.queue.map((q) => (
+                    {turtle.queue &&
+                        turtle.queue.map((q) => (
                             <li>
                                 {q.priority} ({q.x},{q.y},{q.z})
                             </li>

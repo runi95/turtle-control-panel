@@ -68,11 +68,17 @@ wss.on('connection', (ws) => {
         turtleController.on('update', (turtle) => {
             updateEmitter.emit('tconnect', turtle);
         });
-        turtleController.on('location', (turtle) => {
-            updateEmitter.emit('tlocation', turtle);
+        turtleController.on('location', (id, location, fuelLevel) => {
+            updateEmitter.emit('tlocation', { id, location, fuelLevel });
+        });
+        turtleController.on('wupdate', (x, y, z, block) => {
+            updateEmitter.emit('wupdate', { x, y, z, block });
+        });
+        turtleController.on('wdelete', (x, y, z) => {
+            updateEmitter.emit('wdelete', { x, y, z });
         });
 
-        turtleController.ai();
+        // turtleController.ai();
     };
     websocketTurtle.on('handshake', handshake);
 
@@ -100,7 +106,7 @@ wssWebsite.on('connection', (ws) => {
         const obj = JSON.parse(msg);
         switch (obj.type) {
             case 'HANDSHAKE':
-                ws.send(JSON.stringify({ type: 'TUPDATE', message: { turtles: turtlesDB.getTurtles() } }));
+                ws.send(JSON.stringify({ type: 'HANDSHAKE', message: { turtles: turtlesDB.getTurtles(), world: worldDB.getAllBlocks() } }));
         }
     });
 
@@ -118,6 +124,16 @@ wssWebsite.on('connection', (ws) => {
         ws.send(JSON.stringify({ type: 'TLOCATION', message: { turtle } }));
     };
     updateEmitter.on('tlocation', tlocation);
+
+    const wupdate = (world) => {
+        ws.send(JSON.stringify({ type: 'WUPDATE', message: { world } }));
+    };
+    updateEmitter.on('wupdate', wupdate);
+
+    const wdelete = (world) => {
+        ws.send(JSON.stringify({ type: 'WDELETE', message: { world } }));
+    };
+    updateEmitter.on('wdelete', wdelete);
 
     ws.on('close', () => {
         updateEmitter.off('tconnect', tconnect);

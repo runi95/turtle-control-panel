@@ -11,11 +11,13 @@ const client = new W3CWebSocket('ws://localhost:6868');
 class Main extends Component {
     state = {
         turtles: {},
+        world: {},
     };
 
     tLocation(turtle) {
         const updatedTurtle = { ...this.state.turtles[turtle.id] };
         updatedTurtle.location = turtle.location;
+        updatedTurtle.fuelLevel = turtle.fuelLevel;
         this.setState({ turtles: { ...this.state.turtles, [turtle.id]: updatedTurtle } });
     }
 
@@ -31,6 +33,14 @@ class Main extends Component {
         this.setState({ turtles });
     }
 
+    wUpdate(world) {
+        this.setState({ world: { ...this.state.world, [`${world.x},${world.y},${world.z}`]: world.block } });
+    }
+
+    wDelete(world) {
+        this.wUpdate(world);
+    }
+
     componentDidMount() {
         client.onopen = () => {
             console.info('[open] Connection established');
@@ -41,8 +51,8 @@ class Main extends Component {
             const obj = JSON.parse(msg.data);
             // console.debug(obj);
             switch (obj.type) {
-                case 'TUPDATE':
-                    this.setState({ turtles: obj.message.turtles });
+                case 'HANDSHAKE':
+                    this.setState({ turtles: obj.message.turtles, world: obj.message.world });
                     break;
                 case 'TCONNECT':
                     this.tConnect(obj.message.turtle);
@@ -52,6 +62,15 @@ class Main extends Component {
                     break;
                 case 'TDISCONNECT':
                     this.tDisconnect(obj.message.id);
+                    break;
+                case 'WINIT':
+                    this.wInit(obj.message.world);
+                    break;
+                case 'WUPDATE':
+                    this.wUpdate(obj.message.world);
+                    break;
+                case 'WDELETE':
+                    this.wDelete(obj.message.world);
                     break;
                 default:
                     console.error('Could not parse websocket message', obj);
@@ -79,7 +98,13 @@ class Main extends Component {
                 <HashRouter>
                     <div>
                         <Route exact path="/" render={() => <Dashboard {...this.state} />} />
-                        <Route exact path="/turtles/:id" render={(props) => <Turtle {...this.state.turtles[props.match.params.id]} />} />
+                        <Route
+                            exact
+                            path="/turtles/:id"
+                            render={(props) => (
+                                <Turtle selectedTurtle={props.match.params.id} turtles={this.state.turtles} world={this.state.world} />
+                            )}
+                        />
                     </div>
                 </HashRouter>
             </div>
