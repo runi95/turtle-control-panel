@@ -8,12 +8,11 @@ module.exports = class State {
         this.obstacle = obstacle;
     }
 
-    Equals(that) {
+    equals(that) {
         return this.x == that.x && this.y == that.y && this.z === that.z;
     }
 
-    GetSucc(S) {
-        /*
+    getSucc(S) {
         return [
             S.get(this.x + 1, this.y, this.z),
             S.get(this.x, this.y + 1, this.z),
@@ -22,11 +21,10 @@ module.exports = class State {
             S.get(this.x, this.y - 1, this.z),
             S.get(this.x, this.y, this.z - 1),
         ];
-        */
-        return this.GetPred(S);
+        // return this.getPred(S);
     }
 
-    GetPred(S) {
+    getPred(S) {
         const s = [];
         let tempState;
         tempState = S.get(this.x + 1, this.y, this.z);
@@ -42,5 +40,9 @@ module.exports = class State {
         tempState = S.get(this.x, this.y, this.z - 1);
         if (!tempState.obstacle) s.unshift(tempState);
         return s;
+    }
+
+    hashCode() {
+        return `${this.x},${this.y},${this.z}`;
     }
 };

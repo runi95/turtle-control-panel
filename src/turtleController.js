@@ -1,6 +1,6 @@
 const { EventEmitter } = require('events');
 const Coordinates = require('./dlite/coordinates');
-const DStarLite = require('./dlite/dstarLite');
+const DStarLite = require('./dlite');
 
 const getLocalCoordinatesForDirection = (direction) => {
     return [
@@ -389,7 +389,7 @@ module.exports = class TurtleController extends (
         const obstacles = [];
         const obstaclesHash = {};
         const test = {
-            MoveTo: async (s) => {
+            moveTo: async (s) => {
                 time++;
                 px = s.x;
                 py = s.y;
@@ -429,7 +429,7 @@ module.exports = class TurtleController extends (
                     }
                 }
             },
-            GetInitialObstacles: async () => {
+            getInitialObstacles: async () => {
                 const allBlocks = this.worldDB.getAllBlocks();
                 return Object.keys(allBlocks).map((key) => {
                     const keySplit = key.split(',');
@@ -440,7 +440,7 @@ module.exports = class TurtleController extends (
                     };
                 });
             },
-            GetObstaclesInVision: async () => {
+            getObstaclesInVision: async () => {
                 const { x, y, z } = this.turtle.location;
                 const coordinatesInFront = getLocalCoordinatesForDirection(this.turtle.direction);
                 const inFrontX = x + coordinatesInFront[0];
@@ -470,7 +470,7 @@ module.exports = class TurtleController extends (
             },
         };
 
-        await dStarLite.RunDStarLite(px, py, pz, targetX, targetY, targetZ, test);
+        await dStarLite.runDStarLite(px, py, pz, targetX, targetY, targetZ, test);
         console.log(`Moves: ${time}`);
     }
 };

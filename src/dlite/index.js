@@ -1,10 +1,11 @@
-const State = require('./state');
-const K = require('./k');
-const Heap = require('./heap');
-const Coordinates = require('./coordinates');
+const State = require('./State');
+const Pair = require('./Pair');
+const Coordinates = require('./Coordinates');
+const PriorityQueue = require('./PriorityQueue');
 
 module.exports = class DStarLite {
-    constructor() {
+    constructor(maxSteps = 80000) {
+        this.maxSteps = maxSteps;
         this.U = undefined;
         this.S = undefined;
         this.km = undefined;
@@ -12,7 +13,7 @@ module.exports = class DStarLite {
         this.sstart = undefined;
     }
 
-    async RunDStarLite(sx, sy, sz, gx, gy, gz, env) {
+    async runDStarLite(sx, sy, sz, gx, gy, gz, env) {
         this.sstart = new State();
         this.sstart.x = sx;
         this.sstart.y = sy;
@@ -22,17 +23,17 @@ module.exports = class DStarLite {
         this.sgoal.y = gy;
         this.sgoal.z = gz;
         let slast = this.sstart;
-        this.Initialize(await env.GetInitialObstacles());
-        this.ComputeShortestPath();
-        while (!this.sstart.Equals(this.sgoal)) {
+        this.initialize(await env.getInitialObstacles());
+        this.computeShortestPath();
+        while (!this.sstart.equals(this.sgoal)) {
             if (this.sstart.g === Number.POSITIVE_INFINITY) {
                 throw new Error('Goal is unreachable');
             }
 
-            const obstacleCoord = await env.GetObstaclesInVision();
+            const obstacleCoord = await env.getObstaclesInVision();
             const oldkm = this.km;
             const oldslast = slast;
-            this.km += this.Heuristic(this.sstart, slast);
+            this.km += this.heuristic(this.sstart, slast);
             slast = this.sstart;
             let change = false;
             for (let i = 0; i < obstacleCoord.length; i++) {
@@ -42,37 +43,40 @@ module.exports = class DStarLite {
                 if (s.obstacle) continue; // is already known
                 change = true;
                 s.obstacle = true;
-                const pred = s.GetPred(this.S);
+                const pred = s.getPred(this.S);
                 for (let j = 0; j < pred.length; j++) {
                     const p = pred[j];
-                    this.UpdateVertex(p);
+                    this.updateVertex(p);
                 }
             }
             if (!change) {
                 this.km = oldkm;
                 slast = oldslast;
             }
-            const possibleMoveLocation = this.MinSuccState(this.sstart);
-            const didMove = await env.MoveTo(new Coordinates(possibleMoveLocation.x, possibleMoveLocation.y, possibleMoveLocation.z));
+            const possibleMoveLocation = this.minSuccState(this.sstart);
+            if (possibleMoveLocation === undefined) {
+                throw new Error('Stuck');
+            }
+            const didMove = await env.moveTo(new Coordinates(possibleMoveLocation.x, possibleMoveLocation.y, possibleMoveLocation.z));
             if (didMove) {
                 this.sstart = possibleMoveLocation;
             } else {
                 // possibleMoveLocation.obstacle = true;
             }
-            this.ComputeShortestPath();
+            this.computeShortestPath();
         }
     }
 
-    CalculateKey(s) {
-        return new K(this.min(s.g, s.rhs) + this.Heuristic(s, this.sstart) + this.km, this.min(s.g, s.rhs));
+    calculateKey(s) {
+        return new Pair(Math.min(s.g, s.rhs) + this.heuristic(s, this.sstart) + this.km, Math.min(s.g, s.rhs));
     }
 
-    Heuristic(a, b) {
+    heuristic(a, b) {
         return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + Math.abs(a.z - b.z);
     }
 
-    Initialize(initialObstacles) {
-        this.U = new Heap();
+    initialize(initialObstacles) {
+        this.U = new PriorityQueue();
         this.S = {
             get: (x, y, z) => {
                 const pos = `${x},${y},${z}`;
@@ -104,25 +108,25 @@ module.exports = class DStarLite {
         this.sgoal = this.S.get(this.sgoal.x, this.sgoal.y, this.sgoal.z);
         this.sstart = this.S.get(this.sstart.x, this.sstart.y, this.sstart.z);
         this.sgoal.rhs = 0;
-        this.U.Insert(this.sgoal, this.CalculateKey(this.sgoal));
+        this.U.add(this.sgoal, this.calculateKey(this.sgoal));
     }
 
-    UpdateVertex(u) {
-        if (!u.Equals(this.sgoal)) {
-            u.rhs = this.MinSucc(u);
+    updateVertex(u) {
+        if (!u.equals(this.sgoal)) {
+            u.rhs = this.minSucc(u);
         }
-        if (this.U.Contains(u)) {
-            this.U.Remove(u);
+        if (this.U.contains(u)) {
+            this.U.remove(u);
         }
         if (u.g != u.rhs) {
-            this.U.Insert(u, this.CalculateKey(u));
+            this.U.add(u, this.calculateKey(u));
         }
     }
 
-    MinSuccState(u) {
+    minSuccState(u) {
         let min = Number.POSITIVE_INFINITY;
         let n;
-        const uS = u.GetSucc(this.S);
+        const uS = u.getSucc(this.S);
         for (let i = 0; i < uS.length; i++) {
             const s = uS[i];
             const val = s.g + 1;
@@ -131,12 +135,13 @@ module.exports = class DStarLite {
                 n = s;
             }
         }
+
         return n;
     }
 
-    MinSucc(u) {
+    minSucc(u) {
         let min = Number.POSITIVE_INFINITY;
-        const uS = u.GetSucc(this.S);
+        const uS = u.getSucc(this.S);
         for (let i = 0; i < uS.length; i++) {
             const s = uS[i];
             const val = 1 + s.g;
@@ -145,41 +150,34 @@ module.exports = class DStarLite {
         return min;
     }
 
-    ComputeShortestPath() {
-        let loop = 0;
-        while (this.U.TopKey().CompareTo(this.CalculateKey(this.sstart)) < 0 || this.sstart.rhs != this.sstart.g) {
-            if (loop > 15000) {
+    computeShortestPath() {
+        let steps = 0;
+        while (this.U.peek().k.compareTo(this.calculateKey(this.sstart)) < 0 || this.sstart.rhs != this.sstart.g) {
+            if (steps++ > this.maxSteps) {
                 throw new Error("Can't find path");
             }
 
-            const kold = this.U.TopKey();
-            const u = this.U.Pop();
+            const kold = this.U.peek().k;
+            const u = this.U.poll().s;
             if (u == undefined) break;
-            if (kold.CompareTo(this.CalculateKey(u)) < 0) {
-                this.U.Insert(u, this.CalculateKey(u));
+            if (kold.compareTo(this.calculateKey(u)) < 0) {
+                this.U.add(u, this.calculateKey(u));
             } else if (u.g > u.rhs) {
                 u.g = u.rhs;
-                const uPred = u.GetPred(this.S);
+                const uPred = u.getPred(this.S);
                 for (let i = 0; i < uPred.length; i++) {
                     const s = uPred[i];
-                    this.UpdateVertex(s);
+                    this.updateVertex(s);
                 }
             } else {
                 u.g = Number.POSITIVE_INFINITY;
-                this.UpdateVertex(u);
-                const uPred = u.GetPred(this.S);
+                this.updateVertex(u);
+                const uPred = u.getPred(this.S);
                 for (let i = 0; i < uPred.length; i++) {
                     const s = uPred[i];
-                    this.UpdateVertex(s);
+                    this.updateVertex(s);
                 }
             }
-
-            loop++;
         }
-    }
-
-    min(a, b) {
-        if (b < a) return b;
-        return a;
     }
 };
