@@ -138,6 +138,9 @@ wssWebsite.on('connection', (ws) => {
     ws.on('close', () => {
         updateEmitter.off('tconnect', tconnect);
         updateEmitter.off('tdisconnect', tdisconnect);
+        updateEmitter.off('tlocation', tlocation);
+        updateEmitter.off('wupdate', wupdate);
+        updateEmitter.off('wdelete', wdelete);
     });
 });
 
