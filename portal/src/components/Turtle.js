@@ -154,15 +154,6 @@ class Turtle extends Component {
                     width={canvasSize}
                     height={canvasSize}
                 />
-                <br />
-                <ul>
-                    {turtle.queue &&
-                        turtle.queue.map((q) => (
-                            <li>
-                                {q.priority} ({q.x},{q.y},{q.z})
-                            </li>
-                        ))}
-                </ul>
             </div>
         );
     }
