@@ -28,12 +28,13 @@ const rl = readline.createInterface({
     terminal: false,
 });
 
+const turtleAIList = [];
 const wss = new ws.Server({ port: 5757 });
 wss.on('connection', (ws) => {
     console.info('Incoming connection...');
     const websocketTurtle = new TurtleWS(ws);
     const handshake = async (turtleFromWS) => {
-        const turtleFromDB = turtlesDB.getTurtle(turtleFromWS.id);
+        const turtleFromDB = turtlesDB.getTurtle(turtleFromWS.id) || {};
         const {
             id,
             name = turtleFromDB.name,
@@ -78,7 +79,7 @@ wss.on('connection', (ws) => {
             updateEmitter.emit('wdelete', { x, y, z });
         });
 
-        // turtleController.ai();
+        turtleAIList.push(turtleController.ai());
     };
     websocketTurtle.on('handshake', handshake);
 
@@ -143,5 +144,32 @@ wssWebsite.on('connection', (ws) => {
         updateEmitter.off('wdelete', wdelete);
     });
 });
+
+function* aiIterator() {
+    let i = 0;
+    while (true) {
+        if (i >= turtleAIList.length) {
+            i = 0;
+        }
+
+        if (turtleAIList.length > 0) {
+            yield turtleAIList[i];
+        } else {
+            yield;
+        }
+        i++;
+    }
+}
+
+const aiIt = aiIterator();
+const runAI = async () => {
+    const ai = aiIt.next().value;
+    if (ai !== undefined) {
+        await ai.next();
+    }
+    setTimeout(() => runAI(), 1);
+};
+
+runAI();
 
 console.info('Server started!');

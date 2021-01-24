@@ -367,7 +367,7 @@ module.exports = class TurtleController extends (
         this.turtlesDB.addTurtle(this.turtle);
     }
 
-    async ai() {
+    async *ai() {
         while (true) {
             if (
                 this.turtle.stepsSinceLastRecharge === undefined ||
@@ -386,6 +386,8 @@ module.exports = class TurtleController extends (
                     await this.mine();
                     break;
             }
+
+            yield;
         }
     }
 

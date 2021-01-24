@@ -1,9 +1,9 @@
-const { JsonDB } = require("node-json-db");
-const { Config } = require("node-json-db/dist/lib/JsonDBConfig");
+const { JsonDB } = require('node-json-db');
+const { Config } = require('node-json-db/dist/lib/JsonDBConfig');
 
 module.exports = class TurtlesDB {
     constructor() {
-        this.db = new JsonDB(new Config("turtles.json", true, true, "/"));
+        this.db = new JsonDB(new Config('turtles.json', true, true, '/'));
     }
 
     addTurtle(turtle) {
@@ -15,10 +15,14 @@ module.exports = class TurtlesDB {
     }
 
     getTurtle(id) {
-        return this.db.getData(`/${id}`);
+        try {
+            return this.db.getData(`/${id}`);
+        } catch (err) {
+            return undefined;
+        }
     }
 
     getTurtles() {
-        return this.db.getData("/");
+        return this.db.getData('/');
     }
-}
+};
