@@ -40,7 +40,7 @@ module.exports = class TurtleWS extends (
             if (!label) {
                 const name = nameList[Math.floor(Math.random() * (nameList.length - 1))];
                 turtle = new Turtle(id, name, true, level, limit, location, direction, selectedSlot, inventoryAsObject);
-                ws.send(JSON.stringify({ type: 'RENAME', message: name }));
+                this.ws.send(JSON.stringify({ type: 'RENAME', message: name }));
             } else {
                 turtle = new Turtle(id, label, true, level, limit, location, direction, selectedSlot, inventoryAsObject);
             }
