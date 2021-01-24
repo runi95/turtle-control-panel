@@ -43,7 +43,6 @@ class Turtle extends Component {
                     <Inventory turtle={turtle}></Inventory>
                     <Col md="auto">
                         <Canvas
-                            draw={(ctx, frameCount) => this.draw(ctx, frameCount)}
                             style={{ border: '1px solid #fff', borderRadius: canvasRadius }}
                             canvasSize={canvasSize}
                             turtles={this.props.turtles}
