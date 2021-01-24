@@ -7,7 +7,7 @@ class Inventory extends Component {
     render() {
         const { turtle } = this.props;
         if (turtle === undefined) {
-            return undefined;
+            return null;
         }
 
         const { inventory, selectedSlot } = turtle;
