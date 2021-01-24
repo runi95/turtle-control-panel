@@ -1,8 +1,8 @@
-import React from 'react';
-import { useHistory } from 'react-router-dom';
-import './Dashboard.css';
+import { Component } from 'react';
 import styled from 'styled-components';
 import { Table } from 'react-bootstrap';
+import history from '../utils/history';
+import './Dashboard.css';
 import FuelInfo from './FuelInfo';
 
 const stateToString = (state) => {
@@ -13,38 +13,40 @@ const stateToString = (state) => {
     return state.name;
 };
 
-function Dashboard(props) {
-    const history = useHistory();
-
-    return (
-        <div className="container-fluid">
-            <Table hover>
-                <thead>
-                    <tr>
-                        <th style={{ width: 40 }}>ID</th>
-                        <th style={{ width: 80 }}>Status</th>
-                        <th style={{ width: 120 }}>Name</th>
-                        <th style={{ width: 80 }}>Activity</th>
-                        <th>Fuel</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {props.turtles &&
-                        Object.keys(props.turtles).map((key) => (
-                            <tr key={key} onClick={() => history.push(`/turtles/${key}`)}>
-                                <td>{key}</td>
-                                <td>{props.turtles[key].isOnline ? <GreenText>Online</GreenText> : <GreyText>Offline</GreyText>}</td>
-                                <td>{props.turtles[key].name}</td>
-                                <td>{stateToString(props.turtles[key].state)}</td>
-                                <td style={{ verticalAlign: 'middle' }}>
-                                    <FuelInfo {...props.turtles[key]} />
-                                </td>
-                            </tr>
-                        ))}
-                </tbody>
-            </Table>
-        </div>
-    );
+class Dashboard extends Component {
+    render() {
+        return (
+            <div className="container-fluid">
+                <Table hover>
+                    <thead>
+                        <tr>
+                            <th style={{ width: 40 }}>ID</th>
+                            <th style={{ width: 80 }}>Status</th>
+                            <th style={{ width: 120 }}>Name</th>
+                            <th style={{ width: 80 }}>Activity</th>
+                            <th>Fuel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {this.props.turtles &&
+                            Object.keys(this.props.turtles).map((key) => (
+                                <tr key={key} onClick={() => history.push(`/dashboard/${key}`)}>
+                                    <td>{key}</td>
+                                    <td>
+                                        {this.props.turtles[key].isOnline ? <GreenText>Online</GreenText> : <GreyText>Offline</GreyText>}
+                                    </td>
+                                    <td>{this.props.turtles[key].name}</td>
+                                    <td>{stateToString(this.props.turtles[key].state)}</td>
+                                    <td style={{ verticalAlign: 'middle' }}>
+                                        <FuelInfo {...this.props.turtles[key]} />
+                                    </td>
+                                </tr>
+                            ))}
+                    </tbody>
+                </Table>
+            </div>
+        );
+    }
 }
 
 const GreenText = styled.span`

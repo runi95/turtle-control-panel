@@ -1,17 +1,22 @@
 import { Component } from 'react';
-import { Route, HashRouter } from 'react-router-dom';
+import { Route, Router } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Navbar } from 'react-bootstrap';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
+import history from './utils/history';
+import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import Turtle from './components/Turtle';
-
-const client = new W3CWebSocket('ws://localhost:6868');
 
 class Main extends Component {
     state = {
         turtles: {},
         world: {},
+        isLoading: true,
+        isConnected: false,
+        shouldFadeOut: false,
+        message: '',
+        attempts: 0,
     };
 
     tLocation(turtle) {
@@ -41,10 +46,16 @@ class Main extends Component {
         this.wUpdate(world);
     }
 
-    componentDidMount() {
+    connect() {
+        this.setState({ isLoading: true, message: '' });
+        const client = new W3CWebSocket('ws://localhost:6868');
         client.onopen = () => {
             console.info('[open] Connection established');
             client.send(JSON.stringify({ type: 'HANDSHAKE' }));
+            this.setState({ isLoading: false, isConnected: true, shouldFadeOut: true, attempts: 0, message: 'Connected...' });
+            setTimeout(() => {
+                history.push('/dashboard');
+            }, 2500);
         };
 
         client.onmessage = (msg) => {
@@ -84,29 +95,58 @@ class Main extends Component {
             } else {
                 console.warn('[close] Connection died');
             }
+
+            const attempts = this.state.attempts;
+            if (attempts < 3) {
+                this.setState({ isLoading: false, isConnected: false, message: 'Failed to connect', attempts: attempts + 1 });
+                setTimeout(() => {
+                    this.connect();
+                }, 2000);
+            } else {
+                this.setState({ isLoading: false, isConnected: false, message: 'Unable to connect' });
+            }
         };
+    }
+
+    componentDidMount() {
+        this.connect();
     }
 
     render() {
         return (
             <div>
-                <Navbar style={{ backgroundColor: '#27293d' }} variant="dark">
-                    <Navbar.Brand href="/#/">
-                        <img alt="" src="/logo.svg" width="32" height="32" className="d-inline-block align-top" /> Dashboard
-                    </Navbar.Brand>
-                </Navbar>
-                <HashRouter>
-                    <div>
-                        <Route exact path="/" render={() => <Dashboard {...this.state} />} />
-                        <Route
-                            exact
-                            path="/turtles/:id"
-                            render={(props) => (
-                                <Turtle selectedTurtle={props.match.params.id} turtles={this.state.turtles} world={this.state.world} />
-                            )}
-                        />
-                    </div>
-                </HashRouter>
+                <Router history={history}>
+                    <Route
+                        exact
+                        path="/"
+                        render={() => (
+                            <LandingPage
+                                shouldFadeOut={this.state.shouldFadeOut}
+                                isLoading={this.state.isLoading}
+                                isConnected={this.state.isConnected}
+                                message={this.state.message}
+                            />
+                        )}
+                    />
+                    <Route
+                        path="/dashboard"
+                        render={() => (
+                            <Navbar style={{ backgroundColor: '#27293d' }} variant="dark">
+                                <Navbar.Brand style={{ cursor: 'pointer' }} onClick={() => history.push('/dashboard')}>
+                                    <img alt="" src="/logo.svg" width="32" height="32" className="d-inline-block align-top" /> Dashboard
+                                </Navbar.Brand>
+                            </Navbar>
+                        )}
+                    />
+                    <Route exact path="/dashboard" render={() => <Dashboard turtles={this.state.turtles} />} />
+                    <Route
+                        exact
+                        path="/dashboard/:id"
+                        render={(props) => (
+                            <Turtle selectedTurtle={props.match.params.id} turtles={this.state.turtles} world={this.state.world} />
+                        )}
+                    />
+                </Router>
             </div>
         );
     }

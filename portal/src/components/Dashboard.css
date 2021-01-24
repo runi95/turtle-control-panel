@@ -38,7 +38,7 @@ hr {
     border-top: none;
 }
 
-.table tr {
+.table tbody > tr {
     cursor: pointer;
 }
 
