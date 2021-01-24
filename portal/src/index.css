@@ -21,3 +21,17 @@ body {
     opacity: 0;
     transition: opacity 2.5s ease-in;
 }
+
+.blinking {
+    animation: blink 2s ease-in infinite;
+}
+
+@keyframes blink {
+    from,
+    to {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}

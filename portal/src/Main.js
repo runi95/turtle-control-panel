@@ -1,7 +1,7 @@
 import { Component } from 'react';
 import { Route, Router } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Navbar } from 'react-bootstrap';
+import { Navbar, Nav } from 'react-bootstrap';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import history from './utils/history';
 import LandingPage from './components/LandingPage';
@@ -128,9 +128,14 @@ class Main extends Component {
                         path="/dashboard"
                         render={() => (
                             <Navbar style={{ backgroundColor: '#27293d' }} variant="dark">
-                                <Navbar.Brand style={{ cursor: 'pointer' }} onClick={() => history.push('/dashboard')}>
-                                    <img alt="" src="/logo.svg" width="32" height="32" className="d-inline-block align-top" /> Dashboard
+                                <Navbar.Brand className="mr-auto" style={{ cursor: 'pointer' }} onClick={() => history.push('/dashboard')}>
+                                    <img alt="Logo" src="/logo.svg" width="32" height="32" className="d-inline-block align-top" /> Dashboard
                                 </Navbar.Brand>
+                                {!this.state.isConnected && (
+                                    <Nav>
+                                        <img className="blinking" alt="No signal" src="/nosignal.svg" width="32" height="32" />
+                                    </Nav>
+                                )}
                             </Navbar>
                         )}
                     />
