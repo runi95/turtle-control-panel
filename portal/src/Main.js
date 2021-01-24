@@ -6,7 +6,7 @@ import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import history from './utils/history';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
-import Turtle from './components/Turtle';
+import Turtle from './components/turtle/Turtle';
 
 class Main extends Component {
     state = {

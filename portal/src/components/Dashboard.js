@@ -5,14 +5,6 @@ import history from '../utils/history';
 import './Dashboard.css';
 import FuelInfo from './FuelInfo';
 
-const stateToString = (state) => {
-    if (state === undefined) {
-        return 'idle';
-    }
-
-    return state.name;
-};
-
 class Dashboard extends Component {
     render() {
         return (
@@ -36,7 +28,7 @@ class Dashboard extends Component {
                                         {this.props.turtles[key].isOnline ? <GreenText>Online</GreenText> : <GreyText>Offline</GreyText>}
                                     </td>
                                     <td>{this.props.turtles[key].name}</td>
-                                    <td>{stateToString(this.props.turtles[key].state)}</td>
+                                    <td>{this.props.turtles[key].state ? this.props.turtles[key].state.name : 'idle'}</td>
                                     <td style={{ verticalAlign: 'middle' }}>
                                         <FuelInfo {...this.props.turtles[key]} />
                                     </td>
