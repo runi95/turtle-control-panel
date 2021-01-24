@@ -11,7 +11,6 @@ class Inventory extends Component {
         }
 
         const { inventory, selectedSlot } = turtle;
-        const selectedItem = (turtle && turtle.inventory && turtle.inventory[turtle.selectedSlot]) || undefined;
         return [
             <Col key="inventory-grid" md="auto">
                 <InventoryGrid>
@@ -62,17 +61,17 @@ class Inventory extends Component {
                     </h5>
                 </Row>
                 <Row>
-                    <Button variant="outline-info" size="sm" disabled={turtle.isOnline}>
+                    <Button variant="outline-info" size="sm" disabled={!turtle.isOnline}>
                         Mine
                     </Button>
                 </Row>
                 <Row style={{ marginTop: 5 }}>
-                    <Button variant="outline-info" size="sm" disabled={turtle.isOnline}>
+                    <Button variant="outline-info" size="sm" disabled={!turtle.isOnline}>
                         Refuel
                     </Button>
                 </Row>
                 <Row style={{ marginTop: 5 }}>
-                    <Button variant="outline-danger" size="sm" disabled={turtle.isOnline}>
+                    <Button variant="outline-danger" size="sm" disabled={!turtle.isOnline}>
                         Stop
                     </Button>
                 </Row>
