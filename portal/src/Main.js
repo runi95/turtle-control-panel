@@ -97,14 +97,10 @@ class Main extends Component {
             }
 
             const attempts = this.state.attempts;
-            if (attempts < 3) {
-                this.setState({ isLoading: false, isConnected: false, message: 'Failed to connect', attempts: attempts + 1 });
-                setTimeout(() => {
-                    this.connect();
-                }, 2000);
-            } else {
-                this.setState({ isLoading: false, isConnected: false, message: 'Unable to connect' });
-            }
+            this.setState({ isLoading: false, isConnected: false, message: 'Failed to connect', attempts: attempts + 1 });
+            setTimeout(() => {
+                this.connect();
+            }, 1000 + 1000 * Math.pow(2, Math.min(attempts, 8)));
         };
     }
 
