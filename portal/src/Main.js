@@ -54,7 +54,9 @@ class Main extends Component {
             client.send(JSON.stringify({ type: 'HANDSHAKE' }));
             this.setState({ isLoading: false, isConnected: true, shouldFadeOut: true, attempts: 0, message: 'Connected...' });
             setTimeout(() => {
-                history.push('/dashboard');
+                if (history.location.pathname === '/') {
+                    history.push('/dashboard');
+                }
             }, 2500);
         };
 
