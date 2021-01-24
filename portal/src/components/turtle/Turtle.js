@@ -41,7 +41,7 @@ class Turtle extends Component {
                 <hr />
                 <Row>
                     <Inventory turtle={turtle}></Inventory>
-                    <Col md="auto">
+                    <Col key="canvas" md="auto">
                         <Canvas
                             style={{ border: '1px solid #fff', borderRadius: canvasRadius }}
                             canvasSize={canvasSize}

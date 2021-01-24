@@ -13,7 +13,7 @@ class Inventory extends Component {
         const { inventory, selectedSlot } = turtle;
         const selectedItem = (turtle && turtle.inventory && turtle.inventory[turtle.selectedSlot]) || undefined;
         return [
-            <Col md="auto">
+            <Col key="inventory-grid" md="auto">
                 <InventoryGrid>
                     {Array.from(Array(16), (_, i) => i).map((i) => {
                         const itemIndex = i + 1;
@@ -55,7 +55,7 @@ class Inventory extends Component {
                     })}
                 </InventoryGrid>
             </Col>,
-            <Col>
+            <Col key="inventory-actions">
                 <Row>
                     <h5>
                         <ins style={{ textTransform: 'capitalize' }}>{(turtle && turtle.state && turtle.state.name) || 'idle'}</ins>
