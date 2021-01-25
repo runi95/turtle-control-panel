@@ -67,19 +67,23 @@ const Canvas = (props) => {
                     ctx.stroke();
                 }
 
-                ctx.globalAlpha = 1;
-
                 // Draw currently selected block
-                ctx.fillStyle = '#1491a2';
                 if (turtle.isOnline && mousePosition !== undefined) {
-                    ctx.fillRect(
-                        Math.floor((mousePosition[0] - spriteRadius) / spriteSize) * spriteSize + spriteRadius,
-                        Math.floor((mousePosition[1] - spriteRadius) / spriteSize) * spriteSize + spriteRadius,
-                        spriteSize,
-                        spriteSize,
+                    ctx.fillStyle = '#1491a2';
+                    ctx.beginPath();
+                    ctx.fillStyle = 'yellow';
+                    ctx.arc(
+                        Math.floor((mousePosition[0] - spriteRadius) / spriteSize) * spriteSize + spriteSize,
+                        Math.floor((mousePosition[1] - spriteRadius) / spriteSize) * spriteSize + spriteSize,
+                        circleSizeMul * spriteSize,
+                        0,
+                        2 * Math.PI,
+                        false,
                     );
+                    ctx.fill();
                 }
 
+                ctx.globalAlpha = 1;
                 ctx.fillStyle = 'black';
 
                 // Draw blocks
