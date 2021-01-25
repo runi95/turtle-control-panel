@@ -23,18 +23,36 @@ const Canvas = (props) => {
                 const mul = canvasSize / spriteSize;
                 const centerX = 0.5 * spriteSize * mul;
                 const centerY = 0.5 * spriteSize * mul;
+                const drawRange = 0.5 * mul;
                 const turtle = turtles[selectedTurtle];
                 const { x, y, z } = turtle.location;
 
                 // Clear
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
+                ctx.fillStyle = '#323232';
+
+                // Draw floor
+                for (let i = -drawRange; i <= drawRange; i++) {
+                    for (let j = -drawRange; j <= drawRange; j++) {
+                        const wX = x + i;
+                        const wZ = z + j;
+                        if (world[`${wX},${y - 1},${wZ}`] !== undefined) {
+                            ctx.fillRect(
+                                (i + drawRange) * spriteSize - spriteRadius,
+                                (j + drawRange) * spriteSize - spriteRadius,
+                                spriteSize,
+                                spriteSize,
+                            );
+                        }
+                    }
+                }
+
                 ctx.lineWidth = 1;
                 ctx.strokeStyle = 'black';
                 ctx.globalAlpha = 0.4;
 
                 // Draw lines
-                const drawRange = 0.5 * mul;
                 for (let i = -drawRange; i <= drawRange; i++) {
                     // Horizontal
                     ctx.beginPath();
