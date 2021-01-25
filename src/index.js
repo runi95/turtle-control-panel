@@ -108,6 +108,22 @@ wssWebsite.on('connection', (ws) => {
         switch (obj.type) {
             case 'HANDSHAKE':
                 ws.send(JSON.stringify({ type: 'HANDSHAKE', message: { turtles: turtlesDB.getTurtles(), world: worldDB.getAllBlocks() } }));
+                break;
+            case 'ACTION':
+                const turtle = turtlesDB.getTurtle(obj.data.id);
+                switch (obj.action) {
+                    case 'refuel':
+                        if (turtle !== undefined) {
+                            turtlesDB.updateState(turtle.id, { id: 1, name: 'refueling', dropAllItems: true });
+                        }
+                        break;
+                    case 'move':
+                        if (turtle !== undefined) {
+                            turtlesDB.updateState(turtle.id, { id: 3, name: 'moving', x: obj.data.x, y: obj.data.y, z: obj.data.z });
+                        }
+                        break;
+                }
+                break;
         }
     });
 

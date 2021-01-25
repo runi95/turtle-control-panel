@@ -10,6 +10,7 @@ import Turtle from './components/turtle/Turtle';
 
 class Main extends Component {
     state = {
+        socket: undefined,
         turtles: {},
         world: {},
         isLoading: true,
@@ -49,6 +50,7 @@ class Main extends Component {
     connect() {
         this.setState({ isLoading: true, message: '' });
         const client = new W3CWebSocket('ws://localhost:6868');
+        this.setState({ socket: client });
         client.onopen = () => {
             console.info('[open] Connection established');
             client.send(JSON.stringify({ type: 'HANDSHAKE' }));
@@ -146,7 +148,14 @@ class Main extends Component {
                         exact
                         path="/dashboard/:id"
                         render={(props) => (
-                            <Turtle selectedTurtle={props.match.params.id} turtles={this.state.turtles} world={this.state.world} />
+                            <Turtle
+                                selectedTurtle={props.match.params.id}
+                                turtles={this.state.turtles}
+                                world={this.state.world}
+                                action={(msg) => {
+                                    this.state.socket.send(JSON.stringify(msg));
+                                }}
+                            />
                         )}
                     />
                 </Router>

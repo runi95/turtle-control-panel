@@ -1,12 +1,13 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 
 const circleSizeMul = 0.35;
 const spriteSize = 10;
 const spriteRadius = 0.5 * spriteSize;
 
 const Canvas = (props) => {
-    const { canvasSize, turtles, selectedTurtle, world, ...rest } = props;
-    const canvasRef = useRef(null);
+    const { canvasSize, turtles, selectedTurtle, world, action, ...rest } = props;
+    const canvasRef = useRef(undefined);
+    const [mousePosition, setMousePosition] = useState(undefined);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -28,14 +29,47 @@ const Canvas = (props) => {
                 // Clear
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-                // Draw blocks
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'black';
+                ctx.globalAlpha = 0.4;
+
+                // Draw lines
                 const drawRange = 0.5 * mul;
+                for (let i = -drawRange; i <= drawRange; i++) {
+                    // Horizontal
+                    ctx.beginPath();
+                    ctx.moveTo(-canvasSize, (i + drawRange) * spriteSize - spriteRadius);
+                    ctx.lineTo(canvasSize, (i + drawRange) * spriteSize - spriteRadius);
+                    ctx.stroke();
+
+                    // Vertical
+                    ctx.beginPath();
+                    ctx.moveTo((i + drawRange) * spriteSize - spriteRadius, -canvasSize);
+                    ctx.lineTo((i + drawRange) * spriteSize - spriteRadius, canvasSize);
+                    ctx.stroke();
+                }
+
+                ctx.globalAlpha = 1;
+
+                // Draw currently selected block
+                ctx.fillStyle = '#1491a2';
+                if (turtle.isOnline && mousePosition !== undefined) {
+                    ctx.fillRect(
+                        Math.floor((mousePosition[0] - spriteRadius) / spriteSize) * spriteSize + spriteRadius,
+                        Math.floor((mousePosition[1] - spriteRadius) / spriteSize) * spriteSize + spriteRadius,
+                        spriteSize,
+                        spriteSize,
+                    );
+                }
+
+                ctx.fillStyle = 'black';
+
+                // Draw blocks
                 for (let i = -drawRange; i <= drawRange; i++) {
                     for (let j = -drawRange; j <= drawRange; j++) {
                         const wX = x + i;
                         const wZ = z + j;
                         if (world[`${wX},${y},${wZ}`] !== undefined) {
-                            ctx.fillStyle = 'black';
                             ctx.fillRect(
                                 (i + drawRange) * spriteSize - spriteRadius,
                                 (j + drawRange) * spriteSize - spriteRadius,
@@ -93,7 +127,43 @@ const Canvas = (props) => {
         };
     });
 
-    return <canvas ref={canvasRef} {...rest} height={canvasSize} width={canvasSize} />;
+    return (
+        <canvas
+            ref={canvasRef}
+            {...rest}
+            height={canvasSize}
+            width={canvasSize}
+            onMouseMove={(e) => setMousePosition([e.nativeEvent.offsetX, e.nativeEvent.offsetY])}
+            onClick={(e) => {
+                const turtle = turtles && turtles[selectedTurtle];
+                if (turtle && turtle.isOnline) {
+                    const { x, y, z } = turtle.location;
+                    action({
+                        type: 'ACTION',
+                        action: 'move',
+                        data: {
+                            id: turtle.id,
+                            x:
+                                (Math.floor((e.nativeEvent.offsetX - spriteRadius) / spriteSize) * spriteSize +
+                                    spriteRadius +
+                                    spriteRadius -
+                                    canvasSize * 0.5) /
+                                    spriteSize +
+                                x,
+                            y,
+                            z:
+                                (Math.floor((e.nativeEvent.offsetY - spriteRadius) / spriteSize) * spriteSize +
+                                    spriteRadius +
+                                    spriteRadius -
+                                    canvasSize * 0.5) /
+                                    spriteSize +
+                                z,
+                        },
+                    });
+                }
+            }}
+        />
+    );
 };
 
 export default Canvas;

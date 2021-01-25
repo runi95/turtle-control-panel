@@ -14,6 +14,10 @@ module.exports = class TurtlesDB {
         this.db.push(`/${id}/isOnline`, isOnline);
     }
 
+    updateState(id, state) {
+        this.db.push(`/${id}/state`, state);
+    }
+
     getTurtle(id) {
         try {
             return this.db.getData(`/${id}`);

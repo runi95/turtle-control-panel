@@ -40,7 +40,7 @@ class Turtle extends Component {
                 </Row>
                 <hr />
                 <Row>
-                    <Inventory turtle={turtle}></Inventory>
+                    <Inventory turtle={turtle} action={this.props.action}></Inventory>
                     <Col key="canvas" md="auto">
                         <Canvas
                             style={{ border: '1px solid #fff', borderRadius: canvasRadius }}
@@ -48,6 +48,7 @@ class Turtle extends Component {
                             turtles={this.props.turtles}
                             selectedTurtle={this.props.selectedTurtle}
                             world={this.props.world}
+                            action={this.props.action}
                         />
                     </Col>
                 </Row>

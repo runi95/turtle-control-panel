@@ -349,42 +349,46 @@ module.exports = class TurtleController extends (
         await this.select(currentlySelectedSlot);
     }
 
-    async recharge() {
-        if (this.turtle.fuelLevel < 0.8 * this.turtle.fuelLimit) {
-            await this.moveTo(rechargeStation.x, rechargeStation.y, rechargeStation.z);
-
-            await this.dropAllItems();
-
-            while (this.turtle.fuelLevel < this.turtle.fuelLimit) {
-                await this.suckUp(Math.min((this.turtle.fuelLimit - this.turtle.fuelLevel) / 80, 64));
-                await this.refuel();
-            }
-
-            this.turtle.stepsSinceLastRecharge = 0;
+    async moveAndRefuel() {
+        if (this.turtle.fuelLevel > 0.8 * this.turtle.fuelLimit) {
+            this.turtle.state = undefined;
+            this.turtlesDB.addTurtle(this.turtle);
+            return;
         }
 
-        this.turtle.state = undefined;
-        this.turtlesDB.addTurtle(this.turtle);
+        await this.moveTo(rechargeStation.x, rechargeStation.y, rechargeStation.z);
+
+        if (this.turtle.state.dropAllItems) {
+            await this.dropAllItems();
+        }
+
+        await this.suckUp(Math.min((this.turtle.fuelLimit - this.turtle.fuelLevel) / 80, 64));
+        await this.refuel();
+
+        this.turtle.stepsSinceLastRecharge = 0;
     }
 
     async *ai() {
         while (true) {
             if (
-                this.turtle.stepsSinceLastRecharge === undefined ||
-                this.turtle.stepsSinceLastRecharge >= this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
+                // this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
+                this.turtle.stepsSinceLastRecharge >=
+                this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
             ) {
-                this.turtle.state = { id: 1, name: 'Refueling' };
+                this.turtle.state = { id: 1, name: 'refueling', dropAllItems: true };
                 this.turtlesDB.addTurtle(this.turtle);
             }
 
             const stateId = (this.turtle.state || {}).id;
             switch (stateId) {
                 case 1:
-                    await this.recharge();
+                    await this.moveAndRefuel();
                     break;
                 case 2:
                     await this.mine();
                     break;
+                case 3:
+                    await this.moveTo(this.turtle.state.x, this.turtle.state.y, this.turtle.state.z);
             }
 
             yield;
@@ -392,9 +396,6 @@ module.exports = class TurtleController extends (
     }
 
     async moveTo(targetX, targetY, targetZ) {
-        const dStarLite = new DStarLite();
-
-        let time = 0;
         let px = this.turtle.location.x;
         let py = this.turtle.location.y;
         let pz = this.turtle.location.z;
@@ -402,11 +403,12 @@ module.exports = class TurtleController extends (
             return;
         }
 
+        let moves = 0;
         const obstacles = [];
         const obstaclesHash = {};
-        const test = {
+        const env = {
             moveTo: async (s) => {
-                time++;
+                moves++;
                 px = s.x;
                 py = s.y;
                 pz = s.z;
@@ -486,7 +488,8 @@ module.exports = class TurtleController extends (
             },
         };
 
-        await dStarLite.runDStarLite(px, py, pz, targetX, targetY, targetZ, test);
-        console.log(`Moves: ${time}`);
+        const dStarLite = new DStarLite();
+        await dStarLite.runDStarLite(px, py, pz, targetX, targetY, targetZ, env);
+        console.log(`Moves: ${moves}`);
     }
 };

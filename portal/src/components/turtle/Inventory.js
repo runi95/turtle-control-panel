@@ -66,7 +66,12 @@ class Inventory extends Component {
                     </Button>
                 </Row>
                 <Row style={{ marginTop: 5 }}>
-                    <Button variant="outline-info" size="sm" disabled={!turtle.isOnline}>
+                    <Button
+                        onClick={() => this.props.action({ type: 'ACTION', action: 'refuel', data: { id: turtle.id } })}
+                        variant="outline-info"
+                        size="sm"
+                        disabled={!turtle.isOnline}
+                    >
                         Refuel
                     </Button>
                 </Row>
