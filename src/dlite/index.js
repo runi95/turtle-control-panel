@@ -24,10 +24,15 @@ module.exports = class DStarLite {
         this.sgoal.z = gz;
         let slast = this.sstart;
         this.initialize(await env.getInitialObstacles());
-        this.computeShortestPath();
+        try {
+            this.computeShortestPath();
+        } catch (err) {
+            console.error(err);
+            return false;
+        }
         while (!this.sstart.equals(this.sgoal)) {
             if (this.sstart.g === Number.POSITIVE_INFINITY) {
-                throw new Error('Goal is unreachable');
+                return false;
             }
 
             const obstacleCoord = await env.getObstaclesInVision();
@@ -55,7 +60,7 @@ module.exports = class DStarLite {
             }
             const possibleMoveLocation = this.minSuccState(this.sstart);
             if (possibleMoveLocation === undefined) {
-                throw new Error('Stuck');
+                return false;
             }
             const didMove = await env.moveTo(new Coordinates(possibleMoveLocation.x, possibleMoveLocation.y, possibleMoveLocation.z));
             if (didMove) {
@@ -63,8 +68,16 @@ module.exports = class DStarLite {
             } else {
                 // possibleMoveLocation.obstacle = true;
             }
-            this.computeShortestPath();
+
+            try {
+                this.computeShortestPath();
+            } catch (err) {
+                console.error(err);
+                return false;
+            }
         }
+
+        return true;
     }
 
     calculateKey(s) {
