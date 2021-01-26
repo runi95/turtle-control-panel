@@ -491,5 +491,8 @@ module.exports = class TurtleController extends (
         const dStarLite = new DStarLite();
         await dStarLite.runDStarLite(px, py, pz, targetX, targetY, targetZ, env);
         console.log(`Moves: ${moves}`);
+        if (this.turtle.state && this.turtle.state.id === 3) {
+            this.turtlesDB.updateState(turtle.id, undefined);
+        }
     }
 };
