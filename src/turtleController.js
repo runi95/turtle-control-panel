@@ -26,90 +26,6 @@ module.exports = class TurtleController extends (
         this.turtle = turtle;
     }
 
-    /**
-     * Get information about the block in front of the turtle
-     */
-    async inspect() {
-        const [didInspect, block] = await this.wsTurtle.exec('turtle.inspect()');
-        const { x, y, z } = this.turtle.location;
-        const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
-        if (!didInspect) {
-            this.worldDB.deleteBlock(x + xChange, y, z + zChange);
-            this.emit('wdelete', x + xChange, y, z + zChange);
-            return undefined;
-        }
-
-        this.worldDB.updateBlock(x + xChange, y, z + zChange, block);
-        this.emit('wupdate', x + xChange, y, z + zChange, block);
-        return block;
-    }
-
-    /**
-     * Get information about the block above the turtle
-     */
-    async inspectUp() {
-        const [didInspect, block] = await this.wsTurtle.exec('turtle.inspectUp()');
-        const { x, y, z } = this.turtle.location;
-        if (!didInspect) {
-            this.worldDB.deleteBlock(x, y + 1, z);
-            this.emit('wdelete', x, y + 1, z);
-            return undefined;
-        }
-
-        this.worldDB.updateBlock(x, y + 1, z, block);
-        this.emit('wupdate', x, y + 1, z, block);
-        return block;
-    }
-
-    /**
-     * Get information about the block below the turtle
-     */
-    async inspectDown() {
-        const [didInspect, block] = await this.wsTurtle.exec('turtle.inspectDown()');
-        const { x, y, z } = this.turtle.location;
-        if (!didInspect) {
-            this.worldDB.deleteBlock(x, y - 1, z);
-            this.emit('wdelete', x, y - 1, z);
-            return undefined;
-        }
-
-        this.worldDB.updateBlock(x, y - 1, z, block);
-        this.emit('wupdate', x, y - 1, z, block);
-        return block;
-    }
-
-    async turnLeft() {
-        const [didTurn, err] = await this.wsTurtle.exec('turtle.turnLeft()');
-        if (!didTurn) {
-            throw new Error(err);
-        }
-
-        this.turtle.direction = ((this.turtle.direction + 2) % 4) + 1;
-        this.turtlesDB.addTurtle(this.turtle);
-    }
-
-    async turnRight() {
-        const [didTurn, err] = await this.wsTurtle.exec('turtle.turnRight()');
-        if (!didTurn) {
-            throw new Error(err);
-        }
-
-        this.turtle.direction = (this.turtle.direction % 4) + 1;
-        this.turtlesDB.addTurtle(this.turtle);
-    }
-
-    async turnToDirection(direction) {
-        const turn = (direction - this.turtle.direction + 4) % 4;
-        if (turn === 1) {
-            await this.turnRight();
-        } else if (turn === 2) {
-            await this.turnLeft();
-            await this.turnLeft();
-        } else if (turn === 3) {
-            await this.turnLeft();
-        }
-    }
-
     async forward() {
         const [didMove, err] = await this.wsTurtle.exec('turtle.forward()');
         if (!didMove) {
@@ -175,16 +91,36 @@ module.exports = class TurtleController extends (
         this.emit('wdelete', this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
     }
 
-    async detect() {
-        return (await this.wsTurtle.exec('turtle.detect()'))[0];
+    async turnLeft() {
+        const [didTurn, err] = await this.wsTurtle.exec('turtle.turnLeft()');
+        if (!didTurn) {
+            throw new Error(err);
+        }
+
+        this.turtle.direction = ((this.turtle.direction + 2) % 4) + 1;
+        this.turtlesDB.addTurtle(this.turtle);
     }
 
-    async detectUp() {
-        return (await this.wsTurtle.exec('turtle.detectUp()'))[0];
+    async turnRight() {
+        const [didTurn, err] = await this.wsTurtle.exec('turtle.turnRight()');
+        if (!didTurn) {
+            throw new Error(err);
+        }
+
+        this.turtle.direction = (this.turtle.direction % 4) + 1;
+        this.turtlesDB.addTurtle(this.turtle);
     }
 
-    async detectDown() {
-        return (await this.wsTurtle.exec('turtle.detectDown()'))[0];
+    async turnToDirection(direction) {
+        const turn = (direction - this.turtle.direction + 4) % 4;
+        if (turn === 1) {
+            await this.turnRight();
+        } else if (turn === 2) {
+            await this.turnLeft();
+            await this.turnLeft();
+        } else if (turn === 3) {
+            await this.turnLeft();
+        }
     }
 
     async dig() {
@@ -229,12 +165,245 @@ module.exports = class TurtleController extends (
         return result;
     }
 
-    async sleep(ms) {
-        await new Promise((resolve) => setTimeout(() => resolve(), ms));
+    async getItemCount(slot = this.turtle.selectedSlot) {
+        return await this.wsTurtle.exec(`turtle.getItemCount(${slot})`);
     }
 
-    async getItemDetail(slot = this.turtle.selectedSlot) {
-        return await this.wsTurtle.exec(`turtle.getItemDetail(${slot})`);
+    async getItemSpace(slot = this.turtle.selectedSlot) {
+        return await this.wsTurtle.exec(`turtle.getItemSpace(${slot})`);
+    }
+
+    async detect() {
+        return (await this.wsTurtle.exec('turtle.detect()'))[0];
+    }
+
+    async detectUp() {
+        return (await this.wsTurtle.exec('turtle.detectUp()'))[0];
+    }
+
+    async detectDown() {
+        return (await this.wsTurtle.exec('turtle.detectDown()'))[0];
+    }
+
+    /**
+     * Detects whether or not the block in front of
+     * the turtle is the same as the one in the currently selected slot
+     */
+    async compare() {
+        return await this.wsTurtle.exec('turtle.compare()');
+    }
+
+    /**
+     * Detects whether or not the block above the turtle
+     * is the same as the one in the currently selected slot
+     */
+    async compareUp() {
+        return await this.wsTurtle.exec('turtle.compareUp()');
+    }
+
+    /**
+     * Detects whether or not the block below the turtle
+     * is the same as the one in the currently selected slot
+     */
+    async compareDown() {
+        return await this.wsTurtle.exec('turtle.compareDown()');
+    }
+
+    async attack() {
+        return await this.wsTurtle.exec(`turtle.attack()`);
+    }
+
+    async attackUp() {
+        return await this.wsTurtle.exec(`turtle.attackUp()`);
+    }
+
+    async attackDown() {
+        return await this.wsTurtle.exec(`turtle.attackDown()`);
+    }
+
+    async suck(count) {
+        return await this.wsTurtle.exec(`turtle.suck(${count})`);
+    }
+
+    async suckUp(count) {
+        return await this.wsTurtle.exec(`turtle.suckUp(${count})`);
+    }
+
+    async suckDown(count) {
+        return await this.wsTurtle.exec(`turtle.suckDown(${count})`);
+    }
+
+    async getFuelLevel() {
+        const [updatedFuelLevel] = await this.wsTurtle.exec('turtle.getFuelLevel()');
+        return updatedFuelLevel;
+    }
+
+    async refuel() {
+        await this.wsTurtle.exec('turtle.refuel()');
+        const updatedFuelLevel = await this.getFuelLevel();
+        this.turtle.fuelLevel = updatedFuelLevel;
+        this.turtlesDB.addTurtle(this.turtle);
+    }
+
+    /**
+     * Detects whether or not the item in the specified slot is the
+     * same as the item in the currently selected slot
+     *
+     * @param {number} slot
+     */
+    async compareTo(slot) {
+        return await this.wsTurtle.exec(`turtle.compareTo(${slot})`);
+    }
+
+    /**
+     * Transfers quantity items from the currently selected slot to the specified slot.
+     * If the quantity argument is omitted, tries to transfer all the items from the currently selected slot.
+     * If the destination slot already has items of a different type, returns false
+     * (does not try to fill the next slot, like suck() would).
+     * If there are fewer than quantity items in the currently selected slot or only room for fewer items in the destination slot,
+     * transfers only as many as possible and returns true. If none can be transferred, returns false
+     *
+     * @param {number} slot
+     * @param {number} count
+     */
+    async transferTo(slot, count) {
+        if (count) {
+            return await this.wsTurtle.exec(`transferTo(${slot}, ${count})`);
+        } else {
+            return await this.wsTurtle.exec(`transferTo(${slot})`);
+        }
+    }
+
+    async getSelectedSlot() {
+        const [selectedSlot] = await this.wsTurtle.exec('turtle.getSelectedSlot()');
+        this.turtle.selectedSlot = selectedSlot;
+        this.turtlesDB.addTurtle(this.turtle);
+        return selectedSlot;
+    }
+
+    async getFuelLimit() {
+        return await this.wsTurtle.exec('turtle.getFuelLimit()');
+    }
+
+    async equipLeft() {
+        return await this.wsTurtle.exec('turtle.equipLeft()');
+    }
+
+    async equipRight() {
+        return await this.wsTurtle.exec('turtle.equipRight()');
+    }
+
+    /**
+     * Get information about the block in front of the turtle
+     */
+    async inspect() {
+        const [didInspect, block] = await this.wsTurtle.exec('turtle.inspect()');
+        const { x, y, z } = this.turtle.location;
+        const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
+        if (!didInspect) {
+            this.worldDB.deleteBlock(x + xChange, y, z + zChange);
+            this.emit('wdelete', x + xChange, y, z + zChange);
+            return undefined;
+        }
+
+        this.worldDB.updateBlock(x + xChange, y, z + zChange, block);
+        this.emit('wupdate', x + xChange, y, z + zChange, block);
+        return block;
+    }
+
+    /**
+     * Get information about the block above the turtle
+     */
+    async inspectUp() {
+        const [didInspect, block] = await this.wsTurtle.exec('turtle.inspectUp()');
+        const { x, y, z } = this.turtle.location;
+        if (!didInspect) {
+            this.worldDB.deleteBlock(x, y + 1, z);
+            this.emit('wdelete', x, y + 1, z);
+            return undefined;
+        }
+
+        this.worldDB.updateBlock(x, y + 1, z, block);
+        this.emit('wupdate', x, y + 1, z, block);
+        return block;
+    }
+
+    /**
+     * Get information about the block below the turtle
+     */
+    async inspectDown() {
+        const [didInspect, block] = await this.wsTurtle.exec('turtle.inspectDown()');
+        const { x, y, z } = this.turtle.location;
+        if (!didInspect) {
+            this.worldDB.deleteBlock(x, y - 1, z);
+            this.emit('wdelete', x, y - 1, z);
+            return undefined;
+        }
+
+        this.worldDB.updateBlock(x, y - 1, z, block);
+        this.emit('wupdate', x, y - 1, z, block);
+        return block;
+    }
+
+    async getItemDetail(slot = this.turtle.selectedSlot, detailed = false) {
+        return await this.wsTurtle.exec(`turtle.getItemDetail(${slot}, ${detailed})`);
+    }
+
+    /**
+     * Requires a Crafty Turtle.
+     * Crafts an item if items in the turtle's inventory matches a valid recipe.
+     * The items can be placed anywhere as long as they are oriented properly with respect to one another.
+     * Can craft a maximum of one stack of items at a time; for example,
+     * if you put three stacks of 64 reed in a line and craft them, only 63 paper will be crafted,
+     * and three piles of 43 reed will remain in the turtle.
+     * Will not craft if there are any items in the turtle's inventory that are not part of the recipe,
+     * including in the slots not used for crafting. The produced items will appear in the selected slot,
+     * if that slot is free. If not, it will try the next available slot.
+     * A parameter can also be supplied to specify the quantity of items to craft.
+     * If the quantity specified is 0, will return true if a valid recipe has been found in the turtle's inventory, and false otherwise.
+     *
+     * @param {number} limit
+     */
+    async craft(limit) {
+        if (limit) {
+            return await this.wsTurtle.exec(`turtle.craft(${limit})`);
+        } else {
+            return await this.wsTurtle.exec(`turtle.craft()`);
+        }
+    }
+
+    async dropAllItems() {
+        const currentlySelectedSlot = await this.getSelectedSlot();
+        for (let i = 1; i < 17; i++) {
+            await this.select(i);
+            await this.drop();
+        }
+
+        await this.select(currentlySelectedSlot);
+    }
+
+    async checkPeripheral() {
+        const list = (
+            await this.wsTurtle.execRaw(
+                `local list = peripheral.wrap('front').list()\nlocal result = {}\nfor k, v in pairs(list) do result[tostring(k)] = list[k]end\nreturn result`,
+            )
+        )['0'];
+
+        // 1 coal === 80 fuel
+        if (list === undefined) {
+            throw new Error('Failed to refuel');
+        }
+
+        const keys = Object.keys(list);
+        for (let i = 0; i < keys.length; i++) {
+            if (list[keys[i]].name === 'minecraft:coal') {
+                console.log('Found coal!');
+            }
+        }
+    }
+
+    async sleep(ms) {
+        await new Promise((resolve) => setTimeout(() => resolve(), ms));
     }
 
     async mine() {
@@ -299,54 +468,6 @@ module.exports = class TurtleController extends (
                 }
             }
         }
-    }
-
-    async refuel() {
-        await this.wsTurtle.exec('turtle.refuel()');
-        const [updatedFuelLevel] = await this.wsTurtle.exec('turtle.getFuelLevel()');
-        this.turtle.fuelLevel = updatedFuelLevel;
-        this.turtlesDB.addTurtle(this.turtle);
-    }
-
-    async suckUp(count) {
-        return await this.wsTurtle.exec(`turtle.suckUp(${count})`);
-    }
-
-    async checkPeripheral() {
-        const list = (
-            await this.wsTurtle.execRaw(
-                `local list = peripheral.wrap('front').list()\nlocal result = {}\nfor k, v in pairs(list) do result[tostring(k)] = list[k]end\nreturn result`,
-            )
-        )['0'];
-
-        // 1 coal === 80 fuel
-        if (list === undefined) {
-            throw new Error('Failed to refuel');
-        }
-
-        const keys = Object.keys(list);
-        for (let i = 0; i < keys.length; i++) {
-            if (list[keys[i]].name === 'minecraft:coal') {
-                console.log('Found coal!');
-            }
-        }
-    }
-
-    async getSelectedSlot() {
-        const [selectedSlot] = await this.wsTurtle.exec('turtle.getSelectedSlot()');
-        this.turtle.selectedSlot = selectedSlot;
-        this.turtlesDB.addTurtle(this.turtle);
-        return selectedSlot;
-    }
-
-    async dropAllItems() {
-        const currentlySelectedSlot = await this.getSelectedSlot();
-        for (let i = 1; i < 17; i++) {
-            await this.select(i);
-            await this.drop();
-        }
-
-        await this.select(currentlySelectedSlot);
     }
 
     async moveAndRefuel() {
