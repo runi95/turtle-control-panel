@@ -520,100 +520,99 @@ module.exports = class TurtleController extends (
         let px = this.turtle.location.x;
         let py = this.turtle.location.y;
         let pz = this.turtle.location.z;
-        if (px === targetX && py === targetY && pz === targetZ) {
-            return;
+        if (!(px === targetX && py === targetY && pz === targetZ)) {
+            let moves = 0;
+            const obstacles = [];
+            const obstaclesHash = {};
+            const env = {
+                moveTo: async (s) => {
+                    moves++;
+                    px = s.x;
+                    py = s.y;
+                    pz = s.z;
+
+                    const { x, y, z } = this.turtle.location;
+                    if (py - y > 0) {
+                        try {
+                            await this.up();
+                            return true;
+                        } catch (err) {
+                            obstaclesHash[`${x},${y + 1},${z}`] = true;
+                            obstacles.push(new Coordinates(x, y + 1, z));
+                            return false;
+                        }
+                    } else if (py - y < 0) {
+                        try {
+                            await this.down();
+                            return true;
+                        } catch (err) {
+                            obstaclesHash[`${x},${y - 1},${z}`] = true;
+                            obstacles.push(new Coordinates(x, y - 1, z));
+                            return false;
+                        }
+                    } else {
+                        const heading = { x: px - x, y: py - y, z: pz - z };
+                        const direction = heading.x + Math.abs(heading.x) * 2 + (heading.z + Math.abs(heading.z) * 3);
+                        await this.turnToDirection(direction);
+                        try {
+                            await this.forward();
+                            return true;
+                        } catch (err) {
+                            const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
+                            obstaclesHash[`${x + xChange},${y},${z + zChange}`] = true;
+                            obstacles.push(new Coordinates(x + xChange, y, z + zChange));
+                            return false;
+                        }
+                    }
+                },
+                getInitialObstacles: async () => {
+                    const allBlocks = this.worldDB.getAllBlocks();
+                    return Object.keys(allBlocks).map((key) => {
+                        const keySplit = key.split(',');
+                        return {
+                            x: keySplit[0],
+                            y: keySplit[1],
+                            z: keySplit[2],
+                        };
+                    });
+                },
+                getObstaclesInVision: async () => {
+                    const { x, y, z } = this.turtle.location;
+                    const coordinatesInFront = getLocalCoordinatesForDirection(this.turtle.direction);
+                    const inFrontX = x + coordinatesInFront[0];
+                    const inFrontZ = z + coordinatesInFront[1];
+                    if (obstaclesHash[`${inFrontX},${y},${inFrontZ}`] === undefined) {
+                        if (await this.inspect()) {
+                            obstaclesHash[`${inFrontX},${y},${inFrontZ}`] = true;
+                            obstacles.push(new Coordinates(inFrontX, y, inFrontZ));
+                        }
+                    }
+
+                    if (obstaclesHash[`${x},${y + 1},${z}`] === undefined) {
+                        if (await this.inspectUp()) {
+                            obstaclesHash[`${x},${y + 1},${z}`] = true;
+                            obstacles.push(new Coordinates(x, y + 1, z));
+                        }
+                    }
+
+                    if (obstaclesHash[`${x},${y - 1},${z}`] === undefined) {
+                        if (await this.inspectDown()) {
+                            obstaclesHash[`${x},${y - 1},${z}`] = true;
+                            obstacles.push(new Coordinates(x, y - 1, z));
+                        }
+                    }
+
+                    return obstacles;
+                },
+            };
+
+            const dStarLite = new DStarLite();
+            await dStarLite.runDStarLite(px, py, pz, targetX, targetY, targetZ, env);
+            console.log(`Moves: ${moves}`);
         }
 
-        let moves = 0;
-        const obstacles = [];
-        const obstaclesHash = {};
-        const env = {
-            moveTo: async (s) => {
-                moves++;
-                px = s.x;
-                py = s.y;
-                pz = s.z;
-
-                const { x, y, z } = this.turtle.location;
-                if (py - y > 0) {
-                    try {
-                        await this.up();
-                        return true;
-                    } catch (err) {
-                        obstaclesHash[`${x},${y + 1},${z}`] = true;
-                        obstacles.push(new Coordinates(x, y + 1, z));
-                        return false;
-                    }
-                } else if (py - y < 0) {
-                    try {
-                        await this.down();
-                        return true;
-                    } catch (err) {
-                        obstaclesHash[`${x},${y - 1},${z}`] = true;
-                        obstacles.push(new Coordinates(x, y - 1, z));
-                        return false;
-                    }
-                } else {
-                    const heading = { x: px - x, y: py - y, z: pz - z };
-                    const direction = heading.x + Math.abs(heading.x) * 2 + (heading.z + Math.abs(heading.z) * 3);
-                    await this.turnToDirection(direction);
-                    try {
-                        await this.forward();
-                        return true;
-                    } catch (err) {
-                        const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
-                        obstaclesHash[`${x + xChange},${y},${z + zChange}`] = true;
-                        obstacles.push(new Coordinates(x + xChange, y, z + zChange));
-                        return false;
-                    }
-                }
-            },
-            getInitialObstacles: async () => {
-                const allBlocks = this.worldDB.getAllBlocks();
-                return Object.keys(allBlocks).map((key) => {
-                    const keySplit = key.split(',');
-                    return {
-                        x: keySplit[0],
-                        y: keySplit[1],
-                        z: keySplit[2],
-                    };
-                });
-            },
-            getObstaclesInVision: async () => {
-                const { x, y, z } = this.turtle.location;
-                const coordinatesInFront = getLocalCoordinatesForDirection(this.turtle.direction);
-                const inFrontX = x + coordinatesInFront[0];
-                const inFrontZ = z + coordinatesInFront[1];
-                if (obstaclesHash[`${inFrontX},${y},${inFrontZ}`] === undefined) {
-                    if (await this.inspect()) {
-                        obstaclesHash[`${inFrontX},${y},${inFrontZ}`] = true;
-                        obstacles.push(new Coordinates(inFrontX, y, inFrontZ));
-                    }
-                }
-
-                if (obstaclesHash[`${x},${y + 1},${z}`] === undefined) {
-                    if (await this.inspectUp()) {
-                        obstaclesHash[`${x},${y + 1},${z}`] = true;
-                        obstacles.push(new Coordinates(x, y + 1, z));
-                    }
-                }
-
-                if (obstaclesHash[`${x},${y - 1},${z}`] === undefined) {
-                    if (await this.inspectDown()) {
-                        obstaclesHash[`${x},${y - 1},${z}`] = true;
-                        obstacles.push(new Coordinates(x, y - 1, z));
-                    }
-                }
-
-                return obstacles;
-            },
-        };
-
-        const dStarLite = new DStarLite();
-        await dStarLite.runDStarLite(px, py, pz, targetX, targetY, targetZ, env);
-        console.log(`Moves: ${moves}`);
         if (this.turtle.state && this.turtle.state.id === 3) {
-            this.turtlesDB.updateState(turtle.id, undefined);
+            this.turtlesDB.updateState(this.turtle.id, undefined);
         }
     }
 };
