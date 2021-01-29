@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import { Container, Row, Col } from 'react-bootstrap';
 import FuelInfo from '../FuelInfo';
-import Canvas from './Canvas';
+import TurtleMap from './TurtleMap';
 import Inventory from './Inventory';
 
 const canvasSize = 160;
@@ -41,16 +41,14 @@ class Turtle extends Component {
                 <hr />
                 <Row>
                     <Inventory turtle={turtle} action={this.props.action}></Inventory>
-                    <Col key="canvas" md="auto">
-                        <Canvas
-                            style={{ border: '1px solid #fff', borderRadius: canvasRadius }}
-                            canvasSize={canvasSize}
-                            turtles={this.props.turtles}
-                            selectedTurtle={this.props.selectedTurtle}
-                            world={this.props.world}
-                            action={this.props.action}
-                        />
-                    </Col>
+                    <TurtleMap
+                        style={{ border: '1px solid #fff', borderRadius: canvasRadius }}
+                        canvasSize={canvasSize}
+                        turtles={this.props.turtles}
+                        selectedTurtle={this.props.selectedTurtle}
+                        world={this.props.world}
+                        action={this.props.action}
+                    />
                 </Row>
             </Container>
         );

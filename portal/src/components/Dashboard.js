@@ -2,8 +2,8 @@ import { Component } from 'react';
 import styled from 'styled-components';
 import { Table } from 'react-bootstrap';
 import history from '../utils/history';
-import './Dashboard.css';
 import FuelInfo from './FuelInfo';
+import './Dashboard.css';
 
 class Dashboard extends Component {
     render() {

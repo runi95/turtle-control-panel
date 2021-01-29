@@ -4,6 +4,7 @@ const TurtleWS = require('./entities/turtleWS');
 const { EventEmitter } = require('events');
 const TurtlesDB = require('./db/turtlesDB');
 const WorldDB = require('./db/worldDB');
+const AreasDB = require('./db/AreasDB');
 const TurtleController = require('./turtleController');
 const Turtle = require('./entities/turtle');
 
@@ -12,6 +13,7 @@ console.info('Starting up...');
 const updateEmitter = new EventEmitter();
 const turtlesDB = new TurtlesDB();
 const worldDB = new WorldDB();
+const areasDB = new AreasDB();
 
 const setAllTurtlesToOffline = () => {
     const turtles = turtlesDB.getTurtles();
@@ -121,6 +123,13 @@ wssWebsite.on('connection', (ws) => {
                         if (turtle !== undefined) {
                             turtlesDB.updateState(turtle.id, { id: 3, name: 'moving', x: obj.data.x, y: obj.data.y, z: obj.data.z });
                         }
+                        break;
+                }
+                break;
+            case 'AREA':
+                switch (obj.action) {
+                    case 'create':
+                        areasDB.addArea(obj.data);
                         break;
                 }
                 break;
