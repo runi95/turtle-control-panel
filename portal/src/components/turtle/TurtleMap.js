@@ -186,12 +186,25 @@ const TurtleMap = (props) => {
                 data: {
                     id: areaName,
                     color: selectedColor,
-                    area: Object.keys(createdArea).reduce((acc, curr) => {
-                        const tempX = (createdArea[curr].x + spriteRadius - canvasSize * 0.5) / spriteSize + x;
-                        const tempZ = (createdArea[curr].y + spriteRadius - canvasSize * 0.5) / spriteSize + z;
-                        acc[`${tempX},${y},${tempZ}`] = true;
-                        return acc;
-                    }, {}),
+                    area: Object.keys(createdArea)
+                        .map((key) => {
+                            const tempX = (createdArea[key].x + spriteRadius - canvasSize * 0.5) / spriteSize + x;
+                            const tempZ = (createdArea[key].y + spriteRadius - canvasSize * 0.5) / spriteSize + z;
+                            return { x: tempX, y: y, z: tempZ };
+                        })
+                        .sort((a, b) => {
+                            if (a.x < b.x) {
+                                return -1;
+                            } else if (a.x > b.x) {
+                                return 1;
+                            } else if (a.z < b.z) {
+                                return -1;
+                            } else if (a.z > b.z) {
+                                return 1;
+                            }
+
+                            return 0;
+                        }),
                 },
             });
             setIsCreatingArea(false);
