@@ -109,7 +109,12 @@ wssWebsite.on('connection', (ws) => {
         const obj = JSON.parse(msg);
         switch (obj.type) {
             case 'HANDSHAKE':
-                ws.send(JSON.stringify({ type: 'HANDSHAKE', message: { turtles: turtlesDB.getTurtles(), world: worldDB.getAllBlocks() } }));
+                ws.send(
+                    JSON.stringify({
+                        type: 'HANDSHAKE',
+                        message: { turtles: turtlesDB.getTurtles(), world: worldDB.getAllBlocks(), areas: areasDB.getAreas() },
+                    }),
+                );
                 break;
             case 'ACTION':
                 const turtle = turtlesDB.getTurtle(obj.data.id);

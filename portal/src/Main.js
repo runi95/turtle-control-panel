@@ -67,7 +67,7 @@ class Main extends Component {
             // console.debug(obj);
             switch (obj.type) {
                 case 'HANDSHAKE':
-                    this.setState({ turtles: obj.message.turtles, world: obj.message.world });
+                    this.setState({ turtles: obj.message.turtles, world: obj.message.world, areas: obj.message.areas });
                     break;
                 case 'TCONNECT':
                     this.tConnect(obj.message.turtle);
@@ -152,6 +152,7 @@ class Main extends Component {
                                 selectedTurtle={props.match.params.id}
                                 turtles={this.state.turtles}
                                 world={this.state.world}
+                                areas={this.state.areas}
                                 action={(msg) => {
                                     this.state.socket.send(JSON.stringify(msg));
                                 }}

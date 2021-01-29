@@ -47,6 +47,7 @@ class Turtle extends Component {
                         turtles={this.props.turtles}
                         selectedTurtle={this.props.selectedTurtle}
                         world={this.props.world}
+                        areas={this.props.areas}
                         action={this.props.action}
                     />
                 </Row>

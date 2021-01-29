@@ -9,7 +9,7 @@ const spriteRadius = 0.5 * spriteSize;
 const colors = ['#ff0000', '#ff6a00', '#ffd800', '#4cff00', '#00ffff', '#0094ff', '#0026ff', '#b200ff', '#ff006e'];
 
 const TurtleMap = (props) => {
-    const { canvasSize, turtles, selectedTurtle, world, action, ...rest } = props;
+    const { canvasSize, turtles, selectedTurtle, world, areas, action, ...rest } = props;
     const canvasRef = useRef(undefined);
     const [mousePosition, setMousePosition] = useState(undefined);
     const [isCreatingArea, setIsCreatingArea] = useState(false);
@@ -80,7 +80,7 @@ const TurtleMap = (props) => {
                 }
 
                 // Draw currently selected block
-                if (turtle.isOnline && mousePosition !== undefined) {
+                if (!isCreatingArea && turtle.isOnline && mousePosition !== undefined) {
                     ctx.beginPath();
                     ctx.fillStyle = 'yellow';
                     ctx.arc(
@@ -122,6 +122,27 @@ const TurtleMap = (props) => {
                     for (let i = 0; i < keys.length; i++) {
                         ctx.fillRect(createdArea[keys[i]].x, createdArea[keys[i]].y, spriteSize, spriteSize);
                     }
+                }
+
+                // Draw areas
+                const areaKeys = Object.keys(areas);
+                for (let key of areaKeys) {
+                    let smallestX = Number.POSITIVE_INFINITY;
+                    let smallestY = Number.POSITIVE_INFINITY;
+                    ctx.fillStyle = areas[key].color;
+                    for (let position of areas[key].area) {
+                        const posX = (position.x - turtle.location.x) * spriteSize + centerX - spriteRadius;
+                        const posY = (position.z - turtle.location.z) * spriteSize + centerY - spriteRadius;
+                        smallestX = Math.min(smallestX, posX);
+                        smallestY = Math.min(smallestY, posY);
+                        ctx.fillRect(posX, posY, spriteSize, spriteSize);
+                    }
+
+                    ctx.textAlign = 'start';
+                    ctx.font = '12px Ariel';
+                    ctx.lineWidth = 4;
+                    ctx.strokeText(areas[key].id, smallestX, smallestY - spriteRadius);
+                    ctx.fillText(areas[key].id, smallestX, smallestY - spriteRadius);
                 }
 
                 ctx.globalAlpha = 1;
