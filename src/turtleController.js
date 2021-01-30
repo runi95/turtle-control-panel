@@ -562,9 +562,8 @@ module.exports = class TurtleController extends (
     async *ai() {
         while (true) {
             if (
-                // this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
-                this.turtle.stepsSinceLastRecharge >=
-                this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
+                this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
+                this.turtle.stepsSinceLastRecharge >= this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
             ) {
                 this.turtle.state = { id: 1, name: 'refueling', dropAllItems: true };
                 this.turtlesDB.addTurtle(this.turtle);
