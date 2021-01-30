@@ -362,6 +362,7 @@ const TurtleMap = (props) => {
 
                             setIsMouseDown(false);
                         }}
+                        onMouseLeave={() => setMousePosition(undefined)}
                     />
                 </Col>
             </Row>
