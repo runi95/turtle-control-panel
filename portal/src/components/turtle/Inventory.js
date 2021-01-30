@@ -111,7 +111,6 @@ const ItemImage = styled.span`
     background-repeat: no-repeat;
 `;
 
-// width = 4 * ItemSlot:width + 2 * InventoryGrid:padding + 5 * ItemSlot:padding
 const InventoryGrid = styled.div`
     width: 276px;
     display: inline-grid;
