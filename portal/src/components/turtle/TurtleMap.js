@@ -197,6 +197,7 @@ const TurtleMap = (props) => {
     const handleFormSubmit = (e) => {
         e.preventDefault();
 
+        setIsFormValidated(true);
         const form = e.currentTarget;
         if (form.checkValidity() === true) {
             const turtle = turtles && turtles[selectedTurtle];
@@ -236,8 +237,6 @@ const TurtleMap = (props) => {
         } else {
             e.stopPropagation();
         }
-
-        setIsFormValidated(true);
     };
 
     return (
