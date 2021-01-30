@@ -37,7 +37,7 @@ module.exports = class TurtleController extends (
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
         const { x, y, z } = this.turtle.location;
         this.turtle.location = { x: x + xChange, y, z: z + zChange };
-        this.emit('location', this.turtle.id, this.turtle.location);
+        this.emit('location', this.turtle.id, this.turtle.location, this.turtle.fuelLevel);
         this.turtlesDB.addTurtle(this.turtle);
         this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
         this.emit('wdelete', this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
