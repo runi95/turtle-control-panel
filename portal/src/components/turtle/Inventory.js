@@ -1,9 +1,18 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
-import { OverlayTrigger, Tooltip, Col, Row, Button } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip, Col, Row, Button, Modal } from 'react-bootstrap';
+import FarmModal from './FarmModal';
 import SpriteTable from '../../SpriteTable.json';
 
 class Inventory extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            isModalShown: false,
+        };
+    }
+
     render() {
         const { turtle } = this.props;
         if (turtle === undefined) {
@@ -13,6 +22,14 @@ class Inventory extends Component {
         const { inventory, selectedSlot } = turtle;
         return [
             <Col key="inventory-grid" md="auto">
+                <Modal show={this.state.isModalShown} onHide={() => this.setState({ isModalShown: false })}>
+                    <FarmModal
+                        turtle={turtle}
+                        action={this.props.action}
+                        areas={Object.keys(this.props.areas || {}).map((key) => this.props.areas[key].id)}
+                        hideModal={() => this.setState({ isModalShown: false })}
+                    />
+                </Modal>
                 <InventoryGrid>
                     {Array.from(Array(16), (_, i) => i).map((i) => {
                         const itemIndex = i + 1;
@@ -63,6 +80,16 @@ class Inventory extends Component {
                 <Row>
                     <Button variant="outline-info" size="sm" disabled={!turtle.isOnline}>
                         Mine
+                    </Button>
+                </Row>
+                <Row style={{ marginTop: 5 }}>
+                    <Button
+                        onClick={() => this.setState({ isModalShown: true })}
+                        variant="outline-info"
+                        size="sm"
+                        disabled={!turtle.isOnline}
+                    >
+                        Farm
                     </Button>
                 </Row>
                 <Row style={{ marginTop: 5 }}>

@@ -17,11 +17,12 @@ const rechargeStation = { x: 455, y: 87, z: -597 };
 module.exports = class TurtleController extends (
     EventEmitter
 ) {
-    constructor(turtlesDB, worldDB, wsTurtle, turtle) {
+    constructor(turtlesDB, worldDB, areasDB, wsTurtle, turtle) {
         super();
 
         this.turtlesDB = turtlesDB;
         this.worldDB = worldDB;
+        this.areasDB = areasDB;
         this.wsTurtle = wsTurtle;
         this.turtle = turtle;
     }
@@ -382,6 +383,20 @@ module.exports = class TurtleController extends (
         await this.select(currentlySelectedSlot);
     }
 
+    async selectItemOfType(name) {
+        for (let i = 1; i < 17; i++) {
+            const itemDetail = await this.getItemDetail(i);
+            if (itemDetail.length !== undefined) {
+                if (itemDetail[0].name === name) {
+                    await this.select(i);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     async checkPeripheral() {
         const list = (
             await this.wsTurtle.execRaw(
@@ -489,6 +504,61 @@ module.exports = class TurtleController extends (
         this.turtle.stepsSinceLastRecharge = 0;
     }
 
+    async farm() {
+        const { x, y, z } = this.turtle.location;
+        if ((await this.getItemDetail(16)).length !== undefined) {
+            const currentDirection = this.turtle.direction;
+            await this.moveTo(rechargeStation.x, rechargeStation.y, rechargeStation.z);
+            await this.dropAllItems();
+            await this.moveTo(x, y, z);
+            await this.turnToDirection(currentDirection);
+        }
+
+        const { areaId, currentAreaFarmIndex } = this.turtle.state;
+        const farmArea = this.areasDB.getArea(areaId);
+
+        await this.moveTo(
+            farmArea.area[currentAreaFarmIndex].x,
+            farmArea.area[currentAreaFarmIndex].y,
+            farmArea.area[currentAreaFarmIndex].z,
+        );
+        const block = await this.inspectDown();
+
+        // Sow if possible
+        if (block === undefined) {
+            await this.digDown();
+
+            const isWheatSeedsSelected = await this.selectItemOfType('minecraft:wheat_seeds');
+            if (isWheatSeedsSelected) {
+                await this.placeDown();
+            }
+
+            this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
+            this.turtlesDB.addTurtle(this.turtle);
+        } else {
+            switch (block.name) {
+                case 'minecraft:wheat':
+                    if (block.state.age === 7) {
+                        await this.digDown();
+                        await this.suckDown();
+                        await this.suckDown();
+                        const isWheatSeedsSelected = await this.selectItemOfType('minecraft:wheat_seeds');
+                        if (isWheatSeedsSelected) {
+                            await this.placeDown();
+                        }
+
+                        this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
+                        this.turtlesDB.addTurtle(this.turtle);
+                    }
+                    break;
+                default:
+                    this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
+                    this.turtlesDB.addTurtle(this.turtle);
+                    break;
+            }
+        }
+    }
+
     async *ai() {
         while (true) {
             if (
@@ -510,6 +580,8 @@ module.exports = class TurtleController extends (
                     break;
                 case 3:
                     await this.moveTo(this.turtle.state.x, this.turtle.state.y, this.turtle.state.z);
+                case 4:
+                    await this.farm();
             }
 
             yield;

@@ -40,7 +40,7 @@ class Turtle extends Component {
                 </Row>
                 <hr />
                 <Row>
-                    <Inventory turtle={turtle} action={this.props.action}></Inventory>
+                    <Inventory turtle={turtle} action={this.props.action} areas={this.props.areas}></Inventory>
                     <TurtleMap
                         style={{ border: '1px solid #fff', borderRadius: canvasRadius }}
                         canvasSize={canvasSize}

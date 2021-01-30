@@ -67,7 +67,7 @@ wss.on('connection', (ws) => {
         turtlesDB.addTurtle(turtle);
         updateEmitter.emit('tconnect', turtle);
         websocketTurtle.off('handshake', handshake);
-        const turtleController = new TurtleController(turtlesDB, worldDB, websocketTurtle, turtle);
+        const turtleController = new TurtleController(turtlesDB, worldDB, areasDB, websocketTurtle, turtle);
         turtleController.on('update', (turtle) => {
             updateEmitter.emit('tconnect', turtle);
         });
@@ -129,6 +129,10 @@ wssWebsite.on('connection', (ws) => {
                             turtlesDB.updateState(turtle.id, { id: 3, name: 'moving', x: obj.data.x, y: obj.data.y, z: obj.data.z });
                         }
                         break;
+                    case 'farm':
+                        if (turtle !== undefined) {
+                            turtlesDB.updateState(turtle.id, { id: 4, name: 'farming', areaId: obj.data.areaId, currentAreaFarmIndex: 0 });
+                        }
                 }
                 break;
             case 'AREA':
