@@ -540,8 +540,13 @@ module.exports = class TurtleController extends (
                 case 'minecraft:wheat':
                     if (block.state.age === 7) {
                         await this.digDown();
-                        await this.suckDown();
-                        await this.suckDown();
+                        let continueToPickUpItems = true;
+                        let itemPickupCounter = 0;
+                        while (continueToPickUpItems && itemPickupCounter < 16) {
+                            const [didGatherItems] = await this.suckDown();
+                            continueToPickUpItems = didGatherItems;
+                            itemPickupCounter++;
+                        }
                         const isWheatSeedsSelected = await this.selectItemOfType('minecraft:wheat_seeds');
                         if (isWheatSeedsSelected) {
                             await this.placeDown();
