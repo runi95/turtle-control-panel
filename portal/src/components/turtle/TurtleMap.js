@@ -115,15 +115,6 @@ const TurtleMap = (props) => {
 
                 ctx.globalAlpha = 0.4;
 
-                // Draw creatingArea
-                if (isCreatingArea) {
-                    ctx.fillStyle = selectedColor;
-                    const keys = Object.keys(createdArea);
-                    for (let i = 0; i < keys.length; i++) {
-                        ctx.fillRect(createdArea[keys[i]].x, createdArea[keys[i]].y, spriteSize, spriteSize);
-                    }
-                }
-
                 // Draw areas
                 const areaKeys = Object.keys(areas);
                 for (let key of areaKeys) {
@@ -143,6 +134,15 @@ const TurtleMap = (props) => {
                     ctx.lineWidth = 4;
                     ctx.strokeText(areas[key].id, smallestX, smallestY - spriteRadius);
                     ctx.fillText(areas[key].id, smallestX, smallestY - spriteRadius);
+                }
+
+                // Draw creatingArea
+                if (isCreatingArea) {
+                    ctx.fillStyle = selectedColor;
+                    const keys = Object.keys(createdArea);
+                    for (let i = 0; i < keys.length; i++) {
+                        ctx.fillRect(createdArea[keys[i]].x, createdArea[keys[i]].y, spriteSize, spriteSize);
+                    }
                 }
 
                 ctx.globalAlpha = 1;
