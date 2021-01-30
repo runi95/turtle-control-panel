@@ -15,7 +15,7 @@ const TurtleMap = (props) => {
     const [isCreatingArea, setIsCreatingArea] = useState(false);
     const [isClearingCreateArea, setIsClearingCreateArea] = useState(false);
     const [createdArea, setCreatedArea] = useState({});
-    const [isMouseDown, setisMouseDown] = useState(false);
+    const [isMouseDown, setIsMouseDown] = useState(false);
     const [isModalShown, setIsModalShown] = useState(false);
     const [areaName, setAreaName] = useState('');
     const [isFormValidated, setIsFormValidated] = useState(false);
@@ -306,7 +306,7 @@ const TurtleMap = (props) => {
                                 setIsClearingCreateArea(false);
                             }
 
-                            setisMouseDown(true);
+                            setIsMouseDown(true);
                         }}
                         onMouseMove={(e) => {
                             const mouseX = e.nativeEvent.offsetX;
@@ -360,7 +360,7 @@ const TurtleMap = (props) => {
                                 });
                             }
 
-                            setisMouseDown(false);
+                            setIsMouseDown(false);
                         }}
                     />
                 </Col>
