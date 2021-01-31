@@ -20,6 +20,7 @@ const TurtleMap = (props) => {
     const [areaName, setAreaName] = useState('');
     const [isFormValidated, setIsFormValidated] = useState(false);
     const [selectedColor, setSelectedColor] = useState(colors[0]);
+    const [yLevel, setYLevel] = useState(undefined);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -212,7 +213,7 @@ const TurtleMap = (props) => {
                         .map((key) => {
                             const tempX = (createdArea[key].x + spriteRadius - canvasSize * 0.5) / spriteSize + x;
                             const tempZ = (createdArea[key].y + spriteRadius - canvasSize * 0.5) / spriteSize + z;
-                            return { x: tempX, y: y, z: tempZ };
+                            return { x: tempX, y: yLevel || y, z: tempZ };
                         })
                         .sort((a, b) => {
                             if (a.x < b.x) {
@@ -257,6 +258,17 @@ const TurtleMap = (props) => {
                                 onChange={(e) => setAreaName(e.target.value)}
                             ></Form.Control>
                             <Form.Control.Feedback type="invalid">Please enter a non-empty name</Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Y level</Form.Label>
+                            <Form.Control
+                                type="text"
+                                placeholder={(turtles && turtles[selectedTurtle] && turtles[selectedTurtle].location.y) || ''}
+                                pattern="[0-9]*"
+                                value={yLevel}
+                                onChange={(e) => setYLevel(e.target.value)}
+                            ></Form.Control>
+                            <Form.Control.Feedback type="invalid">Please enter a valid number</Form.Control.Feedback>
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>Color</Form.Label>
