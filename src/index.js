@@ -133,6 +133,10 @@ wssWebsite.on('connection', (ws) => {
                         if (turtle !== undefined) {
                             turtlesDB.updateState(turtle.id, { id: 4, name: 'farming', areaId: obj.data.areaId, currentAreaFarmIndex: 0 });
                         }
+                    case 'stop':
+                        if (turtle !== undefined) {
+                            turtlesDB.updateState(turtle.id, undefined);
+                        }
                 }
                 break;
             case 'AREA':
