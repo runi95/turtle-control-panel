@@ -65,20 +65,11 @@ wss.on('connection', (ws) => {
         );
 
         turtlesDB.addTurtle(turtle);
-        updateEmitter.emit('tconnect', turtle);
+        updateEmitter.emit('update', 'tconnect', { turtle });
         websocketTurtle.off('handshake', handshake);
         const turtleController = new TurtleController(turtlesDB, worldDB, areasDB, websocketTurtle, turtle);
-        turtleController.on('update', (turtle) => {
-            updateEmitter.emit('tconnect', turtle);
-        });
-        turtleController.on('location', (id, location, fuelLevel) => {
-            updateEmitter.emit('tlocation', { id, location, fuelLevel });
-        });
-        turtleController.on('wupdate', (x, y, z, block) => {
-            updateEmitter.emit('wupdate', { x, y, z, block });
-        });
-        turtleController.on('wdelete', (x, y, z) => {
-            updateEmitter.emit('wdelete', { x, y, z });
+        turtleController.on('update', (type, obj) => {
+            updateEmitter.emit('update', type, obj);
         });
 
         turtleAIList.push(turtleController.ai());
@@ -87,7 +78,7 @@ wss.on('connection', (ws) => {
 
     const tDisconnect = (id) => {
         turtlesDB.updateOnlineStatus(id, false);
-        updateEmitter.emit('tdisconnect', id);
+        updateEmitter.emit('tdisconnect', { id });
         websocketTurtle.off('disconnect', tDisconnect);
     };
     websocketTurtle.on('disconnect', tDisconnect);
@@ -149,37 +140,29 @@ wssWebsite.on('connection', (ws) => {
         }
     });
 
-    const tconnect = (turtle) => {
-        ws.send(JSON.stringify({ type: 'TCONNECT', message: { turtle } }));
+    const update = (type, obj) => {
+        switch (type) {
+            case 'tconnect':
+                ws.send(JSON.stringify({ type: 'TCONNECT', message: obj }));
+                break;
+            case 'tdisconnect':
+                ws.send(JSON.stringify({ type: 'TDISCONNECT', message: obj }));
+                break;
+            case 'tlocation':
+                ws.send(JSON.stringify({ type: 'TLOCATION', message: obj }));
+                break;
+            case 'wupdate':
+                ws.send(JSON.stringify({ type: 'WUPDATE', message: obj }));
+                break;
+            case 'wdelete':
+                ws.send(JSON.stringify({ type: 'WDELETE', message: obj }));
+                break;
+        }
     };
-    updateEmitter.on('tconnect', tconnect);
-
-    const tdisconnect = (id) => {
-        ws.send(JSON.stringify({ type: 'TDISCONNECT', message: { id } }));
-    };
-    updateEmitter.on('tdisconnect', tdisconnect);
-
-    const tlocation = (turtle) => {
-        ws.send(JSON.stringify({ type: 'TLOCATION', message: { turtle } }));
-    };
-    updateEmitter.on('tlocation', tlocation);
-
-    const wupdate = (world) => {
-        ws.send(JSON.stringify({ type: 'WUPDATE', message: { world } }));
-    };
-    updateEmitter.on('wupdate', wupdate);
-
-    const wdelete = (world) => {
-        ws.send(JSON.stringify({ type: 'WDELETE', message: { world } }));
-    };
-    updateEmitter.on('wdelete', wdelete);
+    updateEmitter.on('update', update);
 
     ws.on('close', () => {
-        updateEmitter.off('tconnect', tconnect);
-        updateEmitter.off('tdisconnect', tdisconnect);
-        updateEmitter.off('tlocation', tlocation);
-        updateEmitter.off('wupdate', wupdate);
-        updateEmitter.off('wdelete', wdelete);
+        updateEmitter.off('update', update);
     });
 });
 

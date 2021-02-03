@@ -38,10 +38,10 @@ module.exports = class TurtleController extends (
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
         const { x, y, z } = this.turtle.location;
         this.turtle.location = { x: x + xChange, y, z: z + zChange };
-        this.emit('location', this.turtle.id, this.turtle.location, this.turtle.fuelLevel);
+        this.emit('update', 'tlocation', { id: this.turtle.id, location: this.turtle.location, fuelLevel: this.turtle.fuelLevel });
         this.turtlesDB.addTurtle(this.turtle);
         this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('wdelete', this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+        this.emit('update', 'wdelete', { x: this.turtle.location.x, y: this.turtle.location.y, z: this.turtle.location.z });
     }
 
     async back() {
@@ -55,10 +55,10 @@ module.exports = class TurtleController extends (
         const [xChange, zChange] = getLocalCoordinatesForDirection((((this.turtle.direction % 4) + 1) % 4) + 1);
         const { x, y, z } = this.turtle.location;
         this.turtle.location = { x: x + xChange, y, z: z + zChange };
-        this.emit('location', this.turtle.id, this.turtle.location, this.turtle.fuelLevel);
+        this.emit('update', 'tlocation', { id: this.turtle.id, location: this.turtle.location, fuelLevel: this.turtle.fuelLevel });
         this.turtlesDB.addTurtle(this.turtle);
         this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('wdelete', this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+        this.emit('update', 'wdelete', { x: this.turtle.location.x, y: this.turtle.location.y, z: this.turtle.location.z });
     }
 
     async up() {
@@ -71,10 +71,10 @@ module.exports = class TurtleController extends (
         this.turtle.stepsSinceLastRecharge++;
         const { x, y, z } = this.turtle.location;
         this.turtle.location = { x, y: y + 1, z };
-        this.emit('location', this.turtle.id, this.turtle.location, this.turtle.fuelLevel);
+        this.emit('update', 'tlocation', { id: this.turtle.id, location: this.turtle.location, fuelLevel: this.turtle.fuelLevel });
         this.turtlesDB.addTurtle(this.turtle);
         this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('wdelete', this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+        this.emit('update', 'wdelete', { x: this.turtle.location.x, y: this.turtle.location.y, z: this.turtle.location.z });
     }
 
     async down() {
@@ -86,10 +86,10 @@ module.exports = class TurtleController extends (
         this.turtle.fuelLevel--;
         const { x, y, z } = this.turtle.location;
         this.turtle.location = { x, y: y - 1, z };
-        this.emit('location', this.turtle.id, this.turtle.location, this.turtle.fuelLevel);
+        this.emit('update', 'tlocation', { id: this.turtle.id, location: this.turtle.location, fuelLevel: this.turtle.fuelLevel });
         this.turtlesDB.addTurtle(this.turtle);
         this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('wdelete', this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+        this.emit('update', 'wdelete', { x: this.turtle.location.x, y: this.turtle.location.y, z: this.turtle.location.z });
     }
 
     async turnLeft() {
@@ -303,12 +303,12 @@ module.exports = class TurtleController extends (
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
         if (!didInspect) {
             this.worldDB.deleteBlock(x + xChange, y, z + zChange);
-            this.emit('wdelete', x + xChange, y, z + zChange);
+            this.emit('update', 'wdelete', { x: x + xChange, y, z: z + zChange });
             return undefined;
         }
 
         this.worldDB.updateBlock(x + xChange, y, z + zChange, block);
-        this.emit('wupdate', x + xChange, y, z + zChange, block);
+        this.emit('update', 'wupdate', { x: x + xChange, y, z: z + zChange, block });
         return block;
     }
 
@@ -320,12 +320,12 @@ module.exports = class TurtleController extends (
         const { x, y, z } = this.turtle.location;
         if (!didInspect) {
             this.worldDB.deleteBlock(x, y + 1, z);
-            this.emit('wdelete', x, y + 1, z);
+            this.emit('update', 'wdelete', { x, y: y + 1, z });
             return undefined;
         }
 
         this.worldDB.updateBlock(x, y + 1, z, block);
-        this.emit('wupdate', x, y + 1, z, block);
+        this.emit('update', 'wupdate', { x, y: y + 1, z, block });
         return block;
     }
 
@@ -337,12 +337,12 @@ module.exports = class TurtleController extends (
         const { x, y, z } = this.turtle.location;
         if (!didInspect) {
             this.worldDB.deleteBlock(x, y - 1, z);
-            this.emit('wdelete', x, y - 1, z);
+            this.emit('update', 'wdelete', { x, y: y - 1, z });
             return undefined;
         }
 
         this.worldDB.updateBlock(x, y - 1, z, block);
-        this.emit('wupdate', x, y - 1, z, block);
+        this.emit('update', 'wupdate', { x, y: y - 1, z, block });
         return block;
     }
 
