@@ -46,6 +46,7 @@ function handshake(uuid)
             end
         end
     end
+    turtle.select(1)
     local fuelLevel = turtle.getFuelLevel()
     local fuelLimit = turtle.getFuelLimit()
     local fuel = { level = fuelLevel, limit = fuelLimit }
