@@ -22,7 +22,7 @@ class FarmModal extends Component {
         if (form.checkValidity() === true) {
             this.props.action({ type: 'ACTION', action: 'farm', data: { id: this.props.turtle.id, areaId: selectedArea } });
             selectedArea = '';
-            this.props.hideModal(false);
+            this.props.hideModal();
         } else {
             e.stopPropagation();
         }
