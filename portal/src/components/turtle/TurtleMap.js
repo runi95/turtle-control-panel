@@ -278,7 +278,6 @@ const TurtleMap = (props) => {
                                     min="1"
                                     max="255"
                                     placeholder={(turtles && turtles[selectedTurtle] && turtles[selectedTurtle].location.y) || ''}
-                                    pattern="[0-9]*"
                                     value={yLevel}
                                     onChange={(e) => setYLevel(e.target.value)}
                                 ></Form.Control>
@@ -290,7 +289,6 @@ const TurtleMap = (props) => {
                                     min="1"
                                     max="255"
                                     placeholder={(turtles && turtles[selectedTurtle] && turtles[selectedTurtle].location.y) || ''}
-                                    pattern="[0-9]*"
                                     value={upperYLevel}
                                     onChange={(e) => setUpperYLevel(e.target.value)}
                                 ></Form.Control>
