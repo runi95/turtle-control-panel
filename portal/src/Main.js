@@ -73,19 +73,19 @@ class Main extends Component {
                     this.tConnect(obj.message.turtle);
                     break;
                 case 'TLOCATION':
-                    this.tLocation(obj.message.turtle);
+                    this.tLocation(obj.message);
                     break;
                 case 'TDISCONNECT':
                     this.tDisconnect(obj.message.id);
                     break;
                 case 'WINIT':
-                    this.wInit(obj.message.world);
+                    this.wInit(obj.message);
                     break;
                 case 'WUPDATE':
-                    this.wUpdate(obj.message.world);
+                    this.wUpdate(obj.message);
                     break;
                 case 'WDELETE':
-                    this.wDelete(obj.message.world);
+                    this.wDelete(obj.message);
                     break;
                 default:
                     console.error('Could not parse websocket message', obj);
