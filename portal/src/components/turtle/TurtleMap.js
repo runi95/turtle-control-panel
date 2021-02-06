@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Row, Col, Button, Modal, Form } from 'react-bootstrap';
+import { Row, Col, Button, Modal, Form, InputGroup } from 'react-bootstrap';
 import styled from 'styled-components';
 import './TurtleMap.css';
 
@@ -21,6 +21,7 @@ const TurtleMap = (props) => {
     const [isFormValidated, setIsFormValidated] = useState(false);
     const [selectedColor, setSelectedColor] = useState(colors[0]);
     const [yLevel, setYLevel] = useState(undefined);
+    const [upperYLevel, setUpperYLevel] = useState(undefined);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -203,17 +204,16 @@ const TurtleMap = (props) => {
         if (form.checkValidity() === true) {
             const turtle = turtles && turtles[selectedTurtle];
             const { x, y, z } = turtle.location;
-            action({
-                type: 'AREA',
-                action: 'create',
-                data: {
-                    id: areaName,
-                    color: selectedColor,
-                    area: Object.keys(createdArea)
+            const minYLevel = Math.min(yLevel || y, upperYLevel || y);
+            const maxYLevel = Math.max(yLevel || y, upperYLevel || y);
+            const area = [];
+            for (let i = minYLevel; i <= maxYLevel; i++) {
+                area.push(
+                    Object.keys(createdArea)
                         .map((key) => {
                             const tempX = (createdArea[key].x + spriteRadius - canvasSize * 0.5) / spriteSize + x;
                             const tempZ = (createdArea[key].y + spriteRadius - canvasSize * 0.5) / spriteSize + z;
-                            return { x: tempX, y: yLevel || y, z: tempZ };
+                            return { x: tempX, y: i, z: tempZ };
                         })
                         .sort((a, b) => {
                             if (a.x < b.x) {
@@ -228,6 +228,15 @@ const TurtleMap = (props) => {
 
                             return 0;
                         }),
+                );
+            }
+            action({
+                type: 'AREA',
+                action: 'create',
+                data: {
+                    id: areaName,
+                    color: selectedColor,
+                    area,
                 },
             });
             setIsCreatingArea(false);
@@ -235,6 +244,8 @@ const TurtleMap = (props) => {
             setIsModalShown(false);
             setAreaName('');
             setIsFormValidated(false);
+            setYLevel(undefined);
+            setUpperYLevel(undefined);
         } else {
             e.stopPropagation();
         }
@@ -261,13 +272,29 @@ const TurtleMap = (props) => {
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>Y level</Form.Label>
-                            <Form.Control
-                                type="text"
-                                placeholder={(turtles && turtles[selectedTurtle] && turtles[selectedTurtle].location.y) || ''}
-                                pattern="[0-9]*"
-                                value={yLevel}
-                                onChange={(e) => setYLevel(e.target.value)}
-                            ></Form.Control>
+                            <InputGroup>
+                                <Form.Control
+                                    type="number"
+                                    min="1"
+                                    max="255"
+                                    placeholder={(turtles && turtles[selectedTurtle] && turtles[selectedTurtle].location.y) || ''}
+                                    pattern="[0-9]*"
+                                    value={yLevel}
+                                    onChange={(e) => setYLevel(e.target.value)}
+                                ></Form.Control>
+                                <div className="input-group-prepend input-group-append">
+                                    <InputGroup.Text>-</InputGroup.Text>
+                                </div>
+                                <Form.Control
+                                    type="number"
+                                    min="1"
+                                    max="255"
+                                    placeholder={(turtles && turtles[selectedTurtle] && turtles[selectedTurtle].location.y) || ''}
+                                    pattern="[0-9]*"
+                                    value={upperYLevel}
+                                    onChange={(e) => setUpperYLevel(e.target.value)}
+                                ></Form.Control>
+                            </InputGroup>
                             <Form.Control.Feedback type="invalid">Please enter a valid number</Form.Control.Feedback>
                         </Form.Group>
                         <Form.Group>
