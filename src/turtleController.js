@@ -421,67 +421,91 @@ module.exports = class TurtleController extends (
         await new Promise((resolve) => setTimeout(() => resolve(), ms));
     }
 
+    async mineToYLevel(mineTarget) {
+        if (Number.isNaN(mineTarget)) {
+            throw new Error('Invalid mine target');
+        }
+
+        const diffInYLevels = mineTarget - this.turtle.location.y;
+        if (diffInYLevels !== 0) {
+            if (diffInYLevels < 0) {
+                await this.digDown();
+                await this.suckDown();
+                await this.down();
+            } else if (diffInYLevels > 0) {
+                await this.digUp();
+                await this.suckUp();
+                await this.up();
+            }
+        } else {
+            this.turtle.state = undefined;
+            this.turtlesDB.addTurtle(this.turtle);
+        }
+    }
+
+    async mineInDirection(mineTarget) {
+        switch (mineTarget) {
+            case 'Up':
+                await this.digUp();
+                await this.suckUp();
+                break;
+            case 'Down':
+                await this.digDown();
+                await this.suckDown();
+                break;
+            case 'North':
+            case 'East':
+            case 'South':
+            case 'West':
+                await this.turnToDirection({ North: 2, East: 3, South: 4, West: 1 }[mineTarget]);
+                await this.dig();
+                await this.suck();
+                break;
+            default:
+                throw new Error('Invalid mine target');
+        }
+
+        this.turtle.state = undefined;
+        this.turtlesDB.addTurtle(this.turtle);
+    }
+
     async mine() {
+        const { mineType, mineTarget } = this.turtle.state;
+        if (mineType === 'direction') {
+            return await this.mineInDirection(mineTarget);
+        }
+
         const { x, y, z } = this.turtle.location;
         if ((await this.getItemDetail(16)).length !== undefined) {
             const currentDirection = this.turtle.direction;
-            await this.moveTo(mineshaftEntrance.x, mineshaftEntrance.y, mineshaftEntrance.z);
             await this.moveTo(rechargeStation.x, rechargeStation.y, rechargeStation.z);
             await this.dropAllItems();
-            await this.moveTo(mineshaftEntrance.x, mineshaftEntrance.y, mineshaftEntrance.z);
             await this.moveTo(x, y, z);
             await this.turnToDirection(currentDirection);
         }
 
-        if (y > 13) {
-            if (x === mineshaftEntrance.x && z === mineshaftEntrance.z) {
-                await this.digDown();
-                await this.down();
+        if (mineType === 'ylevel') {
+            return await this.mineToYLevel(Number(mineTarget));
+        } else if (mineType === 'area') {
+            const currentIndex = this.turtle.state.index || 0;
+            const mineArea = this.areasDB.getArea(mineTarget);
+            if (mineArea === undefined) {
+                throw new Error('Given mining area does not exist');
+            }
+
+            const mineTargetArea = mineArea.area[currentIndex];
+            await this.moveToAndMineObstacles(mineTargetArea.x, mineTargetArea.y, mineTargetArea.z, mineArea.area);
+
+            const newIndex = currentIndex + 1;
+            if (newIndex < mineArea.area.length) {
+                this.turtle.state.index = newIndex;
+                this.turtlesDB.addTurtle(this.turtle);
             } else {
-                await this.moveTo(mineshaftEntrance.x, mineshaftEntrance.y, mineshaftEntrance.z);
+                this.turtle.state = undefined;
+                this.turtlesDB.addTurtle(this.turtle);
             }
         } else {
-            const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
-            if (x + xChange < 495 - this.turtle.state.row && x + xChange > 448 && z + zChange < -561 && z + zChange > -608) {
-                await this.digDown();
-                await this.dig();
-                await this.digUp();
-
-                try {
-                    await this.forward();
-                } catch (err) {
-                    let digAttempts = 0;
-                    while (digAttempts < 10) {
-                        if (await this.detect()) {
-                            await this.dig();
-                        } else {
-                            await this.forward();
-                            break;
-                        }
-                        digAttempts++;
-                    }
-                }
-            } else {
-                if (x + xChange >= 494 - this.turtle.state.row) {
-                    if (z + zChange <= -607) {
-                        await this.turnLeft();
-                        await this.digDown();
-                        await this.dig();
-                        await this.digUp();
-                        await this.forward();
-                        await this.turnLeft();
-                        this.turtle.state.row++;
-                    } else if (z + zChange >= -562) {
-                        await this.turnRight();
-                        await this.digDown();
-                        await this.dig();
-                        await this.digUp();
-                        await this.forward();
-                        await this.turnRight();
-                        this.turtle.state.row++;
-                    }
-                }
-            }
+            throw new Error('Invalid mine type');
         }
     }
 
@@ -613,7 +637,31 @@ module.exports = class TurtleController extends (
         }
     }
 
-    async moveTo(targetX, targetY, targetZ) {
+    async digSuckItemAndMoveForward() {
+        let hasNotMovedForward = true;
+        let attempts = 0;
+        while (hasNotMovedForward) {
+            await this.dig();
+            await this.suck();
+            try {
+                await this.forward();
+                hasNotMovedForward = false;
+            } catch (err) {
+                if (attempts > 5) {
+                    throw err;
+                }
+            }
+
+            attempts++;
+        }
+    }
+
+    async moveToAndMineObstacles(targetX, targetY, targetZ, minableBlocksWhitelist) {
+        const mineableObstaclesMap = minableBlocksWhitelist.reduce((acc, curr) => {
+            acc[`${curr.x},${curr.y},${curr.z}`] = true;
+            return acc;
+        }, {});
+
         let px = this.turtle.location.x;
         let py = this.turtle.location.y;
         let pz = this.turtle.location.z;
@@ -634,18 +682,34 @@ module.exports = class TurtleController extends (
                             await this.up();
                             return true;
                         } catch (err) {
-                            obstaclesHash[`${x},${y + 1},${z}`] = true;
-                            obstacles.push(new Coordinates(x, y + 1, z));
-                            return false;
+                            const upLocation = `${x},${y + 1},${z}`;
+                            if (mineableObstaclesMap[upLocation]) {
+                                await this.digUp();
+                                await this.suckUp();
+                                await this.up();
+                                return true;
+                            } else {
+                                obstaclesHash[upLocation] = true;
+                                obstacles.push(new Coordinates(x, y + 1, z));
+                                return false;
+                            }
                         }
                     } else if (py - y < 0) {
                         try {
                             await this.down();
                             return true;
                         } catch (err) {
-                            obstaclesHash[`${x},${y - 1},${z}`] = true;
-                            obstacles.push(new Coordinates(x, y - 1, z));
-                            return false;
+                            const downLocation = `${x},${y - 1},${z}`;
+                            if (mineableObstaclesMap[downLocation]) {
+                                await this.digDown();
+                                await this.suckDown();
+                                await this.down();
+                                return true;
+                            } else {
+                                obstaclesHash[downLocation] = true;
+                                obstacles.push(new Coordinates(x, y - 1, z));
+                                return false;
+                            }
                         }
                     } else {
                         const heading = { x: px - x, y: py - y, z: pz - z };
@@ -656,46 +720,72 @@ module.exports = class TurtleController extends (
                             return true;
                         } catch (err) {
                             const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
-                            obstaclesHash[`${x + xChange},${y},${z + zChange}`] = true;
-                            obstacles.push(new Coordinates(x + xChange, y, z + zChange));
-                            return false;
+                            const forwardLocation = `${x + xChange},${y},${z + zChange}`;
+                            if (mineableObstaclesMap[forwardLocation]) {
+                                await this.digSuckItemAndMoveForward();
+                                return true;
+                            } else {
+                                obstaclesHash[forwardLocation] = true;
+                                obstacles.push(new Coordinates(x + xChange, y, z + zChange));
+                                return false;
+                            }
                         }
                     }
                 },
                 getInitialObstacles: async () => {
                     const allBlocks = this.worldDB.getAllBlocks();
-                    return Object.keys(allBlocks).map((key) => {
-                        const keySplit = key.split(',');
-                        return {
-                            x: keySplit[0],
-                            y: keySplit[1],
-                            z: keySplit[2],
-                        };
-                    });
+                    return Object.keys(allBlocks)
+                        .filter((key) => !mineableObstaclesMap[key])
+                        .map((key) => {
+                            const keySplit = key.split(',');
+                            return {
+                                x: keySplit[0],
+                                y: keySplit[1],
+                                z: keySplit[2],
+                            };
+                        });
                 },
                 getObstaclesInVision: async () => {
                     const { x, y, z } = this.turtle.location;
                     const coordinatesInFront = getLocalCoordinatesForDirection(this.turtle.direction);
                     const inFrontX = x + coordinatesInFront[0];
                     const inFrontZ = z + coordinatesInFront[1];
-                    if (obstaclesHash[`${inFrontX},${y},${inFrontZ}`] === undefined) {
+                    const frontLocation = `${inFrontX},${y},${inFrontZ}`;
+                    if (obstaclesHash[frontLocation] === undefined) {
                         if (await this.inspect()) {
-                            obstaclesHash[`${inFrontX},${y},${inFrontZ}`] = true;
-                            obstacles.push(new Coordinates(inFrontX, y, inFrontZ));
+                            if (mineableObstaclesMap[frontLocation]) {
+                                await this.dig();
+                                await this.suck();
+                            } else {
+                                obstaclesHash[frontLocation] = true;
+                                obstacles.push(new Coordinates(inFrontX, y, inFrontZ));
+                            }
                         }
                     }
 
-                    if (obstaclesHash[`${x},${y + 1},${z}`] === undefined) {
+                    const upLocation = `${x},${y + 1},${z}`;
+                    if (obstaclesHash[upLocation] === undefined) {
                         if (await this.inspectUp()) {
-                            obstaclesHash[`${x},${y + 1},${z}`] = true;
-                            obstacles.push(new Coordinates(x, y + 1, z));
+                            if (mineableObstaclesMap[upLocation]) {
+                                await this.digUp();
+                                await this.suckUp();
+                            } else {
+                                obstaclesHash[upLocation] = true;
+                                obstacles.push(new Coordinates(x, y + 1, z));
+                            }
                         }
                     }
 
-                    if (obstaclesHash[`${x},${y - 1},${z}`] === undefined) {
+                    const downLocation = `${x},${y - 1},${z}`;
+                    if (obstaclesHash[downLocation] === undefined) {
                         if (await this.inspectDown()) {
-                            obstaclesHash[`${x},${y - 1},${z}`] = true;
-                            obstacles.push(new Coordinates(x, y - 1, z));
+                            if (mineableObstaclesMap[downLocation]) {
+                                await this.digDown();
+                                await this.suckDown();
+                            } else {
+                                obstaclesHash[downLocation] = true;
+                                obstacles.push(new Coordinates(x, y - 1, z));
+                            }
                         }
                     }
 
@@ -715,5 +805,9 @@ module.exports = class TurtleController extends (
         if (this.turtle.state && this.turtle.state.id === 3) {
             this.turtlesDB.updateState(this.turtle.id, undefined);
         }
+    }
+
+    async moveTo(targetX, targetY, targetZ) {
+        return await this.moveToAndMineObstacles(targetX, targetY, targetZ, []);
     }
 };

@@ -115,6 +115,16 @@ wssWebsite.on('connection', (ws) => {
                             turtlesDB.updateState(turtle.id, { id: 1, name: 'refueling', dropAllItems: true });
                         }
                         break;
+                    case 'mine':
+                        if (turtle !== undefined) {
+                            turtlesDB.updateState(turtle.id, {
+                                id: 2,
+                                name: 'mining',
+                                mineType: obj.data.mineType,
+                                mineTarget: obj.data.mineTarget,
+                            });
+                        }
+                        break;
                     case 'move':
                         if (turtle !== undefined) {
                             turtlesDB.updateState(turtle.id, { id: 3, name: 'moving', x: obj.data.x, y: obj.data.y, z: obj.data.z });

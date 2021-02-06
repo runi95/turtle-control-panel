@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import styled from 'styled-components';
 import { OverlayTrigger, Tooltip, Col, Row, Button, Modal } from 'react-bootstrap';
 import FarmModal from './FarmModal';
+import MineModal from './MineModal';
 import SpriteTable from '../../SpriteTable.json';
 
 class Inventory extends Component {
@@ -10,7 +11,33 @@ class Inventory extends Component {
 
         this.state = {
             isModalShown: false,
+            modalState: undefined,
         };
+    }
+
+    renderModal(turtle) {
+        switch (this.state.modalState) {
+            case 'farm':
+                return (
+                    <FarmModal
+                        turtle={turtle}
+                        action={this.props.action}
+                        areas={Object.keys(this.props.areas || {}).map((key) => this.props.areas[key].id)}
+                        hideModal={() => this.setState({ isModalShown: false })}
+                    />
+                );
+            case 'mine':
+                return (
+                    <MineModal
+                        turtle={turtle}
+                        action={this.props.action}
+                        areas={Object.keys(this.props.areas || {}).map((key) => this.props.areas[key].id)}
+                        hideModal={() => this.setState({ isModalShown: false })}
+                    />
+                );
+            default:
+                return undefined;
+        }
     }
 
     render() {
@@ -23,12 +50,7 @@ class Inventory extends Component {
         return [
             <Col key="inventory-grid" md="auto">
                 <Modal show={this.state.isModalShown} onHide={() => this.setState({ isModalShown: false })}>
-                    <FarmModal
-                        turtle={turtle}
-                        action={this.props.action}
-                        areas={Object.keys(this.props.areas || {}).map((key) => this.props.areas[key].id)}
-                        hideModal={() => this.setState({ isModalShown: false })}
-                    />
+                    {this.renderModal(turtle)}
                 </Modal>
                 <InventoryGrid>
                     {Array.from(Array(16), (_, i) => i).map((i) => {
@@ -78,13 +100,18 @@ class Inventory extends Component {
                     </h5>
                 </Row>
                 <Row>
-                    <Button variant="outline-info" size="sm" disabled={!turtle.isOnline}>
+                    <Button
+                        onClick={() => this.setState({ isModalShown: true, modalState: 'mine' })}
+                        variant="outline-info"
+                        size="sm"
+                        disabled={!turtle.isOnline}
+                    >
                         Mine
                     </Button>
                 </Row>
                 <Row style={{ marginTop: 5 }}>
                     <Button
-                        onClick={() => this.setState({ isModalShown: true })}
+                        onClick={() => this.setState({ isModalShown: true, modalState: 'farm' })}
                         variant="outline-info"
                         size="sm"
                         disabled={!turtle.isOnline}
