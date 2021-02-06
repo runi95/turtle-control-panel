@@ -206,9 +206,9 @@ const TurtleMap = (props) => {
             const { x, y, z } = turtle.location;
             const minYLevel = Math.min(yLevel || y, upperYLevel || y);
             const maxYLevel = Math.max(yLevel || y, upperYLevel || y);
-            const area = [];
+            let area = [];
             for (let i = minYLevel; i <= maxYLevel; i++) {
-                area.push(
+                area = area.concat(
                     Object.keys(createdArea)
                         .map((key) => {
                             const tempX = (createdArea[key].x + spriteRadius - canvasSize * 0.5) / spriteSize + x;
