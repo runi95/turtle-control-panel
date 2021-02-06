@@ -165,7 +165,8 @@ module.exports = class DStarLite {
 
     computeShortestPath() {
         let steps = 0;
-        while (this.U.peek().k.compareTo(this.calculateKey(this.sstart)) < 0 || this.sstart.rhs != this.sstart.g) {
+        let u;
+        while (((u = this.U.peek()) && u.k.compareTo(this.calculateKey(this.sstart)) < 0) || this.sstart.rhs != this.sstart.g) {
             if (steps++ > this.maxSteps) {
                 throw new Error('Maximum number of path steps exceeded');
             }
@@ -191,6 +192,10 @@ module.exports = class DStarLite {
                     this.updateVertex(s);
                 }
             }
+        }
+
+        if (u === null) {
+            throw new Error('Path is unreachable');
         }
     }
 };
