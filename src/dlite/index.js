@@ -167,7 +167,7 @@ module.exports = class DStarLite {
         let steps = 0;
         while (this.U.peek().k.compareTo(this.calculateKey(this.sstart)) < 0 || this.sstart.rhs != this.sstart.g) {
             if (steps++ > this.maxSteps) {
-                throw new Error("Can't find path");
+                throw new Error('Maximum number of path steps exceeded');
             }
 
             const kold = this.U.peek().k;
