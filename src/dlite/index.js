@@ -26,10 +26,7 @@ module.exports = class DStarLite {
         this.initialize(await env.getInitialObstacles());
         try {
             this.computeShortestPath();
-        } catch (err) {
-            console.error(err);
-            return false;
-        }
+        } catch (err) {}
         while (!this.sstart.equals(this.sgoal)) {
             if (this.sstart.g === Number.POSITIVE_INFINITY) {
                 return false;
