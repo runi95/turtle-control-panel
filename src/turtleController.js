@@ -603,8 +603,10 @@ module.exports = class TurtleController extends (
                     break;
                 case 3:
                     await this.moveTo(this.turtle.state.x, this.turtle.state.y, this.turtle.state.z);
+                    break;
                 case 4:
                     await this.farm();
+                    break;
             }
 
             yield;
