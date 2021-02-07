@@ -590,8 +590,27 @@ module.exports = class TurtleController extends (
                             continueToPickUpItems = didGatherItems;
                             itemPickupCounter++;
                         }
-                        const isWheatSeedsSelected = await this.selectItemOfType('minecraft:carrot');
-                        if (isWheatSeedsSelected) {
+                        const isCarrotSelected = await this.selectItemOfType('minecraft:carrot');
+                        if (isCarrotSelected) {
+                            await this.placeDown();
+                        }
+
+                        this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
+                        this.turtlesDB.addTurtle(this.turtle);
+                    }
+                    break;
+                case 'minecraft:potatoes':
+                    if (block.state.age === 7) {
+                        await this.digDown();
+                        let continueToPickUpItems = true;
+                        let itemPickupCounter = 0;
+                        while (continueToPickUpItems && itemPickupCounter < 16) {
+                            const [didGatherItems] = await this.suckDown();
+                            continueToPickUpItems = didGatherItems;
+                            itemPickupCounter++;
+                        }
+                        const isPotatoSelected = await this.selectItemOfType('minecraft:potato');
+                        if (isPotatoSelected) {
                             await this.placeDown();
                         }
 
