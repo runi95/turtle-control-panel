@@ -656,6 +656,25 @@ module.exports = class TurtleController extends (
                         this.turtlesDB.addTurtle(this.turtle);
                     }
                     break;
+                case 'minecraft:sweet_berry_bush':
+                    if (block.state.age === 3) {
+                        await this.digDown();
+                        let continueToPickUpItems = true;
+                        let itemPickupCounter = 0;
+                        while (continueToPickUpItems && itemPickupCounter < 16) {
+                            const [didGatherItems] = await this.suckDown();
+                            continueToPickUpItems = didGatherItems;
+                            itemPickupCounter++;
+                        }
+                        const isPotatoSelected = await this.selectItemOfType('minecraft:sweet_berries');
+                        if (isPotatoSelected) {
+                            await this.placeDown();
+                        }
+
+                        this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
+                        this.turtlesDB.addTurtle(this.turtle);
+                    }
+                    break;
                 default:
                     this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
                     this.turtlesDB.addTurtle(this.turtle);
