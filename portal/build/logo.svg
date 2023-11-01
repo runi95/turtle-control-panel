@@ -1,9 +1,0 @@
-<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
- <g>
-  <title>Layer 1</title>
-  <rect id="frame" height="24" width="20" y="4" x="6" fill="#d3cd5f"/>
-  <rect id="panel" height="8" width="20" y="20" x="6" fill="#e5e57b"/>
-  <rect id="button" height="2" width="4" y="24" x="20" fill="#000000"/>
-  <rect id="monitor" height="16" width="16" y="6" x="8" fill="#000000"/>
- </g>
-</svg>
