@@ -4,7 +4,7 @@ const TurtleWS = require('./entities/turtleWS');
 const { EventEmitter } = require('events');
 const TurtlesDB = require('./db/turtlesDB');
 const WorldDB = require('./db/worldDB');
-const AreasDB = require('./db/AreasDB');
+const AreasDB = require('./db/areasDB');
 const TurtleController = require('./turtleController');
 const Turtle = require('./entities/turtle');
 

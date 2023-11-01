@@ -1,6 +1,6 @@
 const State = require('./State');
 const Pair = require('./Pair');
-const Coordinates = require('./Coordinates');
+const Coordinates = require('./coordinates');
 const PriorityQueue = require('./PriorityQueue');
 
 module.exports = class DStarLite {
