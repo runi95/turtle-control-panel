@@ -108,6 +108,8 @@ wssWebsite.on('connection', (ws) => {
                 );
                 break;
             case 'ACTION':
+                //obj.data.id apears to come out undefined, looking into the cause now as the STOP feature throws this
+                console.log(obj.data)
                 const turtle = turtlesDB.getTurtle(obj.data.id);
                 switch (obj.action) {
                     case 'refuel':
