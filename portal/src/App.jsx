@@ -45,7 +45,7 @@ function App() {
                     setState({
                         ...state,
                         turtles: {
-                            ...this.state.turtles,
+                            ...state.turtles,
                             [obj.message.id]: {
                                 ...state.turtles[obj.message.id],
                                 location: obj.message.location,
