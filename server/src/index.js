@@ -1,7 +1,7 @@
 const ws = require('ws');
 const readline = require('readline');
 const TurtleWS = require('./entities/turtleWS');
-const { EventEmitter } = require('events');
+const {EventEmitter} = require('events');
 const TurtlesDB = require('./db/turtlesDB');
 const WorldDB = require('./db/worldDB');
 const AreasDB = require('./db/areasDB');
@@ -31,7 +31,7 @@ const rl = readline.createInterface({
 });
 
 const turtleAIList = [];
-const wss = new ws.Server({ port: 5757 });
+const wss = new ws.Server({port: 5757});
 wss.on('connection', (ws) => {
     console.info('Incoming connection...');
     const websocketTurtle = new TurtleWS(ws);
@@ -61,11 +61,11 @@ wss.on('connection', (ws) => {
             selectedSlot,
             inventory,
             (stepsSinceLastRecharge || 0) + 1,
-            state,
+            state
         );
 
         turtlesDB.addTurtle(turtle);
-        updateEmitter.emit('update', 'tconnect', { turtle });
+        updateEmitter.emit('update', 'tconnect', {turtle});
         websocketTurtle.off('handshake', handshake);
         const turtleController = new TurtleController(turtlesDB, worldDB, areasDB, websocketTurtle, turtle);
         turtleController.on('update', (type, obj) => {
@@ -78,38 +78,42 @@ wss.on('connection', (ws) => {
 
     const tDisconnect = (id) => {
         turtlesDB.updateOnlineStatus(id, false);
-        updateEmitter.emit('tdisconnect', { id });
+        updateEmitter.emit('tdisconnect', {id});
         websocketTurtle.off('disconnect', tDisconnect);
     };
     websocketTurtle.on('disconnect', tDisconnect);
 
     rl.on('line', (line) => {
         if (line === 'disconnect') {
-            ws.send(JSON.stringify({ type: 'DISCONNECT' }));
+            ws.send(JSON.stringify({type: 'DISCONNECT'}));
         } else if (line === 'reboot') {
-            ws.send(JSON.stringify({ type: 'REBOOT' }));
+            ws.send(JSON.stringify({type: 'REBOOT'}));
         } else {
-            ws.send(JSON.stringify({ type: 'EVAL', function: `return ${line}` }));
+            ws.send(JSON.stringify({type: 'EVAL', function: `return ${line}`}));
         }
     });
 });
 
-const wssWebsite = new ws.Server({ port: 6868 });
+const wssWebsite = new ws.Server({port: 6868});
 wssWebsite.on('connection', (ws) => {
     ws.on('message', (msg) => {
         const obj = JSON.parse(msg);
         switch (obj.type) {
             case 'HANDSHAKE':
-                Promise.all([turtlesDB.getTurtles(), worldDB.getAllBlocks(), areasDB.getAreas()]).then(([turtles, world, areas]) => {
-                    ws.send(JSON.stringify({
-                        type: 'HANDSHAKE',
-                        message: {
-                            turtles,
-                            world,
-                            areas
-                        }
-                    }));
-                })
+                Promise.all([turtlesDB.getTurtles(), worldDB.getAllBlocks(), areasDB.getAreas()]).then(
+                    ([turtles, world, areas]) => {
+                        ws.send(
+                            JSON.stringify({
+                                type: 'HANDSHAKE',
+                                message: {
+                                    turtles,
+                                    world,
+                                    areas,
+                                },
+                            })
+                        );
+                    }
+                );
                 break;
             case 'ACTION':
                 //obj.data.id apears to come out undefined, looking into the cause now as the STOP feature throws this
@@ -118,7 +122,7 @@ wssWebsite.on('connection', (ws) => {
                     switch (obj.action) {
                         case 'refuel':
                             if (turtle !== undefined) {
-                                turtlesDB.updateState(turtle.id, { id: 1, name: 'refueling', dropAllItems: true });
+                                turtlesDB.updateState(turtle.id, {id: 1, name: 'refueling', dropAllItems: true});
                             }
                             break;
                         case 'mine':
@@ -133,12 +137,23 @@ wssWebsite.on('connection', (ws) => {
                             break;
                         case 'move':
                             if (turtle !== undefined) {
-                                turtlesDB.updateState(turtle.id, { id: 3, name: 'moving', x: obj.data.x, y: obj.data.y, z: obj.data.z });
+                                turtlesDB.updateState(turtle.id, {
+                                    id: 3,
+                                    name: 'moving',
+                                    x: obj.data.x,
+                                    y: obj.data.y,
+                                    z: obj.data.z,
+                                });
                             }
                             break;
                         case 'farm':
                             if (turtle !== undefined) {
-                                turtlesDB.updateState(turtle.id, { id: 4, name: 'farming', areaId: obj.data.areaId, currentAreaFarmIndex: 0 });
+                                turtlesDB.updateState(turtle.id, {
+                                    id: 4,
+                                    name: 'farming',
+                                    areaId: obj.data.areaId,
+                                    currentAreaFarmIndex: 0,
+                                });
                             }
                             break;
                         case 'stop':
@@ -162,19 +177,19 @@ wssWebsite.on('connection', (ws) => {
     const update = (type, obj) => {
         switch (type) {
             case 'tconnect':
-                ws.send(JSON.stringify({ type: 'TCONNECT', message: obj }));
+                ws.send(JSON.stringify({type: 'TCONNECT', message: obj}));
                 break;
             case 'tdisconnect':
-                ws.send(JSON.stringify({ type: 'TDISCONNECT', message: obj }));
+                ws.send(JSON.stringify({type: 'TDISCONNECT', message: obj}));
                 break;
             case 'tlocation':
-                ws.send(JSON.stringify({ type: 'TLOCATION', message: obj }));
+                ws.send(JSON.stringify({type: 'TLOCATION', message: obj}));
                 break;
             case 'wupdate':
-                ws.send(JSON.stringify({ type: 'WUPDATE', message: obj }));
+                ws.send(JSON.stringify({type: 'WUPDATE', message: obj}));
                 break;
             case 'wdelete':
-                ws.send(JSON.stringify({ type: 'WDELETE', message: obj }));
+                ws.send(JSON.stringify({type: 'WDELETE', message: obj}));
                 break;
         }
     };

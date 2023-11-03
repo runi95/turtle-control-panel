@@ -1,5 +1,5 @@
-const { EventEmitter } = require('events');
-const Coordinates = require('./dlite/coordinates');
+const {EventEmitter} = require('events');
+const Coordinates = require('./dlite/Coordinates');
 const DStarLite = require('./dlite');
 
 const getLocalCoordinatesForDirection = (direction) => {
@@ -11,12 +11,10 @@ const getLocalCoordinatesForDirection = (direction) => {
     ][direction - 1];
 };
 
-const mineshaftEntrance = { x: 467, y: 87, z: -587 };
-const rechargeStation = { x: 455, y: 87, z: -597 };
+const mineshaftEntrance = {x: 467, y: 87, z: -587};
+const rechargeStation = {x: 455, y: 87, z: -597};
 
-module.exports = class TurtleController extends (
-    EventEmitter
-) {
+module.exports = class TurtleController extends EventEmitter {
     constructor(turtlesDB, worldDB, areasDB, wsTurtle, turtle) {
         super();
 
@@ -36,12 +34,20 @@ module.exports = class TurtleController extends (
         this.turtle.fuelLevel--;
         this.turtle.stepsSinceLastRecharge++;
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
-        const { x, y, z } = this.turtle.location;
-        this.turtle.location = { x: x + xChange, y, z: z + zChange };
-        this.emit('update', 'tlocation', { id: this.turtle.id, location: this.turtle.location, fuelLevel: this.turtle.fuelLevel });
+        const {x, y, z} = this.turtle.location;
+        this.turtle.location = {x: x + xChange, y, z: z + zChange};
+        this.emit('update', 'tlocation', {
+            id: this.turtle.id,
+            location: this.turtle.location,
+            fuelLevel: this.turtle.fuelLevel,
+        });
         this.turtlesDB.addTurtle(this.turtle);
         this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('update', 'wdelete', { x: this.turtle.location.x, y: this.turtle.location.y, z: this.turtle.location.z });
+        this.emit('update', 'wdelete', {
+            x: this.turtle.location.x,
+            y: this.turtle.location.y,
+            z: this.turtle.location.z,
+        });
     }
 
     async back() {
@@ -53,12 +59,20 @@ module.exports = class TurtleController extends (
         this.turtle.fuelLevel--;
         this.turtle.stepsSinceLastRecharge++;
         const [xChange, zChange] = getLocalCoordinatesForDirection((((this.turtle.direction % 4) + 1) % 4) + 1);
-        const { x, y, z } = this.turtle.location;
-        this.turtle.location = { x: x + xChange, y, z: z + zChange };
-        this.emit('update', 'tlocation', { id: this.turtle.id, location: this.turtle.location, fuelLevel: this.turtle.fuelLevel });
+        const {x, y, z} = this.turtle.location;
+        this.turtle.location = {x: x + xChange, y, z: z + zChange};
+        this.emit('update', 'tlocation', {
+            id: this.turtle.id,
+            location: this.turtle.location,
+            fuelLevel: this.turtle.fuelLevel,
+        });
         this.turtlesDB.addTurtle(this.turtle);
         this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('update', 'wdelete', { x: this.turtle.location.x, y: this.turtle.location.y, z: this.turtle.location.z });
+        this.emit('update', 'wdelete', {
+            x: this.turtle.location.x,
+            y: this.turtle.location.y,
+            z: this.turtle.location.z,
+        });
     }
 
     async up() {
@@ -69,12 +83,20 @@ module.exports = class TurtleController extends (
 
         this.turtle.fuelLevel--;
         this.turtle.stepsSinceLastRecharge++;
-        const { x, y, z } = this.turtle.location;
-        this.turtle.location = { x, y: y + 1, z };
-        this.emit('update', 'tlocation', { id: this.turtle.id, location: this.turtle.location, fuelLevel: this.turtle.fuelLevel });
+        const {x, y, z} = this.turtle.location;
+        this.turtle.location = {x, y: y + 1, z};
+        this.emit('update', 'tlocation', {
+            id: this.turtle.id,
+            location: this.turtle.location,
+            fuelLevel: this.turtle.fuelLevel,
+        });
         this.turtlesDB.addTurtle(this.turtle);
         this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('update', 'wdelete', { x: this.turtle.location.x, y: this.turtle.location.y, z: this.turtle.location.z });
+        this.emit('update', 'wdelete', {
+            x: this.turtle.location.x,
+            y: this.turtle.location.y,
+            z: this.turtle.location.z,
+        });
     }
 
     async down() {
@@ -84,12 +106,20 @@ module.exports = class TurtleController extends (
         }
 
         this.turtle.fuelLevel--;
-        const { x, y, z } = this.turtle.location;
-        this.turtle.location = { x, y: y - 1, z };
-        this.emit('update', 'tlocation', { id: this.turtle.id, location: this.turtle.location, fuelLevel: this.turtle.fuelLevel });
+        const {x, y, z} = this.turtle.location;
+        this.turtle.location = {x, y: y - 1, z};
+        this.emit('update', 'tlocation', {
+            id: this.turtle.id,
+            location: this.turtle.location,
+            fuelLevel: this.turtle.fuelLevel,
+        });
         this.turtlesDB.addTurtle(this.turtle);
         this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('update', 'wdelete', { x: this.turtle.location.x, y: this.turtle.location.y, z: this.turtle.location.z });
+        this.emit('update', 'wdelete', {
+            x: this.turtle.location.x,
+            y: this.turtle.location.y,
+            z: this.turtle.location.z,
+        });
     }
 
     async turnLeft() {
@@ -299,16 +329,16 @@ module.exports = class TurtleController extends (
      */
     async inspect() {
         const [didInspect, block] = await this.wsTurtle.exec('turtle.inspect()');
-        const { x, y, z } = this.turtle.location;
+        const {x, y, z} = this.turtle.location;
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
         if (!didInspect) {
             this.worldDB.deleteBlock(x + xChange, y, z + zChange);
-            this.emit('update', 'wdelete', { x: x + xChange, y, z: z + zChange });
+            this.emit('update', 'wdelete', {x: x + xChange, y, z: z + zChange});
             return undefined;
         }
 
         this.worldDB.updateBlock(x + xChange, y, z + zChange, block);
-        this.emit('update', 'wupdate', { x: x + xChange, y, z: z + zChange, block });
+        this.emit('update', 'wupdate', {x: x + xChange, y, z: z + zChange, block});
         return block;
     }
 
@@ -317,15 +347,15 @@ module.exports = class TurtleController extends (
      */
     async inspectUp() {
         const [didInspect, block] = await this.wsTurtle.exec('turtle.inspectUp()');
-        const { x, y, z } = this.turtle.location;
+        const {x, y, z} = this.turtle.location;
         if (!didInspect) {
             this.worldDB.deleteBlock(x, y + 1, z);
-            this.emit('update', 'wdelete', { x, y: y + 1, z });
+            this.emit('update', 'wdelete', {x, y: y + 1, z});
             return undefined;
         }
 
         this.worldDB.updateBlock(x, y + 1, z, block);
-        this.emit('update', 'wupdate', { x, y: y + 1, z, block });
+        this.emit('update', 'wupdate', {x, y: y + 1, z, block});
         return block;
     }
 
@@ -334,15 +364,15 @@ module.exports = class TurtleController extends (
      */
     async inspectDown() {
         const [didInspect, block] = await this.wsTurtle.exec('turtle.inspectDown()');
-        const { x, y, z } = this.turtle.location;
+        const {x, y, z} = this.turtle.location;
         if (!didInspect) {
             this.worldDB.deleteBlock(x, y - 1, z);
-            this.emit('update', 'wdelete', { x, y: y - 1, z });
+            this.emit('update', 'wdelete', {x, y: y - 1, z});
             return undefined;
         }
 
         this.worldDB.updateBlock(x, y - 1, z, block);
-        this.emit('update', 'wupdate', { x, y: y - 1, z, block });
+        this.emit('update', 'wupdate', {x, y: y - 1, z, block});
         return block;
     }
 
@@ -400,7 +430,7 @@ module.exports = class TurtleController extends (
     async checkPeripheral() {
         const list = (
             await this.wsTurtle.execRaw(
-                `local list = peripheral.wrap('front').list()\nlocal result = {}\nfor k, v in pairs(list) do result[tostring(k)] = list[k]end\nreturn result`,
+                `local list = peripheral.wrap('front').list()\nlocal result = {}\nfor k, v in pairs(list) do result[tostring(k)] = list[k]end\nreturn result`
             )
         )['0'];
 
@@ -457,7 +487,7 @@ module.exports = class TurtleController extends (
             case 'East':
             case 'South':
             case 'West':
-                await this.turnToDirection({ North: 2, East: 3, South: 4, West: 1 }[mineTarget]);
+                await this.turnToDirection({North: 2, East: 3, South: 4, West: 1}[mineTarget]);
                 await this.dig();
                 await this.suck();
                 break;
@@ -470,12 +500,12 @@ module.exports = class TurtleController extends (
     }
 
     async mine() {
-        const { mineType, mineTarget } = this.turtle.state;
+        const {mineType, mineTarget} = this.turtle.state;
         if (mineType === 'direction') {
             return await this.mineInDirection(mineTarget);
         }
 
-        const { x, y, z } = this.turtle.location;
+        const {x, y, z} = this.turtle.location;
         if ((await this.getItemDetail(16)).length !== undefined) {
             const currentDirection = this.turtle.direction;
             await this.moveTo(rechargeStation.x, rechargeStation.y, rechargeStation.z);
@@ -529,7 +559,7 @@ module.exports = class TurtleController extends (
     }
 
     async farm() {
-        const { x, y, z } = this.turtle.location;
+        const {x, y, z} = this.turtle.location;
         if ((await this.getItemDetail(16)).length !== undefined) {
             const currentDirection = this.turtle.direction;
             await this.moveTo(rechargeStation.x, rechargeStation.y, rechargeStation.z);
@@ -538,13 +568,13 @@ module.exports = class TurtleController extends (
             await this.turnToDirection(currentDirection);
         }
 
-        const { areaId, currentAreaFarmIndex } = this.turtle.state;
+        const {areaId, currentAreaFarmIndex} = this.turtle.state;
         const farmArea = this.areasDB.getArea(areaId);
 
         await this.moveTo(
             farmArea.area[currentAreaFarmIndex].x,
             farmArea.area[currentAreaFarmIndex].y,
-            farmArea.area[currentAreaFarmIndex].z,
+            farmArea.area[currentAreaFarmIndex].z
         );
         const block = await this.inspectDown();
 
@@ -687,9 +717,10 @@ module.exports = class TurtleController extends (
         while (true) {
             if (
                 this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
-                this.turtle.stepsSinceLastRecharge >= this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
+                this.turtle.stepsSinceLastRecharge >=
+                    this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
             ) {
-                this.turtle.state = { id: 1, name: 'refueling', dropAllItems: true };
+                this.turtle.state = {id: 1, name: 'refueling', dropAllItems: true};
                 this.turtlesDB.addTurtle(this.turtle);
             }
 
@@ -752,7 +783,7 @@ module.exports = class TurtleController extends (
                     py = s.y;
                     pz = s.z;
 
-                    const { x, y, z } = this.turtle.location;
+                    const {x, y, z} = this.turtle.location;
                     if (py - y > 0) {
                         try {
                             await this.up();
@@ -788,7 +819,7 @@ module.exports = class TurtleController extends (
                             }
                         }
                     } else {
-                        const heading = { x: px - x, y: py - y, z: pz - z };
+                        const heading = {x: px - x, y: py - y, z: pz - z};
                         const direction = heading.x + Math.abs(heading.x) * 2 + (heading.z + Math.abs(heading.z) * 3);
                         await this.turnToDirection(direction);
                         try {
@@ -822,7 +853,7 @@ module.exports = class TurtleController extends (
                         });
                 },
                 getObstaclesInVision: async () => {
-                    const { x, y, z } = this.turtle.location;
+                    const {x, y, z} = this.turtle.location;
                     const coordinatesInFront = getLocalCoordinatesForDirection(this.turtle.direction);
                     const inFrontX = x + coordinatesInFront[0];
                     const inFrontZ = z + coordinatesInFront[1];

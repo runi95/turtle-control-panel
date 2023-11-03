@@ -1,11 +1,9 @@
-const { EventEmitter } = require('events');
+const {EventEmitter} = require('events');
 const uuid4 = require('uuid4');
 const nameList = require('../names.json');
 const Turtle = require('./turtle');
 
-module.exports = class TurtleWS extends (
-    EventEmitter
-) {
+module.exports = class TurtleWS extends EventEmitter {
     constructor(ws) {
         super();
         this.ws = ws;
@@ -26,30 +24,40 @@ module.exports = class TurtleWS extends (
                 return console.error(obj.message);
             }
 
-            const { message } = obj;
-            const { id, label, fuel, location, direction, selectedSlot, inventory } = message;
+            const {message} = obj;
+            const {id, label, fuel, location, direction, selectedSlot, inventory} = message;
             this.ws.on('close', (code, message) => {
                 console.info(`${id} has disconnected with code ${code} and message ${message}`);
                 this.emit('disconnect', id);
             });
 
             const inventoryAsObject = Array.isArray(inventory) ? {} : inventory;
-            const { level, limit } = fuel;
+            const {level, limit} = fuel;
             console.info(`${label || 'Unnamed Turtle'} [${id}] has connected!`);
             let turtle = undefined;
             if (!label) {
                 const name = nameList[Math.floor(Math.random() * (nameList.length - 1))];
                 turtle = new Turtle(id, name, true, level, limit, location, direction, selectedSlot, inventoryAsObject);
-                this.ws.send(JSON.stringify({ type: 'RENAME', message: name }));
+                this.ws.send(JSON.stringify({type: 'RENAME', message: name}));
             } else {
-                turtle = new Turtle(id, label, true, level, limit, location, direction, selectedSlot, inventoryAsObject);
+                turtle = new Turtle(
+                    id,
+                    label,
+                    true,
+                    level,
+                    limit,
+                    location,
+                    direction,
+                    selectedSlot,
+                    inventoryAsObject
+                );
             }
 
             this.ws.off('message', listener);
             this.emit('handshake', turtle);
         };
         this.ws.on('message', listener);
-        this.ws.send(JSON.stringify({ type: 'HANDSHAKE', uuid }));
+        this.ws.send(JSON.stringify({type: 'HANDSHAKE', uuid}));
     }
 
     exec(f) {
@@ -78,7 +86,7 @@ module.exports = class TurtleWS extends (
                 return resolve(obj.message);
             };
             this.ws.on('message', listener);
-            this.ws.send(JSON.stringify({ type: 'EVAL', uuid, function: f }));
+            this.ws.send(JSON.stringify({type: 'EVAL', uuid, function: f}));
         });
     }
 };

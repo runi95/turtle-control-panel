@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { OverlayTrigger, Tooltip, Col, Row, Button, Modal } from 'react-bootstrap';
+import {OverlayTrigger, Tooltip, Col, Row, Button, Modal} from 'react-bootstrap';
 import FarmModal from './FarmModal';
 import MineModal from './MineModal';
 import SpriteTable from '../../SpriteTable.json';
@@ -19,7 +19,7 @@ function Inventory(props) {
                         turtle={turtle}
                         action={props.action}
                         areas={Object.keys(props.areas || {}).map((key) => props.areas[key].id)}
-                        hideModal={() => setState({ isModalShown: false })}
+                        hideModal={() => setState({isModalShown: false})}
                     />
                 );
             case 'mine':
@@ -28,122 +28,124 @@ function Inventory(props) {
                         turtle={turtle}
                         action={props.action}
                         areas={Object.keys(props.areas || {}).map((key) => props.areas[key].id)}
-                        hideModal={() => setState({ isModalShown: false })}
+                        hideModal={() => setState({isModalShown: false})}
                     />
                 );
             default:
                 return undefined;
         }
+    };
+
+    const {turtle} = props;
+    if (turtle === undefined) {
+        return null;
     }
 
-    const { turtle } = props;
-        if (turtle === undefined) {
-            return null;
-        }
-
-        const { inventory, selectedSlot } = turtle;
-        return [
-            <Col key="inventory-grid" md="auto">
-                <Modal show={state.isModalShown} onHide={() => setState({ isModalShown: false })}>
-                    {renderModal(turtle)}
-                </Modal>
-                <InventoryGrid>
-                    {Array.from(Array(16), (_, i) => i).map((i) => {
-                        const itemIndex = i + 1;
-                        const ItemSlotStyle = itemIndex === selectedSlot ? SelectedItemSlot : ItemSlot;
-                        if (inventory[itemIndex] === undefined) {
-                            return (
-                                <ItemSlotStyle key={i}>
-                                    <OverlayTrigger placement="top" overlay={<Tooltip>Empty</Tooltip>}>
-                                        <EmptyItemImage />
-                                    </OverlayTrigger>
-                                </ItemSlotStyle>
-                            );
-                        }
-
-                        const { name, count, displayName } = inventory[itemIndex];
-                        const nameSplit = name.split(':');
-                        const itemNameFromSplit = nameSplit[nameSplit.length - 1];
-                        const spriteLookupName =
-                            nameSplit[0] !== 'minecraft' || SpriteTable[itemNameFromSplit] === undefined ? '???' : itemNameFromSplit;
-                        const spritePosition = SpriteTable[spriteLookupName];
-                        const spriteY = 32 * Math.floor(spritePosition / 32);
-                        const spriteX = 32 * (spritePosition - spriteY - 1);
-
+    const {inventory, selectedSlot} = turtle;
+    return [
+        <Col key='inventory-grid' md='auto'>
+            <Modal show={state.isModalShown} onHide={() => setState({isModalShown: false})}>
+                {renderModal(turtle)}
+            </Modal>
+            <InventoryGrid>
+                {Array.from(Array(16), (_, i) => i).map((i) => {
+                    const itemIndex = i + 1;
+                    const ItemSlotStyle = itemIndex === selectedSlot ? SelectedItemSlot : ItemSlot;
+                    if (inventory[itemIndex] === undefined) {
                         return (
                             <ItemSlotStyle key={i}>
-                                <OverlayTrigger placement="top" overlay={<Tooltip>{displayName}</Tooltip>}>
-                                    <ItemContainer>
-                                        <ItemImage
-                                            style={{
-                                                backgroundImage: 'url(/sprites.png)',
-                                                backgroundPosition: `-${spriteX}px -${spriteY}px`,
-                                            }}
-                                        />
-                                        <ItemCount>{count}</ItemCount>
-                                    </ItemContainer>
+                                <OverlayTrigger placement='top' overlay={<Tooltip>Empty</Tooltip>}>
+                                    <EmptyItemImage />
                                 </OverlayTrigger>
                             </ItemSlotStyle>
                         );
-                    })}
-                </InventoryGrid>
-            </Col>,
-            <Col key="inventory-actions">
-                <Row>
-                    <h5>
-                        <ins style={{ textTransform: 'capitalize' }}>{turtle?.state?.name || 'idle'}</ins>
-                    </h5>
-                </Row>
-                <Row>
-                    <div>
-                        <Button
-                            onClick={() => setState({ isModalShown: true, modalState: 'mine' })}
-                            variant="outline-info"
-                            size="sm"
-                            disabled={!turtle.isOnline}
-                        >
-                            Mine
-                        </Button>
-                    </div>
-                </Row>
-                <Row style={{ marginTop: 5 }}>
-                    <div>
-                        <Button
-                            onClick={() => setState({ isModalShown: true, modalState: 'farm' })}
-                            variant="outline-info"
-                            size="sm"
-                            disabled={!turtle.isOnline}
-                        >
-                            Farm
-                        </Button>
-                    </div>
-                </Row>
-                <Row style={{ marginTop: 5 }}>
-                    <div>
-                        <Button
-                            onClick={() => props.action({ type: 'ACTION', action: 'refuel', data: { id: turtle.id } })}
-                            variant="outline-info"
-                            size="sm"
-                            disabled={!turtle.isOnline}
-                        >
-                            Refuel
-                        </Button>
-                    </div>
-                </Row>
-                <Row style={{ marginTop: 5 }}>
-                    <div>
-                        <Button
-                            onClick={() => props.action({ type: 'ACTION', action: 'stop' })}
-                            variant="outline-danger"
-                            size="sm"
-                            disabled={!turtle.isOnline}
-                        >
-                            Stop
-                        </Button>
-                    </div>
-                </Row>
-            </Col>,
-        ];
+                    }
+
+                    const {name, count, displayName} = inventory[itemIndex];
+                    const nameSplit = name.split(':');
+                    const itemNameFromSplit = nameSplit[nameSplit.length - 1];
+                    const spriteLookupName =
+                        nameSplit[0] !== 'minecraft' || SpriteTable[itemNameFromSplit] === undefined
+                            ? '???'
+                            : itemNameFromSplit;
+                    const spritePosition = SpriteTable[spriteLookupName];
+                    const spriteY = 32 * Math.floor(spritePosition / 32);
+                    const spriteX = 32 * (spritePosition - spriteY - 1);
+
+                    return (
+                        <ItemSlotStyle key={i}>
+                            <OverlayTrigger placement='top' overlay={<Tooltip>{displayName}</Tooltip>}>
+                                <ItemContainer>
+                                    <ItemImage
+                                        style={{
+                                            backgroundImage: 'url(/sprites.png)',
+                                            backgroundPosition: `-${spriteX}px -${spriteY}px`,
+                                        }}
+                                    />
+                                    <ItemCount>{count}</ItemCount>
+                                </ItemContainer>
+                            </OverlayTrigger>
+                        </ItemSlotStyle>
+                    );
+                })}
+            </InventoryGrid>
+        </Col>,
+        <Col key='inventory-actions'>
+            <Row>
+                <h5>
+                    <ins style={{textTransform: 'capitalize'}}>{turtle?.state?.name || 'idle'}</ins>
+                </h5>
+            </Row>
+            <Row>
+                <div>
+                    <Button
+                        onClick={() => setState({isModalShown: true, modalState: 'mine'})}
+                        variant='outline-info'
+                        size='sm'
+                        disabled={!turtle.isOnline}
+                    >
+                        Mine
+                    </Button>
+                </div>
+            </Row>
+            <Row style={{marginTop: 5}}>
+                <div>
+                    <Button
+                        onClick={() => setState({isModalShown: true, modalState: 'farm'})}
+                        variant='outline-info'
+                        size='sm'
+                        disabled={!turtle.isOnline}
+                    >
+                        Farm
+                    </Button>
+                </div>
+            </Row>
+            <Row style={{marginTop: 5}}>
+                <div>
+                    <Button
+                        onClick={() => props.action({type: 'ACTION', action: 'refuel', data: {id: turtle.id}})}
+                        variant='outline-info'
+                        size='sm'
+                        disabled={!turtle.isOnline}
+                    >
+                        Refuel
+                    </Button>
+                </div>
+            </Row>
+            <Row style={{marginTop: 5}}>
+                <div>
+                    <Button
+                        onClick={() => props.action({type: 'ACTION', action: 'stop'})}
+                        variant='outline-danger'
+                        size='sm'
+                        disabled={!turtle.isOnline}
+                    >
+                        Stop
+                    </Button>
+                </div>
+            </Row>
+        </Col>,
+    ];
 }
 
 const ItemCount = styled.div`

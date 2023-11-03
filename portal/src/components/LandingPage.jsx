@@ -1,14 +1,14 @@
 import styled from 'styled-components';
-import { Spinner } from 'react-bootstrap';
+import {Spinner} from 'react-bootstrap';
 
 function LandingPage(props) {
     return (
         <Centered className={props.shouldFadeOut ? 'fade-out' : undefined}>
-            <img height="192" width="192" src="/logo.svg" alt="Logo" />
+            <img height='192' width='192' src='/logo.svg' alt='Logo' />
             <h1>Turtle Control Panel</h1>
             {props.isLoading ? (
-                <Spinner style={{ width: '3.5rem', height: '3.5rem' }} animation="border" variant="light" role="status">
-                    <span className="sr-only">Loading...</span>
+                <Spinner style={{width: '3.5rem', height: '3.5rem'}} animation='border' variant='light' role='status'>
+                    <span className='sr-only'>Loading...</span>
                 </Spinner>
             ) : (
                 <h5 className={props.isConnected ? 'text-success' : 'text-danger'}>{props.message}</h5>

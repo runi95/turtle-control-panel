@@ -59,7 +59,9 @@ module.exports = class DStarLite {
             if (possibleMoveLocation === undefined) {
                 return false;
             }
-            const didMove = await env.moveTo(new Coordinates(possibleMoveLocation.x, possibleMoveLocation.y, possibleMoveLocation.z));
+            const didMove = await env.moveTo(
+                new Coordinates(possibleMoveLocation.x, possibleMoveLocation.y, possibleMoveLocation.z)
+            );
             if (didMove) {
                 this.sstart = possibleMoveLocation;
             } else {
@@ -163,7 +165,10 @@ module.exports = class DStarLite {
     computeShortestPath() {
         let steps = 0;
         let u;
-        while (((u = this.U.peek()) && u.k.compareTo(this.calculateKey(this.sstart)) < 0) || this.sstart.rhs != this.sstart.g) {
+        while (
+            ((u = this.U.peek()) && u.k.compareTo(this.calculateKey(this.sstart)) < 0) ||
+            this.sstart.rhs != this.sstart.g
+        ) {
             if (steps++ > this.maxSteps) {
                 throw new Error('Maximum number of path steps exceeded');
             }

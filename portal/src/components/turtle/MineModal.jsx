@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import { Modal, Form, Button } from 'react-bootstrap';
+import {Modal, Form, Button} from 'react-bootstrap';
 
 function MineModal(props) {
     const [state, setState] = useState({
@@ -37,7 +37,7 @@ function MineModal(props) {
             props.action({
                 type: 'ACTION',
                 action: 'mine',
-                data: { id: props.turtle.id, mineType: state.selectedOption, mineTarget: target },
+                data: {id: props.turtle.id, mineType: state.selectedOption, mineTarget: target},
             });
             selectedArea = '';
             selectedYLevel = '';
@@ -47,8 +47,8 @@ function MineModal(props) {
             e.stopPropagation();
         }
 
-        setState({ isFormValidated, selectedArea, selectedYLevel, selectedDirection });
-    }
+        setState({isFormValidated, selectedArea, selectedYLevel, selectedDirection});
+    };
 
     const renderFormInput = () => {
         switch (state.selectedOption) {
@@ -58,19 +58,19 @@ function MineModal(props) {
                         <Form.Label>Mine area</Form.Label>
                         <Form.Control
                             value={state.selectedArea}
-                            onChange={(e) => setState({ selectedArea: e.target.value })}
-                            as="select"
+                            onChange={(e) => setState({selectedArea: e.target.value})}
+                            as='select'
                             custom
                             required
                         >
-                            <option value="" key="empty">
+                            <option value='' key='empty'>
                                 -- select an area to mine --
                             </option>
                             {Object.keys(props.areas).map((key) => (
                                 <option key={key}>{props.areas[key]}</option>
                             ))}
                         </Form.Control>
-                        <Form.Control.Feedback type="invalid">Please select a valid area</Form.Control.Feedback>
+                        <Form.Control.Feedback type='invalid'>Please select a valid area</Form.Control.Feedback>
                     </Form.Group>
                 );
             case 'ylevel':
@@ -78,14 +78,14 @@ function MineModal(props) {
                     <Form.Group>
                         <Form.Label>Mine to Y-Level</Form.Label>
                         <Form.Control
-                            type="number"
-                            min="1"
-                            max="255"
+                            type='number'
+                            min='1'
+                            max='255'
                             placeholder={props.turtle.location.y}
                             value={state.selectedYLevel}
-                            onChange={(e) => setState({ selectedYLevel: e.target.value })}
+                            onChange={(e) => setState({selectedYLevel: e.target.value})}
                         />
-                        <Form.Control.Feedback type="invalid">Please select a valid y-level</Form.Control.Feedback>
+                        <Form.Control.Feedback type='invalid'>Please select a valid y-level</Form.Control.Feedback>
                     </Form.Group>
                 );
             case 'direction':
@@ -94,28 +94,28 @@ function MineModal(props) {
                         <Form.Label>Mine in direction</Form.Label>
                         <Form.Control
                             value={state.selectedDirection}
-                            onChange={(e) => setState({ selectedDirection: e.target.value })}
-                            as="select"
+                            onChange={(e) => setState({selectedDirection: e.target.value})}
+                            as='select'
                             custom
                             required
                         >
-                            <option value="" key="empty">
+                            <option value='' key='empty'>
                                 -- select a direction to mine --
                             </option>
-                            <option key="Up">Up</option>
-                            <option key="Down">Down</option>
-                            <option key="North">North</option>
-                            <option key="East">East</option>
-                            <option key="South">South</option>
-                            <option key="West">West</option>
+                            <option key='Up'>Up</option>
+                            <option key='Down'>Down</option>
+                            <option key='North'>North</option>
+                            <option key='East'>East</option>
+                            <option key='South'>South</option>
+                            <option key='West'>West</option>
                         </Form.Control>
-                        <Form.Control.Feedback type="invalid">Please select a valid direction</Form.Control.Feedback>
+                        <Form.Control.Feedback type='invalid'>Please select a valid direction</Form.Control.Feedback>
                     </Form.Group>
                 );
             default:
                 return undefined;
         }
-    }
+    };
 
     return (
         <Form noValidate validated={state.isFormValidated} onSubmit={handleFormSubmit}>
@@ -128,40 +128,40 @@ function MineModal(props) {
                     <div>
                         <Form.Check
                             inline
-                            name="miningType"
-                            label="Area"
-                            type="radio"
-                            id="area"
-                            value="area"
+                            name='miningType'
+                            label='Area'
+                            type='radio'
+                            id='area'
+                            value='area'
                             checked={state.selectedOption === 'area'}
-                            onChange={() => setState({ selectedOption: 'area' })}
+                            onChange={() => setState({selectedOption: 'area'})}
                         />
                         <Form.Check
                             inline
-                            name="miningType"
-                            label="Y-Level"
-                            type="radio"
-                            id="ylevel"
-                            value="ylevel"
+                            name='miningType'
+                            label='Y-Level'
+                            type='radio'
+                            id='ylevel'
+                            value='ylevel'
                             checked={state.selectedOption === 'ylevel'}
-                            onChange={() => setState({ selectedOption: 'ylevel' })}
+                            onChange={() => setState({selectedOption: 'ylevel'})}
                         />
                         <Form.Check
                             inline
-                            name="miningType"
-                            label="Direction"
-                            type="radio"
-                            id="direction"
-                            value="direction"
+                            name='miningType'
+                            label='Direction'
+                            type='radio'
+                            id='direction'
+                            value='direction'
                             checked={state.selectedOption === 'direction'}
-                            onChange={() => setState({ selectedOption: 'direction' })}
+                            onChange={() => setState({selectedOption: 'direction'})}
                         />
                     </div>
                 </Form.Group>
                 {renderFormInput()}
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="success" type="submit">
+                <Button variant='success' type='submit'>
                     Start
                 </Button>
             </Modal.Footer>

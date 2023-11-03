@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect } from 'react';
-import { Row, Col, Button, Modal, Form, InputGroup } from 'react-bootstrap';
+import {useRef, useState, useEffect} from 'react';
+import {Row, Col, Button, Modal, Form, InputGroup} from 'react-bootstrap';
 import styled from 'styled-components';
 import './TurtleMap.css';
 
@@ -9,7 +9,7 @@ const spriteRadius = 0.5 * spriteSize;
 const colors = ['#ff0000', '#ff6a00', '#ffd800', '#4cff00', '#00ffff', '#0094ff', '#0026ff', '#b200ff', '#ff006e'];
 
 const TurtleMap = (props) => {
-    const { canvasSize, turtles, selectedTurtle, world, areas, action, ...rest } = props;
+    const {canvasSize, turtles, selectedTurtle, world, areas, action, ...rest} = props;
     const canvasRef = useRef(undefined);
     const [mousePosition, setMousePosition] = useState(undefined);
     const [isCreatingArea, setIsCreatingArea] = useState(false);
@@ -39,7 +39,7 @@ const TurtleMap = (props) => {
                 const centerY = 0.5 * spriteSize * mul;
                 const drawRange = 0.5 * mul;
                 const turtle = turtles[selectedTurtle];
-                const { x, y, z } = turtle.location;
+                const {x, y, z} = turtle.location;
 
                 // Clear
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -56,7 +56,7 @@ const TurtleMap = (props) => {
                                 (i + drawRange) * spriteSize - spriteRadius,
                                 (j + drawRange) * spriteSize - spriteRadius,
                                 spriteSize,
-                                spriteSize,
+                                spriteSize
                             );
                         }
                     }
@@ -91,7 +91,7 @@ const TurtleMap = (props) => {
                         circleSizeMul * spriteSize,
                         0,
                         2 * Math.PI,
-                        false,
+                        false
                     );
                     ctx.fill();
                 }
@@ -109,7 +109,7 @@ const TurtleMap = (props) => {
                                 (i + drawRange) * spriteSize - spriteRadius,
                                 (j + drawRange) * spriteSize - spriteRadius,
                                 spriteSize,
-                                spriteSize,
+                                spriteSize
                             );
                         }
                     }
@@ -203,7 +203,7 @@ const TurtleMap = (props) => {
         const form = e.currentTarget;
         if (form.checkValidity() === true) {
             const turtle = turtles?.[selectedTurtle];
-            const { x, y, z } = turtle.location;
+            const {x, y, z} = turtle.location;
             const minYLevel = Math.min(yLevel || y, upperYLevel || y);
             const maxYLevel = Math.max(yLevel || y, upperYLevel || y);
             let area = [];
@@ -213,7 +213,7 @@ const TurtleMap = (props) => {
                         .map((key) => {
                             const tempX = (createdArea[key].x + spriteRadius - canvasSize * 0.5) / spriteSize + x;
                             const tempZ = (createdArea[key].y + spriteRadius - canvasSize * 0.5) / spriteSize + z;
-                            return { x: tempX, y: i, z: tempZ };
+                            return {x: tempX, y: i, z: tempZ};
                         })
                         .sort((a, b) => {
                             if (a.x < b.x) {
@@ -227,7 +227,7 @@ const TurtleMap = (props) => {
                             }
 
                             return 0;
-                        }),
+                        })
                 );
             }
             action({
@@ -252,7 +252,7 @@ const TurtleMap = (props) => {
     };
 
     return (
-        <Col key="canvas" md="auto">
+        <Col key='canvas' md='auto'>
             <Modal show={isModalShown} onHide={() => setIsModalShown(false)}>
                 <Form noValidate validated={isFormValidated} onSubmit={handleFormSubmit}>
                     <Modal.Header closeButton>
@@ -263,54 +263,61 @@ const TurtleMap = (props) => {
                             <Form.Label>Area name</Form.Label>
                             <Form.Control
                                 required
-                                type="text"
-                                placeholder="name"
+                                type='text'
+                                placeholder='name'
                                 value={areaName}
                                 onChange={(e) => setAreaName(e.target.value)}
                             ></Form.Control>
-                            <Form.Control.Feedback type="invalid">Please enter a non-empty name</Form.Control.Feedback>
+                            <Form.Control.Feedback type='invalid'>Please enter a non-empty name</Form.Control.Feedback>
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>Y level</Form.Label>
                             <InputGroup>
                                 <Form.Control
-                                    type="number"
-                                    min="1"
-                                    max="255"
+                                    type='number'
+                                    min='1'
+                                    max='255'
                                     placeholder={turtles?.[selectedTurtle]?.location?.y || ''}
                                     value={yLevel}
                                     onChange={(e) => setYLevel(e.target.value)}
                                 ></Form.Control>
-                                <div className="input-group-prepend input-group-append">
+                                <div className='input-group-prepend input-group-append'>
                                     <InputGroup.Text>-</InputGroup.Text>
                                 </div>
                                 <Form.Control
-                                    type="number"
-                                    min="1"
-                                    max="255"
+                                    type='number'
+                                    min='1'
+                                    max='255'
                                     placeholder={turtles?.[selectedTurtle]?.location?.y || ''}
                                     value={upperYLevel}
                                     onChange={(e) => setUpperYLevel(e.target.value)}
                                 ></Form.Control>
                             </InputGroup>
-                            <Form.Control.Feedback type="invalid">Please enter a valid number</Form.Control.Feedback>
+                            <Form.Control.Feedback type='invalid'>Please enter a valid number</Form.Control.Feedback>
                         </Form.Group>
                         <Form.Group>
                             <Form.Label>Color</Form.Label>
-                            <div style={{ display: 'flex', flexDirection: 'row' }}>
+                            <div style={{display: 'flex', flexDirection: 'row'}}>
                                 {colors.map((color, i) =>
                                     color === selectedColor ? (
-                                        <ColorBox key={`color-${i}`} style={{ backgroundColor: color, border: '1px solid #fff' }}></ColorBox>
+                                        <ColorBox
+                                            key={`color-${i}`}
+                                            style={{backgroundColor: color, border: '1px solid #fff'}}
+                                        ></ColorBox>
                                     ) : (
-                                        <ColorBox key={`color-${i}`} style={{ backgroundColor: color }} onClick={() => setSelectedColor(color)}></ColorBox>
-                                    ),
+                                        <ColorBox
+                                            key={`color-${i}`}
+                                            style={{backgroundColor: color}}
+                                            onClick={() => setSelectedColor(color)}
+                                        ></ColorBox>
+                                    )
                                 )}
                             </div>
-                            <Form.Control.Feedback type="invalid">Please enter a non-empty name</Form.Control.Feedback>
+                            <Form.Control.Feedback type='invalid'>Please enter a non-empty name</Form.Control.Feedback>
                         </Form.Group>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="success" type="submit">
+                        <Button variant='success' type='submit'>
                             Save
                         </Button>
                     </Modal.Footer>
@@ -324,8 +331,12 @@ const TurtleMap = (props) => {
                         height={canvasSize}
                         width={canvasSize}
                         onMouseDown={(e) => {
-                            const tileX = Math.floor((e.nativeEvent.offsetX - spriteRadius) / spriteSize) * spriteSize + spriteRadius;
-                            const tileY = Math.floor((e.nativeEvent.offsetY - spriteRadius) / spriteSize) * spriteSize + spriteRadius;
+                            const tileX =
+                                Math.floor((e.nativeEvent.offsetX - spriteRadius) / spriteSize) * spriteSize +
+                                spriteRadius;
+                            const tileY =
+                                Math.floor((e.nativeEvent.offsetY - spriteRadius) / spriteSize) * spriteSize +
+                                spriteRadius;
 
                             if (createdArea[`${tileX},${tileY}`]) {
                                 delete createdArea[`${tileX},${tileY}`];
@@ -349,8 +360,10 @@ const TurtleMap = (props) => {
                             const mouseY = e.nativeEvent.offsetY;
 
                             if (isCreatingArea && isMouseDown) {
-                                const tileX = Math.floor((mouseX - spriteRadius) / spriteSize) * spriteSize + spriteRadius;
-                                const tileY = Math.floor((mouseY - spriteRadius) / spriteSize) * spriteSize + spriteRadius;
+                                const tileX =
+                                    Math.floor((mouseX - spriteRadius) / spriteSize) * spriteSize + spriteRadius;
+                                const tileY =
+                                    Math.floor((mouseY - spriteRadius) / spriteSize) * spriteSize + spriteRadius;
 
                                 if (isClearingCreateArea) {
                                     delete createdArea[`${tileX},${tileY}`];
@@ -371,14 +384,15 @@ const TurtleMap = (props) => {
                         onMouseUp={(e) => {
                             const turtle = turtles?.[selectedTurtle];
                             if (!isCreatingArea && turtle?.isOnline) {
-                                const { x, y, z } = turtle.location;
+                                const {x, y, z} = turtle.location;
                                 action({
                                     type: 'ACTION',
                                     action: 'move',
                                     data: {
                                         id: turtle.id,
                                         x:
-                                            (Math.floor((e.nativeEvent.offsetX - spriteRadius) / spriteSize) * spriteSize +
+                                            (Math.floor((e.nativeEvent.offsetX - spriteRadius) / spriteSize) *
+                                                spriteSize +
                                                 spriteRadius +
                                                 spriteRadius -
                                                 canvasSize * 0.5) /
@@ -386,7 +400,8 @@ const TurtleMap = (props) => {
                                             x,
                                         y,
                                         z:
-                                            (Math.floor((e.nativeEvent.offsetY - spriteRadius) / spriteSize) * spriteSize +
+                                            (Math.floor((e.nativeEvent.offsetY - spriteRadius) / spriteSize) *
+                                                spriteSize +
                                                 spriteRadius +
                                                 spriteRadius -
                                                 canvasSize * 0.5) /
@@ -405,10 +420,10 @@ const TurtleMap = (props) => {
             <Row>
                 <Col>
                     {isCreatingArea ? (
-                        <div className="d-grid gap-2">
+                        <div className='d-grid gap-2'>
                             <Button
-                                variant="outline-success"
-                                size="sm"
+                                variant='outline-success'
+                                size='sm'
                                 onClick={() => {
                                     setAreaName('');
                                     setIsFormValidated(false);
@@ -418,8 +433,8 @@ const TurtleMap = (props) => {
                                 Create
                             </Button>
                             <Button
-                                variant="outline-danger"
-                                size="sm"
+                                variant='outline-danger'
+                                size='sm'
                                 onClick={() => {
                                     setIsCreatingArea(false);
                                     setCreatedArea({});
@@ -429,8 +444,8 @@ const TurtleMap = (props) => {
                             </Button>
                         </div>
                     ) : (
-                        <div className="d-grid gap-2">
-                            <Button variant="outline-success" size="sm" onClick={() => setIsCreatingArea(true)}>
+                        <div className='d-grid gap-2'>
+                            <Button variant='outline-success' size='sm' onClick={() => setIsCreatingArea(true)}>
                                 New Area
                             </Button>
                         </div>

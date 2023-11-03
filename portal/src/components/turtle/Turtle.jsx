@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { Container, Row, Col } from 'react-bootstrap';
+import {Container, Row, Col} from 'react-bootstrap';
 import FuelInfo from '../FuelInfo';
 import TurtleMap from './TurtleMap';
 import Inventory from './Inventory';
@@ -9,11 +9,11 @@ const canvasSize = 160;
 const canvasRadius = 0.5 * canvasSize;
 
 function Turtle(props) {
-    let { id } = useParams();
+    let {id} = useParams();
 
     const directionToString = (direction) => {
         return ['W', 'N', 'E', 'S'][direction - 1];
-    }
+    };
     const turtle = props.turtles ? props.turtles[id] || undefined : undefined;
 
     return (
@@ -22,7 +22,7 @@ function Turtle(props) {
             <Row>
                 <Col>
                     <h3>
-                        {(turtle?.name) || 'Unknown Turtle'}
+                        {turtle?.name || 'Unknown Turtle'}
                         {turtle?.isOnline ? <GreenOnlineBox /> : <GreyOnlineBox />}
                     </h3>
                 </Col>
@@ -31,10 +31,12 @@ function Turtle(props) {
                 <Col>
                     <FuelInfo {...(turtle ? turtle : {})} />
                 </Col>
-                <Col md="auto">
+                <Col md='auto'>
                     <LocationText>
                         {!!turtle?.direction ? `${directionToString(turtle.direction)}` : '_'} (
-                        {turtle?.location ? `${turtle.location.x}, ${turtle.location.y}, ${turtle.location.z}` : '?, ?, ?'}
+                        {turtle?.location
+                            ? `${turtle.location.x}, ${turtle.location.y}, ${turtle.location.z}`
+                            : '?, ?, ?'}
                         )
                     </LocationText>
                 </Col>
@@ -43,7 +45,7 @@ function Turtle(props) {
             <Row>
                 <Inventory turtle={turtle} action={props.action} areas={props.areas}></Inventory>
                 <TurtleMap
-                    style={{ border: '1px solid #fff', borderRadius: canvasRadius }}
+                    style={{border: '1px solid #fff', borderRadius: canvasRadius}}
                     canvasSize={canvasSize}
                     turtles={props.turtles}
                     selectedTurtle={id}

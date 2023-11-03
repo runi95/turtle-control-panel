@@ -10,7 +10,7 @@ module.exports = class Turtle {
         selectedSlot,
         inventory = {},
         stepsSinceLastRecharge = undefined,
-        state = undefined,
+        state = undefined
     ) {
         this.id = id;
         this.name = name;
