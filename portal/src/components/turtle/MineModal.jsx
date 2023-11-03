@@ -60,7 +60,6 @@ function MineModal(props) {
                             value={state.selectedArea}
                             onChange={(e) => setState({selectedArea: e.target.value})}
                             as='select'
-                            custom
                             required
                         >
                             <option value='' key='empty'>
@@ -96,7 +95,6 @@ function MineModal(props) {
                             value={state.selectedDirection}
                             onChange={(e) => setState({selectedDirection: e.target.value})}
                             as='select'
-                            custom
                             required
                         >
                             <option value='' key='empty'>
