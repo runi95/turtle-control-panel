@@ -122,6 +122,8 @@ wssWebsite.on('connection', (ws) => {
                         case 'refuel':
                             if (turtle !== undefined) {
                                 turtlesDB.updateState(turtle.id, {id: 1, name: 'refueling', dropAllItems: true});
+                            } else {
+                                console.error(`Attempted to refuel invalid turtle [${obj.data.id}]`);
                             }
                             break;
                         case 'mine':
@@ -132,6 +134,8 @@ wssWebsite.on('connection', (ws) => {
                                     mineType: obj.data.mineType,
                                     mineTarget: obj.data.mineTarget,
                                 });
+                            } else {
+                                console.error(`Attempted to mine with invalid turtle [${obj.data.id}]`);
                             }
                             break;
                         case 'move':
@@ -143,6 +147,8 @@ wssWebsite.on('connection', (ws) => {
                                     y: obj.data.y,
                                     z: obj.data.z,
                                 });
+                            } else {
+                                console.error(`Attempted to move invalid turtle [${obj.data.id}]`);
                             }
                             break;
                         case 'farm':
@@ -153,11 +159,15 @@ wssWebsite.on('connection', (ws) => {
                                     areaId: obj.data.areaId,
                                     currentAreaFarmIndex: 0,
                                 });
+                            } else {
+                                console.error(`Attempted to farm with invalid turtle [${obj.data.id}]`);
                             }
                             break;
                         case 'stop':
                             if (turtle !== undefined) {
                                 turtlesDB.updateState(turtle.id, undefined);
+                            } else {
+                                console.error(`Attempted to stop invalid turtle [${obj.data.id}]`);
                             }
                             break;
                     }
