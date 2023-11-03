@@ -33,7 +33,7 @@ function Turtle(props) {
                 </Col>
                 <Col md='auto'>
                     <LocationText>
-                        {!!turtle?.direction ? `${directionToString(turtle.direction)}` : '_'} (
+                        {turtle?.direction ? `${directionToString(turtle.direction)}` : '_'} (
                         {turtle?.location
                             ? `${turtle.location.x}, ${turtle.location.y}, ${turtle.location.z}`
                             : '?, ?, ?'}
