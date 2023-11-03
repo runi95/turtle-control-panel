@@ -100,49 +100,54 @@ wssWebsite.on('connection', (ws) => {
         const obj = JSON.parse(msg);
         switch (obj.type) {
             case 'HANDSHAKE':
-                ws.send(
-                    JSON.stringify({
+                Promise.all([turtlesDB.getTurtles(), worldDB.getAllBlocks(), areasDB.getAreas()]).then(([turtles, world, areas]) => {
+                    ws.send(JSON.stringify({
                         type: 'HANDSHAKE',
-                        message: { turtles: turtlesDB.getTurtles(), world: worldDB.getAllBlocks(), areas: areasDB.getAreas() },
-                    }),
-                );
+                        message: {
+                            turtles,
+                            world,
+                            areas
+                        }
+                    }));
+                })
                 break;
             case 'ACTION':
                 //obj.data.id apears to come out undefined, looking into the cause now as the STOP feature throws this
-                console.log(obj.data)
-                const turtle = turtlesDB.getTurtle(obj.data.id);
-                switch (obj.action) {
-                    case 'refuel':
-                        if (turtle !== undefined) {
-                            turtlesDB.updateState(turtle.id, { id: 1, name: 'refueling', dropAllItems: true });
-                        }
-                        break;
-                    case 'mine':
-                        if (turtle !== undefined) {
-                            turtlesDB.updateState(turtle.id, {
-                                id: 2,
-                                name: 'mining',
-                                mineType: obj.data.mineType,
-                                mineTarget: obj.data.mineTarget,
-                            });
-                        }
-                        break;
-                    case 'move':
-                        if (turtle !== undefined) {
-                            turtlesDB.updateState(turtle.id, { id: 3, name: 'moving', x: obj.data.x, y: obj.data.y, z: obj.data.z });
-                        }
-                        break;
-                    case 'farm':
-                        if (turtle !== undefined) {
-                            turtlesDB.updateState(turtle.id, { id: 4, name: 'farming', areaId: obj.data.areaId, currentAreaFarmIndex: 0 });
-                        }
-                        break;
-                    case 'stop':
-                        if (turtle !== undefined) {
-                            turtlesDB.updateState(turtle.id, undefined);
-                        }
-                        break;
-                }
+                console.log(obj.data);
+                turtlesDB.getTurtle(obj.data.id).then((turtle) => {
+                    switch (obj.action) {
+                        case 'refuel':
+                            if (turtle !== undefined) {
+                                turtlesDB.updateState(turtle.id, { id: 1, name: 'refueling', dropAllItems: true });
+                            }
+                            break;
+                        case 'mine':
+                            if (turtle !== undefined) {
+                                turtlesDB.updateState(turtle.id, {
+                                    id: 2,
+                                    name: 'mining',
+                                    mineType: obj.data.mineType,
+                                    mineTarget: obj.data.mineTarget,
+                                });
+                            }
+                            break;
+                        case 'move':
+                            if (turtle !== undefined) {
+                                turtlesDB.updateState(turtle.id, { id: 3, name: 'moving', x: obj.data.x, y: obj.data.y, z: obj.data.z });
+                            }
+                            break;
+                        case 'farm':
+                            if (turtle !== undefined) {
+                                turtlesDB.updateState(turtle.id, { id: 4, name: 'farming', areaId: obj.data.areaId, currentAreaFarmIndex: 0 });
+                            }
+                            break;
+                        case 'stop':
+                            if (turtle !== undefined) {
+                                turtlesDB.updateState(turtle.id, undefined);
+                            }
+                            break;
+                    }
+                });
                 break;
             case 'AREA':
                 switch (obj.action) {
