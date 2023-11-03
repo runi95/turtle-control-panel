@@ -1,4 +1,5 @@
-local connectionURL = "<INPUT YOUR CONNECTION URL HERE>"
+local connectionURL = "127.0.0.1:5757" --replace with your server IP
+
 local ws, err = http.websocket(connectionURL)
 if not ws then
     return printError(err)
@@ -6,7 +7,7 @@ end
 
 print("> CONNECTED")
 
-function arrayToObject(arr)
+function ArrayToObject(arr)
     local result = {}
     
     for k, v in pairs(arr) do
@@ -16,7 +17,7 @@ function arrayToObject(arr)
     return result
 end
 
-function eval(f, uuid)
+function Eval(f, uuid)
     local func = loadstring(f)
     local result = {func()}
     local type = "EVAL"
@@ -24,27 +25,14 @@ function eval(f, uuid)
     ws.send(textutils.serializeJSON(response))
 end
 
-function handshake(uuid)
+--removed broken item identifier system as its completely broken, ill look into recoding it as well
+function Handshake(uuid)
     local id = os.getComputerID()
     local label = os.getComputerLabel()
     local inventory = {}
     for i = 1, 16 do
         local item = turtle.getItemDetail(i, true)
-        item["itemSpaceLeft"] = turtle.getItemSpace(i)
-        if not (item == nil) then
-            if (item["name"] == "computercraft:wireless_modem_normal" or item["name"] == "computercraft:wireless_modem_advanced") then
-                turtle.select(i)
-                turtle.equipRight()
-            elseif item["name"] == "minecraft:diamond_pickaxe" then
-                turtle.select(i)
-                turtle.equipLeft()
-            elseif item["name"] == "minecraft:coal" then
-                turtle.select(i)
-                turtle.refuel()
-            else
-                inventory[tostring(i)] = item
-            end
-        end
+        inventory[tostring(i)] = item
     end
     turtle.select(1)
     local fuelLevel = turtle.getFuelLevel()
@@ -54,25 +42,12 @@ function handshake(uuid)
     if (x == nil) then
         return ws.send(textutils.serializeJSON({ type = "ERROR", uuid = uuid, message = "nogps: Failed to connect to the GPS" }))
     end
+-- removed stuck notifier because honestly kinda usless for now i plan on readding it later with a bit better logic
 
-    local movedBackwards = false
-    if (not turtle.forward()) then
-        movedBackwards = true
-        if (not turtle.back()) then
-            movedBackwards = false
-            turtle.turnLeft()
-            if (not turtle.forward()) then
-                movedBackwards = true
-                if (not turtle.back()) then
-                    return ws.send(textutils.serializeJSON({ type = "ERROR", uuid = uuid, message = "stuck: Turtle can't move" }))
-                end
-            end
-        end
-    end
-
+--extra debugging to the GPS since you cant differentiate them
     local x2, y2, z2 = gps.locate()
     if (x2 == nil) then
-        return ws.send(textutils.serializeJSON({ type = "ERROR", uuid = uuid, message = "nogps: Failed to connect to the GPS" }))
+        return ws.send(textutils.serializeJSON({ type = "ERROR", uuid = uuid, message = "nogps: Failed to connect to the GPS X2" }))
     end
 
     local heading
@@ -102,13 +77,13 @@ while true do
     else
         local obj = textutils.unserializeJSON(message)
         if obj.type == "HANDSHAKE" then
-            handshake(obj.uuid)
+            Handshake(obj.uuid)
         elseif obj.type == "RENAME" then
             os.setComputerLabel(obj["message"])
             local response = { type = "RENAME", uuid = obj.uuid }
             ws.send(textutils.serializeJSON(response))
         elseif obj.type == "EVAL" then
-            eval(obj["function"], obj.uuid)
+            Eval(obj["function"], obj.uuid)
         elseif obj.type == "DISCONNECT" then
             ws.close()
             return print("TERMINATED")

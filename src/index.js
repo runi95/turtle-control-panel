@@ -4,7 +4,7 @@ const TurtleWS = require('./entities/turtleWS');
 const { EventEmitter } = require('events');
 const TurtlesDB = require('./db/turtlesDB');
 const WorldDB = require('./db/worldDB');
-const AreasDB = require('./db/AreasDB');
+const AreasDB = require('./db/areasDB');
 const TurtleController = require('./turtleController');
 const Turtle = require('./entities/turtle');
 
@@ -108,6 +108,8 @@ wssWebsite.on('connection', (ws) => {
                 );
                 break;
             case 'ACTION':
+                //obj.data.id apears to come out undefined, looking into the cause now as the STOP feature throws this
+                console.log(obj.data)
                 const turtle = turtlesDB.getTurtle(obj.data.id);
                 switch (obj.action) {
                     case 'refuel':
