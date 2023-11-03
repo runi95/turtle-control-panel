@@ -135,7 +135,7 @@ function Inventory(props) {
             <Row style={{marginTop: 5}}>
                 <div>
                     <Button
-                        onClick={() => props.action({type: 'ACTION', action: 'stop'})}
+                        onClick={() => props.action({type: 'ACTION', action: 'stop', data: {id: turtle.id}})}
                         variant='outline-danger'
                         size='sm'
                         disabled={!turtle.isOnline}
