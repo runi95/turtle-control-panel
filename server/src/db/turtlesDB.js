@@ -18,9 +18,9 @@ module.exports = class TurtlesDB {
         this.db.push(`/${id}/state`, state);
     }
 
-    getTurtle(id) {
+    async getTurtle(id) {
         try {
-            return this.db.getData(`/${id}`);
+            return await this.db.getData(`/${id}`);
         } catch (err) {
             return undefined;
         }

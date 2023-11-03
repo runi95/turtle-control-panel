@@ -10,9 +10,9 @@ module.exports = class AreasDB {
         this.db.push(`/${area.id}`, area);
     }
 
-    getArea(id) {
+    async getArea(id) {
         try {
-            return this.db.getData(`/${id}`);
+            return await this.db.getData(`/${id}`);
         } catch (err) {
             return undefined;
         }
