@@ -19,7 +19,7 @@ function Inventory(props) {
                         turtle={turtle}
                         action={props.action}
                         areas={Object.keys(props.areas || {}).map((key) => props.areas[key].id)}
-                        hideModal={() => setState({isModalShown: false})}
+                        hideModal={() => setState({...state, isModalShown: false})}
                     />
                 );
             case 'mine':
@@ -28,7 +28,7 @@ function Inventory(props) {
                         turtle={turtle}
                         action={props.action}
                         areas={Object.keys(props.areas || {}).map((key) => props.areas[key].id)}
-                        hideModal={() => setState({isModalShown: false})}
+                        hideModal={() => setState({...state, isModalShown: false})}
                     />
                 );
             default:
@@ -44,7 +44,7 @@ function Inventory(props) {
     const {inventory, selectedSlot} = turtle;
     return [
         <Col key='inventory-grid' md='auto'>
-            <Modal show={state.isModalShown} onHide={() => setState({isModalShown: false})}>
+            <Modal show={state.isModalShown} onHide={() => setState({...state, isModalShown: false})}>
                 {renderModal(turtle)}
             </Modal>
             <InventoryGrid>
@@ -99,7 +99,7 @@ function Inventory(props) {
             <Row>
                 <div>
                     <Button
-                        onClick={() => setState({isModalShown: true, modalState: 'mine'})}
+                        onClick={() => setState({...state, isModalShown: true, modalState: 'mine'})}
                         variant='outline-info'
                         size='sm'
                         disabled={!turtle.isOnline}
@@ -111,7 +111,7 @@ function Inventory(props) {
             <Row style={{marginTop: 5}}>
                 <div>
                     <Button
-                        onClick={() => setState({isModalShown: true, modalState: 'farm'})}
+                        onClick={() => setState({...state, isModalShown: true, modalState: 'farm'})}
                         variant='outline-info'
                         size='sm'
                         disabled={!turtle.isOnline}

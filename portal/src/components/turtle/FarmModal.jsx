@@ -21,7 +21,7 @@ function FarmModal(props) {
             e.stopPropagation();
         }
 
-        setState({isFormValidated, selectedArea});
+        setState({...state, isFormValidated, selectedArea});
     };
 
     return (
@@ -34,7 +34,7 @@ function FarmModal(props) {
                     <Form.Label>Farming area</Form.Label>
                     <Form.Control
                         value={state.selectedArea}
-                        onChange={(e) => setState({selectedArea: e.target.value})}
+                        onChange={(e) => setState({...state, selectedArea: e.target.value})}
                         as='select'
                         custom
                         required

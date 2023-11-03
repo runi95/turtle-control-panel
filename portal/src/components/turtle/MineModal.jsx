@@ -47,7 +47,7 @@ function MineModal(props) {
             e.stopPropagation();
         }
 
-        setState({isFormValidated, selectedArea, selectedYLevel, selectedDirection});
+        setState({...state, isFormValidated, selectedArea, selectedYLevel, selectedDirection});
     };
 
     const renderFormInput = () => {
@@ -58,7 +58,7 @@ function MineModal(props) {
                         <Form.Label>Mine area</Form.Label>
                         <Form.Control
                             value={state.selectedArea}
-                            onChange={(e) => setState({selectedArea: e.target.value})}
+                            onChange={(e) => setState({...state, selectedArea: e.target.value})}
                             as='select'
                             required
                         >
@@ -82,7 +82,7 @@ function MineModal(props) {
                             max='255'
                             placeholder={props.turtle.location.y}
                             value={state.selectedYLevel}
-                            onChange={(e) => setState({selectedYLevel: e.target.value})}
+                            onChange={(e) => setState({...state, selectedYLevel: e.target.value})}
                         />
                         <Form.Control.Feedback type='invalid'>Please select a valid y-level</Form.Control.Feedback>
                     </Form.Group>
@@ -93,7 +93,7 @@ function MineModal(props) {
                         <Form.Label>Mine in direction</Form.Label>
                         <Form.Control
                             value={state.selectedDirection}
-                            onChange={(e) => setState({selectedDirection: e.target.value})}
+                            onChange={(e) => setState({...state, selectedDirection: e.target.value})}
                             as='select'
                             required
                         >
@@ -132,7 +132,7 @@ function MineModal(props) {
                             id='area'
                             value='area'
                             checked={state.selectedOption === 'area'}
-                            onChange={() => setState({selectedOption: 'area'})}
+                            onChange={() => setState({...state, selectedOption: 'area'})}
                         />
                         <Form.Check
                             inline
@@ -142,7 +142,7 @@ function MineModal(props) {
                             id='ylevel'
                             value='ylevel'
                             checked={state.selectedOption === 'ylevel'}
-                            onChange={() => setState({selectedOption: 'ylevel'})}
+                            onChange={() => setState({...state, selectedOption: 'ylevel'})}
                         />
                         <Form.Check
                             inline
@@ -152,7 +152,7 @@ function MineModal(props) {
                             id='direction'
                             value='direction'
                             checked={state.selectedOption === 'direction'}
-                            onChange={() => setState({selectedOption: 'direction'})}
+                            onChange={() => setState({...state, selectedOption: 'direction'})}
                         />
                     </div>
                 </Form.Group>

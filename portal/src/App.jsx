@@ -31,7 +31,12 @@ function App() {
             const obj = JSON.parse(msg.data);
             switch (obj.type) {
                 case 'HANDSHAKE':
-                    setState({turtles: obj.message.turtles, world: obj.message.world, areas: obj.message.areas});
+                    setState({
+                        ...state,
+                        turtles: obj.message.turtles,
+                        world: obj.message.world,
+                        areas: obj.message.areas,
+                    });
                     break;
                 case 'TCONNECT':
                     setState({...state, turtles: {...state.turtles, [obj.message.turtle.id]: obj.message.turtle}});
