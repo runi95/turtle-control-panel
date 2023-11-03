@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "description": "",
-    "main": "index.js",
+    "main": "index.jsx",
     "scripts": {
         "start": "react-scripts start",
         "build": "react-scripts build",
@@ -11,18 +11,26 @@
         "eject": "react-scripts eject"
     },
     "eslintConfig": {
-        "extends": "react-app"
+        "extends": [
+            "react-app",
+            "react-app/jest"
+        ]
     },
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bootstrap": "^4.5.3",
-        "react": "^17.0.1",
-        "react-bootstrap": "^1.4.3",
-        "react-dom": "^17.0.1",
-        "react-router-dom": "^5.2.0",
+        "@testing-library/jest-dom": "^6.1.4",
+        "@testing-library/react": "^14.0.0",
+        "@testing-library/user-event": "^14.5.1",
+        "bootstrap": "^5.3.2",
+        "react": "^18.2.0",
+        "react-bootstrap": "^2.9.1",
+        "react-dom": "^18.2.0",
+        "react-router-dom": "^6.18.0",
         "react-scripts": "^5.0.1",
-        "styled-components": "^5.2.1"
+        "react-use-websocket": "^4.5.0",
+        "styled-components": "^6.1.0",
+        "web-vitals": "^3.5.0"
     },
     "browserslist": {
         "production": [
