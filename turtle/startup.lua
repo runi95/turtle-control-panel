@@ -1,9 +1,9 @@
+local connectionURL = "127.0.0.1:5757" --replace with your server IP
+
 local ws
 local logLevel = 0
 
 local function main()
-    local connectionURL = "127.0.0.1:5757" --replace with your server IP
-
     if logLevel < 2 then
         print("> CONNECTING...")
     end
