@@ -32,23 +32,27 @@ local function main()
                 os.sleep(math.min(reconnectionAttempts, 30))
             end
         else
-            local obj = textutils.unserializeJSON(message)
-            if obj.type == "HANDSHAKE" then
-                Handshake(obj.uuid)
-            elseif obj.type == "RENAME" then
-                os.setComputerLabel(obj["message"])
-                local response = { type = "RENAME", uuid = obj.uuid }
-                ws.send(textutils.serializeJSON(response))
-            elseif obj.type == "EVAL" then
-                Eval(obj["function"], obj.uuid)
-            elseif obj.type == "DISCONNECT" then
-                ws.close()
-                return print("TERMINATED")
-            elseif obj.type == "REBOOT" then
-                ws.close()
-                print("> REBOOTING")
-                os.reboot()
-            end
+            xpcall(function ()
+                local obj = textutils.unserializeJSON(message)
+                if obj.type == "HANDSHAKE" then
+                    Handshake(obj.uuid)
+                elseif obj.type == "RENAME" then
+                    os.setComputerLabel(obj["message"])
+                    local response = { type = "RENAME", uuid = obj.uuid }
+                    ws.send(textutils.serializeJSON(response))
+                elseif obj.type == "EVAL" then
+                    Eval(obj["function"], obj.uuid)
+                elseif obj.type == "DISCONNECT" then
+                    ws.close()
+                    return print("TERMINATED")
+                elseif obj.type == "REBOOT" then
+                    ws.close()
+                    print("> REBOOTING")
+                    os.reboot()
+                end
+            end, function (msg)
+                printError(msg)
+            end)
         end
     end
 end
