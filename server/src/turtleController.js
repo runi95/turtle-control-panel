@@ -540,22 +540,35 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async moveAndRefuel() {
+        // Turtle has enough fuel
         if (this.turtle.fuelLevel > 0.8 * this.turtle.fuelLimit) {
             this.turtle.state = undefined;
             this.turtlesDB.addTurtle(this.turtle);
             return;
         }
 
-        await this.moveTo(rechargeStation.x, rechargeStation.y, rechargeStation.z);
-
-        if (this.turtle.state.dropAllItems) {
-            await this.dropAllItems();
+        // Attempt to refuel with whatever is in the inventory
+        const currentFuelLevel = this.turtle.fuelLevel;
+        const currentlySelectedSlot = await this.getSelectedSlot();
+        for (let i = 1; i < 17; i++) {
+            await this.select(i);
+            await this.refuel();
         }
 
-        await this.suckUp(Math.min((this.turtle.fuelLimit - this.turtle.fuelLevel) / 80, 64));
-        await this.refuel();
+        await this.select(currentlySelectedSlot);
 
-        this.turtle.stepsSinceLastRecharge = 0;
+        // TODO: Attempt to locate a fuel station if possible
+
+        // Refuel successful!
+        if (this.turtle.fuelLevel > currentFuelLevel && this.turtle.fuelLevel > this.turtle.fuelLimit * 0.1) {
+            this.turtle.state = undefined;
+            this.turtlesDB.addTurtle(this.turtle);
+            return;
+        }
+
+        // Failed to refuel, request help
+        this.turtle.state = {id: 5, name: 'out of fuel'};
+        this.turtlesDB.addTurtle(this.turtle);
     }
 
     async farm() {
@@ -716,11 +729,12 @@ module.exports = class TurtleController extends EventEmitter {
     async *ai() {
         while (true) {
             if (
-                this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
-                this.turtle.stepsSinceLastRecharge >=
-                    this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
+                this.turtle.state?.id !== 5 &&
+                (this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
+                    this.turtle.stepsSinceLastRecharge >=
+                        this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1)
             ) {
-                this.turtle.state = {id: 1, name: 'refueling', dropAllItems: true};
+                this.turtle.state = {id: 1, name: 'refueling'};
                 this.turtlesDB.addTurtle(this.turtle);
             }
 
