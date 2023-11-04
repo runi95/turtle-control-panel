@@ -560,7 +560,7 @@ module.exports = class TurtleController extends EventEmitter {
         // TODO: Attempt to locate a fuel station if possible
 
         // Refuel successful!
-        if (this.turtle.fuelLevel > currentFuelLevel && this.turtle.fuelLevel > this.turtle.fuelLimit * 0.1) {
+        if (this.turtle.fuelLevel > this.turtle.fuelLimit * 0.1) {
             this.turtle.state = undefined;
             this.turtlesDB.addTurtle(this.turtle);
             return;
