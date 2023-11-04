@@ -640,7 +640,7 @@ module.exports = class TurtleController extends EventEmitter {
         }
 
         const {areaId, currentAreaFarmIndex} = this.turtle.state;
-        const farmArea = this.areasDB.getArea(areaId);
+        const farmArea = await this.areasDB.getArea(areaId);
 
         await this.moveTo(
             farmArea.area[currentAreaFarmIndex].x,
