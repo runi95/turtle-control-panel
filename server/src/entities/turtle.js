@@ -5,12 +5,12 @@ module.exports = class Turtle {
         isOnline,
         fuelLevel,
         fuelLimit,
-        location,
-        direction,
         selectedSlot,
         inventory = {},
         stepsSinceLastRecharge = undefined,
-        state = undefined
+        state = undefined,
+        location = undefined,
+        direction = undefined
     ) {
         this.id = id;
         this.name = name;

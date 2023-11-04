@@ -726,16 +726,94 @@ module.exports = class TurtleController extends EventEmitter {
         }
     }
 
+    async recalibrate() {
+        let movedBackwards = false;
+        const [didMoveForwards] = await this.wsTurtle.exec('turtle.forward()');
+        if (!didMoveForwards) {
+            movedBackwards = true;
+            const [didMoveBackwards] = await this.wsTurtle.exec('turtle.back()');
+            if (!didMoveBackwards) {
+                movedBackwards = false;
+                const [didTurnLeft] = await this.wsTurtle.exec('turtle.turnLeft()');
+                if (!didTurnLeft) {
+                    const [didTurnRight] = await this.wsTurtle.exec('turtle.turnRight()');
+                    if (!didTurnRight) {
+                        this.turtle.state = {id: 9, name: 'unable to recalibrate'};
+                        this.turtlesDB.addTurtle(this.turtle);
+                        return;
+                    }
+                }
+                const [didMoveForwards] = await this.wsTurtle.exec('turtle.forward()');
+                if (!didMoveForwards) {
+                    movedBackwards = true;
+                    const didMoveBackwards = await this.wsTurtle.exec('turtle.back()');
+                    if (!didMoveBackwards) {
+                        this.turtle.state = {id: 9, name: 'unable to recalibrate'};
+                        this.turtlesDB.addTurtle(this.turtle);
+                        return;
+                    }
+                }
+            }
+        }
+
+        const location = await this.wsTurtle.exec('gps.locate()');
+        if (movedBackwards) {
+            await this.wsTurtle.exec('turtle.forward()');
+        } else {
+            await this.wsTurtle.exec('turtle.back()');
+        }
+
+        if (!Array.isArray(location)) {
+            this.turtle.state = {id: 9, name: 'unable to recalibrate'};
+            this.turtlesDB.addTurtle(this.turtle);
+            return;
+        }
+
+        const [x, y, z] = location;
+
+        let diff = [this.turtle.location.x - x, this.turtle.location.y - y, this.turtle.location.z - z];
+        if (!movedBackwards) {
+            diff = [-diff[0], -diff[1], -diff[2]];
+        }
+
+        const direction = diff[0] + Math.abs(diff[0]) * 2 + diff[2] + Math.abs(diff[2]) * 3;
+        this.turtle.direction = direction;
+        this.turtle.state = undefined;
+        this.turtlesDB.addTurtle(this.turtle);
+    }
+
+    async locate() {
+        const location = await this.wsTurtle.exec('gps.locate()');
+        if (!Array.isArray(location)) {
+            this.turtle.state = {id: 8, name: 'no gps location'};
+            this.turtlesDB.addTurtle(this.turtle);
+            return;
+        }
+
+        const [x, y, z] = location;
+        this.turtle.location = {x, y, z};
+        this.turtlesDB.addTurtle(this.turtle);
+    }
+
     async *ai() {
         while (true) {
-            if (
-                this.turtle.state?.id !== 5 &&
-                (this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
+            if (this.turtle.location === undefined) {
+                if (this.turtle.state?.id !== 8) {
+                    this.turtle.state = {id: 7, name: 'locating'};
+                    this.turtlesDB.addTurtle(this.turtle);
+                }
+            } else if (this.turtle.state?.id !== 5) {
+                if (
+                    this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
                     this.turtle.stepsSinceLastRecharge >=
-                        this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1)
-            ) {
-                this.turtle.state = {id: 1, name: 'refueling'};
-                this.turtlesDB.addTurtle(this.turtle);
+                        this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
+                ) {
+                    this.turtle.state = {id: 1, name: 'refueling'};
+                    this.turtlesDB.addTurtle(this.turtle);
+                } else if (!this.turtle.direction && this.turtle.state?.id !== 9) {
+                    this.turtle.state = {id: 6, name: 'recalibrating'};
+                    this.turtlesDB.addTurtle(this.turtle);
+                }
             }
 
             const stateId = (this.turtle.state || {}).id;
@@ -751,6 +829,12 @@ module.exports = class TurtleController extends EventEmitter {
                     break;
                 case 4:
                     await this.farm();
+                    break;
+                case 6:
+                    await this.recalibrate();
+                    break;
+                case 7:
+                    await this.locate();
                     break;
             }
 

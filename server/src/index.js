@@ -47,8 +47,6 @@ wss.on('connection', (ws) => {
             isOnline,
             fuelLevel,
             fuelLimit,
-            location,
-            direction,
             selectedSlot,
             inventory,
             stepsSinceLastRecharge = turtleFromDB.stepsSinceLastRecharge,
@@ -60,12 +58,12 @@ wss.on('connection', (ws) => {
             isOnline,
             fuelLevel,
             fuelLimit,
-            location,
-            direction,
             selectedSlot,
             inventory,
             (stepsSinceLastRecharge || 0) + 1,
-            state
+            state,
+            turtleFromDB.location,
+            turtleFromDB.direction
         );
 
         turtlesDB.addTurtle(turtle);

@@ -39,6 +39,7 @@ const TurtleMap = (props) => {
                 const centerY = 0.5 * spriteSize * mul;
                 const drawRange = 0.5 * mul;
                 const turtle = turtles[selectedTurtle];
+                if (!turtle?.location) return;
                 const {x, y, z} = turtle.location;
 
                 // Clear
@@ -154,7 +155,7 @@ const TurtleMap = (props) => {
                 for (let key of keys) {
                     if (key !== turtle.id.toString()) {
                         const otherTurtle = turtles[key];
-                        if (otherTurtle.location.y === turtle.location.y) {
+                        if (otherTurtle?.location?.y === turtle?.location?.y) {
                             ctx.beginPath();
                             ctx.fillStyle = otherTurtle.isOnline ? 'white' : '#696969';
                             const posX = (otherTurtle.location.x - turtle.location.x) * spriteSize + centerX;

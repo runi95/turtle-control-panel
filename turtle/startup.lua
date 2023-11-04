@@ -96,7 +96,6 @@ function Eval(f, uuid)
     end
 end
 
---removed broken item identifier system as its completely broken, ill look into recoding it as well
 function Handshake(uuid)
     local id = os.getComputerID()
     local label = os.getComputerLabel()
@@ -105,38 +104,18 @@ function Handshake(uuid)
         local item = turtle.getItemDetail(i, true)
         inventory[tostring(i)] = item
     end
-    turtle.select(1)
     local fuelLevel = turtle.getFuelLevel()
     local fuelLimit = turtle.getFuelLimit()
+    if logLevel < 3 then
+        if fuelLevel == 0 then
+            print("WARN: Out of fuel")
+        elseif fuelLevel < 0.1 * fuelLimit then
+            print("WARN: Low on fuel")
+        end
+    end
     local fuel = { level = fuelLevel, limit = fuelLimit }
-    local x, y, z = gps.locate()
-    if (x == nil) then
-        if ws then
-            ws.send(textutils.serializeJSON({ type = "ERROR", uuid = uuid, message = "nogps: Failed to connect to the GPS" }))
-        end
-        return
-    end
--- removed stuck notifier because honestly kinda usless for now i plan on readding it later with a bit better logic
-
---extra debugging to the GPS since you cant differentiate them
-    local x2, y2, z2 = gps.locate()
-    if (x2 == nil) then
-        if ws then
-            ws.send(textutils.serializeJSON({ type = "ERROR", uuid = uuid, message = "nogps: Failed to connect to the GPS X2" }))
-        end
-        return
-    end
-
-    local heading
-    if movedBackwards then
-        heading = vector.new(x, y, z) - vector.new(x2, y2, z2)
-    else
-        heading = vector.new(x2, y2, z2) - vector.new(x, y, z)
-    end
-    local direction = ((heading.x + math.abs(heading.x) * 2) + (heading.z + math.abs(heading.z) * 3))
-    local location = { x = x2, y = y2, z = z2 }
     local selectedSlot = turtle.getSelectedSlot()
-    local computer = { id = id, label = label, fuel = fuel, inventory = inventory, location = location, direction = direction, selectedSlot = selectedSlot }
+    local computer = { id = id, label = label, fuel = fuel, inventory = inventory, selectedSlot = selectedSlot }
     local response = { type = "HANDSHAKE", uuid = uuid, message = computer }
     if ws then
         ws.send(textutils.serializeJSON(response))
