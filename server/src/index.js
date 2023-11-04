@@ -187,20 +187,17 @@ wssWebsite.on('connection', (ws) => {
     const update = (type, obj) => {
         switch (type) {
             case 'tconnect':
-                ws.send(JSON.stringify({type: 'TCONNECT', message: obj}));
-                break;
+                return ws.send(JSON.stringify({type: 'TCONNECT', message: obj}));
             case 'tdisconnect':
-                ws.send(JSON.stringify({type: 'TDISCONNECT', message: obj}));
-                break;
+                return ws.send(JSON.stringify({type: 'TDISCONNECT', message: obj}));
             case 'tlocation':
-                ws.send(JSON.stringify({type: 'TLOCATION', message: obj}));
-                break;
+                return ws.send(JSON.stringify({type: 'TLOCATION', message: obj}));
+            case 'tupdate':
+                return ws.send(JSON.stringify({type: 'TUPDATE', message: obj}));
             case 'wupdate':
-                ws.send(JSON.stringify({type: 'WUPDATE', message: obj}));
-                break;
+                return ws.send(JSON.stringify({type: 'WUPDATE', message: obj}));
             case 'wdelete':
-                ws.send(JSON.stringify({type: 'WDELETE', message: obj}));
-                break;
+                return ws.send(JSON.stringify({type: 'WDELETE', message: obj}));
         }
     };
     updateEmitter.on('update', update);

@@ -571,6 +571,12 @@ module.exports = class TurtleController extends EventEmitter {
         if (this.turtle.fuelLevel > 0.8 * this.turtle.fuelLimit) {
             this.turtle.state = undefined;
             this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    state: this.turtle.state,
+                },
+            });
             return;
         }
 
@@ -579,10 +585,23 @@ module.exports = class TurtleController extends EventEmitter {
         const currentlySelectedSlot = await this.getSelectedSlot();
         for (let i = 1; i < 17; i++) {
             await this.select(i);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    selectedSlot: i,
+                },
+            });
             await this.refuel();
         }
 
         await this.select(currentlySelectedSlot);
+
+        this.emit('update', 'tupdate', {
+            id: this.turtle.id,
+            data: {
+                selectedSlot: currentlySelectedSlot,
+            },
+        });
 
         // TODO: Attempt to locate a fuel station if possible
 
@@ -590,12 +609,24 @@ module.exports = class TurtleController extends EventEmitter {
         if (this.turtle.fuelLevel > this.turtle.fuelLimit * 0.1) {
             this.turtle.state = undefined;
             this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    state: this.turtle.state,
+                },
+            });
             return;
         }
 
         // Failed to refuel, request help
         this.turtle.state.error = 'Out of fuel';
         this.turtlesDB.addTurtle(this.turtle);
+        this.emit('update', 'tupdate', {
+            id: this.turtle.id,
+            data: {
+                state: this.turtle.state,
+            },
+        });
     }
 
     async farm() {

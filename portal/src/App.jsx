@@ -66,6 +66,18 @@ function App() {
                         },
                     });
                     break;
+                case 'TUPDATE':
+                    setState({
+                        ...state,
+                        turtles: {
+                            ...state.turtles,
+                            [obj.message.id]: {
+                                ...state.turtles[obj.message.id],
+                                ...obj.message.data,
+                            },
+                        },
+                    });
+                    break;
                 case 'WINIT':
                     // TODO: Implement?
                     break;
