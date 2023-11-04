@@ -3,23 +3,34 @@ local ws
 local function main()
     local connectionURL = "127.0.0.1:5757" --replace with your server IP
 
+    print("> CONNECTING...")
     ws, err = http.websocket(connectionURL)
-    if not ws then
-        return printError(err)
+    if ws then
+        print("> CONNECTED")
+    else
+        printError(err)
     end
 
-    print("> CONNECTED")
-
+    local reconnectionAttempts = 0
     while true do
-        local message = ws.receive()
+        local message = nil
+        if ws then
+            message = ws.receive()
+        end
         if message == nil then
-            ws.close()
-            print("> RECONNECTING...")
-            ws, err = http.websocket(connectionURL)
-            if not ws then
-                return printError(err)
+            if ws then
+                ws.close()
             end
-            print("> CONNECTED")
+            print("> RECONNECTING..." .. " [" .. (reconnectionAttempts + 1) .. "]")
+            ws, err = http.websocket(connectionURL)
+            if ws then
+                print("> CONNECTED")
+                reconnectionAttempts = 0
+            else
+                reconnectionAttempts = reconnectionAttempts + 1
+                printError(err)
+                os.sleep(math.min(reconnectionAttempts, 30))
+            end
         else
             local obj = textutils.unserializeJSON(message)
             if obj.type == "HANDSHAKE" then
