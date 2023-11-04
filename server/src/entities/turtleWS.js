@@ -27,7 +27,9 @@ module.exports = class TurtleWS extends EventEmitter {
             const {message} = obj;
             const {id, label, fuel, location, direction, selectedSlot, inventory} = message;
             this.ws.on('close', (code, message) => {
-                console.info(`${id} has disconnected with code ${code} and message ${message.toString() || '<none>'}`);
+                console.info(
+                    `${label}[${id}] has disconnected with code ${code} and message ${message.toString() || '<none>'}`
+                );
                 this.emit('disconnect', id);
             });
 
