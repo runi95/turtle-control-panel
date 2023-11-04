@@ -118,12 +118,11 @@ wssWebsite.on('connection', (ws) => {
                 );
                 break;
             case 'ACTION':
-                //obj.data.id apears to come out undefined, looking into the cause now as the STOP feature throws this
                 turtlesDB.getTurtle(obj.data.id).then((turtle) => {
                     switch (obj.action) {
                         case 'refuel':
                             if (turtle !== undefined) {
-                                turtlesDB.updateState(turtle.id, {id: 1, name: 'refueling', dropAllItems: true});
+                                turtlesDB.updateState(turtle.id, {id: 1, name: 'refueling'});
                             } else {
                                 console.error(`Attempted to refuel invalid turtle [${obj.data.id}]`);
                             }
