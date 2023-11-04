@@ -19,7 +19,8 @@ function Dashboard(props) {
                         <th style={{width: 80}}>Status</th>
                         <th style={{width: 120}}>Name</th>
                         <th style={{width: 80}}>Activity</th>
-                        <th>Fuel</th>
+                        <th style={{width: 220}}>Fuel</th>
+                        <th>Error</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -38,6 +39,9 @@ function Dashboard(props) {
                                 <td>{props.turtles[key].state ? props.turtles[key].state.name : 'idle'}</td>
                                 <td style={{verticalAlign: 'middle'}}>
                                     <FuelInfo {...props.turtles[key]} />
+                                </td>
+                                <td>
+                                    <span className='text-danger'>{props.turtles[key].state?.error}</span>
                                 </td>
                             </tr>
                         ))}

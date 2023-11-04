@@ -100,11 +100,7 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async down() {
-        const [didMove, err] = await this.wsTurtle.exec('turtle.down()');
-        if (!didMove) {
-            throw new Error(err);
-        }
-
+        const down = await this.wsTurtle.exec('turtle.down()');
         this.turtle.fuelLevel--;
         const {x, y, z} = this.turtle.location;
         this.turtle.location = {x, y: y - 1, z};
@@ -120,6 +116,7 @@ module.exports = class TurtleController extends EventEmitter {
             y: this.turtle.location.y,
             z: this.turtle.location.z,
         });
+        return down;
     }
 
     async turnLeft() {
@@ -459,13 +456,43 @@ module.exports = class TurtleController extends EventEmitter {
         const diffInYLevels = mineTarget - this.turtle.location.y;
         if (diffInYLevels !== 0) {
             if (diffInYLevels < 0) {
-                await this.digDown();
-                await this.suckDown();
-                await this.down();
+                const [didDigDown, digDownMessage] = await this.digDown();
+                if (!didDigDown && digDownMessage !== 'Nothing to dig here') {
+                    this.turtle.state.error = digDownMessage;
+                    this.turtlesDB.addTurtle(this.turtle);
+                    return;
+                }
+                const [didSuckDown, suckDownMessage] = await this.suckDown();
+                if (!didSuckDown && suckDownMessage !== 'No items to take') {
+                    this.turtle.state.error = suckDownMessage;
+                    this.turtlesDB.addTurtle(this.turtle);
+                    return;
+                }
+                const [didMoveDown, moveDownMessage] = await this.down();
+                if (!didMoveDown) {
+                    this.turtle.state.error = moveDownMessage;
+                    this.turtlesDB.addTurtle(this.turtle);
+                    return;
+                }
             } else if (diffInYLevels > 0) {
-                await this.digUp();
-                await this.suckUp();
-                await this.up();
+                const [didDigUp, digUpMessage] = await this.digUp();
+                if (!didDigUp && digUpMessage !== 'Nothing to dig here') {
+                    this.turtle.state.error = digUpMessage;
+                    this.turtlesDB.addTurtle(this.turtle);
+                    return;
+                }
+                const [didSuckUp, suckUpMessage] = await this.suckUp();
+                if (!didSuckUp && suckUpMessage !== 'No items to take') {
+                    this.turtle.state.error = suckUpMessage;
+                    this.turtlesDB.addTurtle(this.turtle);
+                    return;
+                }
+                const [didMoveUp, moveUpMessage] = await this.up();
+                if (!didMoveUp) {
+                    this.turtle.state.error = moveUpMessage;
+                    this.turtlesDB.addTurtle(this.turtle);
+                    return;
+                }
             }
         } else {
             this.turtle.state = undefined;
@@ -567,7 +594,7 @@ module.exports = class TurtleController extends EventEmitter {
         }
 
         // Failed to refuel, request help
-        this.turtle.state = {id: 5, name: 'out of fuel'};
+        this.turtle.state.error = 'Out of fuel';
         this.turtlesDB.addTurtle(this.turtle);
     }
 
@@ -727,6 +754,13 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async recalibrate() {
+        const [hasModem] = await this.wsTurtle.exec('peripheral.find("modem") ~= nil');
+        if (!hasModem) {
+            this.turtle.state.error = 'No wireless modem attached';
+            this.turtlesDB.addTurtle(this.turtle);
+            return;
+        }
+
         let movedBackwards = false;
         const [didMoveForwards] = await this.wsTurtle.exec('turtle.forward()');
         if (!didMoveForwards) {
@@ -738,7 +772,7 @@ module.exports = class TurtleController extends EventEmitter {
                 if (!didTurnLeft) {
                     const [didTurnRight] = await this.wsTurtle.exec('turtle.turnRight()');
                     if (!didTurnRight) {
-                        this.turtle.state = {id: 9, name: 'unable to recalibrate'};
+                        this.turtle.state.error = 'Cannot move or turn around';
                         this.turtlesDB.addTurtle(this.turtle);
                         return;
                     }
@@ -746,9 +780,9 @@ module.exports = class TurtleController extends EventEmitter {
                 const [didMoveForwards] = await this.wsTurtle.exec('turtle.forward()');
                 if (!didMoveForwards) {
                     movedBackwards = true;
-                    const didMoveBackwards = await this.wsTurtle.exec('turtle.back()');
+                    const [didMoveBackwards] = await this.wsTurtle.exec('turtle.back()');
                     if (!didMoveBackwards) {
-                        this.turtle.state = {id: 9, name: 'unable to recalibrate'};
+                        this.turtle.state.error = 'Stuck';
                         this.turtlesDB.addTurtle(this.turtle);
                         return;
                     }
@@ -757,19 +791,20 @@ module.exports = class TurtleController extends EventEmitter {
         }
 
         const location = await this.wsTurtle.exec('gps.locate()');
+        const x = location?.[0];
+        const y = location?.[1];
+        const z = location?.[2];
         if (movedBackwards) {
             await this.wsTurtle.exec('turtle.forward()');
         } else {
             await this.wsTurtle.exec('turtle.back()');
         }
 
-        if (!Array.isArray(location)) {
-            this.turtle.state = {id: 9, name: 'unable to recalibrate'};
+        if (x === undefined || y === undefined || z === undefined) {
+            this.turtle.state.error = 'Could not determine position';
             this.turtlesDB.addTurtle(this.turtle);
             return;
         }
-
-        const [x, y, z] = location;
 
         let diff = [this.turtle.location.x - x, this.turtle.location.y - y, this.turtle.location.z - z];
         if (!movedBackwards) {
@@ -783,38 +818,49 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async locate() {
-        const location = await this.wsTurtle.exec('gps.locate()');
-        if (!Array.isArray(location)) {
-            this.turtle.state = {id: 8, name: 'no gps location'};
+        const [hasModem] = await this.wsTurtle.exec('peripheral.find("modem") ~= nil');
+        if (!hasModem) {
+            this.turtle.state.error = 'No wireless modem attached';
             this.turtlesDB.addTurtle(this.turtle);
             return;
         }
 
-        const [x, y, z] = location;
+        const location = await this.wsTurtle.exec('gps.locate()');
+        const x = location?.[0];
+        const y = location?.[1];
+        const z = location?.[2];
+        if (x === undefined || y === undefined || z === undefined) {
+            this.turtle.state.error = 'Could not determine position';
+            this.turtlesDB.addTurtle(this.turtle);
+            return;
+        }
+
+        this.turtle.state = undefined;
         this.turtle.location = {x, y, z};
         this.turtlesDB.addTurtle(this.turtle);
     }
 
     async *ai() {
         while (true) {
-            if (this.turtle.state === undefined) {
+            if (this.turtle.state?.error) {
+                yield;
+                continue;
+            }
+            if (this.turtle.state?.id === undefined) {
                 if (this.turtle.location === undefined) {
-                    if (this.turtle.state?.id !== 8) {
-                        this.turtle.state = {id: 7, name: 'locating'};
-                        this.turtlesDB.addTurtle(this.turtle);
-                    }
-                } else if (this.turtle.state?.id !== 5) {
-                    if (
-                        this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
-                        this.turtle.stepsSinceLastRecharge >=
-                            this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
-                    ) {
-                        this.turtle.state = {id: 1, name: 'refueling'};
-                        this.turtlesDB.addTurtle(this.turtle);
-                    } else if (!this.turtle.direction && this.turtle.state?.id !== 9) {
-                        this.turtle.state = {id: 6, name: 'recalibrating'};
-                        this.turtlesDB.addTurtle(this.turtle);
-                    }
+                    console.log('locating...');
+                    this.turtle.state = {id: 5, name: 'locating'};
+                    this.turtlesDB.addTurtle(this.turtle);
+                } else if (
+                    this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
+                    this.turtle.stepsSinceLastRecharge >=
+                        this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
+                ) {
+                    this.turtle.state = {id: 1, name: 'refueling'};
+                    this.turtlesDB.addTurtle(this.turtle);
+                } else if (!this.turtle.direction) {
+                    this.turtle.state = {id: 6, name: 'recalibrating'};
+                    this.turtlesDB.addTurtle(this.turtle);
                 }
             }
 
@@ -832,11 +878,11 @@ module.exports = class TurtleController extends EventEmitter {
                 case 4:
                     await this.farm();
                     break;
+                case 5:
+                    await this.locate();
+                    break;
                 case 6:
                     await this.recalibrate();
-                    break;
-                case 7:
-                    await this.locate();
                     break;
             }
 
@@ -902,21 +948,24 @@ module.exports = class TurtleController extends EventEmitter {
                             }
                         }
                     } else if (py - y < 0) {
-                        try {
-                            await this.down();
+                        const [didMoveDown] = await this.down();
+                        if (didMoveDown) {
                             return true;
-                        } catch (err) {
-                            const downLocation = `${x},${y - 1},${z}`;
-                            if (mineableObstaclesMap[downLocation]) {
-                                await this.digDown();
-                                await this.suckDown();
-                                await this.down();
-                                return true;
-                            } else {
-                                obstaclesHash[downLocation] = true;
-                                obstacles.push(new Coordinates(x, y - 1, z));
+                        }
+
+                        const downLocation = `${x},${y - 1},${z}`;
+                        if (mineableObstaclesMap[downLocation]) {
+                            await this.digDown();
+                            await this.suckDown();
+                            const [didMoveDown] = await this.down();
+                            if (!didMoveDown) {
                                 return false;
                             }
+                            return true;
+                        } else {
+                            obstaclesHash[downLocation] = true;
+                            obstacles.push(new Coordinates(x, y - 1, z));
+                            return false;
                         }
                     } else {
                         const heading = {x: px - x, y: py - y, z: pz - z};
