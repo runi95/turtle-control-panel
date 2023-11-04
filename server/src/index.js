@@ -16,9 +16,10 @@ const worldDB = new WorldDB();
 const areasDB = new AreasDB();
 
 const setAllTurtlesToOffline = () => {
-    const turtles = turtlesDB.getTurtles();
-    Object.keys(turtles).forEach((key) => {
-        turtlesDB.updateOnlineStatus(key, false);
+    turtlesDB.getTurtles().then((turtles) => {
+        Object.keys(turtles).forEach((key) => {
+            turtlesDB.updateOnlineStatus(key, false);
+        });
     });
 };
 
@@ -36,7 +37,7 @@ wss.on('connection', (ws) => {
     console.info('Incoming connection...');
     const websocketTurtle = new TurtleWS(ws);
     const handshake = async (turtleFromWS) => {
-        const turtleFromDB = turtlesDB.getTurtle(turtleFromWS.id) || {};
+        const turtleFromDB = (await turtlesDB.getTurtle(turtleFromWS.id)) || {};
         const {
             id,
             name = turtleFromDB.name,
