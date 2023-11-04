@@ -797,22 +797,24 @@ module.exports = class TurtleController extends EventEmitter {
 
     async *ai() {
         while (true) {
-            if (this.turtle.location === undefined) {
-                if (this.turtle.state?.id !== 8) {
-                    this.turtle.state = {id: 7, name: 'locating'};
-                    this.turtlesDB.addTurtle(this.turtle);
-                }
-            } else if (this.turtle.state?.id !== 5) {
-                if (
-                    this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
-                    this.turtle.stepsSinceLastRecharge >=
-                        this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
-                ) {
-                    this.turtle.state = {id: 1, name: 'refueling'};
-                    this.turtlesDB.addTurtle(this.turtle);
-                } else if (!this.turtle.direction && this.turtle.state?.id !== 9) {
-                    this.turtle.state = {id: 6, name: 'recalibrating'};
-                    this.turtlesDB.addTurtle(this.turtle);
+            if (this.turtle.state === undefined) {
+                if (this.turtle.location === undefined) {
+                    if (this.turtle.state?.id !== 8) {
+                        this.turtle.state = {id: 7, name: 'locating'};
+                        this.turtlesDB.addTurtle(this.turtle);
+                    }
+                } else if (this.turtle.state?.id !== 5) {
+                    if (
+                        this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
+                        this.turtle.stepsSinceLastRecharge >=
+                            this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
+                    ) {
+                        this.turtle.state = {id: 1, name: 'refueling'};
+                        this.turtlesDB.addTurtle(this.turtle);
+                    } else if (!this.turtle.direction && this.turtle.state?.id !== 9) {
+                        this.turtle.state = {id: 6, name: 'recalibrating'};
+                        this.turtlesDB.addTurtle(this.turtle);
+                    }
                 }
             }
 
