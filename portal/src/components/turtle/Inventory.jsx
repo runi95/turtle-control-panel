@@ -94,6 +94,12 @@ function Inventory(props) {
             <Row>
                 <h5>
                     Status: <ins style={{textTransform: 'capitalize'}}>{turtle?.state?.name || 'idle'}</ins>
+                    {turtle?.state?.error ? (
+                        <span>
+                            {' '}
+                            (<span className='text-danger'>{turtle.state.error}</span>)
+                        </span>
+                    ) : null}
                 </h5>
             </Row>
             <Row>
