@@ -644,7 +644,7 @@ module.exports = class TurtleController extends EventEmitter {
 
         await this.moveTo(
             farmArea.area[currentAreaFarmIndex].x,
-            farmArea.area[currentAreaFarmIndex].y,
+            farmArea.area[currentAreaFarmIndex].y + 1,
             farmArea.area[currentAreaFarmIndex].z
         );
         const block = await this.inspectDown();
