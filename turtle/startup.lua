@@ -110,10 +110,22 @@ function Handshake(uuid)
     ws.send(textutils.serializeJSON(response))
 end
 
-local ok, errorMessage = pcall(main)
+local function wrappedMain()
+    local ok, errorMessage = pcall(main)
 
-pcall(ws and ws.close or function()end)
+    pcall(ws and ws.close or function()end)
 
-if not ok then
-    printError(errorMessage)
+    if not ok then
+        printError(errorMessage)
+    end
 end
+
+local function waitForDisconnect()
+    while true do
+        os.pullEvent("websocket_closed")
+        print("> WEBSOCKET CLOSED")
+        ws = nil
+    end
+end
+
+parallel.waitForAny(wrappedMain, waitForDisconnect)
