@@ -1,11 +1,46 @@
-local connectionURL = "127.0.0.1:5757" --replace with your server IP
+local ws
 
-local ws, err = http.websocket(connectionURL)
-if not ws then
-    return printError(err)
+local function main()
+    local connectionURL = "127.0.0.1:5757" --replace with your server IP
+
+    ws, err = http.websocket(connectionURL)
+    if not ws then
+        return printError(err)
+    end
+
+    print("> CONNECTED")
+
+    while true do
+        local message = ws.receive()
+        if message == nil then
+            ws.close()
+            print("> RECONNECTING...")
+            ws, err = http.websocket(connectionURL)
+            if not ws then
+                return printError(err)
+            end
+            print("> CONNECTED")
+        else
+            local obj = textutils.unserializeJSON(message)
+            if obj.type == "HANDSHAKE" then
+                Handshake(obj.uuid)
+            elseif obj.type == "RENAME" then
+                os.setComputerLabel(obj["message"])
+                local response = { type = "RENAME", uuid = obj.uuid }
+                ws.send(textutils.serializeJSON(response))
+            elseif obj.type == "EVAL" then
+                Eval(obj["function"], obj.uuid)
+            elseif obj.type == "DISCONNECT" then
+                ws.close()
+                return print("TERMINATED")
+            elseif obj.type == "REBOOT" then
+                ws.close()
+                print("> REBOOTING")
+                os.reboot()
+            end
+        end
+    end
 end
-
-print("> CONNECTED")
 
 function ArrayToObject(arr)
     local result = {}
@@ -64,33 +99,10 @@ function Handshake(uuid)
     ws.send(textutils.serializeJSON(response))
 end
 
-while true do
-    local message = ws.receive()
-    if message == nil then
-        ws.close()
-        print("> RECONNECTING...")
-        ws, err = http.websocket(connectionURL)
-        if not ws then
-            return printError(err)
-        end
-        print("> CONNECTED")
-    else
-        local obj = textutils.unserializeJSON(message)
-        if obj.type == "HANDSHAKE" then
-            Handshake(obj.uuid)
-        elseif obj.type == "RENAME" then
-            os.setComputerLabel(obj["message"])
-            local response = { type = "RENAME", uuid = obj.uuid }
-            ws.send(textutils.serializeJSON(response))
-        elseif obj.type == "EVAL" then
-            Eval(obj["function"], obj.uuid)
-        elseif obj.type == "DISCONNECT" then
-            ws.close()
-            return print("TERMINATED")
-        elseif obj.type == "REBOOT" then
-            ws.close()
-            print("> REBOOTING")
-            os.reboot()
-        end
-    end
+local ok, errorMessage = pcall(main)
+
+pcall(ws and ws.close or function()end)
+
+if not ok then
+    printError(errorMessage)
 end
