@@ -102,7 +102,7 @@ function Inventory(props) {
                         onClick={() => setState({...state, isModalShown: true, modalState: 'mine'})}
                         variant='outline-info'
                         size='sm'
-                        disabled={!turtle.isOnline}
+                        disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
                     >
                         Mine
                     </Button>
@@ -114,7 +114,7 @@ function Inventory(props) {
                         onClick={() => setState({...state, isModalShown: true, modalState: 'farm'})}
                         variant='outline-info'
                         size='sm'
-                        disabled={!turtle.isOnline}
+                        disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
                     >
                         Farm
                     </Button>
