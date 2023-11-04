@@ -93,7 +93,7 @@ function Inventory(props) {
         <Col key='inventory-actions'>
             <Row>
                 <h5>
-                    <ins style={{textTransform: 'capitalize'}}>{turtle?.state?.name || 'idle'}</ins>
+                    Status: <ins style={{textTransform: 'capitalize'}}>{turtle?.state?.name || 'idle'}</ins>
                 </h5>
             </Row>
             <Row>
