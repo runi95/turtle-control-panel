@@ -1,11 +1,14 @@
 local ws
+local logLevel = 0
 
 local function main()
     local connectionURL = "127.0.0.1:5757" --replace with your server IP
 
-    print("> CONNECTING...")
+    if logLevel < 2 then
+        print("> CONNECTING...")
+    end
     ws, err = http.websocket(connectionURL)
-    if ws then
+    if ws and logLevel < 2 then
         print("> CONNECTED")
     else
         printError(err)
@@ -21,10 +24,14 @@ local function main()
             if ws then
                 ws.close()
             end
-            print("> RECONNECTING..." .. " [" .. (reconnectionAttempts + 1) .. "]")
+            if logLevel < 2 then
+                print("> RECONNECTING..." .. " [" .. (reconnectionAttempts + 1) .. "]")
+            end
             ws, err = http.websocket(connectionURL)
             if ws then
-                print("> CONNECTED")
+                if logLevel < 2 then
+                    print("> CONNECTED")
+                end
                 reconnectionAttempts = 0
             else
                 reconnectionAttempts = reconnectionAttempts + 1
@@ -35,6 +42,7 @@ local function main()
             xpcall(function ()
                 local obj = textutils.unserializeJSON(message)
                 if obj.type == "HANDSHAKE" then
+                    logLevel = obj.logLevel or 0
                     Handshake(obj.uuid)
                 elseif obj.type == "RENAME" then
                     os.setComputerLabel(obj["message"])
@@ -53,7 +61,9 @@ local function main()
                     if ws then
                         ws.close()
                     end
-                    print("> REBOOTING")
+                    if logLevel < 2 then
+                        print("> REBOOTING")
+                    end
                     os.reboot()
                 end
             end, function (msg)
@@ -74,6 +84,9 @@ function ArrayToObject(arr)
 end
 
 function Eval(f, uuid)
+    if logLevel == 0 then
+        print("EVAL => " .. f)
+    end
     local func = loadstring(f)
     local result = {func()}
     local type = "EVAL"
@@ -143,7 +156,9 @@ end
 local function waitForDisconnect()
     while true do
         os.pullEvent("websocket_closed")
-        print("> WEBSOCKET CLOSED")
+        if logLevel < 3 then
+            print("> WEBSOCKET CLOSED")
+        end
         ws = nil
     end
 end

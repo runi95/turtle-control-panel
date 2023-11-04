@@ -3,6 +3,26 @@ const uuid4 = require('uuid4');
 const nameList = require('../names.json');
 const Turtle = require('./turtle');
 
+// log levels:
+//
+// DEBUG
+// INFO
+// WARNING
+// ERROR
+const turtleLogLevel = (() => {
+    switch (process.env.TURTLE_LOG_LEVEL?.toUpperCase() || 'INFO') {
+        case 'ERROR':
+            return 3;
+        case 'WARNING':
+            return 2;
+        case 'INFO':
+            return 1;
+        case 'DEBUG':
+        default:
+            return 0;
+    }
+})();
+
 module.exports = class TurtleWS extends EventEmitter {
     constructor(ws) {
         super();
@@ -59,7 +79,7 @@ module.exports = class TurtleWS extends EventEmitter {
             this.emit('handshake', turtle);
         };
         this.ws.on('message', listener);
-        this.ws.send(JSON.stringify({type: 'HANDSHAKE', uuid}));
+        this.ws.send(JSON.stringify({type: 'HANDSHAKE', uuid, logLevel: turtleLogLevel}));
     }
 
     exec(f) {
