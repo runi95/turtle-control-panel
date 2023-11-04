@@ -35,6 +35,9 @@ const turtleAIList = [];
 const wss = new ws.Server({port: 5757});
 wss.on('connection', (ws) => {
     console.info('Incoming connection...');
+    ws.on('error', (err) => {
+        console.error(err);
+    });
     const websocketTurtle = new TurtleWS(ws);
     const handshake = async (turtleFromWS) => {
         const turtleFromDB = (await turtlesDB.getTurtle(turtleFromWS.id)) || {};
