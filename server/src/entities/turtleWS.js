@@ -45,7 +45,7 @@ module.exports = class TurtleWS extends EventEmitter {
             }
 
             const {message} = obj;
-            const {id, label, fuel, location, direction, selectedSlot, inventory} = message;
+            const {id, label, fuel, selectedSlot, inventory} = message;
             this.ws.on('close', (code, message) => {
                 console.info(
                     `${label}[${id}] has disconnected with code ${code} and message ${message.toString() || '<none>'}`
@@ -59,20 +59,10 @@ module.exports = class TurtleWS extends EventEmitter {
             let turtle = undefined;
             if (!label) {
                 const name = nameList[Math.floor(Math.random() * (nameList.length - 1))];
-                turtle = new Turtle(id, name, true, level, limit, location, direction, selectedSlot, inventoryAsObject);
+                turtle = new Turtle(id, name, true, level, limit, selectedSlot, inventoryAsObject);
                 this.ws.send(JSON.stringify({type: 'RENAME', message: name}));
             } else {
-                turtle = new Turtle(
-                    id,
-                    label,
-                    true,
-                    level,
-                    limit,
-                    location,
-                    direction,
-                    selectedSlot,
-                    inventoryAsObject
-                );
+                turtle = new Turtle(id, label, true, level, limit, selectedSlot, inventoryAsObject);
             }
 
             this.ws.off('message', listener);
