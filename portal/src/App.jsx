@@ -104,6 +104,7 @@ function App() {
                     break;
             }
         },
+        shouldReconnect: () => true,
     });
     const handleSendMessage = useCallback((msg) => sendMessage(msg), [sendMessage]);
 
