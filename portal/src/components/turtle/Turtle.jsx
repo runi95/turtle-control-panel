@@ -14,7 +14,7 @@ function Turtle(props) {
     const directionToString = (direction) => {
         return ['W', 'N', 'E', 'S'][direction - 1];
     };
-    const turtle = props.turtles ? props.turtles[id] || undefined : undefined;
+    const turtle = props.turtles?.[id];
 
     return (
         <Container fluid>
