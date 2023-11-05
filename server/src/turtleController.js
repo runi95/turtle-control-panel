@@ -200,7 +200,7 @@ module.exports = class TurtleController extends EventEmitter {
         if (didDig) {
             for (let i = 1; i < 17; i++) {
                 const [item] = await this.getItemDetail(i);
-                this.turtle.inventory[slot] = item;
+                this.turtle.inventory[i] = item;
             }
             this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
@@ -220,7 +220,7 @@ module.exports = class TurtleController extends EventEmitter {
         if (didDig) {
             for (let i = 1; i < 17; i++) {
                 const [item] = await this.getItemDetail(i);
-                this.turtle.inventory[slot] = item;
+                this.turtle.inventory[i] = item;
             }
             this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
@@ -240,7 +240,7 @@ module.exports = class TurtleController extends EventEmitter {
         if (didDig) {
             for (let i = 1; i < 17; i++) {
                 const [item] = await this.getItemDetail(i);
-                this.turtle.inventory[slot] = item;
+                this.turtle.inventory[i] = item;
             }
             this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
