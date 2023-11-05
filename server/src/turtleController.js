@@ -26,11 +26,7 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async forward() {
-        const [didMove, err] = await this.wsTurtle.exec('turtle.forward()');
-        if (!didMove) {
-            throw new Error(err);
-        }
-
+        const forward = await this.wsTurtle.exec('turtle.forward()');
         this.turtle.fuelLevel--;
         this.turtle.stepsSinceLastRecharge++;
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
@@ -48,14 +44,11 @@ module.exports = class TurtleController extends EventEmitter {
             y: this.turtle.location.y,
             z: this.turtle.location.z,
         });
+        return forward;
     }
 
     async back() {
-        const [didMove, err] = await this.wsTurtle.exec('turtle.back()');
-        if (!didMove) {
-            throw new Error(err);
-        }
-
+        const back = await this.wsTurtle.exec('turtle.back()');
         this.turtle.fuelLevel--;
         this.turtle.stepsSinceLastRecharge++;
         const [xChange, zChange] = getLocalCoordinatesForDirection((((this.turtle.direction % 4) + 1) % 4) + 1);
@@ -73,14 +66,11 @@ module.exports = class TurtleController extends EventEmitter {
             y: this.turtle.location.y,
             z: this.turtle.location.z,
         });
+        return back;
     }
 
     async up() {
-        const [didMove, err] = await this.wsTurtle.exec('turtle.up()');
-        if (!didMove) {
-            throw new Error(err);
-        }
-
+        const up = await this.wsTurtle.exec('turtle.up()');
         this.turtle.fuelLevel--;
         this.turtle.stepsSinceLastRecharge++;
         const {x, y, z} = this.turtle.location;
@@ -97,6 +87,7 @@ module.exports = class TurtleController extends EventEmitter {
             y: this.turtle.location.y,
             z: this.turtle.location.z,
         });
+        return up;
     }
 
     async down() {
@@ -927,13 +918,11 @@ module.exports = class TurtleController extends EventEmitter {
         while (hasNotMovedForward) {
             await this.dig();
             await this.suck();
-            try {
-                await this.forward();
+            const [didMoveForward, forwardMessage] = await this.forward();
+            if (didMoveForward) {
                 hasNotMovedForward = false;
-            } catch (err) {
-                if (attempts > 5) {
-                    throw err;
-                }
+            } else if (attempts > 5) {
+                throw forwardMessage;
             }
 
             attempts++;
@@ -962,10 +951,8 @@ module.exports = class TurtleController extends EventEmitter {
 
                     const {x, y, z} = this.turtle.location;
                     if (py - y > 0) {
-                        try {
-                            await this.up();
-                            return true;
-                        } catch (err) {
+                        const [didMoveUp] = await this.up();
+                        if (!didMoveUp) {
                             const upLocation = `${x},${y + 1},${z}`;
                             if (mineableObstaclesMap[upLocation]) {
                                 await this.digUp();
@@ -1002,20 +989,19 @@ module.exports = class TurtleController extends EventEmitter {
                         const heading = {x: px - x, y: py - y, z: pz - z};
                         const direction = heading.x + Math.abs(heading.x) * 2 + (heading.z + Math.abs(heading.z) * 3);
                         await this.turnToDirection(direction);
-                        try {
-                            await this.forward();
+
+                        const [didMoveForwar] = await this.forward();
+                        if (didMoveForwar) return true;
+
+                        const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
+                        const forwardLocation = `${x + xChange},${y},${z + zChange}`;
+                        if (mineableObstaclesMap[forwardLocation]) {
+                            await this.digSuckItemAndMoveForward();
                             return true;
-                        } catch (err) {
-                            const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
-                            const forwardLocation = `${x + xChange},${y},${z + zChange}`;
-                            if (mineableObstaclesMap[forwardLocation]) {
-                                await this.digSuckItemAndMoveForward();
-                                return true;
-                            } else {
-                                obstaclesHash[forwardLocation] = true;
-                                obstacles.push(new Coordinates(x + xChange, y, z + zChange));
-                                return false;
-                            }
+                        } else {
+                            obstaclesHash[forwardLocation] = true;
+                            obstacles.push(new Coordinates(x + xChange, y, z + zChange));
+                            return false;
                         }
                     }
                 },
