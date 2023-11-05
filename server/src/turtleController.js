@@ -213,6 +213,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -231,6 +232,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -258,6 +260,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -276,6 +279,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -293,6 +297,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -310,6 +315,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -325,6 +331,7 @@ module.exports = class TurtleController extends EventEmitter {
         const [didSelect] = select;
         if (didSelect) {
             this.turtle.selectedSlot = slot;
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -399,6 +406,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [item] = await this.getItemDetail(i);
                 this.turtle.inventory[i] = item;
             }
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -417,6 +425,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [item] = await this.getItemDetail(i);
                 this.turtle.inventory[i] = item;
             }
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -435,6 +444,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [item] = await this.getItemDetail(i);
                 this.turtle.inventory[i] = item;
             }
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -496,6 +506,7 @@ module.exports = class TurtleController extends EventEmitter {
         if (didTransfer) {
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -525,6 +536,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -543,6 +555,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
+            this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
