@@ -27,100 +27,130 @@ module.exports = class TurtleController extends EventEmitter {
 
     async forward() {
         const forward = await this.wsTurtle.exec('turtle.forward()');
-        this.turtle.fuelLevel--;
-        this.turtle.stepsSinceLastRecharge++;
-        const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
-        const {x, y, z} = this.turtle.location;
-        this.turtle.location = {x: x + xChange, y, z: z + zChange};
-        this.emit('update', 'tlocation', {
-            id: this.turtle.id,
-            location: this.turtle.location,
-            fuelLevel: this.turtle.fuelLevel,
-        });
-        this.turtlesDB.addTurtle(this.turtle);
-        this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('update', 'wdelete', {
-            x: this.turtle.location.x,
-            y: this.turtle.location.y,
-            z: this.turtle.location.z,
-        });
+        const [didMove] = forward;
+        if (didMove) {
+            this.turtle.fuelLevel--;
+            this.turtle.stepsSinceLastRecharge++;
+            const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
+            const {x, y, z} = this.turtle.location;
+            this.turtle.location = {x: x + xChange, y, z: z + zChange};
+            this.emit('update', 'tlocation', {
+                id: this.turtle.id,
+                location: this.turtle.location,
+                fuelLevel: this.turtle.fuelLevel,
+            });
+            this.turtlesDB.addTurtle(this.turtle);
+            this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+            this.emit('update', 'wdelete', {
+                x: this.turtle.location.x,
+                y: this.turtle.location.y,
+                z: this.turtle.location.z,
+            });
+        }
         return forward;
     }
 
     async back() {
         const back = await this.wsTurtle.exec('turtle.back()');
-        this.turtle.fuelLevel--;
-        this.turtle.stepsSinceLastRecharge++;
-        const [xChange, zChange] = getLocalCoordinatesForDirection((((this.turtle.direction % 4) + 1) % 4) + 1);
-        const {x, y, z} = this.turtle.location;
-        this.turtle.location = {x: x + xChange, y, z: z + zChange};
-        this.emit('update', 'tlocation', {
-            id: this.turtle.id,
-            location: this.turtle.location,
-            fuelLevel: this.turtle.fuelLevel,
-        });
-        this.turtlesDB.addTurtle(this.turtle);
-        this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('update', 'wdelete', {
-            x: this.turtle.location.x,
-            y: this.turtle.location.y,
-            z: this.turtle.location.z,
-        });
+        const [didMove] = back;
+        if (didMove) {
+            this.turtle.fuelLevel--;
+            this.turtle.stepsSinceLastRecharge++;
+            const [xChange, zChange] = getLocalCoordinatesForDirection((((this.turtle.direction % 4) + 1) % 4) + 1);
+            const {x, y, z} = this.turtle.location;
+            this.turtle.location = {x: x + xChange, y, z: z + zChange};
+            this.emit('update', 'tlocation', {
+                id: this.turtle.id,
+                location: this.turtle.location,
+                fuelLevel: this.turtle.fuelLevel,
+            });
+            this.turtlesDB.addTurtle(this.turtle);
+            this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+            this.emit('update', 'wdelete', {
+                x: this.turtle.location.x,
+                y: this.turtle.location.y,
+                z: this.turtle.location.z,
+            });
+        }
         return back;
     }
 
     async up() {
         const up = await this.wsTurtle.exec('turtle.up()');
-        this.turtle.fuelLevel--;
-        this.turtle.stepsSinceLastRecharge++;
-        const {x, y, z} = this.turtle.location;
-        this.turtle.location = {x, y: y + 1, z};
-        this.emit('update', 'tlocation', {
-            id: this.turtle.id,
-            location: this.turtle.location,
-            fuelLevel: this.turtle.fuelLevel,
-        });
-        this.turtlesDB.addTurtle(this.turtle);
-        this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('update', 'wdelete', {
-            x: this.turtle.location.x,
-            y: this.turtle.location.y,
-            z: this.turtle.location.z,
-        });
+        const [didMove] = up;
+        if (didMove) {
+            this.turtle.fuelLevel--;
+            this.turtle.stepsSinceLastRecharge++;
+            const {x, y, z} = this.turtle.location;
+            this.turtle.location = {x, y: y + 1, z};
+            this.emit('update', 'tlocation', {
+                id: this.turtle.id,
+                location: this.turtle.location,
+                fuelLevel: this.turtle.fuelLevel,
+            });
+            this.turtlesDB.addTurtle(this.turtle);
+            this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+            this.emit('update', 'wdelete', {
+                x: this.turtle.location.x,
+                y: this.turtle.location.y,
+                z: this.turtle.location.z,
+            });
+        }
         return up;
     }
 
     async down() {
         const down = await this.wsTurtle.exec('turtle.down()');
-        this.turtle.fuelLevel--;
-        const {x, y, z} = this.turtle.location;
-        this.turtle.location = {x, y: y - 1, z};
-        this.emit('update', 'tlocation', {
-            id: this.turtle.id,
-            location: this.turtle.location,
-            fuelLevel: this.turtle.fuelLevel,
-        });
-        this.turtlesDB.addTurtle(this.turtle);
-        this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
-        this.emit('update', 'wdelete', {
-            x: this.turtle.location.x,
-            y: this.turtle.location.y,
-            z: this.turtle.location.z,
-        });
+        const [didMove] = down;
+        if (didMove) {
+            this.turtle.fuelLevel--;
+            const {x, y, z} = this.turtle.location;
+            this.turtle.location = {x, y: y - 1, z};
+            this.emit('update', 'tlocation', {
+                id: this.turtle.id,
+                location: this.turtle.location,
+                fuelLevel: this.turtle.fuelLevel,
+            });
+            this.turtlesDB.addTurtle(this.turtle);
+            this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+            this.emit('update', 'wdelete', {
+                x: this.turtle.location.x,
+                y: this.turtle.location.y,
+                z: this.turtle.location.z,
+            });
+        }
         return down;
     }
 
     async turnLeft() {
         const turnLeft = await this.wsTurtle.exec('turtle.turnLeft()');
-        this.turtle.direction = ((this.turtle.direction + 2) % 4) + 1;
-        this.turtlesDB.addTurtle(this.turtle);
+        const [didTurn] = turnLeft;
+        if (didTurn) {
+            this.turtle.direction = ((this.turtle.direction + 2) % 4) + 1;
+            this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    direction: this.turtle.direction,
+                },
+            });
+        }
         return turnLeft;
     }
 
     async turnRight() {
         const turnRight = await this.wsTurtle.exec('turtle.turnRight()');
-        this.turtle.direction = (this.turtle.direction % 4) + 1;
-        this.turtlesDB.addTurtle(this.turtle);
+        const [didTurn] = turnRight;
+        if (didTurn) {
+            this.turtle.direction = (this.turtle.direction % 4) + 1;
+            this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    direction: this.turtle.direction,
+                },
+            });
+        }
         return turnRight;
     }
 
@@ -149,32 +179,128 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async place() {
-        return await this.wsTurtle.exec('turtle.place()');
+        const place = await this.wsTurtle.exec('turtle.place()');
+        const [didPlace] = place;
+        if (didPlace) {
+            const slot = this.turtle.selectedSlot;
+            const [item] = await this.getItemDetail(slot);
+            this.turtle.inventory[slot] = item;
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+
+        return place;
     }
 
     async placeUp() {
-        return await this.wsTurtle.exec('turtle.placeUp()');
+        const placeUp = await this.wsTurtle.exec('turtle.placeUp()');
+        const [didPlace] = placeUp;
+        if (didPlace) {
+            const slot = this.turtle.selectedSlot;
+            const [item] = await this.getItemDetail(slot);
+            this.turtle.inventory[slot] = item;
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+
+        return placeUp;
+    }
+
+    async getItemDetail(slot = this.turtle.selectedSlot, detailed = true) {
+        const itemDetail = await this.wsTurtle.exec(`turtle.getItemDetail(${slot}, ${detailed})`);
+        if (itemDetail.length > 0) {
+            return itemDetail;
+        }
+
+        return [];
     }
 
     async placeDown() {
-        return await this.wsTurtle.exec('turtle.placeDown()');
+        const placeDown = await this.wsTurtle.exec('turtle.placeDown()');
+        const [didPlace] = placeDown;
+        if (didPlace) {
+            const slot = this.turtle.selectedSlot;
+            const [item] = await this.getItemDetail(slot);
+            this.turtle.inventory[slot] = item;
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+
+        return placeDown;
     }
 
     async drop() {
-        return await this.wsTurtle.exec('turtle.drop()');
+        const drop = await this.wsTurtle.exec('turtle.drop()');
+        const [didDrop] = drop;
+        if (didDrop) {
+            const slot = this.turtle.selectedSlot;
+            const [item] = await this.getItemDetail(slot);
+            this.turtle.inventory[slot] = item;
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+        return drop;
     }
 
     async dropUp() {
-        return await this.wsTurtle.exec('turtle.dropUp()');
+        const dropUp = await this.wsTurtle.exec('turtle.dropUp()');
+        const [didDrop] = dropUp;
+        if (didDrop) {
+            const slot = this.turtle.selectedSlot;
+            const [item] = await this.getItemDetail(slot);
+            this.turtle.inventory[slot] = item;
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+        return dropUp;
     }
 
     async dropDown() {
-        return await this.wsTurtle.exec('turtle.dropDown()');
+        const dropDown = await this.wsTurtle.exec('turtle.dropDown()');
+        const [didDrop] = dropDown;
+        if (didDrop) {
+            const slot = this.turtle.selectedSlot;
+            const [item] = await this.getItemDetail(slot);
+            this.turtle.inventory[slot] = item;
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+        return dropDown;
     }
 
     async select(slot = 1) {
         const result = await this.wsTurtle.exec(`turtle.select(${slot})`);
         this.turtle.selectedSlot = slot;
+        this.emit('update', 'tupdate', {
+            id: this.turtle.id,
+            data: {
+                selectedSlot: slot,
+            },
+        });
         return result;
     }
 
@@ -235,15 +361,57 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async suck(count) {
-        return await this.wsTurtle.exec(`turtle.suck(${count})`);
+        const suck = await this.wsTurtle.exec(`turtle.suck(${count})`);
+        const [didSuckItems] = suck;
+        if (!didSuckItems) {
+            for (let i = 1; i < 17; i++) {
+                const [item] = await this.getItemDetail(i);
+                this.turtle.inventory[i] = item;
+            }
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+        return suck;
     }
 
     async suckUp(count) {
-        return await this.wsTurtle.exec(`turtle.suckUp(${count})`);
+        const suckUp = await this.wsTurtle.exec(`turtle.suckUp(${count})`);
+        const [didSuckItems] = suckUp;
+        if (!didSuckItems) {
+            for (let i = 1; i < 17; i++) {
+                const [item] = await this.getItemDetail(i);
+                this.turtle.inventory[i] = item;
+            }
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+        return suckUp;
     }
 
     async suckDown(count) {
-        return await this.wsTurtle.exec(`turtle.suckDown(${count})`);
+        const suckDown = await this.wsTurtle.exec(`turtle.suckDown(${count})`);
+        const [didSuckItems] = suckDown;
+        if (!didSuckItems) {
+            for (let i = 1; i < 17; i++) {
+                const [item] = await this.getItemDetail(i);
+                this.turtle.inventory[i] = item;
+            }
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+        return suckDown;
     }
 
     async getFuelLevel() {
@@ -252,10 +420,20 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async refuel() {
-        await this.wsTurtle.exec('turtle.refuel()');
-        const updatedFuelLevel = await this.getFuelLevel();
-        this.turtle.fuelLevel = updatedFuelLevel;
-        this.turtlesDB.addTurtle(this.turtle);
+        const refuel = await this.wsTurtle.exec('turtle.refuel()');
+        const [didRefuel] = refuel;
+        if (didRefuel) {
+            const updatedFuelLevel = await this.getFuelLevel();
+            this.turtle.fuelLevel = updatedFuelLevel;
+            this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    fuelLevel: updatedFuelLevel,
+                },
+            });
+        }
+        return refuel;
     }
 
     /**
@@ -280,11 +458,22 @@ module.exports = class TurtleController extends EventEmitter {
      * @param {number} count
      */
     async transferTo(slot, count) {
-        if (count) {
-            return await this.wsTurtle.exec(`transferTo(${slot}, ${count})`);
-        } else {
-            return await this.wsTurtle.exec(`transferTo(${slot})`);
+        const transfer = count
+            ? await this.wsTurtle.exec(`transferTo(${slot}, ${count})`)
+            : await this.wsTurtle.exec(`transferTo(${slot})`);
+        const [didTransfer] = transfer;
+        if (didTransfer) {
+            const [item] = await this.getItemDetail(slot);
+            this.turtle.inventory[slot] = item;
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
         }
+
+        return transfer;
     }
 
     async getSelectedSlot() {
@@ -299,11 +488,39 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async equipLeft() {
-        return await this.wsTurtle.exec('turtle.equipLeft()');
+        const equipLeft = await this.wsTurtle.exec('turtle.equipLeft()');
+        const [didEquip] = equipLeft;
+        if (didEquip) {
+            const slot = this.turtle.selectedSlot;
+            const [item] = await this.getItemDetail(slot);
+            this.turtle.inventory[slot] = item;
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+
+        return equipLeft;
     }
 
     async equipRight() {
-        return await this.wsTurtle.exec('turtle.equipRight()');
+        const equipRight = await this.wsTurtle.exec('turtle.equipRight()');
+        const [didEquip] = equipRight;
+        if (didEquip) {
+            const slot = this.turtle.selectedSlot;
+            const [item] = await this.getItemDetail(slot);
+            this.turtle.inventory[slot] = item;
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+
+        return equipRight;
     }
 
     /**
@@ -358,10 +575,6 @@ module.exports = class TurtleController extends EventEmitter {
         return block;
     }
 
-    async getItemDetail(slot = this.turtle.selectedSlot, detailed = false) {
-        return await this.wsTurtle.exec(`turtle.getItemDetail(${slot}, ${detailed})`);
-    }
-
     /**
      * Requires a Crafty Turtle.
      * Crafts an item if items in the turtle's inventory matches a valid recipe.
@@ -397,9 +610,9 @@ module.exports = class TurtleController extends EventEmitter {
 
     async selectItemOfType(name) {
         for (let i = 1; i < 17; i++) {
-            const itemDetail = await this.getItemDetail(i);
-            if (itemDetail.length !== undefined) {
-                if (itemDetail[0].name === name) {
+            const [item] = await this.getItemDetail(i);
+            if (item !== undefined) {
+                if (item.name === name) {
                     await this.select(i);
                     return true;
                 }
@@ -518,7 +731,8 @@ module.exports = class TurtleController extends EventEmitter {
         }
 
         const {x, y, z} = this.turtle.location;
-        if ((await this.getItemDetail(16)).length !== undefined) {
+        const [item] = await this.getItemDetail(16);
+        if (item !== undefined) {
             const currentDirection = this.turtle.direction;
             await this.moveTo(rechargeStation.x, rechargeStation.y, rechargeStation.z);
             await this.dropAllItems();
@@ -570,23 +784,10 @@ module.exports = class TurtleController extends EventEmitter {
         const currentlySelectedSlot = await this.getSelectedSlot();
         for (let i = 1; i < 17; i++) {
             await this.select(i);
-            this.emit('update', 'tupdate', {
-                id: this.turtle.id,
-                data: {
-                    selectedSlot: i,
-                },
-            });
             await this.refuel();
         }
 
         await this.select(currentlySelectedSlot);
-
-        this.emit('update', 'tupdate', {
-            id: this.turtle.id,
-            data: {
-                selectedSlot: currentlySelectedSlot,
-            },
-        });
 
         // TODO: Attempt to locate a fuel station if possible
 
@@ -616,7 +817,8 @@ module.exports = class TurtleController extends EventEmitter {
 
     async farm() {
         const {x, y, z} = this.turtle.location;
-        if ((await this.getItemDetail(16)).length !== undefined) {
+        const [item] = await this.getItemDetail(16);
+        if (item !== undefined) {
             const currentDirection = this.turtle.direction;
             await this.moveTo(rechargeStation.x, rechargeStation.y, rechargeStation.z);
             await this.dropAllItems();
