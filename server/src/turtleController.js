@@ -944,10 +944,16 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async farmBlock(seedTypeName) {
-        const initialItemCount = Object.values(this.turtle.inventory).reduce((acc, curr) => acc + curr.count, 0);
+        const initialItemCount = Object.values(this.turtle.inventory).reduce(
+            (acc, curr) => acc + (curr?.count || 0),
+            0
+        );
         const [didDigDown] = await this.digDown();
         if (didDigDown) {
-            const currentItemCount = Object.values(this.turtle.inventory).reduce((acc, curr) => acc + curr.count, 0);
+            const currentItemCount = Object.values(this.turtle.inventory).reduce(
+                (acc, curr) => acc + (curr?.count || 0),
+                0
+            );
             if (currentItemCount === initialItemCount) {
                 this.turtle.state.error = 'Inventory is full';
                 this.turtlesDB.addTurtle(this.turtle);
