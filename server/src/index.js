@@ -224,13 +224,10 @@ function* aiIterator() {
     }
 }
 
-const aiIt = aiIterator();
 const runAI = async () => {
-    const ai = aiIt.next().value;
-    if (ai !== undefined) {
-        await ai.next();
-    }
-    setTimeout(() => runAI(), 1);
+    await Promise.all(turtleAIList.map((ai) => ai?.next()));
+
+    setTimeout(runAI, 1);
 };
 
 runAI();
