@@ -293,15 +293,18 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async select(slot = 1) {
-        const result = await this.wsTurtle.exec(`turtle.select(${slot})`);
-        this.turtle.selectedSlot = slot;
-        this.emit('update', 'tupdate', {
-            id: this.turtle.id,
-            data: {
-                selectedSlot: slot,
-            },
-        });
-        return result;
+        const select = await this.wsTurtle.exec(`turtle.select(${slot})`);
+        const [didSelect] = select;
+        if (didSelect) {
+            this.turtle.selectedSlot = slot;
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    selectedSlot: slot,
+                },
+            });
+        }
+        return select;
     }
 
     async getItemCount(slot = this.turtle.selectedSlot) {
