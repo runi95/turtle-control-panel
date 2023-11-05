@@ -195,15 +195,63 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async dig() {
-        return await this.wsTurtle.exec('turtle.dig()');
+        const dig = await this.wsTurtle.exec('turtle.dig()');
+        const [didDig] = dig;
+        if (didDig) {
+            for (let i = 1; i < 17; i++) {
+                const [item] = await this.getItemDetail(i);
+                this.turtle.inventory[slot] = item;
+            }
+            this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+
+        return dig;
     }
 
     async digUp() {
-        return await this.wsTurtle.exec('turtle.digUp()');
+        const digUp = await this.wsTurtle.exec('turtle.digUp()');
+        const [didDig] = digUp;
+        if (didDig) {
+            for (let i = 1; i < 17; i++) {
+                const [item] = await this.getItemDetail(i);
+                this.turtle.inventory[slot] = item;
+            }
+            this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+
+        return digUp;
     }
 
     async digDown() {
-        return await this.wsTurtle.exec('turtle.digDown()');
+        const digDown = await this.wsTurtle.exec('turtle.digDown()');
+        const [didDig] = digDown;
+        if (didDig) {
+            for (let i = 1; i < 17; i++) {
+                const [item] = await this.getItemDetail(i);
+                this.turtle.inventory[slot] = item;
+            }
+            this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                },
+            });
+        }
+
+        return digDown;
     }
 
     async place() {
@@ -860,18 +908,22 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async farmBlock(seedTypeName) {
+        const initialItemCount = Object.values(this.turtle.inventory).reduce((acc, curr) => acc + curr.count, 0);
         const [didDigDown] = await this.digDown();
         if (didDigDown) {
-            let continueToPickUpItems = true;
-            while (continueToPickUpItems) {
-                const [didSuckItems, suckMessage] = await this.suckDown();
-                if (!didSuckItems && suckMessage === 'No space for items') {
-                    this.turtle.state.error = suckMessage;
-                    this.turtlesDB.addTurtle(this.turtle);
-                    return;
-                }
-                continueToPickUpItems = didSuckItems;
+            const currentItemCount = Object.values(this.turtle.inventory).reduce((acc, curr) => acc + curr.count, 0);
+            if (currentItemCount === initialItemCount) {
+                this.turtle.state.error = 'Inventory is full';
+                this.turtlesDB.addTurtle(this.turtle);
+                this.emit('update', 'tupdate', {
+                    id: this.turtle.id,
+                    data: {
+                        state: this.turtle.state,
+                    },
+                });
+                return;
             }
+
             const didSelectSeed = await this.selectItemOfType(seedTypeName);
             if (didSelectSeed) {
                 await this.placeDown();
