@@ -111,23 +111,17 @@ module.exports = class TurtleController extends EventEmitter {
     }
 
     async turnLeft() {
-        const [didTurn, err] = await this.wsTurtle.exec('turtle.turnLeft()');
-        if (!didTurn) {
-            throw new Error(err);
-        }
-
+        const turnLeft = await this.wsTurtle.exec('turtle.turnLeft()');
         this.turtle.direction = ((this.turtle.direction + 2) % 4) + 1;
         this.turtlesDB.addTurtle(this.turtle);
+        return turnLeft;
     }
 
     async turnRight() {
-        const [didTurn, err] = await this.wsTurtle.exec('turtle.turnRight()');
-        if (!didTurn) {
-            throw new Error(err);
-        }
-
+        const turnRight = await this.wsTurtle.exec('turtle.turnRight()');
         this.turtle.direction = (this.turtle.direction % 4) + 1;
         this.turtlesDB.addTurtle(this.turtle);
+        return turnRight;
     }
 
     async turnToDirection(direction) {
