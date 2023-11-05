@@ -750,18 +750,36 @@ module.exports = class TurtleController extends EventEmitter {
                 if (!didDigDown && digDownMessage !== 'Nothing to dig here') {
                     this.turtle.state.error = digDownMessage;
                     this.turtlesDB.addTurtle(this.turtle);
+                    this.emit('update', 'tupdate', {
+                        id: this.turtle.id,
+                        data: {
+                            state: this.turtle.state,
+                        },
+                    });
                     return;
                 }
                 const [didSuckDown, suckDownMessage] = await this.suckDown();
                 if (!didSuckDown && suckDownMessage !== 'No items to take') {
                     this.turtle.state.error = suckDownMessage;
                     this.turtlesDB.addTurtle(this.turtle);
+                    this.emit('update', 'tupdate', {
+                        id: this.turtle.id,
+                        data: {
+                            state: this.turtle.state,
+                        },
+                    });
                     return;
                 }
                 const [didMoveDown, moveDownMessage] = await this.down();
                 if (!didMoveDown) {
                     this.turtle.state.error = moveDownMessage;
                     this.turtlesDB.addTurtle(this.turtle);
+                    this.emit('update', 'tupdate', {
+                        id: this.turtle.id,
+                        data: {
+                            state: this.turtle.state,
+                        },
+                    });
                     return;
                 }
             } else if (diffInYLevels > 0) {
@@ -769,18 +787,36 @@ module.exports = class TurtleController extends EventEmitter {
                 if (!didDigUp && digUpMessage !== 'Nothing to dig here') {
                     this.turtle.state.error = digUpMessage;
                     this.turtlesDB.addTurtle(this.turtle);
+                    this.emit('update', 'tupdate', {
+                        id: this.turtle.id,
+                        data: {
+                            state: this.turtle.state,
+                        },
+                    });
                     return;
                 }
                 const [didSuckUp, suckUpMessage] = await this.suckUp();
                 if (!didSuckUp && suckUpMessage !== 'No items to take') {
                     this.turtle.state.error = suckUpMessage;
                     this.turtlesDB.addTurtle(this.turtle);
+                    this.emit('update', 'tupdate', {
+                        id: this.turtle.id,
+                        data: {
+                            state: this.turtle.state,
+                        },
+                    });
                     return;
                 }
                 const [didMoveUp, moveUpMessage] = await this.up();
                 if (!didMoveUp) {
                     this.turtle.state.error = moveUpMessage;
                     this.turtlesDB.addTurtle(this.turtle);
+                    this.emit('update', 'tupdate', {
+                        id: this.turtle.id,
+                        data: {
+                            state: this.turtle.state,
+                        },
+                    });
                     return;
                 }
             }
@@ -987,6 +1023,12 @@ module.exports = class TurtleController extends EventEmitter {
         if (!hasModem) {
             this.turtle.state.error = 'No wireless modem attached';
             this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    state: this.turtle.state,
+                },
+            });
             return;
         }
 
@@ -1003,6 +1045,12 @@ module.exports = class TurtleController extends EventEmitter {
                     if (!didTurnRight) {
                         this.turtle.state.error = 'Cannot move or turn around';
                         this.turtlesDB.addTurtle(this.turtle);
+                        this.emit('update', 'tupdate', {
+                            id: this.turtle.id,
+                            data: {
+                                state: this.turtle.state,
+                            },
+                        });
                         return;
                     }
                 }
@@ -1013,6 +1061,12 @@ module.exports = class TurtleController extends EventEmitter {
                     if (!didMoveBackwards) {
                         this.turtle.state.error = 'Stuck';
                         this.turtlesDB.addTurtle(this.turtle);
+                        this.emit('update', 'tupdate', {
+                            id: this.turtle.id,
+                            data: {
+                                state: this.turtle.state,
+                            },
+                        });
                         return;
                     }
                 }
@@ -1032,6 +1086,12 @@ module.exports = class TurtleController extends EventEmitter {
         if (x === undefined || y === undefined || z === undefined) {
             this.turtle.state.error = 'Could not determine position';
             this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    state: this.turtle.state,
+                },
+            });
             return;
         }
 
@@ -1051,6 +1111,12 @@ module.exports = class TurtleController extends EventEmitter {
         if (!hasModem) {
             this.turtle.state.error = 'No wireless modem attached';
             this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    state: this.turtle.state,
+                },
+            });
             return;
         }
 
@@ -1061,6 +1127,12 @@ module.exports = class TurtleController extends EventEmitter {
         if (x === undefined || y === undefined || z === undefined) {
             this.turtle.state.error = 'Could not determine position';
             this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    state: this.turtle.state,
+                },
+            });
             return;
         }
 
