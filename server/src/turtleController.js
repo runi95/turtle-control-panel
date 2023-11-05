@@ -14,6 +14,34 @@ const getLocalCoordinatesForDirection = (direction) => {
 const mineshaftEntrance = {x: 467, y: 87, z: -587};
 const rechargeStation = {x: 455, y: 87, z: -597};
 
+const farmingBlockToSeedMapObject = {
+    'minecraft:wheat': {
+        seed: 'minecraft:wheat_seeds',
+        maxAge: 7,
+    },
+    'minecraft:carrots': {
+        seed: 'minecraft:carrot',
+        maxAge: 7,
+    },
+    'minecraft:potatoes': {
+        seed: 'minecraft:potato',
+        maxAge: 7,
+    },
+    'minecraft:beetroots': {
+        seed: 'minecraft:beetroot_seeds',
+        maxAge: 3,
+    },
+    'minecraft:nether_wart': {
+        seed: 'minecraft:nether_wart',
+        maxAge: 3,
+    },
+    'minecraft:sweet_berry_bush': {
+        seed: 'minecraft:sweet_berries',
+        maxAge: 3,
+    },
+};
+const farmingSeedNames = Object.values(farmingBlockToSeedMapObject).map((seedObject) => seedObject.seed);
+
 module.exports = class TurtleController extends EventEmitter {
     constructor(turtlesDB, worldDB, areasDB, wsTurtle, turtle) {
         super();
@@ -818,17 +846,41 @@ module.exports = class TurtleController extends EventEmitter {
         });
     }
 
-    async farm() {
-        const {x, y, z} = this.turtle.location;
-        const [item] = await this.getItemDetail(16);
-        if (item !== undefined) {
-            const currentDirection = this.turtle.direction;
-            await this.moveTo(rechargeStation.x, rechargeStation.y, rechargeStation.z);
-            await this.dropAllItems();
-            await this.moveTo(x, y, z);
-            await this.turnToDirection(currentDirection);
+    async farmBlock(seedTypeName) {
+        const [didDigDown] = await this.digDown();
+        if (didDigDown) {
+            let continueToPickUpItems = true;
+            while (continueToPickUpItems) {
+                const [didSuckItems, suckMessage] = await this.suckDown();
+                if (!didSuckItems && suckMessage === 'No space for items') {
+                    this.turtle.state.error = suckMessage;
+                    this.turtlesDB.addTurtle(this.turtle);
+                    return;
+                }
+                continueToPickUpItems = didSuckItems;
+            }
+            const didSelectSeed = await this.selectItemOfType(seedTypeName);
+            if (didSelectSeed) {
+                await this.placeDown();
+            }
         }
+    }
 
+    async selectAnySeedInInventory() {
+        for (let i = 1; i < 17; i++) {
+            const item = this.turtle.inventory?.[i];
+            if (item?.name && farmingSeedNames.includes(item.name)) {
+                // Ensure that the item is in the turtle's in-game inventory
+                const [itemDetail] = await this.getItemDetail(i);
+                if (itemDetail?.name === item.name) {
+                    await this.select(i);
+                    return true;
+                }
+            }
+        }
+    }
+
+    async farm(moveContinously = false) {
         const {areaId, currentAreaFarmIndex} = this.turtle.state;
         const farmArea = await this.areasDB.getArea(areaId);
 
@@ -843,133 +895,24 @@ module.exports = class TurtleController extends EventEmitter {
         if (block === undefined) {
             await this.digDown();
 
-            const isWheatSeedsSelected = await this.selectItemOfType('minecraft:wheat_seeds');
-            if (isWheatSeedsSelected) {
+            const didSelect = await this.selectAnySeedInInventory();
+            if (didSelect) {
                 await this.placeDown();
             }
 
             this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
             this.turtlesDB.addTurtle(this.turtle);
         } else {
-            switch (block.name) {
-                case 'minecraft:wheat':
-                    if (block.state.age === 7) {
-                        await this.digDown();
-                        let continueToPickUpItems = true;
-                        let itemPickupCounter = 0;
-                        while (continueToPickUpItems && itemPickupCounter < 16) {
-                            const [didGatherItems] = await this.suckDown();
-                            continueToPickUpItems = didGatherItems;
-                            itemPickupCounter++;
-                        }
-                        const isWheatSeedsSelected = await this.selectItemOfType('minecraft:wheat_seeds');
-                        if (isWheatSeedsSelected) {
-                            await this.placeDown();
-                        }
+            const farmingBlockToSeed = farmingBlockToSeedMapObject[block.name];
+            let shouldMoveForward = !farmingBlockToSeed;
+            if (block.state.age === farmingBlockToSeed?.maxAge) {
+                await this.farmBlock(farmingBlockToSeed.seed);
+                shouldMoveForward = true;
+            }
 
-                        this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
-                        this.turtlesDB.addTurtle(this.turtle);
-                    }
-                    break;
-                case 'minecraft:carrots':
-                    if (block.state.age === 7) {
-                        await this.digDown();
-                        let continueToPickUpItems = true;
-                        let itemPickupCounter = 0;
-                        while (continueToPickUpItems && itemPickupCounter < 16) {
-                            const [didGatherItems] = await this.suckDown();
-                            continueToPickUpItems = didGatherItems;
-                            itemPickupCounter++;
-                        }
-                        const isCarrotSelected = await this.selectItemOfType('minecraft:carrot');
-                        if (isCarrotSelected) {
-                            await this.placeDown();
-                        }
-
-                        this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
-                        this.turtlesDB.addTurtle(this.turtle);
-                    }
-                    break;
-                case 'minecraft:potatoes':
-                    if (block.state.age === 7) {
-                        await this.digDown();
-                        let continueToPickUpItems = true;
-                        let itemPickupCounter = 0;
-                        while (continueToPickUpItems && itemPickupCounter < 16) {
-                            const [didGatherItems] = await this.suckDown();
-                            continueToPickUpItems = didGatherItems;
-                            itemPickupCounter++;
-                        }
-                        const isPotatoSelected = await this.selectItemOfType('minecraft:potato');
-                        if (isPotatoSelected) {
-                            await this.placeDown();
-                        }
-
-                        this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
-                        this.turtlesDB.addTurtle(this.turtle);
-                    }
-                    break;
-                case 'minecraft:beetroots':
-                    if (block.state.age === 3) {
-                        await this.digDown();
-                        let continueToPickUpItems = true;
-                        let itemPickupCounter = 0;
-                        while (continueToPickUpItems && itemPickupCounter < 16) {
-                            const [didGatherItems] = await this.suckDown();
-                            continueToPickUpItems = didGatherItems;
-                            itemPickupCounter++;
-                        }
-                        const isPotatoSelected = await this.selectItemOfType('minecraft:beetroot_seeds');
-                        if (isPotatoSelected) {
-                            await this.placeDown();
-                        }
-
-                        this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
-                        this.turtlesDB.addTurtle(this.turtle);
-                    }
-                    break;
-                case 'minecraft:nether_wart':
-                    if (block.state.age === 3) {
-                        await this.digDown();
-                        let continueToPickUpItems = true;
-                        let itemPickupCounter = 0;
-                        while (continueToPickUpItems && itemPickupCounter < 16) {
-                            const [didGatherItems] = await this.suckDown();
-                            continueToPickUpItems = didGatherItems;
-                            itemPickupCounter++;
-                        }
-                        const isPotatoSelected = await this.selectItemOfType('minecraft:nether_wart');
-                        if (isPotatoSelected) {
-                            await this.placeDown();
-                        }
-
-                        this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
-                        this.turtlesDB.addTurtle(this.turtle);
-                    }
-                    break;
-                case 'minecraft:sweet_berry_bush':
-                    if (block.state.age === 3) {
-                        await this.digDown();
-                        let continueToPickUpItems = true;
-                        let itemPickupCounter = 0;
-                        while (continueToPickUpItems && itemPickupCounter < 16) {
-                            const [didGatherItems] = await this.suckDown();
-                            continueToPickUpItems = didGatherItems;
-                            itemPickupCounter++;
-                        }
-                        const isPotatoSelected = await this.selectItemOfType('minecraft:sweet_berries');
-                        if (isPotatoSelected) {
-                            await this.placeDown();
-                        }
-
-                        this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
-                        this.turtlesDB.addTurtle(this.turtle);
-                    }
-                    break;
-                default:
-                    this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
-                    this.turtlesDB.addTurtle(this.turtle);
-                    break;
+            if (moveContinously || shouldMoveForward) {
+                this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
+                this.turtlesDB.addTurtle(this.turtle);
             }
         }
     }
