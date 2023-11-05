@@ -984,6 +984,30 @@ module.exports = class TurtleController extends EventEmitter {
     async farm(moveContinously = false) {
         const {areaId, currentAreaFarmIndex} = this.turtle.state;
         const farmArea = await this.areasDB.getArea(areaId);
+        if (farmArea.area.length > 4 && this.turtle.state.noopTiles >= farmArea.area.length) {
+            const didSelect = await this.selectAnySeedInInventory();
+            if (!didSelect) {
+                this.turtle.state.error = 'No seeds in inventory';
+                this.turtlesDB.addTurtle(this.turtle);
+                this.emit('update', 'tupdate', {
+                    id: this.turtle.id,
+                    data: {
+                        state: this.turtle.state,
+                    },
+                });
+                return;
+            }
+
+            this.turtle.state.error = 'Nothing to farm in area';
+            this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    state: this.turtle.state,
+                },
+            });
+            return;
+        }
 
         await this.moveTo(
             farmArea.area[currentAreaFarmIndex].x,
@@ -998,7 +1022,14 @@ module.exports = class TurtleController extends EventEmitter {
 
             const didSelect = await this.selectAnySeedInInventory();
             if (didSelect) {
-                await this.placeDown();
+                const [didPlace] = await this.placeDown();
+                if (didPlace) {
+                    this.turtle.state.noopTiles = 0;
+                } else {
+                    this.turtle.state.noopTiles++;
+                }
+            } else {
+                this.turtle.state.noopTiles++;
             }
 
             this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
@@ -1006,15 +1037,20 @@ module.exports = class TurtleController extends EventEmitter {
         } else {
             const farmingBlockToSeed = farmingBlockToSeedMapObject[block.name];
             let shouldMoveForward = !farmingBlockToSeed;
-            if (block.state.age === farmingBlockToSeed?.maxAge) {
-                await this.farmBlock(farmingBlockToSeed.seed);
-                shouldMoveForward = true;
+            if (farmingBlockToSeed) {
+                if (block.state.age === farmingBlockToSeed.maxAge) {
+                    await this.farmBlock(farmingBlockToSeed.seed);
+                    shouldMoveForward = true;
+                }
+                this.turtle.state.noopTiles = 0;
+            } else {
+                this.turtle.state.noopTiles++;
             }
 
             if (moveContinously || shouldMoveForward) {
                 this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
-                this.turtlesDB.addTurtle(this.turtle);
             }
+            this.turtlesDB.addTurtle(this.turtle);
         }
     }
 

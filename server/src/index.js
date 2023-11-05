@@ -159,6 +159,7 @@ wssWebsite.on('connection', (ws) => {
                                     name: 'farming',
                                     areaId: obj.data.areaId,
                                     currentAreaFarmIndex: 0,
+                                    noopTiles: 0,
                                 });
                             } else {
                                 console.error(`Attempted to farm with invalid turtle [${obj.data.id}]`);
