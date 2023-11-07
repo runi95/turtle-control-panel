@@ -64,11 +64,8 @@ function Inventory(props) {
                     const {name, count, displayName} = inventory[itemIndex];
                     const nameSplit = name.split(':');
                     const itemNameFromSplit = nameSplit[nameSplit.length - 1];
-                    const spriteLookupName =
-                        nameSplit[0] !== 'minecraft' || SpriteTable[itemNameFromSplit] === undefined
-                            ? '???'
-                            : itemNameFromSplit;
-                    const spritePosition = SpriteTable[spriteLookupName];
+                    const spritePosition =
+                        SpriteTable[displayName] ?? SpriteTable[itemNameFromSplit] ?? SpriteTable['???'];
                     const spriteY = 32 * Math.floor(spritePosition / 32);
                     const spriteX = 32 * (spritePosition - spriteY - 1);
 
