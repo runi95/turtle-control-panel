@@ -18,7 +18,7 @@ function Dashboard(props) {
                         <th style={{width: 40}}>ID</th>
                         <th style={{width: 80}}>Status</th>
                         <th style={{width: 120}}>Name</th>
-                        <th style={{width: 80}}>Activity</th>
+                        <th style={{width: 100}}>Activity</th>
                         <th style={{width: 220}}>Fuel</th>
                         <th>Error</th>
                     </tr>
