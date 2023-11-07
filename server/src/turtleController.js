@@ -514,11 +514,14 @@ module.exports = class TurtleController extends EventEmitter {
         if (didRefuel) {
             const updatedFuelLevel = await this.getFuelLevel();
             this.turtle.fuelLevel = updatedFuelLevel;
+            const [item] = await this.getItemDetail();
+            this.turtle.inventory[this.turtle.selectedSlot] = item;
             this.turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
                     fuelLevel: updatedFuelLevel,
+                    inventory: this.turtle.inventory,
                 },
             });
         }
