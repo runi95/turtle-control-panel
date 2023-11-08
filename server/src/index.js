@@ -119,58 +119,43 @@ wssWebsite.on('connection', (ws) => {
                 break;
             case 'ACTION':
                 turtlesDB.getTurtle(obj.data.id).then((turtle) => {
+                    if (turtle === undefined) {
+                        console.error(`Attempted to [${obj.action}] invalid turtle [${obj.data.id}]`);
+                        return;
+                    }
+
                     switch (obj.action) {
                         case 'refuel':
-                            if (turtle !== undefined) {
-                                turtlesDB.updateState(turtle.id, {id: 1, name: 'refueling'});
-                            } else {
-                                console.error(`Attempted to refuel invalid turtle [${obj.data.id}]`);
-                            }
+                            turtlesDB.updateState(turtle.id, {id: 1, name: 'refueling'});
                             break;
                         case 'mine':
-                            if (turtle !== undefined) {
-                                turtlesDB.updateState(turtle.id, {
-                                    id: 2,
-                                    name: 'mining',
-                                    mineType: obj.data.mineType,
-                                    mineTarget: obj.data.mineTarget,
-                                });
-                            } else {
-                                console.error(`Attempted to mine with invalid turtle [${obj.data.id}]`);
-                            }
+                            turtlesDB.updateState(turtle.id, {
+                                id: 2,
+                                name: 'mining',
+                                mineType: obj.data.mineType,
+                                mineTarget: obj.data.mineTarget,
+                            });
                             break;
                         case 'move':
-                            if (turtle !== undefined) {
-                                turtlesDB.updateState(turtle.id, {
-                                    id: 3,
-                                    name: 'moving',
-                                    x: obj.data.x,
-                                    y: obj.data.y,
-                                    z: obj.data.z,
-                                });
-                            } else {
-                                console.error(`Attempted to move invalid turtle [${obj.data.id}]`);
-                            }
+                            turtlesDB.updateState(turtle.id, {
+                                id: 3,
+                                name: 'moving',
+                                x: obj.data.x,
+                                y: obj.data.y,
+                                z: obj.data.z,
+                            });
                             break;
                         case 'farm':
-                            if (turtle !== undefined) {
-                                turtlesDB.updateState(turtle.id, {
-                                    id: 4,
-                                    name: 'farming',
-                                    areaId: obj.data.areaId,
-                                    currentAreaFarmIndex: 0,
-                                    noopTiles: 0,
-                                });
-                            } else {
-                                console.error(`Attempted to farm with invalid turtle [${obj.data.id}]`);
-                            }
+                            turtlesDB.updateState(turtle.id, {
+                                id: 4,
+                                name: 'farming',
+                                areaId: obj.data.areaId,
+                                currentAreaFarmIndex: 0,
+                                noopTiles: 0,
+                            });
                             break;
                         case 'stop':
-                            if (turtle !== undefined) {
-                                turtlesDB.updateState(turtle.id, undefined);
-                            } else {
-                                console.error(`Attempted to stop invalid turtle [${obj.data.id}]`);
-                            }
+                            turtlesDB.updateState(turtle.id, undefined);
                             break;
                     }
                 });
