@@ -90,7 +90,7 @@ function Inventory(props) {
         <Col key='inventory-actions'>
             <Row>
                 <h5>
-                    Status: <ins style={{textTransform: 'capitalize'}}>{turtle?.state?.name || 'idle'}</ins>
+                    Activity: <ins style={{textTransform: 'capitalize'}}>{turtle?.state?.name || 'idle'}</ins>
                     {turtle?.state?.error ? (
                         <span>
                             {' '}
