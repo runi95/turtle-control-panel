@@ -1063,6 +1063,47 @@ module.exports = class TurtleController extends EventEmitter {
         }
     }
 
+    async craftInventory() {
+        const [hasWorkbench] = await this.wsTurtle.exec('peripheral.find("workbench") ~= nil');
+        if (!hasWorkbench) {
+            this.turtle.state.error = 'No workbench to craft with';
+            this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    state: this.turtle.state,
+                },
+            });
+            return;
+        }
+
+        const [didCraft, craftMessage] = await this.wsTurtle.exec('peripheral.find("workbench").craft()');
+        if (didCraft) {
+            for (let i = 1; i < 17; i++) {
+                const [item] = await this.getItemDetail(i);
+                this.turtle.inventory[i] = item;
+            }
+            this.turtle.state = this.turtle.state.nextState;
+            this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    inventory: this.turtle.inventory,
+                    state: this.turtle.state,
+                },
+            });
+        } else {
+            this.turtle.state.error = craftMessage;
+            this.turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    state: this.turtle.state,
+                },
+            });
+        }
+    }
+
     async refreshInventoryState() {
         for (let i = 1; i < 17; i++) {
             const [item] = await this.getItemDetail(i);
@@ -1248,6 +1289,9 @@ module.exports = class TurtleController extends EventEmitter {
                     break;
                 case 7:
                     await this.refreshInventoryState();
+                    break;
+                case 8:
+                    await this.craftInventory();
                     break;
             }
 

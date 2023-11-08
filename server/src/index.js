@@ -164,6 +164,13 @@ wssWebsite.on('connection', (ws) => {
                                 nextState: turtle.state,
                             });
                             break;
+                        case 'craft':
+                            turtlesDB.updateState(turtle.id, {
+                                id: 8,
+                                name: 'craft',
+                                nextState: turtle.state?.id === 8 ? undefined : turtle.state,
+                            });
+                            break;
                     }
                 });
                 break;

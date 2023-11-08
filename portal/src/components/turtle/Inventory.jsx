@@ -50,7 +50,7 @@ function Inventory(props) {
             </Modal>
             <div className='inventory-container'>
                 <InventoryGrid>
-                    <ButtonSlot style={{gridColumn: 'span 4'}} key='refresh-btn'>
+                    <ButtonSlot key='refresh-btn'>
                         <button
                             className='text-muted inventory-button'
                             onClick={() =>
@@ -59,6 +59,15 @@ function Inventory(props) {
                             disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
                         >
                             <b>Refresh</b>
+                        </button>
+                    </ButtonSlot>
+                    <ButtonSlot style={{gridColumn: 'span 3'}} key='craft-btn'>
+                        <button
+                            className='text-muted inventory-button'
+                            onClick={() => props.action({type: 'ACTION', action: 'craft', data: {id: turtle.id}})}
+                            disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
+                        >
+                            <b>Craft</b>
                         </button>
                     </ButtonSlot>
                     {Array.from(Array(16), (_, i) => i).map((i) => {
