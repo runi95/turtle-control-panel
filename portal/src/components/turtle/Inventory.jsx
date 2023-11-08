@@ -61,13 +61,22 @@ function Inventory(props) {
                             <b>Refresh</b>
                         </button>
                     </ButtonSlot>
-                    <ButtonSlot style={{gridColumn: 'span 3'}} key='craft-btn'>
+                    <ButtonSlot style={{gridColumn: 'span 2'}} key='craft-btn'>
                         <button
                             className='text-muted inventory-button'
                             onClick={() => props.action({type: 'ACTION', action: 'craft', data: {id: turtle.id}})}
                             disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
                         >
                             <b>Craft</b>
+                        </button>
+                    </ButtonSlot>
+                    <ButtonSlot key='drop-btn'>
+                        <button
+                            className='text-danger inventory-button'
+                            onClick={() => props.action({type: 'ACTION', action: 'drop', data: {id: turtle.id}})}
+                            disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
+                        >
+                            <b>Drop</b>
                         </button>
                     </ButtonSlot>
                     {Array.from(Array(16), (_, i) => i).map((i) => {

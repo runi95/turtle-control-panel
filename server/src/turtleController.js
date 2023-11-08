@@ -1063,6 +1063,18 @@ module.exports = class TurtleController extends EventEmitter {
         }
     }
 
+    async dropInventory() {
+        await this.drop();
+        this.turtle.state = this.turtle.state.nextState;
+        this.turtlesDB.addTurtle(this.turtle);
+        this.emit('update', 'tupdate', {
+            id: this.turtle.id,
+            data: {
+                state: this.turtle.state,
+            },
+        });
+    }
+
     async craftInventory() {
         const [hasWorkbench] = await this.wsTurtle.exec('peripheral.find("workbench") ~= nil');
         if (!hasWorkbench) {
@@ -1292,6 +1304,9 @@ module.exports = class TurtleController extends EventEmitter {
                     break;
                 case 8:
                     await this.craftInventory();
+                    break;
+                case 9:
+                    await this.dropInventory();
                     break;
             }
 
