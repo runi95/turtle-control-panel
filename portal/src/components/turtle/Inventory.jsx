@@ -4,6 +4,7 @@ import FarmModal from './FarmModal';
 import MineModal from './MineModal';
 import SpriteTable from '../../SpriteTable.json';
 import {useState} from 'react';
+import './Inventory.css';
 
 function Inventory(props) {
     const [state, setState] = useState({
@@ -47,45 +48,58 @@ function Inventory(props) {
             <Modal show={state.isModalShown} onHide={() => setState({...state, isModalShown: false})}>
                 {renderModal(turtle)}
             </Modal>
-            <InventoryGrid>
-                {Array.from(Array(16), (_, i) => i).map((i) => {
-                    const itemIndex = i + 1;
-                    const ItemSlotStyle = itemIndex === selectedSlot ? SelectedItemSlot : ItemSlot;
-                    if (inventory[itemIndex] === undefined) {
+            <div className='inventory-container'>
+                <InventoryGrid>
+                    <ButtonSlot style={{gridColumn: 'span 4'}} key='refresh-btn'>
+                        <button
+                            className='text-muted inventory-button'
+                            onClick={() =>
+                                props.action({type: 'ACTION', action: 'refresh-inventory', data: {id: turtle.id}})
+                            }
+                            disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
+                        >
+                            <b>Refresh</b>
+                        </button>
+                    </ButtonSlot>
+                    {Array.from(Array(16), (_, i) => i).map((i) => {
+                        const itemIndex = i + 1;
+                        const ItemSlotStyle = itemIndex === selectedSlot ? SelectedItemSlot : ItemSlot;
+                        if (inventory[itemIndex] === undefined) {
+                            return (
+                                <ItemSlotStyle key={i}>
+                                    <OverlayTrigger placement='top' overlay={<Tooltip>Empty</Tooltip>}>
+                                        <EmptyItemImage />
+                                    </OverlayTrigger>
+                                </ItemSlotStyle>
+                            );
+                        }
+
+                        const {name, count, displayName} = inventory[itemIndex];
+                        const nameSplit = name.split(':');
+                        const itemNameFromSplit = nameSplit[nameSplit.length - 1];
+                        const spritePosition =
+                            SpriteTable[displayName] ?? SpriteTable[itemNameFromSplit] ?? SpriteTable['???'];
+                        const spriteY = 32 * Math.floor(spritePosition / 32);
+                        const spriteX = 32 * (spritePosition - spriteY - 1);
+
                         return (
                             <ItemSlotStyle key={i}>
-                                <OverlayTrigger placement='top' overlay={<Tooltip>Empty</Tooltip>}>
-                                    <EmptyItemImage />
+                                <OverlayTrigger placement='top' overlay={<Tooltip>{displayName}</Tooltip>}>
+                                    <ItemContainer>
+                                        <ItemImage
+                                            style={{
+                                                backgroundImage: 'url(/sprites.png)',
+                                                backgroundPosition: `-${spriteX}px -${spriteY}px`,
+                                            }}
+                                        />
+                                        <ItemCount>{count}</ItemCount>
+                                    </ItemContainer>
                                 </OverlayTrigger>
                             </ItemSlotStyle>
                         );
-                    }
-
-                    const {name, count, displayName} = inventory[itemIndex];
-                    const nameSplit = name.split(':');
-                    const itemNameFromSplit = nameSplit[nameSplit.length - 1];
-                    const spritePosition =
-                        SpriteTable[displayName] ?? SpriteTable[itemNameFromSplit] ?? SpriteTable['???'];
-                    const spriteY = 32 * Math.floor(spritePosition / 32);
-                    const spriteX = 32 * (spritePosition - spriteY - 1);
-
-                    return (
-                        <ItemSlotStyle key={i}>
-                            <OverlayTrigger placement='top' overlay={<Tooltip>{displayName}</Tooltip>}>
-                                <ItemContainer>
-                                    <ItemImage
-                                        style={{
-                                            backgroundImage: 'url(/sprites.png)',
-                                            backgroundPosition: `-${spriteX}px -${spriteY}px`,
-                                        }}
-                                    />
-                                    <ItemCount>{count}</ItemCount>
-                                </ItemContainer>
-                            </OverlayTrigger>
-                        </ItemSlotStyle>
-                    );
-                })}
-            </InventoryGrid>
+                    })}
+                </InventoryGrid>
+            </div>
         </Col>,
         <Col key='inventory-actions'>
             <Row>
@@ -183,9 +197,24 @@ const InventoryGrid = styled.div`
     grid-template-rows: auto auto auto auto;
     grid-template-columns: auto auto auto auto;
     grid-gap: 2px;
-    background-color: #c6c6c6;
-    padding: 5px;
-    border-radius: 5px;
+`;
+
+// const ButtonSlot = styled.div`
+//     display: flex;
+//     justify-content: center;
+//     align-items: center;
+//     padding: 2px;
+//     width: 64px;
+//     height: 64px;
+// `;
+
+const ButtonSlot = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2px;
+    width: 64px;
+    height: 40px;
 `;
 
 const ItemSlot = styled.div`

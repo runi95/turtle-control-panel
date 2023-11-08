@@ -157,6 +157,13 @@ wssWebsite.on('connection', (ws) => {
                         case 'stop':
                             turtlesDB.updateState(turtle.id, undefined);
                             break;
+                        case 'refresh-inventory':
+                            turtlesDB.updateState(turtle.id, {
+                                id: 7,
+                                name: 'refreshing inventory',
+                                nextState: turtle.state,
+                            });
+                            break;
                     }
                 });
                 break;

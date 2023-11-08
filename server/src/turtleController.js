@@ -1063,6 +1063,22 @@ module.exports = class TurtleController extends EventEmitter {
         }
     }
 
+    async refreshInventoryState() {
+        for (let i = 1; i < 17; i++) {
+            const [item] = await this.getItemDetail(i);
+            this.turtle.inventory[i] = item;
+        }
+        this.turtle.state = this.turtle.state.nextState;
+        this.turtlesDB.addTurtle(this.turtle);
+        this.emit('update', 'tupdate', {
+            id: this.turtle.id,
+            data: {
+                inventory: this.turtle.inventory,
+                state: this.turtle.state,
+            },
+        });
+    }
+
     async recalibrate() {
         const [hasModem] = await this.wsTurtle.exec('peripheral.find("modem") ~= nil');
         if (!hasModem) {
@@ -1229,6 +1245,9 @@ module.exports = class TurtleController extends EventEmitter {
                     break;
                 case 6:
                     await this.recalibrate();
+                    break;
+                case 7:
+                    await this.refreshInventoryState();
                     break;
             }
 
