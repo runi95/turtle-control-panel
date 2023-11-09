@@ -5,15 +5,7 @@ const turtlesDB = require('./db/turtlesDB');
 const worldDB = require('./db/worldDB');
 const areasDB = require('./db/areasDB');
 const {farmingBlockToSeedMapObject, farmingSeedNames} = require('../helpers/farming');
-
-const getLocalCoordinatesForDirection = (direction) => {
-    return [
-        [-1, 0],
-        [0, -1],
-        [1, 0],
-        [0, 1],
-    ][direction - 1];
-};
+const {getLocalCoordinatesForDirection} = require('../helpers/coordinates');
 
 module.exports = class TurtleController extends EventEmitter {
     constructor(wsTurtle, turtle) {
