@@ -1,6 +1,9 @@
 const {EventEmitter} = require('events');
 const Coordinates = require('./dlite/Coordinates');
 const DStarLite = require('./dlite');
+const turtlesDB = require('./db/turtlesDB');
+const worldDB = require('./db/worldDB');
+const areasDB = require('./db/areasDB');
 
 const getLocalCoordinatesForDirection = (direction) => {
     return [
@@ -43,12 +46,9 @@ const farmingBlockToSeedMapObject = {
 const farmingSeedNames = Object.values(farmingBlockToSeedMapObject).map((seedObject) => seedObject.seed);
 
 module.exports = class TurtleController extends EventEmitter {
-    constructor(turtlesDB, worldDB, areasDB, wsTurtle, turtle) {
+    constructor(wsTurtle, turtle) {
         super();
 
-        this.turtlesDB = turtlesDB;
-        this.worldDB = worldDB;
-        this.areasDB = areasDB;
         this.wsTurtle = wsTurtle;
         this.turtle = turtle;
     }
@@ -67,8 +67,8 @@ module.exports = class TurtleController extends EventEmitter {
                 location: this.turtle.location,
                 fuelLevel: this.turtle.fuelLevel,
             });
-            this.turtlesDB.addTurtle(this.turtle);
-            this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+            turtlesDB.addTurtle(this.turtle);
+            worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
             this.emit('update', 'wdelete', {
                 x: this.turtle.location.x,
                 y: this.turtle.location.y,
@@ -92,8 +92,8 @@ module.exports = class TurtleController extends EventEmitter {
                 location: this.turtle.location,
                 fuelLevel: this.turtle.fuelLevel,
             });
-            this.turtlesDB.addTurtle(this.turtle);
-            this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+            turtlesDB.addTurtle(this.turtle);
+            worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
             this.emit('update', 'wdelete', {
                 x: this.turtle.location.x,
                 y: this.turtle.location.y,
@@ -116,8 +116,8 @@ module.exports = class TurtleController extends EventEmitter {
                 location: this.turtle.location,
                 fuelLevel: this.turtle.fuelLevel,
             });
-            this.turtlesDB.addTurtle(this.turtle);
-            this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+            turtlesDB.addTurtle(this.turtle);
+            worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
             this.emit('update', 'wdelete', {
                 x: this.turtle.location.x,
                 y: this.turtle.location.y,
@@ -139,8 +139,8 @@ module.exports = class TurtleController extends EventEmitter {
                 location: this.turtle.location,
                 fuelLevel: this.turtle.fuelLevel,
             });
-            this.turtlesDB.addTurtle(this.turtle);
-            this.worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
+            turtlesDB.addTurtle(this.turtle);
+            worldDB.deleteBlock(this.turtle.location.x, this.turtle.location.y, this.turtle.location.z);
             this.emit('update', 'wdelete', {
                 x: this.turtle.location.x,
                 y: this.turtle.location.y,
@@ -155,7 +155,7 @@ module.exports = class TurtleController extends EventEmitter {
         const [didTurn] = turnLeft;
         if (didTurn) {
             this.turtle.direction = ((this.turtle.direction + 2) % 4) + 1;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -171,7 +171,7 @@ module.exports = class TurtleController extends EventEmitter {
         const [didTurn] = turnRight;
         if (didTurn) {
             this.turtle.direction = (this.turtle.direction % 4) + 1;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -202,7 +202,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [item] = await this.getItemDetail(i);
                 this.turtle.inventory[i] = item;
             }
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -222,7 +222,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [item] = await this.getItemDetail(i);
                 this.turtle.inventory[i] = item;
             }
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -242,7 +242,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [item] = await this.getItemDetail(i);
                 this.turtle.inventory[i] = item;
             }
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -261,7 +261,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -280,7 +280,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -308,7 +308,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -327,7 +327,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -345,7 +345,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -363,7 +363,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -379,7 +379,7 @@ module.exports = class TurtleController extends EventEmitter {
         const [didSelect] = select;
         if (didSelect) {
             this.turtle.selectedSlot = slot;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -454,7 +454,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [item] = await this.getItemDetail(i);
                 this.turtle.inventory[i] = item;
             }
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -473,7 +473,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [item] = await this.getItemDetail(i);
                 this.turtle.inventory[i] = item;
             }
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -492,7 +492,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [item] = await this.getItemDetail(i);
                 this.turtle.inventory[i] = item;
             }
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -516,7 +516,7 @@ module.exports = class TurtleController extends EventEmitter {
             this.turtle.fuelLevel = updatedFuelLevel;
             const [item] = await this.getItemDetail();
             this.turtle.inventory[this.turtle.selectedSlot] = item;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -557,7 +557,7 @@ module.exports = class TurtleController extends EventEmitter {
         if (didTransfer) {
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -572,7 +572,7 @@ module.exports = class TurtleController extends EventEmitter {
     async getSelectedSlot() {
         const [selectedSlot] = await this.wsTurtle.exec('turtle.getSelectedSlot()');
         this.turtle.selectedSlot = selectedSlot;
-        this.turtlesDB.addTurtle(this.turtle);
+        turtlesDB.addTurtle(this.turtle);
         return selectedSlot;
     }
 
@@ -587,7 +587,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -606,7 +606,7 @@ module.exports = class TurtleController extends EventEmitter {
             const slot = this.turtle.selectedSlot;
             const [item] = await this.getItemDetail(slot);
             this.turtle.inventory[slot] = item;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -626,12 +626,12 @@ module.exports = class TurtleController extends EventEmitter {
         const {x, y, z} = this.turtle.location;
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.turtle.direction);
         if (!didInspect) {
-            this.worldDB.deleteBlock(x + xChange, y, z + zChange);
+            worldDB.deleteBlock(x + xChange, y, z + zChange);
             this.emit('update', 'wdelete', {x: x + xChange, y, z: z + zChange});
             return undefined;
         }
 
-        this.worldDB.updateBlock(x + xChange, y, z + zChange, block);
+        worldDB.updateBlock(x + xChange, y, z + zChange, block);
         this.emit('update', 'wupdate', {x: x + xChange, y, z: z + zChange, block});
         return block;
     }
@@ -643,12 +643,12 @@ module.exports = class TurtleController extends EventEmitter {
         const [didInspect, block] = await this.wsTurtle.exec('turtle.inspectUp()');
         const {x, y, z} = this.turtle.location;
         if (!didInspect) {
-            this.worldDB.deleteBlock(x, y + 1, z);
+            worldDB.deleteBlock(x, y + 1, z);
             this.emit('update', 'wdelete', {x, y: y + 1, z});
             return undefined;
         }
 
-        this.worldDB.updateBlock(x, y + 1, z, block);
+        worldDB.updateBlock(x, y + 1, z, block);
         this.emit('update', 'wupdate', {x, y: y + 1, z, block});
         return block;
     }
@@ -660,12 +660,12 @@ module.exports = class TurtleController extends EventEmitter {
         const [didInspect, block] = await this.wsTurtle.exec('turtle.inspectDown()');
         const {x, y, z} = this.turtle.location;
         if (!didInspect) {
-            this.worldDB.deleteBlock(x, y - 1, z);
+            worldDB.deleteBlock(x, y - 1, z);
             this.emit('update', 'wdelete', {x, y: y - 1, z});
             return undefined;
         }
 
-        this.worldDB.updateBlock(x, y - 1, z, block);
+        worldDB.updateBlock(x, y - 1, z, block);
         this.emit('update', 'wupdate', {x, y: y - 1, z, block});
         return block;
     }
@@ -752,7 +752,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [didDigDown, digDownMessage] = await this.digDown();
                 if (!didDigDown && digDownMessage !== 'Nothing to dig here') {
                     this.turtle.state.error = digDownMessage;
-                    this.turtlesDB.addTurtle(this.turtle);
+                    turtlesDB.addTurtle(this.turtle);
                     this.emit('update', 'tupdate', {
                         id: this.turtle.id,
                         data: {
@@ -764,7 +764,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [didSuckDown, suckDownMessage] = await this.suckDown();
                 if (!didSuckDown && suckDownMessage !== 'No items to take') {
                     this.turtle.state.error = suckDownMessage;
-                    this.turtlesDB.addTurtle(this.turtle);
+                    turtlesDB.addTurtle(this.turtle);
                     this.emit('update', 'tupdate', {
                         id: this.turtle.id,
                         data: {
@@ -776,7 +776,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [didMoveDown, moveDownMessage] = await this.down();
                 if (!didMoveDown) {
                     this.turtle.state.error = moveDownMessage;
-                    this.turtlesDB.addTurtle(this.turtle);
+                    turtlesDB.addTurtle(this.turtle);
                     this.emit('update', 'tupdate', {
                         id: this.turtle.id,
                         data: {
@@ -789,7 +789,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [didDigUp, digUpMessage] = await this.digUp();
                 if (!didDigUp && digUpMessage !== 'Nothing to dig here') {
                     this.turtle.state.error = digUpMessage;
-                    this.turtlesDB.addTurtle(this.turtle);
+                    turtlesDB.addTurtle(this.turtle);
                     this.emit('update', 'tupdate', {
                         id: this.turtle.id,
                         data: {
@@ -801,7 +801,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [didSuckUp, suckUpMessage] = await this.suckUp();
                 if (!didSuckUp && suckUpMessage !== 'No items to take') {
                     this.turtle.state.error = suckUpMessage;
-                    this.turtlesDB.addTurtle(this.turtle);
+                    turtlesDB.addTurtle(this.turtle);
                     this.emit('update', 'tupdate', {
                         id: this.turtle.id,
                         data: {
@@ -813,7 +813,7 @@ module.exports = class TurtleController extends EventEmitter {
                 const [didMoveUp, moveUpMessage] = await this.up();
                 if (!didMoveUp) {
                     this.turtle.state.error = moveUpMessage;
-                    this.turtlesDB.addTurtle(this.turtle);
+                    turtlesDB.addTurtle(this.turtle);
                     this.emit('update', 'tupdate', {
                         id: this.turtle.id,
                         data: {
@@ -825,7 +825,7 @@ module.exports = class TurtleController extends EventEmitter {
             }
         } else {
             this.turtle.state = undefined;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
         }
     }
 
@@ -852,7 +852,7 @@ module.exports = class TurtleController extends EventEmitter {
         }
 
         this.turtle.state = undefined;
-        this.turtlesDB.addTurtle(this.turtle);
+        turtlesDB.addTurtle(this.turtle);
     }
 
     async mine() {
@@ -875,7 +875,7 @@ module.exports = class TurtleController extends EventEmitter {
             return await this.mineToYLevel(Number(mineTarget));
         } else if (mineType === 'area') {
             const currentIndex = this.turtle.state.index || 0;
-            const mineArea = this.areasDB.getArea(mineTarget);
+            const mineArea = areasDB.getArea(mineTarget);
             if (mineArea === undefined) {
                 throw new Error('Given mining area does not exist');
             }
@@ -886,10 +886,10 @@ module.exports = class TurtleController extends EventEmitter {
             const newIndex = currentIndex + 1;
             if (newIndex < mineArea.area.length) {
                 this.turtle.state.index = newIndex;
-                this.turtlesDB.addTurtle(this.turtle);
+                turtlesDB.addTurtle(this.turtle);
             } else {
                 this.turtle.state = undefined;
-                this.turtlesDB.addTurtle(this.turtle);
+                turtlesDB.addTurtle(this.turtle);
             }
         } else {
             throw new Error('Invalid mine type');
@@ -900,7 +900,7 @@ module.exports = class TurtleController extends EventEmitter {
         // Turtle has enough fuel
         if (this.turtle.fuelLevel > 0.8 * this.turtle.fuelLimit) {
             this.turtle.state = undefined;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -925,7 +925,7 @@ module.exports = class TurtleController extends EventEmitter {
         // Refuel successful!
         if (this.turtle.fuelLevel > this.turtle.fuelLimit * 0.1) {
             this.turtle.state = undefined;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -937,7 +937,7 @@ module.exports = class TurtleController extends EventEmitter {
 
         // Failed to refuel, request help
         this.turtle.state.error = 'Out of fuel';
-        this.turtlesDB.addTurtle(this.turtle);
+        turtlesDB.addTurtle(this.turtle);
         this.emit('update', 'tupdate', {
             id: this.turtle.id,
             data: {
@@ -959,7 +959,7 @@ module.exports = class TurtleController extends EventEmitter {
             );
             if (currentItemCount === initialItemCount) {
                 this.turtle.state.error = 'Inventory is full';
-                this.turtlesDB.addTurtle(this.turtle);
+                turtlesDB.addTurtle(this.turtle);
                 this.emit('update', 'tupdate', {
                     id: this.turtle.id,
                     data: {
@@ -992,12 +992,12 @@ module.exports = class TurtleController extends EventEmitter {
 
     async farm(moveContinously = false) {
         const {areaId, currentAreaFarmIndex} = this.turtle.state;
-        const farmArea = await this.areasDB.getArea(areaId);
+        const farmArea = await areasDB.getArea(areaId);
         if (farmArea.area.length > 4 && this.turtle.state.noopTiles >= farmArea.area.length) {
             const didSelect = await this.selectAnySeedInInventory();
             if (!didSelect) {
                 this.turtle.state.error = 'No seeds in inventory';
-                this.turtlesDB.addTurtle(this.turtle);
+                turtlesDB.addTurtle(this.turtle);
                 this.emit('update', 'tupdate', {
                     id: this.turtle.id,
                     data: {
@@ -1008,7 +1008,7 @@ module.exports = class TurtleController extends EventEmitter {
             }
 
             this.turtle.state.error = 'Nothing to farm in area';
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -1042,7 +1042,7 @@ module.exports = class TurtleController extends EventEmitter {
             }
 
             this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
         } else {
             const farmingBlockToSeed = farmingBlockToSeedMapObject[block.name];
             let shouldMoveForward = !farmingBlockToSeed;
@@ -1059,14 +1059,14 @@ module.exports = class TurtleController extends EventEmitter {
             if (moveContinously || shouldMoveForward) {
                 this.turtle.state.currentAreaFarmIndex = (currentAreaFarmIndex + 1) % farmArea.area.length;
             }
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
         }
     }
 
     async dropInventory() {
         await this.drop();
         this.turtle.state = this.turtle.state.nextState;
-        this.turtlesDB.addTurtle(this.turtle);
+        turtlesDB.addTurtle(this.turtle);
         this.emit('update', 'tupdate', {
             id: this.turtle.id,
             data: {
@@ -1079,7 +1079,7 @@ module.exports = class TurtleController extends EventEmitter {
         const [hasWorkbench] = await this.wsTurtle.exec('peripheral.find("workbench") ~= nil');
         if (!hasWorkbench) {
             this.turtle.state.error = 'No workbench to craft with';
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -1096,7 +1096,7 @@ module.exports = class TurtleController extends EventEmitter {
                 this.turtle.inventory[i] = item;
             }
             this.turtle.state = this.turtle.state.nextState;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -1106,7 +1106,7 @@ module.exports = class TurtleController extends EventEmitter {
             });
         } else {
             this.turtle.state.error = craftMessage;
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -1122,7 +1122,7 @@ module.exports = class TurtleController extends EventEmitter {
             this.turtle.inventory[i] = item;
         }
         this.turtle.state = this.turtle.state.nextState;
-        this.turtlesDB.addTurtle(this.turtle);
+        turtlesDB.addTurtle(this.turtle);
         this.emit('update', 'tupdate', {
             id: this.turtle.id,
             data: {
@@ -1136,7 +1136,7 @@ module.exports = class TurtleController extends EventEmitter {
         const [hasModem] = await this.wsTurtle.exec('peripheral.find("modem") ~= nil');
         if (!hasModem) {
             this.turtle.state.error = 'No wireless modem attached';
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -1158,7 +1158,7 @@ module.exports = class TurtleController extends EventEmitter {
                     const [didTurnRight] = await this.wsTurtle.exec('turtle.turnRight()');
                     if (!didTurnRight) {
                         this.turtle.state.error = 'Cannot move or turn around';
-                        this.turtlesDB.addTurtle(this.turtle);
+                        turtlesDB.addTurtle(this.turtle);
                         this.emit('update', 'tupdate', {
                             id: this.turtle.id,
                             data: {
@@ -1174,7 +1174,7 @@ module.exports = class TurtleController extends EventEmitter {
                     const [didMoveBackwards] = await this.wsTurtle.exec('turtle.back()');
                     if (!didMoveBackwards) {
                         this.turtle.state.error = 'Stuck';
-                        this.turtlesDB.addTurtle(this.turtle);
+                        turtlesDB.addTurtle(this.turtle);
                         this.emit('update', 'tupdate', {
                             id: this.turtle.id,
                             data: {
@@ -1199,7 +1199,7 @@ module.exports = class TurtleController extends EventEmitter {
 
         if (x === undefined || y === undefined || z === undefined) {
             this.turtle.state.error = 'Could not determine position';
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -1217,14 +1217,14 @@ module.exports = class TurtleController extends EventEmitter {
         const direction = diff[0] + Math.abs(diff[0]) * 2 + diff[2] + Math.abs(diff[2]) * 3;
         this.turtle.direction = direction;
         this.turtle.state = undefined;
-        this.turtlesDB.addTurtle(this.turtle);
+        turtlesDB.addTurtle(this.turtle);
     }
 
     async locate() {
         const [hasModem] = await this.wsTurtle.exec('peripheral.find("modem") ~= nil');
         if (!hasModem) {
             this.turtle.state.error = 'No wireless modem attached';
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -1240,7 +1240,7 @@ module.exports = class TurtleController extends EventEmitter {
         const z = location?.[2];
         if (x === undefined || y === undefined || z === undefined) {
             this.turtle.state.error = 'Could not determine position';
-            this.turtlesDB.addTurtle(this.turtle);
+            turtlesDB.addTurtle(this.turtle);
             this.emit('update', 'tupdate', {
                 id: this.turtle.id,
                 data: {
@@ -1252,7 +1252,7 @@ module.exports = class TurtleController extends EventEmitter {
 
         this.turtle.state = undefined;
         this.turtle.location = {x, y, z};
-        this.turtlesDB.addTurtle(this.turtle);
+        turtlesDB.addTurtle(this.turtle);
     }
 
     async *ai() {
@@ -1265,17 +1265,17 @@ module.exports = class TurtleController extends EventEmitter {
                 if (this.turtle.location === undefined) {
                     console.log('locating...');
                     this.turtle.state = {id: 5, name: 'locating'};
-                    this.turtlesDB.addTurtle(this.turtle);
+                    turtlesDB.addTurtle(this.turtle);
                 } else if (
                     this.turtle.fuelLevel < this.turtle.fuelLimit * 0.1 ||
                     this.turtle.stepsSinceLastRecharge >=
                         this.turtle.fuelLimit - this.turtle.fuelLevel + this.turtle.fuelLimit * 0.1
                 ) {
                     this.turtle.state = {id: 1, name: 'refueling'};
-                    this.turtlesDB.addTurtle(this.turtle);
+                    turtlesDB.addTurtle(this.turtle);
                 } else if (!this.turtle.direction) {
                     this.turtle.state = {id: 6, name: 'recalibrating'};
-                    this.turtlesDB.addTurtle(this.turtle);
+                    turtlesDB.addTurtle(this.turtle);
                 }
             }
 
@@ -1408,7 +1408,7 @@ module.exports = class TurtleController extends EventEmitter {
                     }
                 },
                 getInitialObstacles: async () => {
-                    const allBlocks = this.worldDB.getAllBlocks();
+                    const allBlocks = worldDB.getAllBlocks();
                     return Object.keys(allBlocks)
                         .filter((key) => !mineableObstaclesMap[key])
                         .map((key) => {
@@ -1478,7 +1478,7 @@ module.exports = class TurtleController extends EventEmitter {
         }
 
         if (this.turtle.state && this.turtle.state.id === 3) {
-            this.turtlesDB.updateState(this.turtle.id, undefined);
+            turtlesDB.updateState(this.turtle.id, undefined);
         }
     }
 

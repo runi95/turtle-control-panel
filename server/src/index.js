@@ -66,7 +66,7 @@ wss.on('connection', (ws) => {
         turtlesDB.addTurtle(turtle);
         updateEmitter.emit('update', 'tconnect', {turtle});
         websocketTurtle.off('handshake', handshake);
-        const turtleController = new TurtleController(turtlesDB, worldDB, areasDB, websocketTurtle, turtle);
+        const turtleController = new TurtleController(websocketTurtle, turtle);
         turtleController.on('update', (type, obj) => {
             updateEmitter.emit('update', type, obj);
         });
