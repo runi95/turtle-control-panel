@@ -7,6 +7,7 @@ const areasDB = require('./db/areasDB');
 const TurtleController = require('./turtleController');
 const Turtle = require('./entities/turtle');
 const globalUpdateEmitter = require('./globalUpdateEmitter');
+const globalTurtleAiController = require('./turtleAiController');
 
 console.info('Starting up...');
 
@@ -26,7 +27,6 @@ const rl = readline.createInterface({
     terminal: false,
 });
 
-const turtleAIList = [];
 const wss = new ws.Server({port: 5757});
 wss.on('connection', (ws) => {
     console.info('Incoming connection...');
@@ -69,7 +69,7 @@ wss.on('connection', (ws) => {
             globalUpdateEmitter.emit('update', type, obj);
         });
 
-        turtleAIList.push(turtleController.ai());
+        globalTurtleAiController.add(turtleController);
     };
     websocketTurtle.on('handshake', handshake);
 
@@ -208,13 +208,5 @@ wssWebsite.on('connection', (ws) => {
         globalUpdateEmitter.off('update', update);
     });
 });
-
-const runAI = async () => {
-    await Promise.all(turtleAIList.map((ai) => ai?.next()));
-
-    setTimeout(runAI, 1);
-};
-
-runAI();
 
 console.info('Server started!');
