@@ -15,8 +15,6 @@ const getLocalCoordinatesForDirection = (direction) => {
     ][direction - 1];
 };
 
-const rechargeStation = {x: 455, y: 87, z: -597};
-
 module.exports = class TurtleController extends EventEmitter {
     constructor(wsTurtle, turtle) {
         super();
@@ -836,11 +834,15 @@ module.exports = class TurtleController extends EventEmitter {
         const {x, y, z} = this.turtle.location;
         const [item] = await this.getItemDetail(16);
         if (item !== undefined) {
-            const currentDirection = this.turtle.direction;
-            await this.moveTo(rechargeStation.x, rechargeStation.y, rechargeStation.z);
-            await this.dropAllItems();
-            await this.moveTo(x, y, z);
-            await this.turnToDirection(currentDirection);
+            this.turtle.state.error = 'Inventory is full';
+            turtlesDB.addTurtle(this.turtle);
+            this.emit('update', 'tupdate', {
+                id: this.turtle.id,
+                data: {
+                    state: this.turtle.state,
+                },
+            });
+            return;
         }
 
         if (mineType === 'ylevel') {
