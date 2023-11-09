@@ -1,16 +1,14 @@
 const ws = require('ws');
 const readline = require('readline');
 const TurtleWS = require('./entities/turtleWS');
-const {EventEmitter} = require('events');
 const turtlesDB = require('./db/turtlesDB');
 const worldDB = require('./db/worldDB');
 const areasDB = require('./db/areasDB');
 const TurtleController = require('./turtleController');
 const Turtle = require('./entities/turtle');
+const globalUpdateEmitter = require('./globalUpdateEmitter');
 
 console.info('Starting up...');
-
-const updateEmitter = new EventEmitter();
 
 const setAllTurtlesToOffline = () => {
     turtlesDB.getTurtles().then((turtles) => {
@@ -64,11 +62,11 @@ wss.on('connection', (ws) => {
         );
 
         turtlesDB.addTurtle(turtle);
-        updateEmitter.emit('update', 'tconnect', {turtle});
+        globalUpdateEmitter.emit('update', 'tconnect', {turtle});
         websocketTurtle.off('handshake', handshake);
         const turtleController = new TurtleController(websocketTurtle, turtle);
         turtleController.on('update', (type, obj) => {
-            updateEmitter.emit('update', type, obj);
+            globalUpdateEmitter.emit('update', type, obj);
         });
 
         turtleAIList.push(turtleController.ai());
@@ -77,7 +75,7 @@ wss.on('connection', (ws) => {
 
     const tDisconnect = (id) => {
         turtlesDB.updateOnlineStatus(id, false);
-        updateEmitter.emit('tdisconnect', {id});
+        globalUpdateEmitter.emit('tdisconnect', {id});
         websocketTurtle.off('disconnect', tDisconnect);
     };
     websocketTurtle.on('disconnect', tDisconnect);
@@ -204,10 +202,10 @@ wssWebsite.on('connection', (ws) => {
                 return ws.send(JSON.stringify({type: 'WDELETE', message: obj}));
         }
     };
-    updateEmitter.on('update', update);
+    globalUpdateEmitter.on('update', update);
 
     ws.on('close', () => {
-        updateEmitter.off('update', update);
+        globalUpdateEmitter.off('update', update);
     });
 });
 
