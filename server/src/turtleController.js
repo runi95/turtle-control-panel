@@ -14,7 +14,6 @@ const getLocalCoordinatesForDirection = (direction) => {
     ][direction - 1];
 };
 
-const mineshaftEntrance = {x: 467, y: 87, z: -587};
 const rechargeStation = {x: 455, y: 87, z: -597};
 
 const farmingBlockToSeedMapObject = {
