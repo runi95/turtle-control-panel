@@ -4,6 +4,7 @@ const DStarLite = require('./dlite');
 const turtlesDB = require('./db/turtlesDB');
 const worldDB = require('./db/worldDB');
 const areasDB = require('./db/areasDB');
+const {farmingBlockToSeedMapObject, farmingSeedNames} = require('../helpers/farming');
 
 const getLocalCoordinatesForDirection = (direction) => {
     return [
@@ -15,34 +16,6 @@ const getLocalCoordinatesForDirection = (direction) => {
 };
 
 const rechargeStation = {x: 455, y: 87, z: -597};
-
-const farmingBlockToSeedMapObject = {
-    'minecraft:wheat': {
-        seed: 'minecraft:wheat_seeds',
-        maxAge: 7,
-    },
-    'minecraft:carrots': {
-        seed: 'minecraft:carrot',
-        maxAge: 7,
-    },
-    'minecraft:potatoes': {
-        seed: 'minecraft:potato',
-        maxAge: 7,
-    },
-    'minecraft:beetroots': {
-        seed: 'minecraft:beetroot_seeds',
-        maxAge: 3,
-    },
-    'minecraft:nether_wart': {
-        seed: 'minecraft:nether_wart',
-        maxAge: 3,
-    },
-    'minecraft:sweet_berry_bush': {
-        seed: 'minecraft:sweet_berries',
-        maxAge: 3,
-    },
-};
-const farmingSeedNames = Object.values(farmingBlockToSeedMapObject).map((seedObject) => seedObject.seed);
 
 module.exports = class TurtleController extends EventEmitter {
     constructor(wsTurtle, turtle) {
