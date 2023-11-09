@@ -209,22 +209,6 @@ wssWebsite.on('connection', (ws) => {
     });
 });
 
-function* aiIterator() {
-    let i = 0;
-    while (true) {
-        if (i >= turtleAIList.length) {
-            i = 0;
-        }
-
-        if (turtleAIList.length > 0) {
-            yield turtleAIList[i];
-        } else {
-            yield;
-        }
-        i++;
-    }
-}
-
 const runAI = async () => {
     await Promise.all(turtleAIList.map((ai) => ai?.next()));
 
