@@ -26,6 +26,7 @@ const turtleLogLevel = (() => {
 module.exports = class TurtleWS extends EventEmitter {
     constructor(ws) {
         super();
+
         this.ws = ws;
         this.handshake();
     }
@@ -36,6 +37,7 @@ module.exports = class TurtleWS extends EventEmitter {
         const listener = (msg) => {
             const obj = JSON.parse(msg);
             if (obj.uuid !== uuid) {
+                console.error(`${obj.uuid} does not match ${uuid}!`);
                 return;
             }
 
@@ -82,6 +84,7 @@ module.exports = class TurtleWS extends EventEmitter {
             const listener = (msg) => {
                 const obj = JSON.parse(msg);
                 if (obj.uuid !== uuid) {
+                    console.error(`${obj.uuid} does not match ${uuid}!`);
                     return;
                 }
 
