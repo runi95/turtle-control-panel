@@ -6,16 +6,16 @@ module.exports = class TurtlesDB {
         this.db = new JsonDB(new Config('turtles.json', true, true, '/'));
     }
 
-    addTurtle(turtle) {
-        this.db.push(`/${turtle.id}`, turtle);
+    async addTurtle(turtle) {
+        await this.db.push(`/${turtle.id}`, turtle);
     }
 
-    updateOnlineStatus(id, isOnline) {
-        this.db.push(`/${id}/isOnline`, isOnline);
+    async updateOnlineStatus(id, isOnline) {
+        await this.db.push(`/${id}/isOnline`, isOnline);
     }
 
-    updateState(id, state) {
-        this.db.push(`/${id}/state`, state);
+    async updateState(id, state) {
+        await this.db.push(`/${id}/state`, state);
     }
 
     async getTurtle(id) {
@@ -26,7 +26,7 @@ module.exports = class TurtlesDB {
         }
     }
 
-    getTurtles() {
-        return this.db.getData('/');
+    async getTurtles() {
+        return await this.db.getData('/');
     }
 };

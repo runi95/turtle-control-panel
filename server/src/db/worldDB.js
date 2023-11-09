@@ -6,19 +6,19 @@ module.exports = class WorldDB {
         this.db = new JsonDB(new Config('world.json', true, true, '/'));
     }
 
-    updateBlock(x, y, z, block = {}) {
-        this.db.push(`/${x},${y},${z}`, block);
+    async updateBlock(x, y, z, block = {}) {
+        await this.db.push(`/${x},${y},${z}`, block);
     }
 
-    deleteBlock(x, y, z) {
-        return this.db.delete(`/${x},${y},${z}`);
+    async deleteBlock(x, y, z) {
+        return await this.db.delete(`/${x},${y},${z}`);
     }
 
-    getBlock(x, y, z) {
-        return this.db.getData(`/${x},${y},${z}`);
+    async getBlock(x, y, z) {
+        return await this.db.getData(`/${x},${y},${z}`);
     }
 
-    getAllBlocks() {
-        return this.db.getData('/');
+    async getAllBlocks() {
+        return await this.db.getData('/');
     }
 };

@@ -6,8 +6,8 @@ module.exports = class AreasDB {
         this.db = new JsonDB(new Config('areas.json', true, true, '/'));
     }
 
-    addArea(area) {
-        this.db.push(`/${area.id}`, area);
+    async addArea(area) {
+        await this.db.push(`/${area.id}`, area);
     }
 
     async getArea(id) {
@@ -18,7 +18,7 @@ module.exports = class AreasDB {
         }
     }
 
-    getAreas() {
-        return this.db.getData('/');
+    async getAreas() {
+        return await this.db.getData('/');
     }
 };
