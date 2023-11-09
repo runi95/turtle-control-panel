@@ -1,7 +1,7 @@
 const {JsonDB} = require('node-json-db');
 const {Config} = require('node-json-db/dist/lib/JsonDBConfig');
 
-module.exports = class TurtlesDB {
+class TurtlesDB {
     constructor() {
         this.db = new JsonDB(new Config('turtles.json', true, true, '/'));
     }
@@ -29,4 +29,6 @@ module.exports = class TurtlesDB {
     async getTurtles() {
         return await this.db.getData('/');
     }
-};
+}
+
+module.exports = new TurtlesDB();

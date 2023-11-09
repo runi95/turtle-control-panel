@@ -1,7 +1,7 @@
 const {JsonDB} = require('node-json-db');
 const {Config} = require('node-json-db/dist/lib/JsonDBConfig');
 
-module.exports = class WorldDB {
+class WorldDB {
     constructor() {
         this.db = new JsonDB(new Config('world.json', true, true, '/'));
     }
@@ -21,4 +21,6 @@ module.exports = class WorldDB {
     async getAllBlocks() {
         return await this.db.getData('/');
     }
-};
+}
+
+module.exports = new WorldDB();

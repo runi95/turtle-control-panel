@@ -2,18 +2,15 @@ const ws = require('ws');
 const readline = require('readline');
 const TurtleWS = require('./entities/turtleWS');
 const {EventEmitter} = require('events');
-const TurtlesDB = require('./db/turtlesDB');
-const WorldDB = require('./db/worldDB');
-const AreasDB = require('./db/areasDB');
+const turtlesDB = require('./db/turtlesDB');
+const worldDB = require('./db/worldDB');
+const areasDB = require('./db/areasDB');
 const TurtleController = require('./turtleController');
 const Turtle = require('./entities/turtle');
 
 console.info('Starting up...');
 
 const updateEmitter = new EventEmitter();
-const turtlesDB = new TurtlesDB();
-const worldDB = new WorldDB();
-const areasDB = new AreasDB();
 
 const setAllTurtlesToOffline = () => {
     turtlesDB.getTurtles().then((turtles) => {

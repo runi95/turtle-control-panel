@@ -1,7 +1,7 @@
 const {JsonDB} = require('node-json-db');
 const {Config} = require('node-json-db/dist/lib/JsonDBConfig');
 
-module.exports = class AreasDB {
+class AreasDB {
     constructor() {
         this.db = new JsonDB(new Config('areas.json', true, true, '/'));
     }
@@ -21,4 +21,6 @@ module.exports = class AreasDB {
     async getAreas() {
         return await this.db.getData('/');
     }
-};
+}
+
+module.exports = new AreasDB();
