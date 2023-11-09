@@ -31,19 +31,19 @@ class TurtlesDB {
         await this.db.push(`/${id}/isOnline`, isOnline);
     }
 
-    async updateFuelLevel(fuelLevel) {
+    async updateFuelLevel(id, fuelLevel) {
         await this.db.push(`/${id}/fuelLevel`, fuelLevel);
     }
 
-    async updateSelectedSlot(selectedSlot) {
+    async updateSelectedSlot(id, selectedSlot) {
         await this.db.push(`/${id}/selectedSlot`, selectedSlot);
     }
 
-    async updateInventory(inventory) {
+    async updateInventory(id, inventory) {
         await this.db.push(`/${id}/inventory`, inventory);
     }
 
-    async updateStepsSinceLastRecharge(stepsSinceLastRecharge) {
+    async updateStepsSinceLastRecharge(id, stepsSinceLastRecharge) {
         await this.db.push(`/${id}/stepsSinceLastRecharge`, stepsSinceLastRecharge);
     }
 
@@ -51,11 +51,11 @@ class TurtlesDB {
         await this.db.push(`/${id}/state`, state);
     }
 
-    async updateLocation(location) {
+    async updateLocation(id, location) {
         await this.db.push(`/${id}/location`, location);
     }
 
-    async updateDirection(direction) {
+    async updateDirection(id, direction) {
         await this.db.push(`/${id}/direction`, direction);
     }
 }
