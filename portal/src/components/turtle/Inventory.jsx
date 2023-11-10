@@ -84,11 +84,11 @@ function Inventory(props) {
                         const ItemSlotStyle = itemIndex === selectedSlot ? SelectedItemSlot : ItemSlot;
                         if (inventory[itemIndex] === undefined) {
                             return (
-                                <ItemSlotStyle key={i}>
-                                    <OverlayTrigger placement='top' overlay={<Tooltip>Empty</Tooltip>}>
+                                <OverlayTrigger key={i} placement='top' overlay={<Tooltip>Empty</Tooltip>}>
+                                    <ItemSlotStyle>
                                         <EmptyItemImage />
-                                    </OverlayTrigger>
-                                </ItemSlotStyle>
+                                    </ItemSlotStyle>
+                                </OverlayTrigger>
                             );
                         }
 
@@ -101,19 +101,17 @@ function Inventory(props) {
                         const spriteX = 32 * (spritePosition - spriteY - 1);
 
                         return (
-                            <ItemSlotStyle key={i}>
-                                <OverlayTrigger placement='top' overlay={<Tooltip>{displayName}</Tooltip>}>
-                                    <ItemContainer>
-                                        <ItemImage
-                                            style={{
-                                                backgroundImage: 'url(/sprites.png)',
-                                                backgroundPosition: `-${spriteX}px -${spriteY}px`,
-                                            }}
-                                        />
-                                        <ItemCount>{count}</ItemCount>
-                                    </ItemContainer>
-                                </OverlayTrigger>
-                            </ItemSlotStyle>
+                            <OverlayTrigger key={i} placement='top' overlay={<Tooltip>{displayName}</Tooltip>}>
+                                <ItemSlotStyle>
+                                    <ItemImage
+                                        style={{
+                                            backgroundImage: 'url(/sprites.png)',
+                                            backgroundPosition: `-${spriteX}px -${spriteY}px`,
+                                        }}
+                                    />
+                                    <ItemCount>{count}</ItemCount>
+                                </ItemSlotStyle>
+                            </OverlayTrigger>
                         );
                     })}
                 </InventoryGrid>
@@ -183,16 +181,12 @@ function Inventory(props) {
     ];
 }
 
-const ItemCount = styled.div`
+const ItemCount = styled.span`
     position: absolute;
-    bottom: -15px;
-    right: -15px;
-    font-size: 1.5em;
-    font-weight: 500;
-`;
-
-const ItemContainer = styled.div`
-    position: relative;
+    bottom: 0;
+    right: 0;
+    font-size: 24px;
+    line-height: 24px;
 `;
 
 const EmptyItemImage = styled.span`
@@ -236,8 +230,11 @@ const ButtonSlot = styled.div`
 `;
 
 const ItemSlot = styled.div`
+    position: relative;
     display: flex;
+    flex-direction: column;
     justify-content: center;
+    cursor: pointer;
     align-items: center;
     background-color: #8b8b8b;
     border: 1px solid #373737;
