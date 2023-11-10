@@ -85,7 +85,15 @@ function Inventory(props) {
                         if (inventory[itemIndex] === undefined) {
                             return (
                                 <OverlayTrigger key={i} placement='top' overlay={<Tooltip>Empty</Tooltip>}>
-                                    <ItemSlotStyle>
+                                    <ItemSlotStyle
+                                        onClick={() => {
+                                            props.action({
+                                                type: 'ACTION',
+                                                action: 'select',
+                                                data: {id: turtle.id, slot: i},
+                                            });
+                                        }}
+                                    >
                                         <EmptyItemImage />
                                     </ItemSlotStyle>
                                 </OverlayTrigger>
@@ -102,7 +110,15 @@ function Inventory(props) {
 
                         return (
                             <OverlayTrigger key={i} placement='top' overlay={<Tooltip>{displayName}</Tooltip>}>
-                                <ItemSlotStyle>
+                                <ItemSlotStyle
+                                    onClick={() => {
+                                        props.action({
+                                            type: 'ACTION',
+                                            action: 'select',
+                                            data: {id: turtle.id, slot: i},
+                                        });
+                                    }}
+                                >
                                     <ItemImage
                                         style={{
                                             backgroundImage: 'url(/sprites.png)',

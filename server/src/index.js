@@ -98,6 +98,8 @@ wssWebsite.on('connection', (ws) => {
                             nextState: turtle.state,
                         };
                         break;
+                    case 'select':
+                        turtle.select(obj.data.slot + 1);
                 }
                 break;
             case 'AREA':
