@@ -211,15 +211,6 @@ const InventoryGrid = styled.div`
     grid-gap: 2px;
 `;
 
-// const ButtonSlot = styled.div`
-//     display: flex;
-//     justify-content: center;
-//     align-items: center;
-//     padding: 2px;
-//     width: 64px;
-//     height: 64px;
-// `;
-
 const ButtonSlot = styled.div`
     display: flex;
     justify-content: center;
