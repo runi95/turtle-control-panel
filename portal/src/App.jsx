@@ -31,18 +31,21 @@ function App() {
             const obj = JSON.parse(msg.data);
             switch (obj.type) {
                 case 'HANDSHAKE':
-                    setState({
+                    setState((state) => ({
                         ...state,
                         turtles: obj.message.turtles,
                         world: obj.message.world,
                         areas: obj.message.areas,
-                    });
+                    }));
                     break;
                 case 'TCONNECT':
-                    setState({...state, turtles: {...state.turtles, [obj.message.turtle.id]: obj.message.turtle}});
+                    setState((state) => ({
+                        ...state,
+                        turtles: {...state.turtles, [obj.message.turtle.id]: obj.message.turtle},
+                    }));
                     break;
                 case 'TLOCATION':
-                    setState({
+                    setState((state) => ({
                         ...state,
                         turtles: {
                             ...state.turtles,
@@ -52,10 +55,10 @@ function App() {
                                 fuelLevel: obj.message.fuelLevel,
                             },
                         },
-                    });
+                    }));
                     break;
                 case 'TDISCONNECT':
-                    setState({
+                    setState((state) => ({
                         ...state,
                         turtles: {
                             ...state.turtles,
@@ -64,10 +67,10 @@ function App() {
                                 isOnline: false,
                             },
                         },
-                    });
+                    }));
                     break;
                 case 'TUPDATE':
-                    setState({
+                    setState((state) => ({
                         ...state,
                         turtles: {
                             ...state.turtles,
@@ -76,28 +79,28 @@ function App() {
                                 ...obj.message.data,
                             },
                         },
-                    });
+                    }));
                     break;
                 case 'WINIT':
                     // TODO: Implement?
                     break;
                 case 'WUPDATE':
-                    setState({
+                    setState((state) => ({
                         ...state,
                         world: {
                             ...state.world,
                             [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message.block,
                         },
-                    });
+                    }));
                     break;
                 case 'WDELETE':
-                    setState({
+                    setState((state) => ({
                         ...state,
                         world: {
                             ...state.world,
                             [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message.block,
                         },
-                    });
+                    }));
                     break;
                 default:
                     console.error('Could not parse websocket message', obj);
