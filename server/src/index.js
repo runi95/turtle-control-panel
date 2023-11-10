@@ -1,95 +1,20 @@
 const ws = require('ws');
-const readline = require('readline');
-const TurtleWS = require('./entities/turtleWS');
 const turtlesDB = require('./db/turtlesDB');
 const worldDB = require('./db/worldDB');
 const areasDB = require('./db/areasDB');
-const TurtleController = require('./turtleController');
-const Turtle = require('./entities/turtle');
-const globalUpdateEmitter = require('./globalUpdateEmitter');
-const globalTurtleAiController = require('./turtleAiController');
+const {getOnlineTurtleById} = require('./entities/turtle');
+const globalEventEmitter = require('./globalEventEmitter');
 
 console.info('Starting up...');
 
-const setAllTurtlesToOffline = () => {
-    turtlesDB.getTurtles().then((turtles) => {
+const setAllTurtlesToOffline = async () => {
+    await turtlesDB.getTurtles().then((turtles) => {
         Object.keys(turtles).forEach((key) => {
             turtlesDB.updateOnlineStatus(key, false);
         });
     });
 };
-
 setAllTurtlesToOffline();
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    terminal: false,
-});
-
-const wss = new ws.Server({port: 5757});
-wss.on('connection', (ws) => {
-    console.info('Incoming connection...');
-    ws.on('error', (err) => {
-        console.error(err);
-    });
-    const websocketTurtle = new TurtleWS(ws);
-    const handshake = async (turtleFromWS) => {
-        const turtleFromDB = (await turtlesDB.getTurtle(turtleFromWS.id)) || {};
-        const {
-            id,
-            name = turtleFromDB.name,
-            isOnline,
-            fuelLevel,
-            fuelLimit,
-            selectedSlot,
-            inventory,
-            stepsSinceLastRecharge = turtleFromDB.stepsSinceLastRecharge,
-            state = turtleFromDB.state,
-        } = turtleFromWS;
-        const turtle = new Turtle(
-            id,
-            name,
-            isOnline,
-            fuelLevel,
-            fuelLimit,
-            selectedSlot,
-            inventory,
-            (stepsSinceLastRecharge || 0) + 1,
-            state,
-            turtleFromDB.location,
-            turtleFromDB.direction
-        );
-
-        turtlesDB.addTurtle(turtle);
-        globalUpdateEmitter.emit('update', 'tconnect', {turtle});
-        websocketTurtle.off('handshake', handshake);
-        const turtleController = new TurtleController(websocketTurtle, turtle);
-        turtleController.on('update', (type, obj) => {
-            globalUpdateEmitter.emit('update', type, obj);
-        });
-
-        globalTurtleAiController.add(turtleController);
-    };
-    websocketTurtle.on('handshake', handshake);
-
-    const tDisconnect = (id) => {
-        turtlesDB.updateOnlineStatus(id, false);
-        globalUpdateEmitter.emit('tdisconnect', {id});
-        websocketTurtle.off('disconnect', tDisconnect);
-    };
-    websocketTurtle.on('disconnect', tDisconnect);
-
-    rl.on('line', (line) => {
-        if (line === 'disconnect') {
-            ws.send(JSON.stringify({type: 'DISCONNECT'}));
-        } else if (line === 'reboot') {
-            ws.send(JSON.stringify({type: 'REBOOT'}));
-        } else {
-            ws.send(JSON.stringify({type: 'EVAL', function: `return ${line}`}));
-        }
-    });
-});
 
 const wssWebsite = new ws.Server({port: 6868});
 wssWebsite.on('connection', (ws) => {
@@ -113,68 +38,67 @@ wssWebsite.on('connection', (ws) => {
                 );
                 break;
             case 'ACTION':
-                turtlesDB.getTurtle(obj.data.id).then((turtle) => {
-                    if (turtle === undefined) {
-                        console.error(`Attempted to [${obj.action}] invalid turtle [${obj.data.id}]`);
-                        return;
-                    }
+                const turtle = getOnlineTurtleById(obj.data.id);
+                if (turtle === undefined) {
+                    console.error(`Attempted to [${obj.action}] invalid turtle [${obj.data.id}]`);
+                    return;
+                }
 
-                    switch (obj.action) {
-                        case 'refuel':
-                            turtlesDB.updateState(turtle.id, {id: 1, name: 'refueling'});
-                            break;
-                        case 'mine':
-                            turtlesDB.updateState(turtle.id, {
-                                id: 2,
-                                name: 'mining',
-                                mineType: obj.data.mineType,
-                                mineTarget: obj.data.mineTarget,
-                            });
-                            break;
-                        case 'move':
-                            turtlesDB.updateState(turtle.id, {
-                                id: 3,
-                                name: 'moving',
-                                x: obj.data.x,
-                                y: obj.data.y,
-                                z: obj.data.z,
-                            });
-                            break;
-                        case 'farm':
-                            turtlesDB.updateState(turtle.id, {
-                                id: 4,
-                                name: 'farming',
-                                areaId: obj.data.areaId,
-                                currentAreaFarmIndex: 0,
-                                noopTiles: 0,
-                            });
-                            break;
-                        case 'stop':
-                            turtlesDB.updateState(turtle.id, undefined);
-                            break;
-                        case 'refresh-inventory':
-                            turtlesDB.updateState(turtle.id, {
-                                id: 7,
-                                name: 'refreshing inventory',
-                                nextState: turtle.state,
-                            });
-                            break;
-                        case 'craft':
-                            turtlesDB.updateState(turtle.id, {
-                                id: 8,
-                                name: 'craft',
-                                nextState: turtle.state?.id === 8 ? undefined : turtle.state,
-                            });
-                            break;
-                        case 'drop':
-                            turtlesDB.updateState(turtle.id, {
-                                id: 9,
-                                name: 'drop',
-                                nextState: turtle.state,
-                            });
-                            break;
-                    }
-                });
+                switch (obj.action) {
+                    case 'refuel':
+                        turtle.state = {id: 1, name: 'refueling'};
+                        break;
+                    case 'mine':
+                        turtle.state = {
+                            id: 2,
+                            name: 'mining',
+                            mineType: obj.data.mineType,
+                            mineTarget: obj.data.mineTarget,
+                        };
+                        break;
+                    case 'move':
+                        turtle.state = {
+                            id: 3,
+                            name: 'moving',
+                            x: obj.data.x,
+                            y: obj.data.y,
+                            z: obj.data.z,
+                        };
+                        break;
+                    case 'farm':
+                        turtle.state = {
+                            id: 4,
+                            name: 'farming',
+                            areaId: obj.data.areaId,
+                            currentAreaFarmIndex: 0,
+                            noopTiles: 0,
+                        };
+                        break;
+                    case 'stop':
+                        turtle.state = undefined;
+                        break;
+                    case 'refresh-inventory':
+                        turtle.state = {
+                            id: 7,
+                            name: 'refreshing inventory',
+                            nextState: turtle.state,
+                        };
+                        break;
+                    case 'craft':
+                        turtle.state = {
+                            id: 8,
+                            name: 'craft',
+                            nextState: turtle.state?.id === 8 ? undefined : turtle.state,
+                        };
+                        break;
+                    case 'drop':
+                        turtle.state = {
+                            id: 9,
+                            name: 'drop',
+                            nextState: turtle.state,
+                        };
+                        break;
+                }
                 break;
             case 'AREA':
                 switch (obj.action) {
@@ -186,26 +110,26 @@ wssWebsite.on('connection', (ws) => {
         }
     });
 
-    const update = (type, obj) => {
-        switch (type) {
-            case 'tconnect':
-                return ws.send(JSON.stringify({type: 'TCONNECT', message: obj}));
-            case 'tdisconnect':
-                return ws.send(JSON.stringify({type: 'TDISCONNECT', message: obj}));
-            case 'tlocation':
-                return ws.send(JSON.stringify({type: 'TLOCATION', message: obj}));
-            case 'tupdate':
-                return ws.send(JSON.stringify({type: 'TUPDATE', message: obj}));
-            case 'wupdate':
-                return ws.send(JSON.stringify({type: 'WUPDATE', message: obj}));
-            case 'wdelete':
-                return ws.send(JSON.stringify({type: 'WDELETE', message: obj}));
-        }
-    };
-    globalUpdateEmitter.on('update', update);
+    const tconnect = (obj) => ws.send(JSON.stringify({type: 'TCONNECT', message: obj}));
+    globalEventEmitter.on('tconnect', tconnect);
+    const tdisconnect = (obj) => ws.send(JSON.stringify({type: 'TDISCONNECT', message: obj}));
+    globalEventEmitter.on('tdisconnect', tdisconnect);
+    const tlocation = (obj) => ws.send(JSON.stringify({type: 'TLOCATION', message: obj}));
+    globalEventEmitter.on('tlocation', tlocation);
+    const tupdate = (obj) => ws.send(JSON.stringify({type: 'TUPDATE', message: obj}));
+    globalEventEmitter.on('tupdate', tupdate);
+    const wupdate = (obj) => ws.send(JSON.stringify({type: 'WUPDATE', message: obj}));
+    globalEventEmitter.on('wupdate', wupdate);
+    const wdelete = (obj) => ws.send(JSON.stringify({type: 'WDELETE', message: obj}));
+    globalEventEmitter.on('wdelete', wdelete);
 
     ws.on('close', () => {
-        globalUpdateEmitter.off('update', update);
+        globalEventEmitter.off('tconnect', tconnect);
+        globalEventEmitter.off('tdisconnect', tdisconnect);
+        globalEventEmitter.off('tlocation', tlocation);
+        globalEventEmitter.off('tupdate', tupdate);
+        globalEventEmitter.off('wupdate', wupdate);
+        globalEventEmitter.off('wdelete', wdelete);
     });
 });
 
