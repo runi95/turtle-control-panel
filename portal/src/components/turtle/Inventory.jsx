@@ -203,6 +203,7 @@ const ItemCount = styled.span`
     right: 0;
     font-size: 24px;
     line-height: 24px;
+    user-select: none;
 `;
 
 const EmptyItemImage = styled.span`
