@@ -15,7 +15,7 @@ class WorldDB {
     }
 
     async getBlock(x, y, z) {
-        return await this.db.getData(`/${x},${y},${z}`);
+        return await this.db.getObjectDefault(`/${x},${y},${z}`, null);
     }
 
     async getAllBlocks() {
