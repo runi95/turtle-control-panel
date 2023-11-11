@@ -423,7 +423,7 @@ class Turtle {
             ...this.inventory,
             [slot]: itemDetail ?? undefined,
         };
-        return [itemDetail];
+        return itemDetail;
     }
 
     async refreshInventoryState(from = this.selectedSlot, stopOnUndefined = false) {
@@ -607,8 +607,8 @@ class Turtle {
         const place = await this.#exec('turtle.place()');
         const [didPlace] = place;
         if (didPlace) {
-            const [item] = await this.getItemDetail(selectedSlot);
-            this.inventory[selectedSlot] = item;
+            const item = await this.getItemDetail(selectedSlot);
+            this.inventory[selectedSlot] = item ?? undefined;
             await this.inspect();
         }
 
@@ -620,8 +620,8 @@ class Turtle {
         const placeUp = await this.#exec('turtle.placeUp()');
         const [didPlace] = placeUp;
         if (didPlace) {
-            const [item] = await this.getItemDetail(selectedSlot);
-            this.inventory[selectedSlot] = item;
+            const item = await this.getItemDetail(selectedSlot);
+            this.inventory[selectedSlot] = item ?? undefined;
             await this.inspectUp();
         }
 
@@ -633,8 +633,8 @@ class Turtle {
         const placeDown = await this.#exec('turtle.placeDown()');
         const [didPlace] = placeDown;
         if (didPlace) {
-            const [item] = await this.getItemDetail(selectedSlot);
-            this.inventory[selectedSlot] = item;
+            const item = await this.getItemDetail(selectedSlot);
+            this.inventory[selectedSlot] = item ?? undefined;
             await this.inspectDown();
         }
 
