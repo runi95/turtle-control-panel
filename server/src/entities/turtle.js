@@ -257,6 +257,15 @@ class Turtle {
         turtlesDB.updateDirection(this.id, this.direction);
     }
 
+    /**
+     * Moves the turtle forward by one block.
+     *
+     * This method asynchronously executes the 'turtle.forward()' command and updates the turtle's state based on the result.
+     *
+     * @returns {Promise<[boolean, string | undefined]>} A Promise resolving to a tuple:
+     *   - A boolean indicating whether the turtle successfully moved forward.
+     *   - An optional string describing an error if the movement was unsuccessful.
+     */
     async forward() {
         const forward = await this.#exec('turtle.forward()');
         if (!this.location || !this.direction) return forward;
@@ -293,6 +302,15 @@ class Turtle {
         return forward;
     }
 
+    /**
+     * Move the turtle backwards one block.
+     *
+     * This method asynchronously executes the 'turtle.back()' command and updates the turtle's state based on the result.
+     *
+     * @returns {Promise<[boolean, string | undefined]>} A Promise resolving to a tuple:
+     *   - A boolean indicating whether the turtle successfully moved back.
+     *   - An optional string describing an error if the movement was unsuccessful.
+     */
     async back() {
         const back = await this.#exec('turtle.back()');
         if (!this.location || !this.direction) return back;
@@ -329,6 +347,15 @@ class Turtle {
         return back;
     }
 
+    /**
+     * Move the turtle up one block.
+     *
+     * This method asynchronously executes the 'turtle.up()' command and updates the turtle's state based on the result.
+     *
+     * @returns {Promise<[boolean, string | undefined]>} A Promise resolving to a tuple:
+     *   - A boolean indicating whether the turtle successfully moved up.
+     *   - An optional string describing an error if the movement was unsuccessful.
+     */
     async up() {
         const up = await this.#exec('turtle.up()');
         if (!this.location) return up;
@@ -364,6 +391,15 @@ class Turtle {
         return up;
     }
 
+    /**
+     * Move the turtle down one block.
+     *
+     * This method asynchronously executes the 'turtle.down()' command and updates the turtle's state based on the result.
+     *
+     * @returns {Promise<[boolean, string | undefined]>} A Promise resolving to a tuple:
+     *   - A boolean indicating whether the turtle successfully moved down.
+     *   - An optional string describing an error if the movement was unsuccessful.
+     */
     async down() {
         const down = await this.#exec('turtle.down()');
         if (!this.location) return down;
@@ -399,6 +435,15 @@ class Turtle {
         return down;
     }
 
+    /**
+     * Rotate the turtle 90 degrees to the left.
+     *
+     * This method asynchronously executes the 'turtle.turnLeft()' command and updates the turtle's state based on the result.
+     *
+     * @returns {Promise<[boolean, string | undefined]>} A Promise resolving to a tuple:
+     *   - A boolean indicating whether the turtle successfully turned left.
+     *   - An optional string describing an error if the rotation was unsuccessful.
+     */
     async turnLeft() {
         const turnLeft = await this.#exec('turtle.turnLeft()');
         const [didTurn] = turnLeft;
@@ -408,6 +453,15 @@ class Turtle {
         return turnLeft;
     }
 
+    /**
+     * Rotate the turtle 90 degrees to the right.
+     *
+     * This method asynchronously executes the 'turtle.turnRight()' command and updates the turtle's state based on the result.
+     *
+     * @returns {Promise<[boolean, string | undefined]>} A Promise resolving to a tuple:
+     *   - A boolean indicating whether the turtle successfully turned right.
+     *   - An optional string describing an error if the rotation was unsuccessful.
+     */
     async turnRight() {
         const turnRight = await this.#exec('turtle.turnRight()');
         const [didTurn] = turnRight;
@@ -417,6 +471,27 @@ class Turtle {
         return turnRight;
     }
 
+    /**
+     * Get detailed information about the items in the given slot.
+     *
+     * This method asynchronously executes the 'turtle.getItemDetail()' command and updates the turtle's inventory based on the result.
+     *
+     * @param {number} [slot=this.selectedSlot] - The inventory slot to query. Defaults to the currently selected slot.
+     * @param {boolean} [detailed=true] - A boolean indicating whether to retrieve detailed information about the item. Defaults to true.
+     *
+     * @returns {Promise<object | null>} A Promise resolving to an object containing details about the item in the specified slot or undefined if the slot is empty.
+     * The details object includes the following properties:
+     *   - `enchantments` - An array of objects containing details about the enchantments (`level`, `name`, `displayName`) or undefined if item is unenchanted
+     *   - `durability` - How much durability the item has left in % where 1.0 = 100%, 0.5 = 50% and 0.0 = 0%
+     *   - `maxDamage` - How much potential damage the item can take or undefined if item cannot be damaged
+     *   - `damage` - How much damage the item has taken or undefined if item cannot be damaged
+     *   - `nbt` - Named Binary Tag
+     *   - `name` - The name of the item
+     *   - `tags` - Tags used by Minecraft for item sorting and grouping
+     *   - `count` - The current item count
+     *   - `maxCount` - The maximum possible count in one stack
+     *   - `displayName` - The name of the item as displayed in-game
+     */
     async getItemDetail(slot = this.selectedSlot, detailed = true) {
         const [itemDetail] = await this.#exec(`turtle.getItemDetail(${slot}, ${detailed}) or textutils.json_null`);
         this.inventory = {
@@ -426,6 +501,16 @@ class Turtle {
         return itemDetail;
     }
 
+    /**
+     * Refreshes the turtle's inventory state by querying details for items in all slots.
+     *
+     * This method asynchronously executes the 'turtle.getItemDetail()' command for each slot and updates the turtle's inventory based on the results.
+     *
+     * @param {number} [from=this.selectedSlot] - The starting inventory slot to query. Defaults to the currently selected slot.
+     * @param {boolean} [stopOnUndefined=false] - A boolean indicating whether to stop querying when an empty item slot is encountered. Defaults to false.
+     *
+     * @returns {Promise<void>} A Promise that resolves once the turtle's inventory state has been refreshed.
+     */
     async refreshInventoryState(from = this.selectedSlot, stopOnUndefined = false) {
         const inventoryAsObject = {};
         for (let i = 1; i < 17; i++) {
@@ -436,6 +521,16 @@ class Turtle {
         this.inventory = inventoryAsObject;
     }
 
+    /**
+     * Attempt to break the block in front of the turtle.
+     * This requires a turtle tool capable of breaking the block. Diamond pickaxes (mining turtles) can break any vanilla block, but other tools (such as axes) are more limited.
+     *
+     * This method asynchronously executes the 'turtle.dig()' command and updates the turtle's state based on the result.
+     *
+     * @returns {Promise<[boolean, string | undefined]>} A Promise resolving to a tuple:
+     *   - A boolean indicating whether the block was broken.
+     *   - An optional string describing an the reason no block was broken.
+     */
     async dig() {
         const selectedSlot = this.selectedSlot;
         const dig = await this.#exec('turtle.dig()');
@@ -463,6 +558,16 @@ class Turtle {
         return dig;
     }
 
+    /**
+     * Attempt to break the block above the turtle.
+     * This requires a turtle tool capable of breaking the block. Diamond pickaxes (mining turtles) can break any vanilla block, but other tools (such as axes) are more limited.
+     *
+     * This method asynchronously executes the 'turtle.digUp()' command and updates the turtle's state based on the result.
+     *
+     * @returns {Promise<[boolean, string | undefined]>} A Promise resolving to a tuple:
+     *   - A boolean indicating whether the block was broken.
+     *   - An optional string describing an the reason no block was broken.
+     */
     async digUp() {
         const selectedSlot = this.selectedSlot;
         const digUp = await this.#exec('turtle.digUp()');
@@ -490,6 +595,16 @@ class Turtle {
         return digUp;
     }
 
+    /**
+     * Attempt to break the block below the turtle.
+     * This requires a turtle tool capable of breaking the block. Diamond pickaxes (mining turtles) can break any vanilla block, but other tools (such as axes) are more limited.
+     *
+     * This method asynchronously executes the 'turtle.digDown()' command and updates the turtle's state based on the result.
+     *
+     * @returns {Promise<[boolean, string | undefined]>} A Promise resolving to a tuple:
+     *   - A boolean indicating whether the block was broken.
+     *   - An optional string describing an the reason no block was broken.
+     */
     async digDown() {
         const selectedSlot = this.selectedSlot;
         const digDown = await this.#exec('turtle.digDown()');
@@ -518,7 +633,15 @@ class Turtle {
     }
 
     /**
-     * Get information about the block in front of the turtle
+     * Get information about the block in front of the turtle.
+     *
+     * This method asynchronously executes the 'turtle.inspect()' command and interacts with the world database based on the result.
+     *
+     * @returns {Promise<object | undefined>} A Promise resolving to an object representing the inspected block or undefined if inspection fails.
+     * The details object includes the following properties:
+     *   - `state` - An object containing details about the block state if there is any
+     *   - `name` - The name of the block
+     *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
     async inspect() {
         const {x, y, z} = this.location;
@@ -547,7 +670,15 @@ class Turtle {
     }
 
     /**
-     * Get information about the block above the turtle
+     * Get information about the block above the turtle.
+     *
+     * This method asynchronously executes the 'turtle.inspectUp()' command and interacts with the world database based on the result.
+     *
+     * @returns {Promise<object | undefined>} A Promise resolving to an object representing the inspected block or undefined if inspection fails.
+     * The details object includes the following properties:
+     *   - `state` - An object containing details about the block state if there is any
+     *   - `name` - The name of the block
+     *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
     async inspectUp() {
         const {x, y, z} = this.location;
@@ -575,7 +706,15 @@ class Turtle {
     }
 
     /**
-     * Get information about the block below the turtle
+     * Get information about the block below the turtle.
+     *
+     * This method asynchronously executes the 'turtle.inspectDown()' command and interacts with the world database based on the result.
+     *
+     * @returns {Promise<object | undefined>} A Promise resolving to an object representing the inspected block or undefined if inspection fails.
+     * The details object includes the following properties:
+     *   - `state` - An object containing details about the block state if there is any
+     *   - `name` - The name of the block
+     *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
     async inspectDown() {
         const {x, y, z} = this.location;
