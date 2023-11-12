@@ -192,8 +192,7 @@ class TurtleController {
             return await this.#mineInDirection(mineTarget);
         }
 
-        const {x, y, z} = this.#turtle.location;
-        const [item] = await this.#turtle.getItemDetail(16);
+        const item = await this.#turtle.getItemDetail(16);
         if (item !== undefined) {
             this.#turtle.error = 'Inventory is full';
             return;
@@ -280,7 +279,7 @@ class TurtleController {
         if (seed === undefined) return false;
 
         const [slot] = seed;
-        const [item] = await this.#turtle.getItemDetail(slot);
+        const item = await this.#turtle.getItemDetail(slot);
         if (item?.name !== seed.name) return false;
 
         await this.#turtle.select(slot);
