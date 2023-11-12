@@ -962,7 +962,7 @@ class Turtle {
     }
 
     async getSelectedSlot() {
-        const [selectedSlot] = await this.#exec('turtle.getSelectedSlot()');
+        const [selectedSlot] = Number(await this.#exec('turtle.getSelectedSlot()'));
         this.selectedSlot = selectedSlot;
         return [selectedSlot];
     }
