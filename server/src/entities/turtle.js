@@ -44,6 +44,7 @@ class Turtle {
 
     // Private properties
     #ws;
+    #lastPromise = new Promise((resolve) => resolve());
 
     constructor(
         id,
@@ -1089,29 +1090,33 @@ class Turtle {
 
     #execRaw(f) {
         const uuid = uuid4();
-        return new Promise((resolve, reject) => {
-            const listener = (msg) => {
-                const obj = JSON.parse(msg);
-                if (obj.uuid !== uuid) {
-                    console.error(`${obj.uuid} does not match ${uuid}!`);
-                    return;
-                }
+        this.#lastPromise = new Promise((resolve, reject) =>
+            this.#lastPromise.finally(() => {
+                const listener = (msg) => {
+                    const obj = JSON.parse(msg);
+                    if (obj.uuid !== uuid) {
+                        console.error(`${obj.uuid} does not match ${uuid}!`);
+                        return;
+                    }
 
-                if (obj.type === 'ERROR') {
-                    console.error(obj.message);
-                    return reject(obj.message);
-                }
+                    if (obj.type === 'ERROR') {
+                        console.error(obj.message);
+                        return reject(obj.message);
+                    }
 
-                if (obj.type !== 'EVAL') {
-                    return reject(`Unknown response type "${obj.type}" from turtle with message "${obj.message}"`);
-                }
+                    if (obj.type !== 'EVAL') {
+                        return reject(`Unknown response type "${obj.type}" from turtle with message "${obj.message}"`);
+                    }
 
-                this.#ws.off('message', listener);
-                return resolve(obj.message);
-            };
-            this.#ws.on('message', listener);
-            this.#ws.send(JSON.stringify({type: 'EVAL', uuid, function: f}));
-        });
+                    this.#ws.off('message', listener);
+                    return resolve(obj.message);
+                };
+                this.#ws.on('message', listener);
+                this.#ws.send(JSON.stringify({type: 'EVAL', uuid, function: f}));
+            })
+        );
+
+        return this.#lastPromise;
     }
 }
 
