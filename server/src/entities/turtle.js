@@ -1049,7 +1049,7 @@ class Turtle {
      * @param {number} slot
      */
     async compareTo(slot) {
-        return await this.wsTurtle.exec(`turtle.compareTo(${slot})`);
+        return await this.#exec(`turtle.compareTo(${slot})`);
     }
 
     async attack() {
