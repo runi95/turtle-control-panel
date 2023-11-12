@@ -38,6 +38,12 @@ function Turtle(props) {
                                 }}
                             >
                                 <InputGroup>
+                                    <Form.Control
+                                        name='name'
+                                        type='text'
+                                        size='sm'
+                                        defaultValue={turtle.name}
+                                    ></Form.Control>
                                     <Button
                                         variant='outline-secondary'
                                         onClick={() => {
@@ -46,7 +52,6 @@ function Turtle(props) {
                                     >
                                         Cancel
                                     </Button>
-                                    <Form.Control name='name' type='text' size='sm' value={turtle.name}></Form.Control>
                                     <Button type='submit' variant='outline-success'>
                                         Update
                                     </Button>
