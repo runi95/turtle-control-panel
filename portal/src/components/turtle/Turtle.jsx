@@ -1,15 +1,17 @@
 import styled from 'styled-components';
-import {Container, Row, Col} from 'react-bootstrap';
+import {Container, Row, Col, Form, Button, InputGroup} from 'react-bootstrap';
 import FuelInfo from '../FuelInfo';
 import TurtleMap from './TurtleMap';
 import Inventory from './Inventory';
 import {useParams} from 'react-router-dom';
+import {useState} from 'react';
 
 const canvasSize = 160;
 const canvasRadius = 0.5 * canvasSize;
 
 function Turtle(props) {
     let {id} = useParams();
+    const [editNameState, setEditNameState] = useState(false);
 
     const directionToString = (direction) => {
         return ['W', 'N', 'E', 'S'][direction - 1];
@@ -21,10 +23,53 @@ function Turtle(props) {
             <br />
             <Row>
                 <Col>
-                    <h3>
-                        {turtle?.name || 'Unknown Turtle'}
-                        {turtle?.isOnline ? <GreenOnlineBox /> : <GreyOnlineBox />}
-                    </h3>
+                    <div style={{display: 'flex'}}>
+                        {editNameState ? (
+                            <Form
+                                style={{marginBottom: '.5rem'}}
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    props.action({
+                                        type: 'ACTION',
+                                        action: 'rename',
+                                        data: {id: turtle.id, newName: e.target[0].value},
+                                    });
+                                    setEditNameState(false);
+                                }}
+                            >
+                                <InputGroup>
+                                    <Button
+                                        variant='outline-secondary'
+                                        onClick={() => {
+                                            setEditNameState(false);
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Form.Control name='name' type='text' size='sm' value={turtle.name}></Form.Control>
+                                    <Button type='submit' variant='outline-success'>
+                                        Update
+                                    </Button>
+                                </InputGroup>
+                            </Form>
+                        ) : (
+                            <div style={{display: 'flex'}}>
+                                <h3>
+                                    {turtle?.isOnline ? <GreenOnlineBox /> : <GreyOnlineBox />}
+                                    {turtle?.name ?? 'Unknown Turtle'}
+                                </h3>
+                                <div
+                                    className='text-secondary'
+                                    style={{marginLeft: 4, cursor: 'pointer'}}
+                                    onClick={() => {
+                                        setEditNameState(true);
+                                    }}
+                                >
+                                    ✎
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </Col>
             </Row>
             <Row>

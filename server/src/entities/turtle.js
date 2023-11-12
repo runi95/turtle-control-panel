@@ -1078,6 +1078,11 @@ class Turtle {
         return updatedFuelLevel;
     }
 
+    async rename(name) {
+        await this.#exec(`os.setComputerLabel("${name}")`);
+        this.name = name;
+    }
+
     #exec(f) {
         return this.#execRaw(`return ${f}`);
     }

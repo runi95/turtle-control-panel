@@ -100,6 +100,8 @@ wssWebsite.on('connection', (ws) => {
                         break;
                     case 'select':
                         turtle.select(obj.data.slot + 1);
+                    case 'rename':
+                        turtle.rename(obj.data.newName);
                 }
                 break;
             case 'AREA':
