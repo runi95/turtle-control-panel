@@ -1,3 +1,12 @@
+// TODO: Add farming instructions for:
+// - pumpkin => minecraft:pumpkin_stem
+// - watermelon => ?
+// - kelp => ? => maxAge: 25
+// - bamboo => ? => maxAge: ?
+// - sugar cane => minecraft:sugar_cane => maxAge: 15
+// - chorus fruit => ? => maxAge: 5
+// - mushrooms => ?
+// - cactus => minecraft:cactus => maxAge: 15
 const farmingBlockToSeedMapObject = {
     'minecraft:wheat': {
         seed: 'minecraft:wheat_seeds',
