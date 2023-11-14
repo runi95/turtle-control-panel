@@ -344,10 +344,12 @@ class TurtleController {
                     await this.#farmBlock(farmingBlockToSeed.seed);
                     shouldMoveForward = true;
                 }
-                this.#turtle.state = {
-                    ...this.#turtle.state,
-                    noopTiles: 0,
-                };
+                if (this.#turtle.state.noopTiles !== 0) {
+                    this.#turtle.state = {
+                        ...this.#turtle.state,
+                        noopTiles: 0,
+                    };
+                }
             } else {
                 this.#turtle.state = {
                     ...this.#turtle.state,
