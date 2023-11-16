@@ -1,5 +1,5 @@
 const ws = require('ws');
-const uuid4 = require('uuid4');
+const {v4: uuid4} = require('uuid');
 const globalEventEmitter = require('../globalEventEmitter');
 const {removeTurtle, addTurtle} = require('../turtleController');
 const nameList = require('../names.json');
