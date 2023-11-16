@@ -5,6 +5,7 @@ const areasDB = require('./db/areasDB');
 const {farmingBlockToSeedMapObject, farmingSeedNames} = require('./helpers/farming');
 const {getLocalCoordinatesForDirection} = require('./helpers/coordinates');
 const globalEventEmitter = require('./globalEventEmitter');
+const logger = require('./logger/server');
 
 const turtleMap = new Map();
 
@@ -605,9 +606,9 @@ class TurtleController {
             const dStarLite = new DStarLite();
             try {
                 await dStarLite.runDStarLite(px, py, pz, targetX, targetY, targetZ, env);
-                console.log(`Moves: ${moves}`);
+                logger.log(`Moves: ${moves}`);
             } catch (err) {
-                console.error(err);
+                logger.error(err);
             }
         }
 

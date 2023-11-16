@@ -7,6 +7,7 @@ const turtlesDB = require('../db/turtlesDB');
 const worldDB = require('../db/worldDB');
 const {getLocalCoordinatesForDirection} = require('../helpers/coordinates');
 const turtleLogLevel = require('../logger/turtle');
+const logger = require('../logger/server');
 
 const connectedTurtlesMap = new Map();
 class Turtle {
@@ -55,7 +56,7 @@ class Turtle {
 
         this.#ws = ws;
         this.#ws.on('close', (code, message) => {
-            console.info(
+            logger.info(
                 `${this.name ?? '<unnamed>'}[${
                     this.id ?? '<uninitialized turtle>'
                 }] has disconnected with code ${code} and message ${message?.toString() || '<none>'}`
@@ -66,7 +67,7 @@ class Turtle {
             }
         });
         this.#ws.on('disconnect', (code, message) => {
-            console.info(
+            logger.info(
                 `${this.name ?? '<unnamed>'}[${
                     this.id ?? '<uninitialized turtle>'
                 }] has disconnected with code ${code} and message ${message?.toString() || '<none>'}`
@@ -1076,12 +1077,12 @@ class Turtle {
                 const listener = (msg) => {
                     const obj = JSON.parse(msg);
                     if (obj.uuid !== uuid) {
-                        console.error(`${obj.uuid} does not match ${uuid}!`);
+                        logger.error(`${obj.uuid} does not match ${uuid}!`);
                         return;
                     }
 
                     if (obj.type === 'ERROR') {
-                        console.error(obj.message);
+                        logger.error(obj.message);
                         return reject(obj.message);
                     }
 
@@ -1102,17 +1103,17 @@ class Turtle {
 }
 
 const initializeHandshake = (ws) => {
-    console.info('Initiating handshake...');
+    logger.info('Initiating handshake...');
     const uuid = uuid4();
     const listener = async (msg) => {
         const obj = JSON.parse(msg);
         if (obj.uuid !== uuid) {
-            console.error(`${obj.uuid} does not match ${uuid}!`);
+            logger.error(`${obj.uuid} does not match ${uuid}!`);
             return;
         }
 
         if (obj.type === 'ERROR') {
-            console.error(obj.message);
+            logger.error(obj.message);
             return;
         }
 
@@ -1127,7 +1128,7 @@ const initializeHandshake = (ws) => {
         }
 
         const {stepsSinceLastRecharge, state, location, direction} = (await turtlesDB.getTurtle(id)) ?? {};
-        console.info(`${name || '<unnamed>'} [${id}] has connected!`);
+        logger.info(`${name || '<unnamed>'} [${id}] has connected!`);
         ws.off('message', listener);
         const isOnline = true;
         const dbTurtle = {
@@ -1165,14 +1166,14 @@ const initializeHandshake = (ws) => {
     };
     ws.on('message', listener);
     ws.on('error', (err) => {
-        console.error(err);
+        logger.error(err);
     });
     ws.send(JSON.stringify({type: 'HANDSHAKE', uuid, logLevel: turtleLogLevel}));
 };
 
 const wss = new ws.Server({port: 5757});
 wss.on('connection', (ws) => {
-    console.info('Incoming connection...');
+    logger.info('Incoming connection...');
     initializeHandshake(ws);
 });
 

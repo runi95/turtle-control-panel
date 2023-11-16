@@ -2,6 +2,7 @@ const State = require('./State');
 const Pair = require('./Pair');
 const Coordinates = require('./Coordinates');
 const PriorityQueue = require('./PriorityQueue');
+const logger = require('../logger/server');
 
 module.exports = class DStarLite {
     constructor(maxSteps = 80000) {
@@ -71,7 +72,7 @@ module.exports = class DStarLite {
             try {
                 this.computeShortestPath();
             } catch (err) {
-                console.error(err);
+                logger.error(err);
                 return false;
             }
         }

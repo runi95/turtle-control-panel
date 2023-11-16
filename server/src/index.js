@@ -4,8 +4,9 @@ const worldDB = require('./db/worldDB');
 const areasDB = require('./db/areasDB');
 const {getOnlineTurtleById} = require('./entities/turtle');
 const globalEventEmitter = require('./globalEventEmitter');
+const logger = require('./logger/server');
 
-console.info('Starting up...');
+logger.info('Starting server...');
 
 const setAllTurtlesToOffline = async () => {
     await turtlesDB.getTurtles().then((turtles) => {
@@ -16,7 +17,8 @@ const setAllTurtlesToOffline = async () => {
 };
 setAllTurtlesToOffline();
 
-const wssWebsite = new ws.Server({port: 6868});
+const wssPort = process.env.WSS_PORT ?? 6868;
+const wssWebsite = new ws.Server({port: wssPort});
 wssWebsite.on('connection', (ws) => {
     ws.on('message', (msg) => {
         const obj = JSON.parse(msg);
@@ -40,7 +42,7 @@ wssWebsite.on('connection', (ws) => {
             case 'ACTION':
                 const turtle = getOnlineTurtleById(obj.data.id);
                 if (turtle === undefined) {
-                    console.error(`Attempted to [${obj.action}] invalid turtle [${obj.data.id}]`);
+                    logger.error(`Attempted to [${obj.action}] invalid turtle [${obj.data.id}]`);
                     return;
                 }
 
@@ -139,4 +141,4 @@ wssWebsite.on('connection', (ws) => {
     });
 });
 
-console.info('Server started!');
+logger.info(`Listening on port \x1b[36m${wssPort}\x1b[0m`);
