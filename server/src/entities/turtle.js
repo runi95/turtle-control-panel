@@ -6,26 +6,7 @@ const nameList = require('../names.json');
 const turtlesDB = require('../db/turtlesDB');
 const worldDB = require('../db/worldDB');
 const {getLocalCoordinatesForDirection} = require('../helpers/coordinates');
-
-// log levels:
-//
-// DEBUG
-// INFO
-// WARNING
-// ERROR
-const turtleLogLevel = (() => {
-    switch (process.env.TURTLE_LOG_LEVEL?.toUpperCase() || 'INFO') {
-        case 'ERROR':
-            return 3;
-        case 'WARNING':
-            return 2;
-        case 'INFO':
-            return 1;
-        case 'DEBUG':
-        default:
-            return 0;
-    }
-})();
+const turtleLogLevel = require('../logger/turtle');
 
 const connectedTurtlesMap = new Map();
 class Turtle {
