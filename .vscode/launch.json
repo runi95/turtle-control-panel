@@ -12,7 +12,8 @@
                 "<node_internals>/**"
             ],
             "cwd": "${workspaceFolder}/server",
-            "program": "${workspaceFolder}/server/src"
+            "program": "${workspaceFolder}/server/src",
+            "outputCapture": "std"
         }
     ]
 }
