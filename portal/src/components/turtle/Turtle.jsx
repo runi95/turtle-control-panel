@@ -1,10 +1,11 @@
 import styled from 'styled-components';
-import {Container, Row, Col, Form, Button, InputGroup} from 'react-bootstrap';
+import {Container, Row, Col, Form, Button, InputGroup, Modal} from 'react-bootstrap';
 import FuelInfo from '../FuelInfo';
 import TurtleMap from './TurtleMap';
 import Inventory from './Inventory';
 import {useParams} from 'react-router-dom';
 import {useCallback, useEffect, useState} from 'react';
+import LocationModal from './LocationModal';
 
 const canvasSize = 160;
 const canvasRadius = 0.5 * canvasSize;
@@ -12,6 +13,7 @@ const canvasRadius = 0.5 * canvasSize;
 function Turtle(props) {
     let {id} = useParams();
     const [editNameState, setEditNameState] = useState(false);
+    const [isModalShown, setIsModalShown] = useState(false);
 
     const escFunc = useCallback((e) => {
         if (e.key === 'Escape') {
@@ -94,7 +96,14 @@ function Turtle(props) {
                     <FuelInfo {...(turtle ? turtle : {})} />
                 </Col>
                 <Col md='auto'>
-                    <LocationText>
+                    <Modal show={isModalShown} onHide={() => setIsModalShown(false)}>
+                        <LocationModal turtle={turtle} action={props.action} hideModal={() => setIsModalShown(false)} />
+                    </Modal>
+                    <LocationText
+                        onClick={() => {
+                            setIsModalShown(true);
+                        }}
+                    >
                         {turtle?.direction ? `${directionToString(turtle.direction)}` : '_'} (
                         {turtle?.location
                             ? `${turtle.location.x}, ${turtle.location.y}, ${turtle.location.z}`
@@ -137,6 +146,7 @@ const GreyOnlineBox = styled(OnlineBox)`
 `;
 
 const LocationText = styled.small`
+    cursor: pointer;
     color: #8b8b8b;
 `;
 
