@@ -797,7 +797,7 @@ class Turtle {
         const select = await this.#exec(`turtle.select(${slot})`);
         const [didSelect] = select;
         if (didSelect) {
-            this.selectedSlot = slot;
+            this.selectedSlot = Number(slot);
         }
         return select;
     }
