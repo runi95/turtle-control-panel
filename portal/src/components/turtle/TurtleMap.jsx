@@ -293,8 +293,8 @@ const TurtleMap = (props) => {
                                     value={upperYLevel}
                                     onChange={(e) => setUpperYLevel(e.target.value)}
                                 ></Form.Control>
+                                <Form.Control.Feedback type='invalid'>Please enter valid numbers</Form.Control.Feedback>
                             </InputGroup>
-                            <Form.Control.Feedback type='invalid'>Please enter a valid number</Form.Control.Feedback>
                         </Form.Group>
                         <Form.Group className='mb-2'>
                             <Form.Label>Color</Form.Label>
