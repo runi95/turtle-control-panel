@@ -446,7 +446,12 @@ const TurtleMap = (props) => {
                         </div>
                     ) : (
                         <div className='d-grid gap-2'>
-                            <Button variant='outline-success' size='sm' onClick={() => setIsCreatingArea(true)}>
+                            <Button
+                                variant='outline-success'
+                                size='sm'
+                                disabled={!turtles?.[selectedTurtle]?.location}
+                                onClick={() => setIsCreatingArea(true)}
+                            >
                                 New Area
                             </Button>
                         </div>
