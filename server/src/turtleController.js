@@ -2,7 +2,7 @@ const Coordinates = require('./dlite/Coordinates');
 const DStarLite = require('./dlite');
 const worldDB = require('./db/worldDB');
 const areasDB = require('./db/areasDB');
-const {farmingBlockToSeedMapObject, farmingSeedNames} = require('./helpers/farming');
+const {blockToFarmingDetailsMapObject, farmingSeedNames} = require('./helpers/farming');
 const {getLocalCoordinatesForDirection} = require('./helpers/coordinates');
 const globalEventEmitter = require('./globalEventEmitter');
 const logger = require('./logger/server');
@@ -69,6 +69,21 @@ class TurtleController {
 
             yield;
         }
+    }
+
+    #hasSpaceForItem(name, count = 1) {
+        const inventoryEntries = Object.entries(this.#turtle.inventory);
+        if (inventoryEntries.length < 16) return true;
+
+        return (
+            inventoryEntries.reduce((remainingCount, [_, item]) => {
+                if (!item) return 0;
+                if (item.name !== name) return remainingCount;
+                if (!item.maxCount || !item.maxCount) return remainingCount;
+
+                return remainingCount - (item.maxCount - item.count);
+            }, count) <= 0
+        );
     }
 
     async #refreshInventoryState() {
@@ -338,11 +353,16 @@ class TurtleController {
                 currentAreaFarmIndex: (currentAreaFarmIndex + 1) % farmArea.area.length,
             };
         } else {
-            const farmingBlockToSeed = farmingBlockToSeedMapObject[block.name];
-            let shouldMoveForward = !farmingBlockToSeed;
-            if (farmingBlockToSeed) {
-                if (block.state.age === farmingBlockToSeed.maxAge) {
-                    await this.#farmBlock(farmingBlockToSeed.seed);
+            const farmingBlockToFarmingDetails = blockToFarmingDetailsMapObject[block.name];
+            let shouldMoveForward = !farmingBlockToFarmingDetails;
+            if (farmingBlockToFarmingDetails) {
+                if (!this.#hasSpaceForItem(farmingBlockToFarmingDetails.harvest)) {
+                    this.#turtle.error = 'Inventory is full';
+                    return;
+                }
+
+                if (block.state.age === farmingBlockToFarmingDetails.maxAge) {
+                    await this.#farmBlock(farmingBlockToFarmingDetails.seed);
                     shouldMoveForward = true;
                 }
                 if (this.#turtle.state.noopTiles !== 0) {

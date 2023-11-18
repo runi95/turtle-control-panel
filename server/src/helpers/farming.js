@@ -7,35 +7,41 @@
 // - chorus fruit => ? => maxAge: 5
 // - mushrooms => ?
 // - cactus => minecraft:cactus => maxAge: 15
-const farmingBlockToSeedMapObject = {
+const blockToFarmingDetailsMapObject = {
     'minecraft:wheat': {
         seed: 'minecraft:wheat_seeds',
+        harvest: 'minecraft:wheat',
         maxAge: 7,
     },
     'minecraft:carrots': {
         seed: 'minecraft:carrot',
+        harvest: 'minecraft:carrot',
         maxAge: 7,
     },
     'minecraft:potatoes': {
         seed: 'minecraft:potato',
+        harvest: 'minecraft:potato',
         maxAge: 7,
     },
     'minecraft:beetroots': {
         seed: 'minecraft:beetroot_seeds',
+        harvest: 'minecraft:beetroot',
         maxAge: 3,
     },
     'minecraft:nether_wart': {
         seed: 'minecraft:nether_wart',
+        harvest: 'minecraft:nether_wart',
         maxAge: 3,
     },
     'minecraft:sweet_berry_bush': {
         seed: 'minecraft:sweet_berries',
+        harvest: 'minecraft:sweet_berries',
         maxAge: 3,
     },
 };
-const farmingSeedNames = Object.values(farmingBlockToSeedMapObject).map((seedObject) => seedObject.seed);
+const farmingSeedNames = Object.values(blockToFarmingDetailsMapObject).map((seedObject) => seedObject.seed);
 
 module.exports = {
-    farmingBlockToSeedMapObject,
+    blockToFarmingDetailsMapObject,
     farmingSeedNames,
 };
