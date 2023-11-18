@@ -30,7 +30,7 @@ function FarmModal(props) {
                 <Modal.Title>Farm</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <Form.Group>
+                <Form.Group className='mb-2'>
                     <Form.Label>Farming area</Form.Label>
                     <Form.Control
                         value={state.selectedArea}

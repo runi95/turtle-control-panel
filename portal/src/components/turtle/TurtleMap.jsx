@@ -260,7 +260,7 @@ const TurtleMap = (props) => {
                         <Modal.Title>Create New Area</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <Form.Group>
+                        <Form.Group className='mb-2'>
                             <Form.Label>Area name</Form.Label>
                             <Form.Control
                                 required
@@ -271,7 +271,7 @@ const TurtleMap = (props) => {
                             ></Form.Control>
                             <Form.Control.Feedback type='invalid'>Please enter a non-empty name</Form.Control.Feedback>
                         </Form.Group>
-                        <Form.Group>
+                        <Form.Group className='mb-2'>
                             <Form.Label>Y level</Form.Label>
                             <InputGroup>
                                 <Form.Control
@@ -296,7 +296,7 @@ const TurtleMap = (props) => {
                             </InputGroup>
                             <Form.Control.Feedback type='invalid'>Please enter a valid number</Form.Control.Feedback>
                         </Form.Group>
-                        <Form.Group>
+                        <Form.Group className='mb-2'>
                             <Form.Label>Color</Form.Label>
                             <div style={{display: 'flex', flexDirection: 'row'}}>
                                 {colors.map((color, i) =>

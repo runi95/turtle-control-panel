@@ -54,7 +54,7 @@ function MineModal(props) {
         switch (state.selectedOption) {
             case 'area':
                 return (
-                    <Form.Group>
+                    <Form.Group className='mb-2'>
                         <Form.Label>Mine area</Form.Label>
                         <Form.Control
                             value={state.selectedArea}
@@ -74,7 +74,7 @@ function MineModal(props) {
                 );
             case 'ylevel':
                 return (
-                    <Form.Group>
+                    <Form.Group className='mb-2'>
                         <Form.Label>Mine to Y-Level</Form.Label>
                         <Form.Control
                             type='number'
@@ -89,7 +89,7 @@ function MineModal(props) {
                 );
             case 'direction':
                 return (
-                    <Form.Group>
+                    <Form.Group className='mb-2'>
                         <Form.Label>Mine in direction</Form.Label>
                         <Form.Control
                             value={state.selectedDirection}
@@ -121,7 +121,7 @@ function MineModal(props) {
                 <Modal.Title>Mine</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <Form.Group>
+                <Form.Group className='mb-2'>
                     <Form.Label>Mining type</Form.Label>
                     <div>
                         <Form.Check
