@@ -872,8 +872,7 @@ class Turtle {
             const [item] = await this.#exec(`turtle.getItemDetail(${selectedSlot}, true) or textutils.json_null`);
             this.#inventory[selectedSlot] = item ?? undefined;
 
-            turtlesDB.addTurtle({
-                id: this.id,
+            turtlesDB.addTurtle(this.id, {
                 fuelLevel: this.fuelLevel,
                 inventory: this.inventory,
             });
@@ -1162,7 +1161,7 @@ const initializeHandshake = (ws) => {
 
         globalEventEmitter.emit('tconnect', {turtle: dbTurtle});
         addTurtle(turtle);
-        await turtlesDB.addTurtle(dbTurtle);
+        await turtlesDB.addTurtle(id, dbTurtle);
     };
     ws.on('message', listener);
     ws.on('error', (err) => {
