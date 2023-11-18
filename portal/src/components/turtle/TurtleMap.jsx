@@ -432,7 +432,7 @@ const TurtleMap = (props) => {
                                     setIsModalShown(true);
                                 }}
                             >
-                                Create
+                                {Object.keys(createdArea).length < 1 ? '(draw on map)' : 'Create'}
                             </Button>
                             <Button
                                 variant='outline-danger'
