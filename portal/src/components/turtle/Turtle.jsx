@@ -62,10 +62,10 @@ function Turtle(props) {
                                             setEditNameState(false);
                                         }}
                                     >
-                                        Cancel
+                                        ✖
                                     </Button>
                                     <Button type='submit' variant='outline-success'>
-                                        Update
+                                        ✔
                                     </Button>
                                 </InputGroup>
                             </Form>
