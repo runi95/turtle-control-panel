@@ -41,3 +41,11 @@ npm install
 # Start the portal
 npm start
 ```
+
+### Turtle
+
+Get the contents of [startup.lua](./turtle/startup.lua) onto the turtle. This can be achieved by either uploading the contents onto pastebin and running the `pastebin get <code> startup` on the turtle itself (recommended) or by copying the contents of the file, running `edit startup` on the turtle and pasting the content line by line.
+
+Once the turtle has the correct startup file simply restart the turtle with `reboot` and it should attempt to connect to your running server.
+
+NOTE: Make sure to edit the `connectionURL` variable in startup.lua to your own IP address (or server URL). If you want to run this on a local server on localhost then check out this CC:Tweaked guide on [Allowing access to local IPs](https://tweaked.cc/guide/local_ips.html).
