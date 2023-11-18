@@ -291,10 +291,12 @@ class TurtleController {
     }
 
     async #selectAnySeedInInventory() {
-        const seed = Object.entries(this.#turtle.inventory).find(([_, item]) => farmingSeedNames.includes(item?.name));
-        if (seed === undefined) return false;
+        const inventoryEntry = Object.entries(this.#turtle.inventory).find(([_, item]) =>
+            farmingSeedNames.includes(item?.name)
+        );
+        if (inventoryEntry === undefined) return false;
 
-        const [slot] = seed;
+        const [slot, seed] = inventoryEntry;
         const item = await this.#turtle.getItemDetail(slot);
         if (item?.name !== seed.name) return false;
 
