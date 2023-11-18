@@ -8,7 +8,7 @@ class TurtlesDB {
 
     async addTurtle(id, turtle) {
         if (!id) return;
-        await this.db.push(`/${id}`, turtle);
+        await this.db.push(`/${id}`, turtle, false);
     }
 
     async getTurtle(id) {
