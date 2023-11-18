@@ -43,6 +43,7 @@ function Turtle(props) {
                                         type='text'
                                         size='sm'
                                         defaultValue={turtle.name}
+                                        autoFocus
                                     ></Form.Control>
                                     <Button
                                         variant='outline-secondary'
