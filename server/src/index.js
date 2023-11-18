@@ -42,7 +42,7 @@ wssWebsite.on('connection', (ws) => {
             case 'ACTION':
                 const turtle = getOnlineTurtleById(obj.data.id);
                 if (turtle === undefined) {
-                    logger.error(`Attempted to [${obj.action}] invalid turtle [${obj.data.id}]`);
+                    logger.error(`Attempted to [${obj.action}] on invalid turtle [${obj.data.id}]`);
                     return;
                 }
 
