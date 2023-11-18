@@ -4,7 +4,7 @@ import FuelInfo from '../FuelInfo';
 import TurtleMap from './TurtleMap';
 import Inventory from './Inventory';
 import {useParams} from 'react-router-dom';
-import {useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 
 const canvasSize = 160;
 const canvasRadius = 0.5 * canvasSize;
@@ -12,6 +12,17 @@ const canvasRadius = 0.5 * canvasSize;
 function Turtle(props) {
     let {id} = useParams();
     const [editNameState, setEditNameState] = useState(false);
+
+    const escFunc = useCallback((e) => {
+        if (e.key === 'Escape') {
+            setEditNameState(false);
+        }
+    });
+    useEffect(() => {
+        document.addEventListener('keydown', escFunc, false);
+
+        return () => document.removeEventListener('keydown', escFunc, false);
+    });
 
     const directionToString = (direction) => {
         return ['W', 'N', 'E', 'S'][direction - 1];
