@@ -425,6 +425,7 @@ const TurtleMap = (props) => {
                             <Button
                                 variant='outline-success'
                                 size='sm'
+                                disabled={Object.keys(createdArea).length < 1}
                                 onClick={() => {
                                     setAreaName('');
                                     setIsFormValidated(false);
