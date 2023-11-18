@@ -99,6 +99,11 @@ function Turtle(props) {
                     <Modal show={isModalShown} onHide={() => setIsModalShown(false)}>
                         <LocationModal turtle={turtle} action={props.action} hideModal={() => setIsModalShown(false)} />
                     </Modal>
+                    {(!turtle.location || !turtle.direction) && (
+                        <span className='text-danger' style={{marginRight: 5}}>
+                            Update turtle position:
+                        </span>
+                    )}
                     <LocationText
                         onClick={() => {
                             setIsModalShown(true);
