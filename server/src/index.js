@@ -106,6 +106,9 @@ wssWebsite.on('connection', (ws) => {
                     case 'rename':
                         turtle.rename(obj.data.newName);
                         break;
+                    default:
+                        logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);
+                        break;
                 }
                 break;
             case 'AREA':
