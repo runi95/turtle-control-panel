@@ -606,7 +606,7 @@ class TurtleController {
             const dStarLite = new DStarLite();
             try {
                 await dStarLite.runDStarLite(px, py, pz, targetX, targetY, targetZ, env);
-                logger.log(`Moves: ${moves}`);
+                logger.debug(`Moves: ${moves}`);
             } catch (err) {
                 logger.error(err);
             }
