@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {Modal, Form, Button} from 'react-bootstrap';
+import {Modal, Form, Button, InputGroup} from 'react-bootstrap';
 
 function MineModal(props) {
     const [state, setState] = useState({
@@ -56,58 +56,66 @@ function MineModal(props) {
                 return (
                     <Form.Group className='mb-2'>
                         <Form.Label>Mine area</Form.Label>
-                        <Form.Control
-                            value={state.selectedArea}
-                            onChange={(e) => setState({...state, selectedArea: e.target.value})}
-                            as='select'
-                            required
-                        >
-                            <option value='' key='empty'>
-                                -- select an area to mine --
-                            </option>
-                            {Object.keys(props.areas).map((key) => (
-                                <option key={key}>{props.areas[key]}</option>
-                            ))}
-                        </Form.Control>
-                        <Form.Control.Feedback type='invalid'>Please select a valid area</Form.Control.Feedback>
+                        <InputGroup>
+                            <Form.Control
+                                value={state.selectedArea}
+                                onChange={(e) => setState({...state, selectedArea: e.target.value})}
+                                as='select'
+                                required
+                            >
+                                <option value='' key='empty'>
+                                    -- select an area to mine --
+                                </option>
+                                {Object.keys(props.areas).map((key) => (
+                                    <option key={key}>{props.areas[key]}</option>
+                                ))}
+                            </Form.Control>
+                            <Form.Control.Feedback type='invalid'>Please select a valid area</Form.Control.Feedback>
+                        </InputGroup>
                     </Form.Group>
                 );
             case 'ylevel':
                 return (
                     <Form.Group className='mb-2'>
                         <Form.Label>Mine to Y-Level</Form.Label>
-                        <Form.Control
-                            type='number'
-                            min='1'
-                            max='255'
-                            placeholder={props.turtle.location.y}
-                            value={state.selectedYLevel}
-                            onChange={(e) => setState({...state, selectedYLevel: e.target.value})}
-                        />
-                        <Form.Control.Feedback type='invalid'>Please select a valid y-level</Form.Control.Feedback>
+                        <InputGroup>
+                            <Form.Control
+                                type='number'
+                                min='1'
+                                max='255'
+                                placeholder={props.turtle.location.y}
+                                value={state.selectedYLevel}
+                                onChange={(e) => setState({...state, selectedYLevel: e.target.value})}
+                            />
+                            <Form.Control.Feedback type='invalid'>Please select a valid y-level</Form.Control.Feedback>
+                        </InputGroup>
                     </Form.Group>
                 );
             case 'direction':
                 return (
                     <Form.Group className='mb-2'>
                         <Form.Label>Mine in direction</Form.Label>
-                        <Form.Control
-                            value={state.selectedDirection}
-                            onChange={(e) => setState({...state, selectedDirection: e.target.value})}
-                            as='select'
-                            required
-                        >
-                            <option value='' key='empty'>
-                                -- select a direction to mine --
-                            </option>
-                            <option key='Up'>Up</option>
-                            <option key='Down'>Down</option>
-                            <option key='North'>North</option>
-                            <option key='East'>East</option>
-                            <option key='South'>South</option>
-                            <option key='West'>West</option>
-                        </Form.Control>
-                        <Form.Control.Feedback type='invalid'>Please select a valid direction</Form.Control.Feedback>
+                        <InputGroup>
+                            <Form.Control
+                                value={state.selectedDirection}
+                                onChange={(e) => setState({...state, selectedDirection: e.target.value})}
+                                as='select'
+                                required
+                            >
+                                <option value='' key='empty'>
+                                    -- select a direction to mine --
+                                </option>
+                                <option key='Up'>Up</option>
+                                <option key='Down'>Down</option>
+                                <option key='North'>North</option>
+                                <option key='East'>East</option>
+                                <option key='South'>South</option>
+                                <option key='West'>West</option>
+                            </Form.Control>
+                            <Form.Control.Feedback type='invalid'>
+                                Please select a valid direction
+                            </Form.Control.Feedback>
+                        </InputGroup>
                     </Form.Group>
                 );
             default:

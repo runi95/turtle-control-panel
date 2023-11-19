@@ -262,14 +262,18 @@ const TurtleMap = (props) => {
                     <Modal.Body>
                         <Form.Group className='mb-2'>
                             <Form.Label>Area name</Form.Label>
-                            <Form.Control
-                                required
-                                type='text'
-                                placeholder='name'
-                                value={areaName}
-                                onChange={(e) => setAreaName(e.target.value)}
-                            ></Form.Control>
-                            <Form.Control.Feedback type='invalid'>Please enter a non-empty name</Form.Control.Feedback>
+                            <InputGroup>
+                                <Form.Control
+                                    required
+                                    type='text'
+                                    placeholder='name'
+                                    value={areaName}
+                                    onChange={(e) => setAreaName(e.target.value)}
+                                />
+                                <Form.Control.Feedback type='invalid'>
+                                    Please enter a non-empty name
+                                </Form.Control.Feedback>
+                            </InputGroup>
                         </Form.Group>
                         <Form.Group className='mb-2'>
                             <Form.Label>Y level</Form.Label>
@@ -281,7 +285,7 @@ const TurtleMap = (props) => {
                                     placeholder={turtles?.[selectedTurtle]?.location?.y || ''}
                                     value={yLevel}
                                     onChange={(e) => setYLevel(e.target.value)}
-                                ></Form.Control>
+                                />
                                 <div className='input-group-prepend input-group-append'>
                                     <InputGroup.Text>-</InputGroup.Text>
                                 </div>
@@ -292,7 +296,7 @@ const TurtleMap = (props) => {
                                     placeholder={turtles?.[selectedTurtle]?.location?.y || ''}
                                     value={upperYLevel}
                                     onChange={(e) => setUpperYLevel(e.target.value)}
-                                ></Form.Control>
+                                />
                                 <Form.Control.Feedback type='invalid'>Please enter valid numbers</Form.Control.Feedback>
                             </InputGroup>
                         </Form.Group>

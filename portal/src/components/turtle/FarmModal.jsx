@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {Modal, Form, Button} from 'react-bootstrap';
+import {Modal, Form, Button, InputGroup} from 'react-bootstrap';
 
 function FarmModal(props) {
     const [state, setState] = useState({
@@ -32,21 +32,23 @@ function FarmModal(props) {
             <Modal.Body>
                 <Form.Group className='mb-2'>
                     <Form.Label>Farming area</Form.Label>
-                    <Form.Control
-                        value={state.selectedArea}
-                        onChange={(e) => setState({...state, selectedArea: e.target.value})}
-                        as='select'
-                        custom
-                        required
-                    >
-                        <option value='' key='empty'>
-                            -- select an area to farm --
-                        </option>
-                        {Object.keys(props.areas).map((key) => (
-                            <option key={key}>{props.areas[key]}</option>
-                        ))}
-                    </Form.Control>
-                    <Form.Control.Feedback type='invalid'>Please select a valid area</Form.Control.Feedback>
+                    <InputGroup>
+                        <Form.Control
+                            value={state.selectedArea}
+                            onChange={(e) => setState({...state, selectedArea: e.target.value})}
+                            as='select'
+                            custom
+                            required
+                        >
+                            <option value='' key='empty'>
+                                -- select an area to farm --
+                            </option>
+                            {Object.keys(props.areas).map((key) => (
+                                <option key={key}>{props.areas[key]}</option>
+                            ))}
+                        </Form.Control>
+                        <Form.Control.Feedback type='invalid'>Please select a valid area</Form.Control.Feedback>
+                    </InputGroup>
                 </Form.Group>
             </Modal.Body>
             <Modal.Footer>
