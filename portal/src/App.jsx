@@ -14,7 +14,8 @@ function App() {
     //Public API that will echo messages sent to it back to the client
     const [state, setState] = useState({
         turtles: {},
-        world: {},
+        worlds: {},
+        servers: {},
         areas: undefined,
     });
     const {sendMessage, readyState} = useWebSocket('ws://localhost:6868', {
@@ -34,14 +35,21 @@ function App() {
                     setState((state) => ({
                         ...state,
                         turtles: obj.message.turtles,
-                        world: obj.message.world,
+                        worlds: obj.message.worlds,
                         areas: obj.message.areas,
+                        servers: obj.message.servers,
                     }));
                     break;
                 case 'TCONNECT':
                     setState((state) => ({
                         ...state,
-                        turtles: {...state.turtles, [obj.message.turtle.id]: obj.message.turtle},
+                        turtles: {
+                            ...state.turtles,
+                            [obj.message.serverId]: {
+                                ...state.turtles[obj.message.serverId],
+                                [obj.message.id]: obj.message.turtle,
+                            },
+                        },
                     }));
                     break;
                 case 'TLOCATION':
@@ -49,10 +57,13 @@ function App() {
                         ...state,
                         turtles: {
                             ...state.turtles,
-                            [obj.message.id]: {
-                                ...state.turtles[obj.message.id],
-                                location: obj.message.location,
-                                fuelLevel: obj.message.fuelLevel,
+                            [obj.message.serverId]: {
+                                ...state.turtles[obj.message.serverId],
+                                [obj.message.id]: {
+                                    ...state.turtles[obj.message.serverId][obj.message.id],
+                                    location: obj.message.location,
+                                    fuelLevel: obj.message.fuelLevel,
+                                },
                             },
                         },
                     }));
@@ -62,9 +73,12 @@ function App() {
                         ...state,
                         turtles: {
                             ...state.turtles,
-                            [obj.message.id]: {
-                                ...state.turtles[obj.message.id],
-                                isOnline: false,
+                            [obj.message.serverId]: {
+                                ...state.turtles[obj.message.serverId],
+                                [obj.message.id]: {
+                                    ...state.turtles[obj.message.serverId][obj.message.id],
+                                    isOnline: false,
+                                },
                             },
                         },
                     }));
@@ -74,9 +88,12 @@ function App() {
                         ...state,
                         turtles: {
                             ...state.turtles,
-                            [obj.message.id]: {
-                                ...state.turtles[obj.message.id],
-                                ...obj.message.data,
+                            [obj.message.serverId]: {
+                                ...state.turtles[obj.message.serverId],
+                                [obj.message.id]: {
+                                    ...state.turtles[obj.message.serverId][obj.message.id],
+                                    ...obj.message.data,
+                                },
                             },
                         },
                     }));
@@ -87,18 +104,24 @@ function App() {
                 case 'WUPDATE':
                     setState((state) => ({
                         ...state,
-                        world: {
-                            ...state.world,
-                            [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message.block,
+                        worlds: {
+                            ...state.worlds,
+                            [obj.message.serverId]: {
+                                ...state.worlds[obj.message.serverId],
+                                [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message.block,
+                            },
                         },
                     }));
                     break;
                 case 'WDELETE':
                     setState((state) => ({
                         ...state,
-                        world: {
-                            ...state.world,
-                            [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message.block,
+                        worlds: {
+                            ...state.worlds,
+                            [obj.message.serverId]: {
+                                ...state.worlds[obj.message.serverId],
+                                [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message.block,
+                            },
                         },
                     }));
                     break;
@@ -161,12 +184,12 @@ function App() {
                                 </Nav>
                             )}
                         </Navbar>
-                        <Dashboard turtles={state.turtles} />
+                        <Dashboard turtles={state.turtles} servers={state.servers} />
                     </div>
                 }
             />
             <Route
-                path='/dashboard/:id'
+                path='/servers/:serverId/turtles/:id'
                 element={
                     <div>
                         <Navbar style={{backgroundColor: '#27293d'}} variant='dark'>
@@ -198,7 +221,7 @@ function App() {
                         </Navbar>
                         <Turtle
                             turtles={state.turtles}
-                            world={state.world}
+                            worlds={state.worlds}
                             areas={state.areas}
                             action={(msg) => {
                                 handleSendMessage(JSON.stringify(msg));

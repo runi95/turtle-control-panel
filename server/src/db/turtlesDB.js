@@ -6,67 +6,83 @@ class TurtlesDB {
         this.db = new JsonDB(new Config('turtles.json', true, true, '/'));
     }
 
-    async addTurtle(id, turtle) {
-        if (!id) return;
-        await this.db.push(`/${id}`, turtle, false);
+    async addTurtle(serverId, id, turtle) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
+        await this.db.push(`/${serverId}/${id}`, turtle, false);
     }
 
-    async getTurtle(id) {
-        if (!id) return undefined;
+    async getTurtle(serverId, id) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
         try {
-            return await this.db.getData(`/${id}`);
+            return await this.db.getData(`/${serverId}/${id}`);
         } catch (err) {
             return undefined;
         }
     }
 
-    async getTurtles() {
+    async getTurtles(serverId) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        return await this.db.getData(`/${serverId}/`);
+    }
+
+    async getAllTurtles() {
         return await this.db.getData('/');
     }
 
-    async updateName(id, name) {
-        if (!id) return;
-        await this.db.push(`/${id}/name`, name);
+    async updateName(serverId, id, name) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
+        await this.db.push(`/${serverId}/${id}/name`, name);
     }
 
-    async updateOnlineStatus(id, isOnline) {
-        if (!id) return;
-        await this.db.push(`/${id}/isOnline`, isOnline);
+    async updateOnlineStatus(serverId, id, isOnline) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
+        await this.db.push(`/${serverId}/${id}/isOnline`, isOnline);
     }
 
-    async updateFuelLevel(id, fuelLevel) {
-        if (!id) return;
-        await this.db.push(`/${id}/fuelLevel`, fuelLevel);
+    async updateFuelLevel(serverId, id, fuelLevel) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
+        await this.db.push(`/${serverId}/${id}/fuelLevel`, fuelLevel);
     }
 
-    async updateSelectedSlot(id, selectedSlot) {
-        if (!id) return;
-        await this.db.push(`/${id}/selectedSlot`, selectedSlot);
+    async updateSelectedSlot(serverId, id, selectedSlot) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
+        await this.db.push(`/${serverId}/${id}/selectedSlot`, selectedSlot);
     }
 
-    async updateInventory(id, inventory) {
-        if (!id) return;
-        await this.db.push(`/${id}/inventory`, inventory);
+    async updateInventory(serverId, id, inventory) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
+        await this.db.push(`/${serverId}/${id}/inventory`, inventory);
     }
 
-    async updateStepsSinceLastRecharge(id, stepsSinceLastRecharge) {
-        if (!id) return;
-        await this.db.push(`/${id}/stepsSinceLastRecharge`, stepsSinceLastRecharge);
+    async updateStepsSinceLastRecharge(serverId, id, stepsSinceLastRecharge) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
+        await this.db.push(`/${serverId}/${id}/stepsSinceLastRecharge`, stepsSinceLastRecharge);
     }
 
-    async updateState(id, state) {
-        if (!id) return;
-        await this.db.push(`/${id}/state`, state);
+    async updateState(serverId, id, state) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
+        await this.db.push(`/${serverId}/${id}/state`, state);
     }
 
-    async updateLocation(id, location) {
-        if (!id) return;
-        await this.db.push(`/${id}/location`, location);
+    async updateLocation(serverId, id, location) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
+        await this.db.push(`/${serverId}/${id}/location`, location);
     }
 
-    async updateDirection(id, direction) {
-        if (!id) return;
-        await this.db.push(`/${id}/direction`, direction);
+    async updateDirection(serverId, id, direction) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
+        await this.db.push(`/${serverId}/${id}/direction`, direction);
     }
 }
 

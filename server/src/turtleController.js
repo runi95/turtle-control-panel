@@ -91,6 +91,7 @@ class TurtleController {
         this.#turtle.state = this.#turtle.state?.nextState?.id === 7 ? undefined : this.#turtle.state?.nextState;
         globalEventEmitter.emit('tupdate', {
             id: this.#turtle.id,
+            serverId: this.#turtle.serverId,
             data: {
                 state: this.#turtle.state,
             },
@@ -218,7 +219,7 @@ class TurtleController {
             return await this.#mineToYLevel(Number(mineTarget));
         } else if (mineType === 'area') {
             const currentIndex = this.#turtle.state.index || 0;
-            const mineArea = await areasDB.getArea(mineTarget);
+            const mineArea = await areasDB.getArea(this.#turtle.serverId, mineTarget);
             if (mineArea === undefined) {
                 throw new Error('Given mining area does not exist');
             }
@@ -306,7 +307,7 @@ class TurtleController {
 
     async #farm(moveContinously = false) {
         const {areaId, currentAreaFarmIndex} = this.#turtle.state;
-        const farmArea = await areasDB.getArea(areaId);
+        const farmArea = await areasDB.getArea(this.#turtle.serverId, areaId);
         if (farmArea.area.length > 4 && this.#turtle.state.noopTiles >= farmArea.area.length) {
             const didSelect = await this.#selectAnySeedInInventory();
             if (!didSelect) {
@@ -565,7 +566,7 @@ class TurtleController {
                     }
                 },
                 getInitialObstacles: async () => {
-                    const allBlocks = await worldDB.getAllBlocks();
+                    const allBlocks = await worldDB.getBlocks(this.#turtle.serverId);
                     return Object.keys(allBlocks)
                         .filter((key) => !mineableObstaclesMap[key])
                         .map((key) => {

@@ -5,17 +5,20 @@ const areasDB = require('./db/areasDB');
 const {getOnlineTurtleById} = require('./entities/turtle');
 const globalEventEmitter = require('./globalEventEmitter');
 const logger = require('./logger/server');
+const serversDB = require('./db/serversDB');
 
 logger.info('Starting server...');
 
-const setAllTurtlesToOffline = async () => {
-    await turtlesDB.getTurtles().then((turtles) => {
-        Object.keys(turtles).forEach((key) => {
-            turtlesDB.updateOnlineStatus(key, false);
-        });
-    });
-};
-setAllTurtlesToOffline();
+// Sets all turtles to offline on startup
+(async () => {
+    const turtleServers = await turtlesDB.getAllTurtles();
+    if (!turtleServers) return;
+    return Promise.all(
+        Object.entries(turtleServers).map(([serverId, turtleServer]) =>
+            Object.keys(turtleServer).map((turtleId) => turtlesDB.updateOnlineStatus(serverId, turtleId, false))
+        )
+    );
+})();
 
 const wssPort = process.env.WSS_PORT ?? 6868;
 const wssWebsite = new ws.Server({port: wssPort});
@@ -24,20 +27,24 @@ wssWebsite.on('connection', (ws) => {
         const obj = JSON.parse(msg);
         switch (obj.type) {
             case 'HANDSHAKE':
-                Promise.all([turtlesDB.getTurtles(), worldDB.getAllBlocks(), areasDB.getAreas()]).then(
-                    ([turtles, world, areas]) => {
-                        ws.send(
-                            JSON.stringify({
-                                type: 'HANDSHAKE',
-                                message: {
-                                    turtles,
-                                    world,
-                                    areas,
-                                },
-                            })
-                        );
-                    }
-                );
+                Promise.all([
+                    turtlesDB.getAllTurtles(),
+                    worldDB.getAllBlocks(),
+                    areasDB.getAllAreas(),
+                    serversDB.getServers(),
+                ]).then(([turtles, worlds, areas, servers]) => {
+                    ws.send(
+                        JSON.stringify({
+                            type: 'HANDSHAKE',
+                            message: {
+                                turtles,
+                                worlds,
+                                areas,
+                                servers,
+                            },
+                        })
+                    );
+                });
                 break;
             case 'ACTION':
                 const turtle = getOnlineTurtleById(obj.data.id);
@@ -118,7 +125,7 @@ wssWebsite.on('connection', (ws) => {
             case 'AREA':
                 switch (obj.action) {
                     case 'create':
-                        areasDB.addArea(obj.data);
+                        areasDB.addArea(obj.data.serverId, obj.data);
                         break;
                 }
                 break;

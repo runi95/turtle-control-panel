@@ -6,16 +6,28 @@ class WorldDB {
         this.db = new JsonDB(new Config('world.json', true, true, '/'));
     }
 
-    async updateBlock(x, y, z, block = {}) {
-        await this.db.push(`/${x},${y},${z}`, block);
+    async updateBlock(serverId, x, y, z, block = {}) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        await this.db.push(`/${serverId}/${x},${y},${z}`, block);
     }
 
-    async deleteBlock(x, y, z) {
-        return await this.db.delete(`/${x},${y},${z}`);
+    async deleteBlock(serverId, x, y, z) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        return await this.db.delete(`/${serverId}/${x},${y},${z}`);
     }
 
-    async getBlock(x, y, z) {
+    async getBlock(serverId, x, y, z) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
         return await this.db.getObjectDefault(`/${x},${y},${z}`, null);
+    }
+
+    async getBlocks(serverId) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        try {
+            return await this.db.getData(`/${serverId}/`);
+        } catch (err) {
+            return {};
+        }
     }
 
     async getAllBlocks() {

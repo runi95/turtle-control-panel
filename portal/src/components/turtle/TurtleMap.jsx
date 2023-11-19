@@ -2,6 +2,7 @@ import {useRef, useState, useEffect} from 'react';
 import {Row, Col, Button, Modal, Form, InputGroup} from 'react-bootstrap';
 import styled from 'styled-components';
 import './TurtleMap.css';
+import {useParams} from 'react-router-dom';
 
 const circleSizeMul = 0.35;
 const spriteSize = 10;
@@ -9,7 +10,8 @@ const spriteRadius = 0.5 * spriteSize;
 const colors = ['#ff0000', '#ff6a00', '#ffd800', '#4cff00', '#00ffff', '#0094ff', '#0026ff', '#b200ff', '#ff006e'];
 
 const TurtleMap = (props) => {
-    const {canvasSize, turtles, selectedTurtle, world, areas, action, ...rest} = props;
+    const {serverId, id} = useParams();
+    const {canvasSize, turtles, worlds, areas, action, ...rest} = props;
     const canvasRef = useRef(undefined);
     const [mousePosition, setMousePosition] = useState(undefined);
     const [isCreatingArea, setIsCreatingArea] = useState(false);
@@ -22,6 +24,8 @@ const TurtleMap = (props) => {
     const [selectedColor, setSelectedColor] = useState(colors[0]);
     const [yLevel, setYLevel] = useState(undefined);
     const [upperYLevel, setUpperYLevel] = useState(undefined);
+    const turtle = turtles?.[serverId]?.[id];
+    const world = worlds?.[serverId] ?? {};
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -29,8 +33,8 @@ const TurtleMap = (props) => {
         let animationFrameId;
 
         const render = () => {
-            const draw = (ctx, canvasSize, turtles, selectedTurtle, world) => {
-                if (!turtles || !turtles[selectedTurtle] || !world) {
+            const draw = (ctx, canvasSize, turtles, world, turtle) => {
+                if (!turtle || !world) {
                     return;
                 }
 
@@ -38,7 +42,6 @@ const TurtleMap = (props) => {
                 const centerX = 0.5 * spriteSize * mul;
                 const centerY = 0.5 * spriteSize * mul;
                 const drawRange = 0.5 * mul;
-                const turtle = turtles[selectedTurtle];
                 if (!turtle?.location) return;
                 const {x, y, z} = turtle.location;
 
@@ -151,10 +154,10 @@ const TurtleMap = (props) => {
                 ctx.globalAlpha = 1;
 
                 // Draw other turtles
-                const keys = Object.keys(turtles);
+                const keys = Object.keys(turtles?.[serverId]);
                 for (let key of keys) {
                     if (key !== turtle.id.toString()) {
-                        const otherTurtle = turtles[key];
+                        const otherTurtle = turtles[serverId][key];
                         if (otherTurtle?.location?.y === turtle?.location?.y) {
                             ctx.beginPath();
                             ctx.fillStyle = otherTurtle.isOnline ? 'white' : '#696969';
@@ -186,7 +189,7 @@ const TurtleMap = (props) => {
                 ctx.strokeText(turtle.name, centerX, centerY - spriteRadius);
                 ctx.fillText(turtle.name, centerX, centerY - spriteRadius);
             };
-            draw(context, canvasSize, turtles, selectedTurtle, world);
+            draw(context, canvasSize, turtles, world, turtle);
 
             animationFrameId = window.requestAnimationFrame(render);
         };
@@ -203,7 +206,6 @@ const TurtleMap = (props) => {
         setIsFormValidated(true);
         const form = e.currentTarget;
         if (form.checkValidity() === true) {
-            const turtle = turtles?.[selectedTurtle];
             const {x, y, z} = turtle.location;
             const minYLevel = Math.min(yLevel || y, upperYLevel || y);
             const maxYLevel = Math.max(yLevel || y, upperYLevel || y);
@@ -235,6 +237,7 @@ const TurtleMap = (props) => {
                 type: 'AREA',
                 action: 'create',
                 data: {
+                    serverId,
                     id: areaName,
                     color: selectedColor,
                     area,
@@ -282,7 +285,7 @@ const TurtleMap = (props) => {
                                     type='number'
                                     min='1'
                                     max='255'
-                                    placeholder={turtles?.[selectedTurtle]?.location?.y || ''}
+                                    placeholder={turtle?.location?.y || ''}
                                     value={yLevel}
                                     onChange={(e) => setYLevel(e.target.value)}
                                 />
@@ -293,7 +296,7 @@ const TurtleMap = (props) => {
                                     type='number'
                                     min='1'
                                     max='255'
-                                    placeholder={turtles?.[selectedTurtle]?.location?.y || ''}
+                                    placeholder={turtle?.location?.y || ''}
                                     value={upperYLevel}
                                     onChange={(e) => setUpperYLevel(e.target.value)}
                                 />
@@ -387,7 +390,6 @@ const TurtleMap = (props) => {
                             setMousePosition([mouseX, mouseY]);
                         }}
                         onMouseUp={(e) => {
-                            const turtle = turtles?.[selectedTurtle];
                             if (!isCreatingArea && turtle?.isOnline) {
                                 const {x, y, z} = turtle.location;
                                 action({
@@ -454,7 +456,7 @@ const TurtleMap = (props) => {
                             <Button
                                 variant='outline-success'
                                 size='sm'
-                                disabled={!turtles?.[selectedTurtle]?.location}
+                                disabled={!turtle?.location}
                                 onClick={() => setIsCreatingArea(true)}
                             >
                                 New Area

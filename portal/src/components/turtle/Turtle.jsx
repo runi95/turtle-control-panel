@@ -11,7 +11,7 @@ const canvasSize = 160;
 const canvasRadius = 0.5 * canvasSize;
 
 function Turtle(props) {
-    let {id} = useParams();
+    const {serverId, id} = useParams();
     const [editNameState, setEditNameState] = useState(false);
     const [isModalShown, setIsModalShown] = useState(false);
 
@@ -29,7 +29,8 @@ function Turtle(props) {
     const directionToString = (direction) => {
         return ['W', 'N', 'E', 'S'][direction - 1];
     };
-    const turtle = props.turtles?.[id];
+    const turtle = props.turtles?.[serverId]?.[id];
+    const areas = props.areas?.[serverId];
 
     return (
         <Container fluid>
@@ -120,14 +121,13 @@ function Turtle(props) {
             </Row>
             <hr />
             <Row>
-                <Inventory turtle={turtle} action={props.action} areas={props.areas}></Inventory>
+                <Inventory turtle={turtle} action={props.action} areas={areas}></Inventory>
                 <TurtleMap
                     style={{border: '1px solid #fff', borderRadius: canvasRadius}}
                     canvasSize={canvasSize}
                     turtles={props.turtles}
-                    selectedTurtle={id}
-                    world={props.world}
-                    areas={props.areas}
+                    worlds={props.worlds}
+                    areas={areas}
                     action={props.action}
                 />
             </Row>

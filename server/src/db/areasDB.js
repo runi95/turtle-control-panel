@@ -6,19 +6,27 @@ class AreasDB {
         this.db = new JsonDB(new Config('areas.json', true, true, '/'));
     }
 
-    async addArea(area) {
-        await this.db.push(`/${area.id}`, area);
+    async addArea(serverId, area) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        await this.db.push(`/${serverId}/${area.id}`, area);
     }
 
-    async getArea(id) {
+    async getArea(serverId, id) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        if (!id) throw new Error(`Invalid argument "${id}"`);
         try {
-            return await this.db.getData(`/${id}`);
+            return await this.db.getData(`/${serverId}/${id}`);
         } catch (err) {
             return undefined;
         }
     }
 
-    async getAreas() {
+    async getAreas(serverId) {
+        if (!serverId) throw new Error(`Invalid argument "${serverId}"`);
+        return await this.db.getData(`/${serverId}/`);
+    }
+
+    async getAllAreas() {
         return await this.db.getData('/');
     }
 }

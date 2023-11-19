@@ -6,47 +6,64 @@ import {useNavigate} from 'react-router-dom';
 
 function Dashboard(props) {
     const navigate = useNavigate();
+    const {turtles, servers} = props;
+    const serverNameMap = Object.entries(servers).reduce(
+        (acc, [serverId, {name}]) => ((acc[serverId] = name), acc),
+        {}
+    );
 
     return (
         <div className='container-fluid'>
-            <Table
-                hover
-                style={{'--bs-table-bg': 'inherit', '--bs-table-color': 'inherit', '--bs-table-hover-color': 'inherit'}}
-            >
-                <thead>
-                    <tr>
-                        <th style={{width: 40}}>ID</th>
-                        <th style={{width: 80}}>Status</th>
-                        <th style={{width: 120}}>Name</th>
-                        <th style={{width: 100}}>Activity</th>
-                        <th style={{width: 220}}>Fuel</th>
-                        <th>Error</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {!!props.turtles &&
-                        Object.keys(props.turtles).map((key) => (
-                            <tr key={key} onClick={() => navigate(`/dashboard/${key}`)}>
-                                <td>{key}</td>
-                                <td>
-                                    {props.turtles[key].isOnline ? (
-                                        <GreenText>Online</GreenText>
-                                    ) : (
-                                        <GreyText>Offline</GreyText>
-                                    )}
-                                </td>
-                                <td>{props.turtles[key].name}</td>
-                                <td>{props.turtles[key].state ? props.turtles[key].state.name : 'idle'}</td>
-                                <td style={{verticalAlign: 'middle'}}>
-                                    <FuelInfo {...props.turtles[key]} />
-                                </td>
-                                <td>
-                                    <span className='text-danger'>{props.turtles[key].state?.error}</span>
-                                </td>
-                            </tr>
-                        ))}
-                </tbody>
-            </Table>
+            {!!turtles &&
+                Object.entries(turtles).map(([serverId, turtleServer]) => (
+                    <details key={serverId} open>
+                        <summary>{serverNameMap[serverId] ?? serverId}:</summary>
+                        <Table
+                            hover
+                            style={{
+                                '--bs-table-bg': 'inherit',
+                                '--bs-table-color': 'inherit',
+                                '--bs-table-hover-color': 'inherit',
+                            }}
+                        >
+                            <thead>
+                                <tr>
+                                    <th style={{width: 40}}>ID</th>
+                                    <th style={{width: 80}}>Status</th>
+                                    <th style={{width: 120}}>Name</th>
+                                    <th style={{width: 100}}>Activity</th>
+                                    <th style={{width: 220}}>Fuel</th>
+                                    <th>Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {Object.values(turtleServer).map((turtle) => (
+                                    <tr
+                                        key={`${serverId}-${turtle.id}`}
+                                        onClick={() => navigate(`/servers/${serverId}/turtles/${turtle.id}`)}
+                                    >
+                                        <td>{turtle.id}</td>
+                                        <td>
+                                            {turtle.isOnline ? (
+                                                <GreenText>Online</GreenText>
+                                            ) : (
+                                                <GreyText>Offline</GreyText>
+                                            )}
+                                        </td>
+                                        <td>{turtle.name}</td>
+                                        <td>{turtle.state ? turtle.state.name : 'idle'}</td>
+                                        <td style={{verticalAlign: 'middle'}}>
+                                            <FuelInfo {...turtle} />
+                                        </td>
+                                        <td>
+                                            <span className='text-danger'>{turtle.state?.error}</span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </details>
+                ))}
         </div>
     );
 }
