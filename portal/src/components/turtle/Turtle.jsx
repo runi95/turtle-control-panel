@@ -59,14 +59,15 @@ function Turtle(props) {
                                         autoFocus
                                     />
                                     <Button
-                                        variant='outline-secondary'
+                                        style={{border: 'none'}}
+                                        variant='outline-danger'
                                         onClick={() => {
                                             setEditNameState(false);
                                         }}
                                     >
                                         ✖
                                     </Button>
-                                    <Button type='submit' variant='outline-success'>
+                                    <Button style={{border: 'none'}} type='submit' variant='outline-success'>
                                         ✔
                                     </Button>
                                 </InputGroup>

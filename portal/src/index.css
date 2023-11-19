@@ -26,6 +26,25 @@ body {
     animation: blink 2s ease-in infinite;
 }
 
+.input-group > .form-control {
+    background-color: transparent;
+    color: white;
+}
+
+.input-group > .form-control:focus {
+    background-color: transparent;
+    color: white;
+}
+
+.input-group > .form-control > option {
+    background-color: #1e1e2f;
+    color: white;
+}
+
+.input-group > .form-control::placeholder {
+    color: grey;
+}
+
 @keyframes blink {
     from,
     to {
