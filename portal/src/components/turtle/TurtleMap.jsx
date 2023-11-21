@@ -11,7 +11,7 @@ const colors = ['#ff0000', '#ff6a00', '#ffd800', '#4cff00', '#00ffff', '#0094ff'
 
 const TurtleMap = (props) => {
     const {serverId, id} = useParams();
-    const {canvasSize, turtles, worlds, areas, action, ...rest} = props;
+    const {canvasSize, turtles, blocks, areas, action, ...rest} = props;
     const canvasRef = useRef(undefined);
     const [mousePosition, setMousePosition] = useState(undefined);
     const [isCreatingArea, setIsCreatingArea] = useState(false);
@@ -24,8 +24,7 @@ const TurtleMap = (props) => {
     const [selectedColor, setSelectedColor] = useState(colors[0]);
     const [yLevel, setYLevel] = useState(undefined);
     const [upperYLevel, setUpperYLevel] = useState(undefined);
-    const turtle = turtles?.[serverId]?.[id];
-    const world = worlds?.[serverId] ?? {};
+    const turtle = turtles?.[id];
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -33,8 +32,8 @@ const TurtleMap = (props) => {
         let animationFrameId;
 
         const render = () => {
-            const draw = (ctx, canvasSize, turtles, world, turtle) => {
-                if (!turtle || !world) {
+            const draw = (ctx, canvasSize, turtles, blocks, turtle) => {
+                if (!turtle || !blocks) {
                     return;
                 }
 
@@ -55,7 +54,7 @@ const TurtleMap = (props) => {
                     for (let j = -drawRange; j <= drawRange; j++) {
                         const wX = x + i;
                         const wZ = z + j;
-                        if (world[`${wX},${y - 1},${wZ}`] !== undefined) {
+                        if (blocks[`${wX},${y - 1},${wZ}`] !== undefined) {
                             ctx.fillRect(
                                 (i + drawRange) * spriteSize - spriteRadius,
                                 (j + drawRange) * spriteSize - spriteRadius,
@@ -108,7 +107,7 @@ const TurtleMap = (props) => {
                     for (let j = -drawRange; j <= drawRange; j++) {
                         const wX = x + i;
                         const wZ = z + j;
-                        if (world[`${wX},${y},${wZ}`] !== undefined) {
+                        if (blocks[`${wX},${y},${wZ}`] !== undefined) {
                             ctx.fillRect(
                                 (i + drawRange) * spriteSize - spriteRadius,
                                 (j + drawRange) * spriteSize - spriteRadius,
@@ -154,10 +153,10 @@ const TurtleMap = (props) => {
                 ctx.globalAlpha = 1;
 
                 // Draw other turtles
-                const keys = Object.keys(turtles?.[serverId]);
+                const keys = Object.keys(turtles);
                 for (let key of keys) {
                     if (key !== turtle.id.toString()) {
-                        const otherTurtle = turtles[serverId][key];
+                        const otherTurtle = turtles[key];
                         if (otherTurtle?.location?.y === turtle?.location?.y) {
                             ctx.beginPath();
                             ctx.fillStyle = otherTurtle.isOnline ? 'white' : '#696969';
@@ -189,7 +188,7 @@ const TurtleMap = (props) => {
                 ctx.strokeText(turtle.name, centerX, centerY - spriteRadius);
                 ctx.fillText(turtle.name, centerX, centerY - spriteRadius);
             };
-            draw(context, canvasSize, turtles, world, turtle);
+            draw(context, canvasSize, turtles, blocks, turtle);
 
             animationFrameId = window.requestAnimationFrame(render);
         };

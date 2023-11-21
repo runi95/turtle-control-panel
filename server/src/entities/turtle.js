@@ -3,22 +3,28 @@ const {v4: uuid4} = require('uuid');
 const globalEventEmitter = require('../globalEventEmitter');
 const {removeTurtle, addTurtle} = require('../turtleController');
 const nameList = require('../names.json');
-const turtlesDB = require('../db/turtlesDB');
-const worldDB = require('../db/worldDB');
-const serversDB = require('../db/serversDB');
 const {getLocalCoordinatesForDirection} = require('../helpers/coordinates');
 const turtleLogLevel = require('../logger/turtle');
 const logger = require('../logger/server');
-
-const remoteAddressToServerMap = new Map();
-// Initializes
-(async () => {
-    const servers = await serversDB.getServers();
-    if (!servers) return;
-    Object.entries(servers).forEach(([serverId, server]) => {
-        remoteAddressToServerMap.set(server.remoteAddress, serverId);
-    });
-})();
+const {
+    updateTurtleName,
+    updateTurtleFuelLevel,
+    updateTurtleSelectedSlot,
+    updateTurtleInventory,
+    updateTurtleStepsSinceLastRefuel,
+    updateTurtleState,
+    updateTurtleLocation,
+    updateTurtleDirection,
+    updateTurtleMovement,
+    updateTurtleFuel,
+    getTurtle,
+    upsertTurtle,
+    deleteBlock,
+    getBlock,
+    upsertBlock,
+    upsertServer,
+    getServerByRemoteAddress,
+} = require('../db');
 
 const connectedTurtlesMap = new Map();
 class Turtle {
@@ -116,7 +122,7 @@ class Turtle {
                 name: this.name,
             },
         });
-        turtlesDB.updateName(this.serverId, this.id, this.name);
+        updateTurtleName(this.serverId, this.id, this.name);
     }
 
     get isOnline() {
@@ -132,7 +138,6 @@ class Turtle {
                 isOnline: this.isOnline,
             },
         });
-        turtlesDB.updateIsOnline(this.serverId, this.id, this.isOnline);
     }
 
     get fuelLevel() {
@@ -148,7 +153,7 @@ class Turtle {
                 fuelLevel: this.fuelLevel,
             },
         });
-        turtlesDB.updateFuelLevel(this.serverId, this.id, this.fuelLevel);
+        updateTurtleFuelLevel(this.serverId, this.id, this.fuelLevel);
     }
 
     get fuelLimit() {
@@ -168,7 +173,7 @@ class Turtle {
                 selectedSlot: this.selectedSlot,
             },
         });
-        turtlesDB.updateSelectedSlot(this.serverId, this.id, this.selectedSlot);
+        updateTurtleSelectedSlot(this.serverId, this.id, this.selectedSlot);
     }
 
     get inventory() {
@@ -184,7 +189,7 @@ class Turtle {
                 inventory: this.inventory,
             },
         });
-        turtlesDB.updateInventory(this.serverId, this.id, this.inventory);
+        updateTurtleInventory(this.serverId, this.id, this.inventory);
     }
 
     get stepsSinceLastRecharge() {
@@ -200,7 +205,7 @@ class Turtle {
                 stepsSinceLastRecharge: this.stepsSinceLastRecharge,
             },
         });
-        turtlesDB.updateStepsSinceLastRecharge(this.serverId, this.id, this.stepsSinceLastRecharge);
+        updateTurtleStepsSinceLastRefuel(this.serverId, this.id, this.stepsSinceLastRecharge);
     }
 
     /**
@@ -219,7 +224,7 @@ class Turtle {
                 state: this.state,
             },
         });
-        turtlesDB.updateState(this.serverId, this.id, this.state);
+        updateTurtleState(this.serverId, this.id, this.state);
     }
 
     set error(message) {
@@ -242,7 +247,7 @@ class Turtle {
                 location: this.location,
             },
         });
-        turtlesDB.updateLocation(this.serverId, this.id, this.location);
+        updateTurtleLocation(this.serverId, this.id, this.location);
     }
 
     /**
@@ -264,7 +269,7 @@ class Turtle {
                 direction: this.direction,
             },
         });
-        turtlesDB.updateDirection(this.serverId, this.id, this.direction);
+        updateTurtleDirection(this.serverId, this.id, this.direction);
     }
 
     /**
@@ -304,12 +309,8 @@ class Turtle {
                 z: this.location.z,
             });
 
-            turtlesDB.addTurtle(this.serverId, this.id, {
-                fuelLevel: this.fuelLevel,
-                stepsSinceLastRecharge: this.stepsSinceLastRecharge,
-                location: this.location,
-            });
-            worldDB.deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
+            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRecharge, this.location);
+            deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
         return forward;
     }
@@ -351,12 +352,8 @@ class Turtle {
                 z: this.location.z,
             });
 
-            turtlesDB.addTurtle(this.serverId, this.id, {
-                fuelLevel: this.fuelLevel,
-                stepsSinceLastRecharge: this.stepsSinceLastRecharge,
-                location: this.location,
-            });
-            worldDB.deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
+            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRecharge, this.location);
+            deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
         return back;
     }
@@ -397,12 +394,8 @@ class Turtle {
                 z: this.location.z,
             });
 
-            turtlesDB.addTurtle(this.serverId, this.id, {
-                fuelLevel: this.fuelLevel,
-                stepsSinceLastRecharge: this.stepsSinceLastRecharge,
-                location: this.location,
-            });
-            worldDB.deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
+            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRecharge, this.location);
+            deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
         return up;
     }
@@ -443,12 +436,8 @@ class Turtle {
                 z: this.location.z,
             });
 
-            turtlesDB.addTurtle(this.serverId, this.id, {
-                fuelLevel: this.fuelLevel,
-                stepsSinceLastRecharge: this.stepsSinceLastRecharge,
-                location: this.location,
-            });
-            worldDB.deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
+            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRecharge, this.location);
+            deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
         return down;
     }
@@ -571,7 +560,7 @@ class Turtle {
                 y: this.location.y,
                 z: this.location.z,
             });
-            worldDB.deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
+            deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
 
         return dig;
@@ -609,7 +598,7 @@ class Turtle {
                 y: this.location.y,
                 z: this.location.z,
             });
-            worldDB.deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
+            deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
 
         return digUp;
@@ -647,7 +636,7 @@ class Turtle {
                 y: this.location.y,
                 z: this.location.z,
             });
-            worldDB.deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
+            deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
 
         return digDown;
@@ -669,30 +658,23 @@ class Turtle {
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.direction);
         const [didInspect, block] = await this.#exec('turtle.inspect()');
         if (!didInspect) {
-            worldDB.getBlock(this.serverId, x + xChange, y, z + zChange).then((dbBlock) => {
-                if (!dbBlock) return;
-                globalEventEmitter.emit('wdelete', {
-                    serverId: this.serverId,
-                    x: this.location.x + xChange,
-                    y: this.location.y,
-                    z: this.location.z + zChange,
-                });
-                worldDB.deleteBlock(
-                    this.serverId,
-                    this.location.x + xChange,
-                    this.location.y,
-                    this.location.z + zChange
-                );
+            const dbBlock = getBlock(this.serverId, x + xChange, y, z + zChange);
+            if (!dbBlock) return;
+            globalEventEmitter.emit('wdelete', {
+                serverId: this.serverId,
+                x: this.location.x + xChange,
+                y: this.location.y,
+                z: this.location.z + zChange,
             });
+            deleteBlock(this.serverId, this.location.x + xChange, this.location.y, this.location.z + zChange);
             return undefined;
         }
 
-        worldDB.getBlock(this.serverId, x + xChange, y, z + zChange).then((dbBlock) => {
-            if (!dbBlock || dbBlock?.name !== block?.name) {
-                worldDB.updateBlock(this.serverId, x + xChange, y, z + zChange, block);
-                globalEventEmitter.emit('wupdate', {serverId: this.serverId, x: x + xChange, y, z: z + zChange, block});
-            }
-        });
+        const dbBlock = getBlock(this.serverId, x + xChange, y, z + zChange);
+        if (!dbBlock || dbBlock?.name !== block?.name) {
+            upsertBlock(this.serverId, x + xChange, y, z + zChange, block.name, block.state, block.tags);
+            globalEventEmitter.emit('wupdate', {serverId: this.serverId, x: x + xChange, y, z: z + zChange, block});
+        }
         return block;
     }
 
@@ -711,25 +693,23 @@ class Turtle {
         const {x, y, z} = this.location;
         const [didInspect, block] = await this.#exec('turtle.inspectUp()');
         if (!didInspect) {
-            worldDB.getBlock(this.serverId, x, y + 1, z).then((dbBlock) => {
-                if (!dbBlock) return;
-                globalEventEmitter.emit('wdelete', {
-                    serverId: this.serverId,
-                    x: this.location.x,
-                    y: this.location.y + 1,
-                    z: this.location.z,
-                });
-                worldDB.deleteBlock(this.serverId, this.location.x, this.location.y + 1, this.location.z);
+            const dbBlock = getBlock(this.serverId, x, y + 1, z);
+            if (!dbBlock) return;
+            globalEventEmitter.emit('wdelete', {
+                serverId: this.serverId,
+                x: this.location.x,
+                y: this.location.y + 1,
+                z: this.location.z,
             });
+            deleteBlock(this.serverId, this.location.x, this.location.y + 1, this.location.z);
             return undefined;
         }
 
-        worldDB.getBlock(this.serverId, x, y + 1, z).then((dbBlock) => {
-            if (!dbBlock || dbBlock?.name !== block?.name) {
-                worldDB.updateBlock(this.serverId, x, y + 1, z, block);
-                globalEventEmitter.emit('wupdate', {serverId: this.serverId, x, y: y + 1, z, block});
-            }
-        });
+        const dbBlock = getBlock(this.serverId, x, y + 1, z);
+        if (!dbBlock || dbBlock?.name !== block?.name) {
+            upsertBlock(this.serverId, x, y + 1, z, block.name, block.state, block.tags);
+            globalEventEmitter.emit('wupdate', {serverId: this.serverId, x, y: y + 1, z, block});
+        }
         return block;
     }
 
@@ -748,25 +728,23 @@ class Turtle {
         const {x, y, z} = this.location;
         const [didInspect, block] = await this.#exec('turtle.inspectDown()');
         if (!didInspect) {
-            worldDB.getBlock(this.serverId, x, y - 1, z).then((dbBlock) => {
-                if (!dbBlock) return;
-                globalEventEmitter.emit('wdelete', {
-                    serverId: this.serverId,
-                    x: this.location.x,
-                    y: this.location.y - 1,
-                    z: this.location.z,
-                });
-                worldDB.deleteBlock(this.serverId, this.location.x, this.location.y + 1, this.location.z);
+            const dbBlock = getBlock(this.serverId, x, y - 1, z);
+            if (!dbBlock) return;
+            globalEventEmitter.emit('wdelete', {
+                serverId: this.serverId,
+                x: this.location.x,
+                y: this.location.y - 1,
+                z: this.location.z,
             });
+            deleteBlock(this.serverId, this.location.x, this.location.y + 1, this.location.z);
             return undefined;
         }
 
-        worldDB.getBlock(this.serverId, x, y - 1, z).then((dbBlock) => {
-            if (!dbBlock || dbBlock?.name !== block?.name) {
-                worldDB.updateBlock(this.serverId, x, y - 1, z, block);
-                globalEventEmitter.emit('wupdate', {serverId: this.serverId, x, y: y - 1, z, block});
-            }
-        });
+        const dbBlock = getBlock(this.serverId, x, y - 1, z);
+        if (!dbBlock || dbBlock?.name !== block?.name) {
+            upsertBlock(this.serverId, x, y - 1, z, block.name, block.state, block.tags);
+            globalEventEmitter.emit('wupdate', {serverId: this.serverId, x, y: y - 1, z, block});
+        }
         return block;
     }
 
@@ -918,10 +896,7 @@ class Turtle {
             const [item] = await this.#exec(`turtle.getItemDetail(${selectedSlot}, true) or textutils.json_null`);
             this.#inventory[selectedSlot] = item ?? undefined;
 
-            turtlesDB.addTurtle(this.serverId, this.id, {
-                fuelLevel: this.fuelLevel,
-                inventory: this.inventory,
-            });
+            updateTurtleFuel(this.serverId, this.id, this.fuelLevel, this.inventory);
             globalEventEmitter.emit('tupdate', {
                 id: this.id,
                 serverId: this.serverId,
@@ -1174,35 +1149,12 @@ const initializeHandshake = (ws, remoteAddress) => {
             ws.send(JSON.stringify({type: 'RENAME', message: name}));
         }
 
-        let serverId = remoteAddressToServerMap.get(remoteAddress);
-        if (!serverId) {
-            serverId = uuid4();
-            remoteAddressToServerMap.set(remoteAddress, serverId);
-            await serversDB.addServer({
-                id: serverId,
-                remoteAddress,
-                name: remoteAddress,
-            });
-        }
-
-        const {stepsSinceLastRecharge, state, location, direction} = (await turtlesDB.getTurtle(serverId, id)) ?? {};
+        upsertServer(remoteAddress, null);
+        const {id: serverId} = getServerByRemoteAddress(remoteAddress);
+        const {stepsSinceLastRecharge, state, location, direction} = getTurtle(serverId, id) ?? {};
         logger.info(`${name || '<unnamed>'} [${id}] has connected!`);
         ws.off('message', listener);
         const isOnline = true;
-        const dbTurtle = {
-            serverId,
-            id,
-            name,
-            isOnline,
-            fuelLevel,
-            fuelLimit,
-            selectedSlot,
-            inventory: inventoryAsObject,
-            stepsSinceLastRecharge,
-            state,
-            location,
-            direction,
-        };
         const turtle = new Turtle(
             serverId,
             id,
@@ -1220,9 +1172,38 @@ const initializeHandshake = (ws, remoteAddress) => {
         );
         connectedTurtlesMap.set(id, turtle);
 
-        globalEventEmitter.emit('tconnect', {id, serverId, turtle: dbTurtle});
+        globalEventEmitter.emit('tconnect', {
+            id,
+            serverId,
+            turtle: {
+                serverId,
+                id,
+                name,
+                isOnline,
+                fuelLevel,
+                fuelLimit,
+                selectedSlot,
+                inventory: inventoryAsObject,
+                stepsSinceLastRecharge,
+                state,
+                location,
+                direction,
+            },
+        });
         addTurtle(turtle);
-        await turtlesDB.addTurtle(serverId, id, dbTurtle);
+        upsertTurtle(
+            serverId,
+            id,
+            name,
+            fuelLevel,
+            fuelLimit,
+            selectedSlot,
+            inventoryAsObject,
+            stepsSinceLastRecharge,
+            state,
+            location,
+            direction
+        );
     };
     ws.on('message', listener);
     ws.on('error', (err) => {
@@ -1239,5 +1220,6 @@ wss.on('connection', (ws, req) => {
 
 module.exports = {
     Turtle,
+    getOnlineTurtles: () => connectedTurtlesMap.values(),
     getOnlineTurtleById: (id) => connectedTurtlesMap.get(id),
 };

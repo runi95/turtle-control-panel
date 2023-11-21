@@ -1,11 +1,10 @@
 const Coordinates = require('./dlite/Coordinates');
 const DStarLite = require('./dlite');
-const worldDB = require('./db/worldDB');
-const areasDB = require('./db/areasDB');
 const {blockToFarmingDetailsMapObject, farmingSeedNames} = require('./helpers/farming');
 const {getLocalCoordinatesForDirection} = require('./helpers/coordinates');
 const globalEventEmitter = require('./globalEventEmitter');
 const logger = require('./logger/server');
+const {getArea, getBlocks} = require('./db');
 
 const turtleMap = new Map();
 
@@ -219,7 +218,7 @@ class TurtleController {
             return await this.#mineToYLevel(Number(mineTarget));
         } else if (mineType === 'area') {
             const currentIndex = this.#turtle.state.index || 0;
-            const mineArea = await areasDB.getArea(this.#turtle.serverId, mineTarget);
+            const mineArea = getArea(this.#turtle.serverId, mineTarget);
             if (mineArea === undefined) {
                 throw new Error('Given mining area does not exist');
             }
@@ -307,7 +306,7 @@ class TurtleController {
 
     async #farm(moveContinously = false) {
         const {areaId, currentAreaFarmIndex} = this.#turtle.state;
-        const farmArea = await areasDB.getArea(this.#turtle.serverId, areaId);
+        const farmArea = getArea(this.#turtle.serverId, areaId);
         if (farmArea.area.length > 4 && this.#turtle.state.noopTiles >= farmArea.area.length) {
             const didSelect = await this.#selectAnySeedInInventory();
             if (!didSelect) {
@@ -566,7 +565,7 @@ class TurtleController {
                     }
                 },
                 getInitialObstacles: async () => {
-                    const allBlocks = await worldDB.getBlocks(this.#turtle.serverId);
+                    const allBlocks = getBlocks(this.#turtle.serverId);
                     return Object.keys(allBlocks)
                         .filter((key) => !mineableObstaclesMap[key])
                         .map((key) => {

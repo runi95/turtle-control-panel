@@ -1,7 +1,4 @@
 node_modules/
-server/world.json
-server/turtles.json
-server/areas.json
-server/servers.json
+server/db/server.db*
 
 .eslintcache

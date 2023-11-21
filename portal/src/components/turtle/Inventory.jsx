@@ -100,7 +100,7 @@ function Inventory(props) {
                             );
                         }
 
-                        const {name, count, displayName} = inventory[itemIndex];
+                        const {name, count, displayName} = inventory[itemIndex.toString()];
                         const nameSplit = name.split(':');
                         const itemNameFromSplit = nameSplit[nameSplit.length - 1];
                         const spritePosition =

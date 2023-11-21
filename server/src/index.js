@@ -1,24 +1,10 @@
 const ws = require('ws');
-const turtlesDB = require('./db/turtlesDB');
-const worldDB = require('./db/worldDB');
-const areasDB = require('./db/areasDB');
-const {getOnlineTurtleById} = require('./entities/turtle');
+const {getOnlineTurtleById, getOnlineTurtles} = require('./entities/turtle');
 const globalEventEmitter = require('./globalEventEmitter');
 const logger = require('./logger/server');
-const serversDB = require('./db/serversDB');
+const {addArea, getDashboard} = require('./db');
 
 logger.info('Starting server...');
-
-// Sets all turtles to offline on startup
-(async () => {
-    const turtleServers = await turtlesDB.getAllTurtles();
-    if (!turtleServers) return;
-    return Promise.all(
-        Object.entries(turtleServers).map(([serverId, turtleServer]) =>
-            Object.keys(turtleServer).map((turtleId) => turtlesDB.updateOnlineStatus(serverId, turtleId, false))
-        )
-    );
-})();
 
 const wssPort = process.env.WSS_PORT ?? 6868;
 const wssWebsite = new ws.Server({port: wssPort});
@@ -27,24 +13,19 @@ wssWebsite.on('connection', (ws) => {
         const obj = JSON.parse(msg);
         switch (obj.type) {
             case 'HANDSHAKE':
-                Promise.all([
-                    turtlesDB.getAllTurtles(),
-                    worldDB.getAllBlocks(),
-                    areasDB.getAllAreas(),
-                    serversDB.getServers(),
-                ]).then(([turtles, worlds, areas, servers]) => {
-                    ws.send(
-                        JSON.stringify({
-                            type: 'HANDSHAKE',
-                            message: {
-                                turtles,
-                                worlds,
-                                areas,
-                                servers,
-                            },
-                        })
-                    );
-                });
+                ws.send(
+                    JSON.stringify({
+                        type: 'HANDSHAKE',
+                        message: {
+                            dashboard: getDashboard(),
+                            onlineStatuses: Array.from(getOnlineTurtles()).map((turtle) => ({
+                                serverId: turtle.serverId,
+                                id: turtle.id,
+                                onlineStatus: turtle.onlineStatus,
+                            })),
+                        },
+                    })
+                );
                 break;
             case 'ACTION':
                 const turtle = getOnlineTurtleById(obj.data.id);
@@ -125,7 +106,7 @@ wssWebsite.on('connection', (ws) => {
             case 'AREA':
                 switch (obj.action) {
                     case 'create':
-                        areasDB.addArea(obj.data.serverId, obj.data);
+                        addArea(obj.data.serverId, obj.data.color, obj.data.area);
                         break;
                 }
                 break;

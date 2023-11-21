@@ -29,8 +29,11 @@ function Turtle(props) {
     const directionToString = (direction) => {
         return ['W', 'N', 'E', 'S'][direction - 1];
     };
-    const turtle = props.turtles?.[serverId]?.[id];
-    const areas = props.areas?.[serverId];
+    const {servers} = props;
+    const turtles = servers?.[serverId]?.turtles;
+    const blocks = servers?.[serverId]?.blocks;
+    const turtle = turtles?.[id];
+    const areas = servers?.[serverId]?.areas;
 
     return (
         <Container fluid>
@@ -125,8 +128,8 @@ function Turtle(props) {
                 <TurtleMap
                     style={{border: '1px solid #fff', borderRadius: canvasRadius}}
                     canvasSize={canvasSize}
-                    turtles={props.turtles}
-                    worlds={props.worlds}
+                    turtles={turtles}
+                    blocks={blocks}
                     areas={areas}
                     action={props.action}
                 />

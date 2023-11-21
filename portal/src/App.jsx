@@ -12,12 +12,7 @@ function App() {
     const location = useLocation();
 
     //Public API that will echo messages sent to it back to the client
-    const [state, setState] = useState({
-        turtles: {},
-        worlds: {},
-        servers: {},
-        areas: undefined,
-    });
+    const [servers, setServers] = useState({});
     const {sendMessage, readyState} = useWebSocket('ws://localhost:6868', {
         onOpen: () => {
             console.info('[open] Connection established');
@@ -32,66 +27,87 @@ function App() {
             const obj = JSON.parse(msg.data);
             switch (obj.type) {
                 case 'HANDSHAKE':
-                    setState((state) => ({
-                        ...state,
-                        turtles: obj.message.turtles,
-                        worlds: obj.message.worlds,
-                        areas: obj.message.areas,
-                        servers: obj.message.servers,
-                    }));
+                    setServers(
+                        obj.message.dashboard.reduce(
+                            (acc, server) => (
+                                (acc[server.id] = {
+                                    ...server,
+                                    turtles: server.turtles.reduce(
+                                        (acc, curr) => (
+                                            (acc[curr.id] = {
+                                                ...curr,
+                                                isOnline: obj.message.onlineStatuses.some(
+                                                    ({serverId, id}) => serverId === server.id && id === curr.id
+                                                ),
+                                            }),
+                                            acc
+                                        ),
+                                        {}
+                                    ),
+                                    areas: server.areas.reduce((acc, curr) => ((acc[curr.id] = curr), acc), {}),
+                                    blocks: server.blocks.reduce(
+                                        (acc, curr) => ((acc[`${curr.x},${curr.y},${curr.z}`] = curr), acc),
+                                        {}
+                                    ),
+                                }),
+                                acc
+                            ),
+                            {}
+                        )
+                    );
                     break;
                 case 'TCONNECT':
-                    setState((state) => ({
-                        ...state,
-                        turtles: {
-                            ...state.turtles,
-                            [obj.message.serverId]: {
-                                ...state.turtles[obj.message.serverId],
+                    setServers((servers) => ({
+                        ...servers,
+                        [obj.message.serverId]: {
+                            ...servers[obj.message.serverId],
+                            turtles: {
+                                ...servers[obj.message.serverId].turtles,
                                 [obj.message.id]: obj.message.turtle,
                             },
                         },
                     }));
                     break;
                 case 'TLOCATION':
-                    setState((state) => ({
-                        ...state,
-                        turtles: {
-                            ...state.turtles,
-                            [obj.message.serverId]: {
-                                ...state.turtles[obj.message.serverId],
+                    setServers((servers) => ({
+                        ...servers,
+                        [obj.message.serverId]: {
+                            ...servers[obj.message.serverId],
+                            turtles: {
+                                ...servers[obj.message.serverId].turtles,
                                 [obj.message.id]: {
-                                    ...state.turtles[obj.message.serverId][obj.message.id],
+                                    ...servers[obj.message.serverId].turtles[obj.message.id],
                                     location: obj.message.location,
-                                    fuelLevel: obj.message.fuelLevel,
+                                    fuel_level: obj.message.fuel_level,
                                 },
                             },
                         },
                     }));
                     break;
                 case 'TDISCONNECT':
-                    setState((state) => ({
-                        ...state,
-                        turtles: {
-                            ...state.turtles,
-                            [obj.message.serverId]: {
-                                ...state.turtles[obj.message.serverId],
+                    setServers((servers) => ({
+                        ...servers,
+                        [obj.message.serverId]: {
+                            ...servers[obj.message.serverId],
+                            turtles: {
+                                ...servers[obj.message.serverId].turtles,
                                 [obj.message.id]: {
-                                    ...state.turtles[obj.message.serverId][obj.message.id],
-                                    isOnline: false,
+                                    ...servers[obj.message.serverId].turtles[obj.message.id],
+                                    is_online: obj.message.is_online,
                                 },
                             },
                         },
                     }));
                     break;
                 case 'TUPDATE':
-                    setState((state) => ({
-                        ...state,
-                        turtles: {
-                            ...state.turtles,
-                            [obj.message.serverId]: {
-                                ...state.turtles[obj.message.serverId],
+                    setServers((servers) => ({
+                        ...servers,
+                        [obj.message.serverId]: {
+                            ...servers[obj.message.serverId],
+                            turtles: {
+                                ...servers[obj.message.serverId].turtles,
                                 [obj.message.id]: {
-                                    ...state.turtles[obj.message.serverId][obj.message.id],
+                                    ...servers[obj.message.serverId].turtles[obj.message.id],
                                     ...obj.message.data,
                                 },
                             },
@@ -102,24 +118,24 @@ function App() {
                     // TODO: Implement?
                     break;
                 case 'WUPDATE':
-                    setState((state) => ({
-                        ...state,
-                        worlds: {
-                            ...state.worlds,
-                            [obj.message.serverId]: {
-                                ...state.worlds[obj.message.serverId],
+                    setServers((servers) => ({
+                        ...servers,
+                        [obj.message.serverId]: {
+                            ...servers[obj.message.serverId],
+                            blocks: {
+                                ...servers[obj.message.serverId].blocks,
                                 [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message.block,
                             },
                         },
                     }));
                     break;
                 case 'WDELETE':
-                    setState((state) => ({
-                        ...state,
-                        worlds: {
-                            ...state.worlds,
-                            [obj.message.serverId]: {
-                                ...state.worlds[obj.message.serverId],
+                    setServers((servers) => ({
+                        ...servers,
+                        [obj.message.serverId]: {
+                            ...servers[obj.message.serverId],
+                            blocks: {
+                                ...servers[obj.message.serverId].blocks,
                                 [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message.block,
                             },
                         },
@@ -184,7 +200,7 @@ function App() {
                                 </Nav>
                             )}
                         </Navbar>
-                        <Dashboard turtles={state.turtles} servers={state.servers} />
+                        <Dashboard servers={servers} />
                     </div>
                 }
             />
@@ -220,9 +236,7 @@ function App() {
                             )}
                         </Navbar>
                         <Turtle
-                            turtles={state.turtles}
-                            worlds={state.worlds}
-                            areas={state.areas}
+                            servers={servers}
                             action={(msg) => {
                                 handleSendMessage(JSON.stringify(msg));
                             }}
