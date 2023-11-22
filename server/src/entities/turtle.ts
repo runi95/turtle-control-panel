@@ -1,12 +1,12 @@
-const ws = require('ws');
-const {v4: uuid4} = require('uuid');
-const globalEventEmitter = require('../globalEventEmitter');
-const {removeTurtle, addTurtle} = require('../turtleController');
-const nameList = require('../names.json');
-const {getLocalCoordinatesForDirection} = require('../helpers/coordinates');
-const turtleLogLevel = require('../logger/turtle');
-const logger = require('../logger/server');
-const {
+import WebSocket, {WebSocketServer} from 'ws';
+import {v4 as uuid4} from 'uuid';
+import globalEventEmitter from '../globalEventEmitter';
+import {removeTurtle, addTurtle} from '../turtleController';
+import nameList from '../names';
+import {getLocalCoordinatesForDirection} from '../helpers/coordinates';
+import turtleLogLevel from '../logger/turtle';
+import logger from '../logger/server';
+import {
     updateTurtleName,
     updateTurtleFuelLevel,
     updateTurtleSelectedSlot,
@@ -24,45 +24,126 @@ const {
     upsertBlock,
     upsertServer,
     getServerByRemoteAddress,
-} = require('../db');
+} from '../db';
+
+export enum Direction {
+    West = 1,
+    North = 2,
+    East = 3,
+    South = 4,
+}
+
+export interface Inventory {
+    [key: number]: ItemDetail | undefined;
+}
+
+export interface BaseState {
+    id: number;
+    error?: string;
+    name: string;
+    [key: string]: unknown;
+}
+
+export interface MiningState {
+    mineType: string;
+    mineTarget: string;
+}
+
+export interface FarmingState {
+    areaId: number;
+    currentAreaFarmIndex: number;
+    noopTiles: number;
+}
+
+export interface Location {
+    x: number;
+    y: number;
+    z: number;
+}
+
+export interface Enchantment {
+    level: number;
+    name: string;
+    displayName: string;
+}
+
+export interface ItemDetail {
+    enchantments?: Enchantment[];
+    durability: number;
+    maxDamage: number;
+    damage: number;
+    nbt: string;
+    name: string;
+    tags: {
+        [key: string]: string;
+    };
+    count: number;
+    maxCount: string;
+    displayName: string;
+}
+
+export interface BlockState {
+    [key: string]: string;
+}
+
+export interface BlockTags {
+    [key: string]: string;
+}
+
+export interface Block {
+    state: BlockState;
+    name: string;
+    tags: BlockTags;
+}
+
+export interface Area {}
+
+export interface Server {
+    id: number;
+    remoteAddress: string;
+    turtles: Turtle[];
+    areas: Area[];
+    blocks: Block[];
+}
 
 const connectedTurtlesMap = new Map();
-class Turtle {
+export class Turtle {
     // Database properties
-    #serverId;
-    #id;
-    #name;
-    #isOnline;
-    #fuelLevel;
-    #fuelLimit;
-    #selectedSlot;
-    #inventory;
-    #stepsSinceLastRecharge;
-    #state;
-    #location;
-    #direction;
+    public readonly serverId: number;
+    public readonly id: number;
+
+    #name: string;
+    #isOnline: boolean;
+    #fuelLevel: number;
+    #fuelLimit: number;
+    #selectedSlot: number;
+    #inventory: Inventory;
+    #stepsSinceLastRecharge: number;
+    #state?: BaseState;
+    #location: Location;
+    #direction: Direction;
 
     // Private properties
-    #ws;
-    #lastPromise = new Promise((resolve) => resolve());
+    private readonly ws;
+    private lastPromise: Promise<unknown> = new Promise<void>((resolve) => resolve());
 
     constructor(
-        serverId,
-        id,
-        name,
-        isOnline,
-        fuelLevel,
-        fuelLimit,
-        selectedSlot,
-        inventory,
-        stepsSinceLastRecharge,
-        state,
-        location,
-        direction,
-        ws
+        serverId: number,
+        id: number,
+        name: string,
+        isOnline: boolean,
+        fuelLevel: number,
+        fuelLimit: number,
+        selectedSlot: number,
+        inventory: Inventory,
+        stepsSinceLastRecharge: number,
+        state: BaseState,
+        location: Location,
+        direction: Direction,
+        ws: WebSocket
     ) {
-        this.#serverId = serverId;
-        this.#id = id;
+        this.serverId = serverId;
+        this.id = id;
         this.#name = name;
         this.#isOnline = isOnline;
         this.#fuelLevel = fuelLevel;
@@ -74,8 +155,8 @@ class Turtle {
         this.#location = location;
         this.#direction = direction;
 
-        this.#ws = ws;
-        this.#ws.on('close', (code, message) => {
+        this.ws = ws;
+        this.ws.on('close', (code, message) => {
             logger.info(
                 `${this.name ?? '<unnamed>'}[${
                     this.id ?? '<uninitialized turtle>'
@@ -86,7 +167,7 @@ class Turtle {
                 globalEventEmitter.emit('tdisconnect', {id: this.id, serverId: this.serverId});
             }
         });
-        this.#ws.on('disconnect', (code, message) => {
+        this.ws.on('disconnect', (code, message) => {
             logger.info(
                 `${this.name ?? '<unnamed>'}[${
                     this.id ?? '<uninitialized turtle>'
@@ -101,19 +182,11 @@ class Turtle {
         });
     }
 
-    get id() {
-        return this.#id;
-    }
-
-    get serverId() {
-        return this.#serverId;
-    }
-
-    get name() {
+    public get name() {
         return this.#name;
     }
 
-    set name(name) {
+    public set name(name) {
         this.#name = name;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -125,11 +198,11 @@ class Turtle {
         updateTurtleName(this.serverId, this.id, this.name);
     }
 
-    get isOnline() {
+    public get isOnline() {
         return this.#isOnline;
     }
 
-    set isOnline(isOnline) {
+    public set isOnline(isOnline) {
         this.#isOnline = isOnline;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -140,11 +213,11 @@ class Turtle {
         });
     }
 
-    get fuelLevel() {
+    public get fuelLevel() {
         return this.#fuelLevel;
     }
 
-    set fuelLevel(fuelLevel) {
+    public set fuelLevel(fuelLevel) {
         this.#fuelLevel = fuelLevel;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -156,15 +229,19 @@ class Turtle {
         updateTurtleFuelLevel(this.serverId, this.id, this.fuelLevel);
     }
 
-    get fuelLimit() {
+    public get fuelLimit() {
         return this.#fuelLimit;
     }
 
-    get selectedSlot() {
+    private set fuelLimit(fuelLimit: number) {
+        this.#fuelLimit = fuelLimit;
+    }
+
+    public get selectedSlot() {
         return this.#selectedSlot;
     }
 
-    set selectedSlot(selectedSlot) {
+    public set selectedSlot(selectedSlot) {
         this.#selectedSlot = selectedSlot;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -176,11 +253,11 @@ class Turtle {
         updateTurtleSelectedSlot(this.serverId, this.id, this.selectedSlot);
     }
 
-    get inventory() {
+    public get inventory() {
         return this.#inventory;
     }
 
-    set inventory(inventory) {
+    public set inventory(inventory) {
         this.#inventory = inventory;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -192,11 +269,11 @@ class Turtle {
         updateTurtleInventory(this.serverId, this.id, this.inventory);
     }
 
-    get stepsSinceLastRecharge() {
+    public get stepsSinceLastRecharge() {
         return this.#stepsSinceLastRecharge;
     }
 
-    set stepsSinceLastRecharge(stepsSinceLastRecharge) {
+    public set stepsSinceLastRecharge(stepsSinceLastRecharge) {
         this.#stepsSinceLastRecharge = stepsSinceLastRecharge;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -211,11 +288,11 @@ class Turtle {
     /**
      * Undefined: Standby
      */
-    get state() {
+    public get state() {
         return this.#state;
     }
 
-    set state(state) {
+    public set state(state) {
         this.#state = state;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -227,18 +304,20 @@ class Turtle {
         updateTurtleState(this.serverId, this.id, this.state);
     }
 
-    set error(message) {
-        this.state = {
-            ...this.state,
-            error: message,
-        };
+    public set error(message: string) {
+        if (this.state) {
+            this.state = {
+                ...this.state,
+                error: message,
+            };
+        }
     }
 
-    get location() {
+    public get location() {
         return this.#location;
     }
 
-    set location(location) {
+    public set location(location) {
         this.#location = location;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -256,11 +335,11 @@ class Turtle {
      * 3: EAST
      * 4: SOUTH
      */
-    get direction() {
+    public get direction() {
         return this.#direction;
     }
 
-    set direction(direction) {
+    public set direction(direction) {
         this.#direction = direction;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -281,8 +360,8 @@ class Turtle {
      *   - A boolean indicating whether the turtle successfully moved forward.
      *   - An optional string describing an error if the movement was unsuccessful.
      */
-    async forward() {
-        const forward = await this.#exec('turtle.forward()');
+    async forward(): Promise<[boolean, string | undefined]> {
+        const forward = await this.#exec<[boolean, string | undefined]>('turtle.forward()');
         if (!this.location || !this.direction) return forward;
 
         const [didMove] = forward;
@@ -324,8 +403,8 @@ class Turtle {
      *   - A boolean indicating whether the turtle successfully moved back.
      *   - An optional string describing an error if the movement was unsuccessful.
      */
-    async back() {
-        const back = await this.#exec('turtle.back()');
+    async back(): Promise<[boolean, string | undefined]> {
+        const back = await this.#exec<[boolean, string | undefined]>('turtle.back()');
         if (!this.location || !this.direction) return back;
 
         const [didMove] = back;
@@ -367,8 +446,8 @@ class Turtle {
      *   - A boolean indicating whether the turtle successfully moved up.
      *   - An optional string describing an error if the movement was unsuccessful.
      */
-    async up() {
-        const up = await this.#exec('turtle.up()');
+    async up(): Promise<[boolean, string | undefined]> {
+        const up = await this.#exec<[boolean, string | undefined]>('turtle.up()');
         if (!this.location) return up;
 
         const [didMove] = up;
@@ -409,8 +488,8 @@ class Turtle {
      *   - A boolean indicating whether the turtle successfully moved down.
      *   - An optional string describing an error if the movement was unsuccessful.
      */
-    async down() {
-        const down = await this.#exec('turtle.down()');
+    async down(): Promise<[boolean, string | undefined]> {
+        const down = await this.#exec<[boolean, string | undefined]>('turtle.down()');
         if (!this.location) return down;
 
         const [didMove] = down;
@@ -451,8 +530,8 @@ class Turtle {
      *   - A boolean indicating whether the turtle successfully turned left.
      *   - An optional string describing an error if the rotation was unsuccessful.
      */
-    async turnLeft() {
-        const turnLeft = await this.#exec('turtle.turnLeft()');
+    async turnLeft(): Promise<[boolean, string | undefined]> {
+        const turnLeft = await this.#exec<[boolean, string | undefined]>('turtle.turnLeft()');
         const [didTurn] = turnLeft;
         if (didTurn && this.direction) {
             this.direction = ((this.direction + 2) % 4) + 1;
@@ -469,8 +548,8 @@ class Turtle {
      *   - A boolean indicating whether the turtle successfully turned right.
      *   - An optional string describing an error if the rotation was unsuccessful.
      */
-    async turnRight() {
-        const turnRight = await this.#exec('turtle.turnRight()');
+    async turnRight(): Promise<[boolean, string | undefined]> {
+        const turnRight = await this.#exec<[boolean, string | undefined]>('turtle.turnRight()');
         const [didTurn] = turnRight;
         if (didTurn && this.direction) {
             this.direction = (this.direction % 4) + 1;
@@ -499,8 +578,10 @@ class Turtle {
      *   - `maxCount` - The maximum possible count in one stack
      *   - `displayName` - The name of the item as displayed in-game
      */
-    async getItemDetail(slot = this.selectedSlot, detailed = true) {
-        const [itemDetail] = await this.#exec(`turtle.getItemDetail(${slot}, ${detailed}) or textutils.json_null`);
+    async getItemDetail(slot = this.selectedSlot, detailed = true): Promise<ItemDetail | null> {
+        const [itemDetail] = await this.#exec<[ItemDetail | null]>(
+            `turtle.getItemDetail(${slot}, ${detailed}) or textutils.json_null`
+        );
         this.inventory = {
             ...this.inventory,
             [slot]: itemDetail ?? undefined,
@@ -518,10 +599,12 @@ class Turtle {
      *
      * @returns {Promise<void>} A Promise that resolves once the turtle's inventory state has been refreshed.
      */
-    async refreshInventoryState(from = this.selectedSlot, stopOnUndefined = false) {
-        const inventoryAsObject = {};
+    async refreshInventoryState(from: number = this.selectedSlot, stopOnUndefined: boolean = false): Promise<void> {
+        const inventoryAsObject: Inventory = {};
         for (let i = 1; i < 17; i++) {
-            const [item] = await this.#exec(`turtle.getItemDetail(${i}, true) or textutils.json_null`);
+            const [item] = await this.#exec<[ItemDetail | null]>(
+                `turtle.getItemDetail(${i}, true) or textutils.json_null`
+            );
             inventoryAsObject[i] = item ?? undefined;
         }
 
@@ -538,14 +621,16 @@ class Turtle {
      *   - A boolean indicating whether the block was broken.
      *   - An optional string describing an the reason no block was broken.
      */
-    async dig() {
+    async dig(): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const dig = await this.#exec('turtle.dig()');
+        const dig = await this.#exec<[boolean, string | undefined]>('turtle.dig()');
         const [didDig] = dig;
         if (didDig) {
-            const inventory = {};
+            const inventory: Inventory = {};
             for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec(`turtle.getItemDetail(${i}, true) or textutils.json_null`);
+                const [item] = await this.#exec<[ItemDetail | null]>(
+                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
+                );
                 inventory[i] = item ?? undefined;
                 if (item === undefined) break;
             }
@@ -576,14 +661,16 @@ class Turtle {
      *   - A boolean indicating whether the block was broken.
      *   - An optional string describing an the reason no block was broken.
      */
-    async digUp() {
+    async digUp(): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const digUp = await this.#exec('turtle.digUp()');
+        const digUp = await this.#exec<[boolean, string | undefined]>('turtle.digUp()');
         const [didDig] = digUp;
         if (didDig) {
-            const inventory = {};
+            const inventory: Inventory = {};
             for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec(`turtle.getItemDetail(${i}, true) or textutils.json_null`);
+                const [item] = await this.#exec<[ItemDetail | null]>(
+                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
+                );
                 inventory[i] = item ?? undefined;
                 if (item === undefined) break;
             }
@@ -614,14 +701,16 @@ class Turtle {
      *   - A boolean indicating whether the block was broken.
      *   - An optional string describing an the reason no block was broken.
      */
-    async digDown() {
+    async digDown(): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const digDown = await this.#exec('turtle.digDown()');
+        const digDown = await this.#exec<[boolean, string | undefined]>('turtle.digDown()');
         const [didDig] = digDown;
         if (didDig) {
-            const inventory = {};
+            const inventory: Inventory = {};
             for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec(`turtle.getItemDetail(${i}, true) or textutils.json_null`);
+                const [item] = await this.#exec<[ItemDetail | null]>(
+                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
+                );
                 inventory[i] = item ?? undefined;
                 if (item === undefined) break;
             }
@@ -653,10 +742,10 @@ class Turtle {
      *   - `name` - The name of the block
      *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
-    async inspect() {
+    async inspect(): Promise<Block | undefined> {
         const {x, y, z} = this.location;
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.direction);
-        const [didInspect, block] = await this.#exec('turtle.inspect()');
+        const [didInspect, block] = await this.#exec<[boolean, Block | undefined]>('turtle.inspect()');
         if (!didInspect) {
             const dbBlock = getBlock(this.serverId, x + xChange, y, z + zChange);
             if (!dbBlock) return;
@@ -672,7 +761,15 @@ class Turtle {
 
         const dbBlock = getBlock(this.serverId, x + xChange, y, z + zChange);
         if (!dbBlock || dbBlock?.name !== block?.name) {
-            upsertBlock(this.serverId, x + xChange, y, z + zChange, block.name, block.state, block.tags);
+            upsertBlock(
+                this.serverId,
+                x + xChange,
+                y,
+                z + zChange,
+                (block as Block).name,
+                (block as Block).state,
+                (block as Block).tags
+            );
             globalEventEmitter.emit('wupdate', {serverId: this.serverId, x: x + xChange, y, z: z + zChange, block});
         }
         return block;
@@ -689,9 +786,9 @@ class Turtle {
      *   - `name` - The name of the block
      *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
-    async inspectUp() {
+    async inspectUp(): Promise<Block | undefined> {
         const {x, y, z} = this.location;
-        const [didInspect, block] = await this.#exec('turtle.inspectUp()');
+        const [didInspect, block] = await this.#exec<[boolean, Block | undefined]>('turtle.inspectUp()');
         if (!didInspect) {
             const dbBlock = getBlock(this.serverId, x, y + 1, z);
             if (!dbBlock) return;
@@ -707,7 +804,15 @@ class Turtle {
 
         const dbBlock = getBlock(this.serverId, x, y + 1, z);
         if (!dbBlock || dbBlock?.name !== block?.name) {
-            upsertBlock(this.serverId, x, y + 1, z, block.name, block.state, block.tags);
+            upsertBlock(
+                this.serverId,
+                x,
+                y + 1,
+                z,
+                (block as Block).name,
+                (block as Block).state,
+                (block as Block).tags
+            );
             globalEventEmitter.emit('wupdate', {serverId: this.serverId, x, y: y + 1, z, block});
         }
         return block;
@@ -724,9 +829,9 @@ class Turtle {
      *   - `name` - The name of the block
      *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
-    async inspectDown() {
+    async inspectDown(): Promise<Block | undefined> {
         const {x, y, z} = this.location;
-        const [didInspect, block] = await this.#exec('turtle.inspectDown()');
+        const [didInspect, block] = await this.#exec<[boolean, Block | undefined]>('turtle.inspectDown()');
         if (!didInspect) {
             const dbBlock = getBlock(this.serverId, x, y - 1, z);
             if (!dbBlock) return;
@@ -742,15 +847,23 @@ class Turtle {
 
         const dbBlock = getBlock(this.serverId, x, y - 1, z);
         if (!dbBlock || dbBlock?.name !== block?.name) {
-            upsertBlock(this.serverId, x, y - 1, z, block.name, block.state, block.tags);
+            upsertBlock(
+                this.serverId,
+                x,
+                y - 1,
+                z,
+                (block as Block).name,
+                (block as Block).state,
+                (block as Block).tags
+            );
             globalEventEmitter.emit('wupdate', {serverId: this.serverId, x, y: y - 1, z, block});
         }
         return block;
     }
 
-    async place() {
+    async place(): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const place = await this.#exec('turtle.place()');
+        const place = await this.#exec<[boolean, string | undefined]>('turtle.place()');
         const [didPlace] = place;
         if (didPlace) {
             const item = await this.getItemDetail(selectedSlot);
@@ -761,9 +874,9 @@ class Turtle {
         return place;
     }
 
-    async placeUp() {
+    async placeUp(): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const placeUp = await this.#exec('turtle.placeUp()');
+        const placeUp = await this.#exec<[boolean, string | undefined]>('turtle.placeUp()');
         const [didPlace] = placeUp;
         if (didPlace) {
             const item = await this.getItemDetail(selectedSlot);
@@ -774,9 +887,9 @@ class Turtle {
         return placeUp;
     }
 
-    async placeDown() {
+    async placeDown(): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const placeDown = await this.#exec('turtle.placeDown()');
+        const placeDown = await this.#exec<[boolean, string | undefined]>('turtle.placeDown()');
         const [didPlace] = placeDown;
         if (didPlace) {
             const item = await this.getItemDetail(selectedSlot);
@@ -787,9 +900,9 @@ class Turtle {
         return placeDown;
     }
 
-    async drop() {
+    async drop(): Promise<[boolean, string | undefined]> {
         const slot = this.selectedSlot;
-        const drop = await this.#exec('turtle.drop()');
+        const drop = await this.#exec<[boolean, string | undefined]>('turtle.drop()');
         const [didDrop] = drop;
         if (didDrop) {
             await this.getItemDetail(slot);
@@ -797,9 +910,9 @@ class Turtle {
         return drop;
     }
 
-    async dropUp() {
+    async dropUp(): Promise<[boolean, string | undefined]> {
         const slot = this.selectedSlot;
-        const dropUp = await this.#exec('turtle.dropUp()');
+        const dropUp = await this.#exec<[boolean, string | undefined]>('turtle.dropUp()');
         const [didDrop] = dropUp;
         if (didDrop) {
             await this.getItemDetail(slot);
@@ -807,9 +920,9 @@ class Turtle {
         return dropUp;
     }
 
-    async dropDown() {
+    async dropDown(): Promise<[boolean, string | undefined]> {
         const slot = this.selectedSlot;
-        const dropDown = await this.#exec('turtle.dropDown()');
+        const dropDown = await this.#exec<[boolean, string | undefined]>('turtle.dropDown()');
         const [didDrop] = dropDown;
         if (didDrop) {
             await this.getItemDetail(slot);
@@ -817,8 +930,8 @@ class Turtle {
         return dropDown;
     }
 
-    async select(slot = 1) {
-        const select = await this.#exec(`turtle.select(${slot})`);
+    async select(slot = 1): Promise<[boolean, string | undefined]> {
+        const select = await this.#exec<[boolean, string | undefined]>(`turtle.select(${slot})`);
         const [didSelect] = select;
         if (didSelect) {
             this.selectedSlot = Number(slot);
@@ -826,14 +939,16 @@ class Turtle {
         return select;
     }
 
-    async suck(count) {
+    async suck(count?: number): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const suck = await this.#exec(`turtle.suck(${count ?? ''})`);
+        const suck = await this.#exec<[boolean, string | undefined]>(`turtle.suck(${count ?? ''})`);
         const [didSuckItems] = suck;
         if (!didSuckItems) {
-            const inventory = {};
+            const inventory: Inventory = {};
             for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec(`turtle.getItemDetail(${i}, true) or textutils.json_null`);
+                const [item] = await this.#exec<[ItemDetail | null]>(
+                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
+                );
                 inventory[i] = item ?? undefined;
                 if (item === undefined) break;
             }
@@ -846,14 +961,16 @@ class Turtle {
         return suck;
     }
 
-    async suckUp(count) {
+    async suckUp(count?: number): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const suckUp = await this.#exec(`turtle.suckUp(${count ?? ''})`);
+        const suckUp = await this.#exec<[boolean, string | undefined]>(`turtle.suckUp(${count ?? ''})`);
         const [didSuckItems] = suckUp;
         if (!didSuckItems) {
-            const inventory = {};
+            const inventory: Inventory = {};
             for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec(`turtle.getItemDetail(${i}, true) or textutils.json_null`);
+                const [item] = await this.#exec<[ItemDetail | null]>(
+                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
+                );
                 inventory[i] = item ?? undefined;
                 if (item === undefined) break;
             }
@@ -866,14 +983,16 @@ class Turtle {
         return suckUp;
     }
 
-    async suckDown(count) {
+    async suckDown(count?: number): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const suckDown = await this.#exec(`turtle.suckDown(${count ?? ''})`);
+        const suckDown = await this.#exec<[boolean, string | undefined]>(`turtle.suckDown(${count ?? ''})`);
         const [didSuckItems] = suckDown;
         if (!didSuckItems) {
-            const inventory = {};
+            const inventory: Inventory = {};
             for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec(`turtle.getItemDetail(${i}, true) or textutils.json_null`);
+                const [item] = await this.#exec<[ItemDetail | null]>(
+                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
+                );
                 inventory[i] = item ?? undefined;
                 if (item === undefined) break;
             }
@@ -886,14 +1005,16 @@ class Turtle {
         return suckDown;
     }
 
-    async refuel() {
+    async refuel(): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const refuel = await this.#exec('turtle.refuel()');
+        const refuel = await this.#exec<[boolean, string | undefined]>('turtle.refuel()');
         const [didRefuel] = refuel;
         if (didRefuel) {
-            const [updatedFuelLevel] = await this.#exec('turtle.getFuelLevel()');
-            this.#fuelLevel = updatedFuelLevel;
-            const [item] = await this.#exec(`turtle.getItemDetail(${selectedSlot}, true) or textutils.json_null`);
+            const [updatedFuelLevel] = await this.#exec<[number | string]>('turtle.getFuelLevel()');
+            this.#fuelLevel = typeof updatedFuelLevel === 'string' ? Number.POSITIVE_INFINITY : updatedFuelLevel;
+            const [item] = await this.#exec<[ItemDetail | null]>(
+                `turtle.getItemDetail(${selectedSlot}, true) or textutils.json_null`
+            );
             this.#inventory[selectedSlot] = item ?? undefined;
 
             updateTurtleFuel(this.serverId, this.id, this.fuelLevel, this.inventory);
@@ -920,16 +1041,18 @@ class Turtle {
      * @param {number} slot
      * @param {number} count
      */
-    async transferTo(slot, count) {
+    async transferTo(slot: number, count: number): Promise<[boolean]> {
         const selectedSlot = this.selectedSlot;
         if (slot === selectedSlot) return [true];
         const transfer = count
-            ? await this.#exec(`transferTo(${slot}, ${count})`)
-            : await this.#exec(`transferTo(${slot})`);
+            ? await this.#exec<[boolean]>(`transferTo(${slot}, ${count})`)
+            : await this.#exec<[boolean]>(`transferTo(${slot})`);
         const [didTransfer] = transfer;
         if (didTransfer) {
-            const [itemDetail] = await this.#exec(`turtle.getItemDetail(${slot}, true) or textutils.json_null`);
-            const [selectedItemDetail] = await this.#exec(
+            const [itemDetail] = await this.#exec<[ItemDetail | null]>(
+                `turtle.getItemDetail(${slot}, true) or textutils.json_null`
+            );
+            const [selectedItemDetail] = await this.#exec<[ItemDetail | null]>(
                 `turtle.getItemDetail(${selectedSlot}, true) or textutils.json_null`
             );
             this.inventory = {
@@ -942,9 +1065,9 @@ class Turtle {
         return transfer;
     }
 
-    async equipLeft() {
+    async equipLeft(): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const equipLeft = await this.#exec('turtle.equipLeft()');
+        const equipLeft = await this.#exec<[boolean, string | undefined]>('turtle.equipLeft()');
         const [didEquip] = equipLeft;
         if (didEquip) {
             await this.getItemDetail(selectedSlot);
@@ -953,9 +1076,9 @@ class Turtle {
         return equipLeft;
     }
 
-    async equipLeft() {
+    async equipRight(): Promise<[boolean, string | undefined]> {
         const selectedSlot = this.selectedSlot;
-        const equipRight = await this.#exec('turtle.equipRight()');
+        const equipRight = await this.#exec<[boolean, string | undefined]>('turtle.equipRight()');
         const [didEquip] = equipRight;
         if (didEquip) {
             await this.getItemDetail(selectedSlot);
@@ -964,30 +1087,36 @@ class Turtle {
         return equipRight;
     }
 
-    async getSelectedSlot() {
-        const [selectedSlot] = Number(await this.#exec('turtle.getSelectedSlot()'));
-        this.selectedSlot = selectedSlot;
-        return [selectedSlot];
+    async getSelectedSlot(): Promise<[number]> {
+        const [selectedSlot] = await this.#exec<string>('turtle.getSelectedSlot()');
+        const transformedSelectedSlot = Number(selectedSlot);
+        this.selectedSlot = transformedSelectedSlot;
+        return [transformedSelectedSlot];
     }
 
-    async getFuelLimit() {
-        const [fuelLimit] = await this.#exec('turtle.getFuelLimit()');
-        this.fuelLimit = fuelLimit;
-        return [fuelLimit];
+    async getFuelLimit(): Promise<[number]> {
+        const [fuelLimit] = await this.#exec<string>('turtle.getFuelLimit()');
+        const transformedFuelLimit = Number(fuelLimit);
+        this.fuelLimit = transformedFuelLimit;
+        return [transformedFuelLimit];
     }
 
-    async craft() {
+    async craft(): Promise<void> {
         const [hasWorkbench] = await this.hasPeripheralWithName('workbench');
         if (!hasWorkbench) {
             this.error = 'No workbench to craft with';
             return;
         }
 
-        const [didCraft, craftMessage] = await this.#exec('peripheral.find("workbench").craft()');
+        const [didCraft, craftMessage] = await this.#exec<[boolean, string | undefined]>(
+            'peripheral.find("workbench").craft()'
+        );
         if (didCraft) {
-            const inventoryAsObject = {};
+            const inventoryAsObject: Inventory = {};
             for (let i = 1; i < 17; i++) {
-                const [item] = await this.#exec(`turtle.getItemDetail(${i}, true) or textutils.json_null`);
+                const [item] = await this.#exec<[ItemDetail | null]>(
+                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
+                );
                 inventoryAsObject[i] = item ?? undefined;
             }
             this.#inventory = inventoryAsObject;
@@ -999,16 +1128,18 @@ class Turtle {
                 },
             });
         } else {
-            this.error = craftMessage;
+            this.error = craftMessage as string;
         }
     }
 
-    async hasPeripheralWithName(peripheralName) {
-        return await this.#exec(`peripheral.find("${peripheralName}") ~= nil`);
+    async hasPeripheralWithName(peripheralName: string): Promise<[boolean]> {
+        return await this.#exec<[boolean]>(`peripheral.find("${peripheralName}") ~= nil`);
     }
 
-    async gpsLocate() {
-        return await this.#exec('gps.locate()');
+    async gpsLocate(): Promise<[number, number, number] | [null, null, null]> {
+        return await this.#exec(
+            '(function(x, y, z) return x and y and z and x, y, z or textutils.json_null end)(gps.locate())'
+        );
     }
 
     async detect() {
@@ -1053,8 +1184,8 @@ class Turtle {
      *
      * @param {number} slot
      */
-    async compareTo(slot) {
-        return await this.#exec(`turtle.compareTo(${slot})`);
+    async compareTo(slot: number) {
+        return await this.#exec<[boolean]>(`turtle.compareTo(${slot})`);
     }
 
     async attack() {
@@ -1077,26 +1208,26 @@ class Turtle {
         return await this.#exec(`turtle.getItemSpace(${slot})`);
     }
 
-    async getFuelLevel() {
-        const [updatedFuelLevel] = await this.#exec('turtle.getFuelLevel()');
-        this.fuelLevel = updatedFuelLevel;
-        return updatedFuelLevel;
+    async getFuelLevel(): Promise<[number]> {
+        const [updatedFuelLevel] = await this.#exec<[number | string]>('turtle.getFuelLevel()');
+        this.fuelLevel = typeof updatedFuelLevel === 'string' ? Number.POSITIVE_INFINITY : updatedFuelLevel;
+        return [this.fuelLevel];
     }
 
-    async rename(name) {
-        await this.#exec(`os.setComputerLabel("${name}")`);
+    async rename(name: string): Promise<void> {
+        await this.#exec<void>(`os.setComputerLabel("${name}")`);
         this.name = name;
     }
 
-    #exec(f) {
+    #exec<R>(f: string): Promise<R> {
         return this.#execRaw(`return ${f}`);
     }
 
-    #execRaw(f) {
+    #execRaw<R>(f: string): Promise<R> {
         const uuid = uuid4();
-        this.#lastPromise = new Promise((resolve, reject) =>
-            this.#lastPromise.finally(() => {
-                const listener = (msg) => {
+        this.lastPromise = new Promise<R>((resolve, reject) =>
+            this.lastPromise.finally(() => {
+                const listener = (msg: string) => {
                     const obj = JSON.parse(msg);
                     if (obj.uuid !== uuid) {
                         logger.error(`${obj.uuid} does not match ${uuid}!`);
@@ -1112,22 +1243,22 @@ class Turtle {
                         return reject(`Unknown response type "${obj.type}" from turtle with message "${obj.message}"`);
                     }
 
-                    this.#ws.off('message', listener);
+                    this.ws.off('message', listener);
                     return resolve(obj.message);
                 };
-                this.#ws.on('message', listener);
-                this.#ws.send(JSON.stringify({type: 'EVAL', uuid, function: f}));
+                this.ws.on('message', listener);
+                this.ws.send(JSON.stringify({type: 'EVAL', uuid, function: f}));
             })
         );
 
-        return this.#lastPromise;
+        return this.lastPromise as Promise<R>;
     }
 }
 
-const initializeHandshake = (ws, remoteAddress) => {
+const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
     logger.info('Initiating handshake...');
     const uuid = uuid4();
-    const listener = async (msg) => {
+    const listener = async (msg: string) => {
         const obj = JSON.parse(msg);
         if (obj.uuid !== uuid) {
             logger.error(`${obj.uuid} does not match ${uuid}!`);
@@ -1212,14 +1343,11 @@ const initializeHandshake = (ws, remoteAddress) => {
     ws.send(JSON.stringify({type: 'HANDSHAKE', uuid, logLevel: turtleLogLevel}));
 };
 
-const wss = new ws.Server({port: 5757});
+const wss = new WebSocketServer({port: 5757});
 wss.on('connection', (ws, req) => {
     logger.info('Incoming connection...');
-    initializeHandshake(ws, req.socket.remoteAddress);
+    initializeHandshake(ws, req.socket.remoteAddress as string);
 });
 
-module.exports = {
-    Turtle,
-    getOnlineTurtles: () => connectedTurtlesMap.values(),
-    getOnlineTurtleById: (id) => connectedTurtlesMap.get(id),
-};
+export const getOnlineTurtles = () => connectedTurtlesMap.values();
+export const getOnlineTurtleById = (id: number) => connectedTurtlesMap.get(id);

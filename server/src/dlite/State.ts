@@ -1,4 +1,11 @@
-module.exports = class State {
+export default class State {
+    public readonly x: number;
+    public readonly y: number;
+    public readonly z: number;
+    public readonly g: number;
+    public readonly rhs: number;
+    public readonly obstacle: boolean;
+
     constructor(x = 0, y = 0, z = 0, g = 0, rhs = 0, obstacle = false) {
         this.x = x;
         this.y = y;
@@ -8,7 +15,7 @@ module.exports = class State {
         this.obstacle = obstacle;
     }
 
-    equals(that) {
+    equals(that: State) {
         return this.x == that.x && this.y == that.y && this.z === that.z;
     }
 
@@ -45,4 +52,4 @@ module.exports = class State {
     hashCode() {
         return `${this.x},${this.y},${this.z}`;
     }
-};
+}

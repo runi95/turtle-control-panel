@@ -1,6 +1,6 @@
-const Element = require('./Element');
+import Element from './Element';
 
-module.exports = class PriorityQueue {
+export default class PriorityQueue {
     constructor() {
         this.hash = {};
         this.queue = [];
@@ -110,4 +110,4 @@ module.exports = class PriorityQueue {
         this.hash = {};
         this.size = 0;
     }
-};
+}

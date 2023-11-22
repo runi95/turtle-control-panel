@@ -1,4 +1,5 @@
 node_modules/
 server/db/server.db*
+server/dist
 
 .eslintcache

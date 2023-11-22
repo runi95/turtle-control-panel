@@ -4,7 +4,7 @@
 // INFO
 // WARNING
 // ERROR
-module.exports = (() => {
+export default (() => {
     switch (process.env.TURTLE_LOG_LEVEL?.toUpperCase() || 'INFO') {
         case 'ERROR':
             return 3;

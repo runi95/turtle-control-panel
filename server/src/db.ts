@@ -1,4 +1,5 @@
-const Database = require('better-sqlite3');
+import {BlockState, BlockTags, Direction, Inventory, Location, BaseState} from './entities/turtle';
+import Database from 'better-sqlite3';
 
 const db = new Database('db/server.db');
 db.pragma('journal_mode = WAL');
@@ -99,7 +100,7 @@ const preparedDashboard = db
 
 // General database queries
 const selectServerByRemoteAddress = db.prepare('SELECT * FROM `servers` WHERE `remote_address` = ?');
-const upsertServer = db.prepare(
+const insertServer = db.prepare(
     'INSERT INTO `servers` (`remote_address`, `name`) VALUES (:remote_address, :name) ON CONFLICT DO UPDATE SET name = :name'
 );
 const selectArea = db.prepare(`SELECT json_object(
@@ -120,7 +121,7 @@ const selectTurtle = db.prepare(`SELECT json_object(
     'location', json(\`t\`.\`location\`),
     'direction', \`t\`.\`direction\`
 ) FROM \`turtles\` AS \`t\` WHERE \`server_id\` = ? AND \`id\` = ?`);
-const upsertTurtle = db.prepare(
+const insertTurtle = db.prepare(
     'INSERT INTO `turtles` VALUES (:server_id, :id, :name, :fuel_level, :fuel_limit, :selected_slot, :inventory, :steps_since_last_refuel, :state, :location, :direction) ON CONFLICT DO UPDATE SET name = :name, fuel_level = :fuel_level, fuel_limit = :fuel_limit, selected_slot = :selected_slot, inventory = :inventory, steps_since_last_refuel = :steps_since_last_refuel, state = :state, location = :location, direction = :direction'
 );
 const selectBlocks = db.prepare(`SELECT json_object(
@@ -141,10 +142,12 @@ const selectBlock = db.prepare(`SELECT json_object(
     'state', json(\`b\`.\`state\`),
     'tags', json(\`b\`.\`tags\`)
 ) FROM \`blocks\` AS \`b\` WHERE \`server_id\` = ? AND \`x\` = ? AND \`y\` = ? AND \`z\` = ?`);
-const upsertBlock = db.prepare(
+const insertBlock = db.prepare(
     'INSERT INTO `blocks` VALUES (:server_id, :x, :y, :z, :name, :state, :tags) ON CONFLICT DO UPDATE SET `name` = :name, `state` = :state, `tags` = :tags'
 );
-const deleteBlock = db.prepare('DELETE FROM `blocks` WHERE `server_id` = ? AND `x` = ? AND `y` = ? AND `z` = ?');
+const deleteBlockStatement = db.prepare(
+    'DELETE FROM `blocks` WHERE `server_id` = ? AND `x` = ? AND `y` = ? AND `z` = ?'
+);
 const setTurtleName = db.prepare('UPDATE `turtles` SET `name` = ? WHERE `server_id` = ? AND `id` = ?');
 const setTurtleFuelLevel = db.prepare('UPDATE `turtles` SET `fuel_level` = ? WHERE `server_id` = ? AND `id` = ?');
 const setTurtleSelectedSlot = db.prepare('UPDATE `turtles` SET `selected_slot` = ? WHERE `server_id` = ? AND `id` = ?');
@@ -161,67 +164,87 @@ const setTurtleMovement = db.prepare(
 const setTurtleFuel = db.prepare(
     'UPDATE `turtles` SET `fuel_level` = ?, `inventory` = ? WHERE `server_id` = ? AND `id` = ?'
 );
-module.exports = {
-    getDashboard: () => preparedDashboard.all().map((server) => JSON.parse(server)),
-    upsertServer: (remoteAddress, name) =>
-        upsertServer.run({
-            remote_address: remoteAddress,
-            name,
-        }),
-    getServerByRemoteAddress: (remoteAddress) => selectServerByRemoteAddress.get(remoteAddress),
-    getArea: (serverId, id) => selectArea.get(serverId, id),
-    addArea: (serverId, color, area) => insertArea.run(serverId, color, JSON.stringify(area)),
-    getTurtle: (serverId, id) => selectTurtle.get(serverId, id),
-    upsertTurtle: (
-        serverId,
+
+export const getDashboard = () => preparedDashboard.all().map((server: string) => JSON.parse(server));
+export const upsertServer = (remoteAddress: string, name: string) =>
+    insertServer.run({
+        remote_address: remoteAddress,
+        name,
+    });
+export const getServerByRemoteAddress = (remoteAddress: string) => selectServerByRemoteAddress.get(remoteAddress);
+export const getArea = (serverId: number, id: number) => selectArea.get(serverId, id);
+export const addArea = (serverId: number, color: string, area: JSON) =>
+    insertArea.run(serverId, color, JSON.stringify(area));
+export const getTurtle = (serverId: number, id: number) => selectTurtle.get(serverId, id);
+export const upsertTurtle = (
+    serverId: number,
+    id: number,
+    name: string,
+    fuelLevel: number,
+    fuelLimit: number,
+    selectedSlot: number,
+    inventory: Inventory,
+    stepsSinceLastRefuel: number,
+    state: BaseState,
+    location: Location,
+    direction: Direction
+) =>
+    insertTurtle.run({
+        server_id: serverId,
         id,
         name,
-        fuelLevel,
-        fuelLimit,
-        selectedSlot,
-        inventory,
-        stepsSinceLastRefuel,
-        state,
-        location,
-        direction
-    ) =>
-        upsertTurtle.run({
-            server_id: serverId,
-            id,
-            name,
-            fuel_level: fuelLevel,
-            fuel_limit: fuelLimit,
-            selected_slot: selectedSlot,
-            inventory: JSON.stringify(inventory),
-            steps_since_last_refuel: stepsSinceLastRefuel,
-            state: JSON.stringify(state),
-            location: JSON.stringify(location),
-            direction,
-        }),
-    getBlocks: (serverId) => selectBlocks.all(serverId),
-    getBlock: (serverId, x, y, z) => selectBlock.get(serverId, x, y, z),
-    upsertBlock: (serverId, x, y, z, name, state, tags) =>
-        upsertBlock.run({
-            server_id: serverId,
-            x,
-            y,
-            z,
-            name,
-            state: JSON.stringify(state),
-            tags: JSON.stringify(tags),
-        }),
-    deleteBlock: (serverId, x, y, z) => deleteBlock.run(serverId, x, y, z),
-    updateTurtleName: (serverId, id, name) => setTurtleName.run(name, serverId, id),
-    updateTurtleFuelLevel: (serverId, id, fuelLevel) => setTurtleFuelLevel.run(fuelLevel, serverId, id),
-    updateTurtleSelectedSlot: (serverId, id, selectedSlot) => setTurtleSelectedSlot.run(selectedSlot, serverId, id),
-    updateTurtleInventory: (serverId, id, inventory) => setTurtleInventory.run(JSON.stringify(inventory), serverId, id),
-    updateTurtleStepsSinceLastRefuel: (serverId, id, stepsSinceLastRefuel) =>
-        setTurtleStepsSinceLastRefuel.run(stepsSinceLastRefuel, serverId, id),
-    updateTurtleState: (serverId, id, state) => setTurtleState.run(JSON.stringify(state), serverId, id),
-    updateTurtleLocation: (serverId, id, location) => setTurtleLocation.run(JSON.stringify(location), serverId, id),
-    updateTurtleDirection: (serverId, id, direction) => setTurtleDirection.run(direction, serverId, id),
-    updateTurtleMovement: (serverId, id, fuelLevel, stepsSinceLastRefuel, location) =>
-        setTurtleMovement.run(fuelLevel, stepsSinceLastRefuel, JSON.stringify(location), serverId, id),
-    updateTurtleFuel: (serverId, id, fuelLevel, inventory) =>
-        setTurtleFuel.run(fuelLevel, JSON.stringify(inventory), serverId, id),
-};
+        fuel_level: fuelLevel,
+        fuel_limit: fuelLimit,
+        selected_slot: selectedSlot,
+        inventory: JSON.stringify(inventory),
+        steps_since_last_refuel: stepsSinceLastRefuel,
+        state: JSON.stringify(state),
+        location: JSON.stringify(location),
+        direction,
+    });
+export const getBlocks = (serverId: number) => selectBlocks.all(serverId);
+export const getBlock = (serverId: number, x: number, y: number, z: number) => selectBlock.get(serverId, x, y, z);
+export const upsertBlock = (
+    serverId: number,
+    x: number,
+    y: number,
+    z: number,
+    name: string,
+    state: BlockState,
+    tags: BlockTags
+) =>
+    insertBlock.run({
+        server_id: serverId,
+        x,
+        y,
+        z,
+        name,
+        state: JSON.stringify(state),
+        tags: JSON.stringify(tags),
+    });
+export const deleteBlock = (serverId: number, x: number, y: number, z: number) =>
+    deleteBlockStatement.run(serverId, x, y, z);
+export const updateTurtleName = (serverId: number, id: number, name: string) => setTurtleName.run(name, serverId, id);
+export const updateTurtleFuelLevel = (serverId: number, id: number, fuelLevel: number) =>
+    setTurtleFuelLevel.run(fuelLevel, serverId, id);
+export const updateTurtleSelectedSlot = (serverId: number, id: number, selectedSlot: number) =>
+    setTurtleSelectedSlot.run(selectedSlot, serverId, id);
+export const updateTurtleInventory = (serverId: number, id: number, inventory: Inventory) =>
+    setTurtleInventory.run(JSON.stringify(inventory), serverId, id);
+export const updateTurtleStepsSinceLastRefuel = (serverId: number, id: number, stepsSinceLastRefuel: number) =>
+    setTurtleStepsSinceLastRefuel.run(stepsSinceLastRefuel, serverId, id);
+export const updateTurtleState = (serverId: number, id: number, state: BaseState) =>
+    setTurtleState.run(JSON.stringify(state), serverId, id);
+export const updateTurtleLocation = (serverId: number, id: number, location: Location) =>
+    setTurtleLocation.run(JSON.stringify(location), serverId, id);
+export const updateTurtleDirection = (serverId: number, id: number, direction: Direction) =>
+    setTurtleDirection.run(direction, serverId, id);
+export const updateTurtleMovement = (
+    serverId: number,
+    id: number,
+    fuelLevel: number,
+    stepsSinceLastRefuel: number,
+    location: Location
+) => setTurtleMovement.run(fuelLevel, stepsSinceLastRefuel, JSON.stringify(location), serverId, id);
+export const updateTurtleFuel = (serverId: number, id: number, fuelLevel: number, inventory: Inventory) =>
+    setTurtleFuel.run(fuelLevel, JSON.stringify(inventory), serverId, id);

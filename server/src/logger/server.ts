@@ -1,7 +1,7 @@
-const winston = require('winston');
+import * as winston from 'winston';
 
 const logLevel = process.env.LOG_LEVEL ?? 'debug';
-module.exports = winston.createLogger({
+export default winston.createLogger({
     level: logLevel,
     format: winston.format.combine(
         winston.format.colorize(),

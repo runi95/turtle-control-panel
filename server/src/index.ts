@@ -1,15 +1,15 @@
-const ws = require('ws');
-const {getOnlineTurtleById, getOnlineTurtles} = require('./entities/turtle');
-const globalEventEmitter = require('./globalEventEmitter');
-const logger = require('./logger/server');
-const {addArea, getDashboard} = require('./db');
+import {WebSocketServer} from 'ws';
+import {getOnlineTurtleById, getOnlineTurtles} from './entities/turtle';
+import globalEventEmitter from './globalEventEmitter';
+import logger from './logger/server';
+import {addArea, getDashboard} from './db';
 
 logger.info('Starting server...');
 
-const wssPort = process.env.WSS_PORT ?? 6868;
-const wssWebsite = new ws.Server({port: wssPort});
+const wssPort = process.env.WSS_PORT ? Number(process.env.WSS_PORT) : 6868;
+const wssWebsite = new WebSocketServer({port: wssPort});
 wssWebsite.on('connection', (ws) => {
-    ws.on('message', (msg) => {
+    ws.on('message', (msg: string) => {
         const obj = JSON.parse(msg);
         switch (obj.type) {
             case 'HANDSHAKE':

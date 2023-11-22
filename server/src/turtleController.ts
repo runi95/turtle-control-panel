@@ -1,17 +1,18 @@
-const Coordinates = require('./dlite/Coordinates');
-const DStarLite = require('./dlite');
-const {blockToFarmingDetailsMapObject, farmingSeedNames} = require('./helpers/farming');
-const {getLocalCoordinatesForDirection} = require('./helpers/coordinates');
-const globalEventEmitter = require('./globalEventEmitter');
-const logger = require('./logger/server');
-const {getArea, getBlocks} = require('./db');
+import {BaseState, FarmingState, MiningState, Turtle} from './entities/turtle';
+import Coordinates from './dlite/Coordinates';
+import DStarLite from './dlite';
+import {blockToFarmingDetailsMapObject, farmingSeedNames} from './helpers/farming';
+import {getLocalCoordinatesForDirection} from './helpers/coordinates';
+import globalEventEmitter from './globalEventEmitter';
+import logger from './logger/server';
+import {getArea, getBlocks} from './db';
 
 const turtleMap = new Map();
 
 class TurtleController {
     #turtle;
 
-    constructor(turtle) {
+    constructor(turtle: Turtle) {
         this.#turtle = turtle;
     }
 
@@ -44,7 +45,11 @@ class TurtleController {
                     await this.#mine();
                     break;
                 case 3:
-                    await this.#moveTo(this.#turtle.state.x, this.#turtle.state.y, this.#turtle.state.z);
+                    await this.#moveTo(
+                        (this.#turtle.state as BaseState & {x: number}).x,
+                        (this.#turtle.state as BaseState & {y: number}).y,
+                        (this.#turtle.state as BaseState & {z: number}).z
+                    );
                     break;
                 case 4:
                     await this.#farm();
@@ -70,7 +75,7 @@ class TurtleController {
         }
     }
 
-    #hasSpaceForItem(name, count = 1) {
+    #hasSpaceForItem(name: string, count = 1) {
         const inventoryEntries = Object.entries(this.#turtle.inventory);
         if (inventoryEntries.length < 16) return true;
 
@@ -87,7 +92,10 @@ class TurtleController {
 
     async #refreshInventoryState() {
         await this.#turtle.refreshInventoryState();
-        this.#turtle.state = this.#turtle.state?.nextState?.id === 7 ? undefined : this.#turtle.state?.nextState;
+        this.#turtle.state =
+            (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState?.id === 7
+                ? undefined
+                : (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState;
         globalEventEmitter.emit('tupdate', {
             id: this.#turtle.id,
             serverId: this.#turtle.serverId,
@@ -99,15 +107,21 @@ class TurtleController {
 
     async #craft() {
         await this.#turtle.craft();
-        this.#turtle.state = this.#turtle.state?.nextState?.id === 8 ? undefined : this.#turtle.state?.nextState;
+        this.#turtle.state =
+            (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState?.id === 8
+                ? undefined
+                : (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState;
     }
 
     async #drop() {
         await this.#turtle.drop();
-        this.#turtle.state = this.#turtle.state?.nextState?.id === 9 ? undefined : this.#turtle.state?.nextState;
+        this.#turtle.state =
+            (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState?.id === 9
+                ? undefined
+                : (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState;
     }
 
-    async #turnToDirection(direction) {
+    async #turnToDirection(direction: number) {
         const turn = (direction - this.#turtle.direction + 4) % 4;
         if (turn === 1) {
             await this.#turtle.turnRight();
@@ -119,20 +133,20 @@ class TurtleController {
         }
     }
 
-    async #selectItemOfType(name) {
+    async #selectItemOfType(name: string) {
         const itemOfType = Object.entries(this.#turtle.inventory).find(([_, item]) => item?.name === name);
         if (itemOfType === undefined) return false;
 
         const [key] = itemOfType;
-        await this.#turtle.select(key);
+        await this.#turtle.select(Number(key));
         return true;
     }
 
-    async #sleep(ms) {
-        await new Promise((resolve) => setTimeout(() => resolve(), ms));
+    async #sleep(ms: number) {
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), ms));
     }
 
-    async #mineToYLevel(mineTarget) {
+    async #mineToYLevel(mineTarget: number) {
         if (Number.isNaN(mineTarget)) {
             throw new Error('Invalid mine target');
         }
@@ -142,33 +156,33 @@ class TurtleController {
             if (diffInYLevels < 0) {
                 const [didDigDown, digDownMessage] = await this.#turtle.digDown();
                 if (!didDigDown && digDownMessage !== 'Nothing to dig here') {
-                    this.#turtle.error = digDownMessage;
+                    this.#turtle.error = digDownMessage as string;
                     return;
                 }
                 const [didSuckDown, suckDownMessage] = await this.#turtle.suckDown();
                 if (!didSuckDown && suckDownMessage !== 'No items to take') {
-                    this.#turtle.error = suckDownMessage;
+                    this.#turtle.error = suckDownMessage as string;
                     return;
                 }
                 const [didMoveDown, moveDownMessage] = await this.#turtle.down();
                 if (!didMoveDown) {
-                    this.#turtle.error = moveDownMessage;
+                    this.#turtle.error = moveDownMessage as string;
                     return;
                 }
             } else if (diffInYLevels > 0) {
                 const [didDigUp, digUpMessage] = await this.#turtle.digUp();
                 if (!didDigUp && digUpMessage !== 'Nothing to dig here') {
-                    this.#turtle.error = digUpMessage;
+                    this.#turtle.error = digUpMessage as string;
                     return;
                 }
                 const [didSuckUp, suckUpMessage] = await this.#turtle.suckUp();
                 if (!didSuckUp && suckUpMessage !== 'No items to take') {
-                    this.#turtle.error = suckUpMessage;
+                    this.#turtle.error = suckUpMessage as string;
                     return;
                 }
                 const [didMoveUp, moveUpMessage] = await this.#turtle.up();
                 if (!didMoveUp) {
-                    this.#turtle.error = moveUpMessage;
+                    this.#turtle.error = moveUpMessage as string;
                     return;
                 }
             }
@@ -177,7 +191,7 @@ class TurtleController {
         }
     }
 
-    async #mineInDirection(mineTarget) {
+    async #mineInDirection(mineTarget: string) {
         switch (mineTarget) {
             case 'Up':
                 await this.#turtle.digUp();
@@ -203,7 +217,7 @@ class TurtleController {
     }
 
     async #mine() {
-        const {mineType, mineTarget} = this.#turtle.state;
+        const {mineType, mineTarget} = this.#turtle.state as BaseState & MiningState;
         if (mineType === 'direction') {
             return await this.#mineInDirection(mineTarget);
         }
@@ -217,7 +231,7 @@ class TurtleController {
         if (mineType === 'ylevel') {
             return await this.#mineToYLevel(Number(mineTarget));
         } else if (mineType === 'area') {
-            const currentIndex = this.#turtle.state.index || 0;
+            const currentIndex = (this.#turtle.state as BaseState & {index?: number})?.index || 0;
             const mineArea = getArea(this.#turtle.serverId, mineTarget);
             if (mineArea === undefined) {
                 throw new Error('Given mining area does not exist');
@@ -228,10 +242,12 @@ class TurtleController {
 
             const newIndex = currentIndex + 1;
             if (newIndex < mineArea.area.length) {
-                this.#turtle.state = {
-                    ...this.#turtle.state,
-                    index: newIndex,
-                };
+                if (this.#turtle.state) {
+                    this.#turtle.state = {
+                        ...this.#turtle.state,
+                        index: newIndex,
+                    };
+                }
             } else {
                 this.#turtle.state = undefined;
             }
@@ -267,7 +283,7 @@ class TurtleController {
         this.#turtle.error = 'Out of fuel';
     }
 
-    async #farmBlock(seedTypeName) {
+    async #farmBlock(seedTypeName: string) {
         const initialItemCount = Object.values(this.#turtle.inventory).reduce(
             (acc, curr) => acc + (curr?.count || 0),
             0
@@ -297,17 +313,21 @@ class TurtleController {
         if (inventoryEntry === undefined) return false;
 
         const [slot, seed] = inventoryEntry;
-        const item = await this.#turtle.getItemDetail(slot);
+        const slotAsNumber = Number(slot);
+        const item = await this.#turtle.getItemDetail(slotAsNumber);
         if (item?.name !== seed.name) return false;
 
-        await this.#turtle.select(slot);
+        await this.#turtle.select(slotAsNumber);
         return true;
     }
 
     async #farm(moveContinously = false) {
-        const {areaId, currentAreaFarmIndex} = this.#turtle.state;
+        const {areaId, currentAreaFarmIndex} = this.#turtle.state as BaseState & FarmingState;
         const farmArea = getArea(this.#turtle.serverId, areaId);
-        if (farmArea.area.length > 4 && this.#turtle.state.noopTiles >= farmArea.area.length) {
+        if (
+            farmArea.area.length > 4 &&
+            (this.#turtle.state as BaseState & FarmingState)?.noopTiles >= farmArea.area.length
+        ) {
             const didSelect = await this.#selectAnySeedInInventory();
             if (!didSelect) {
                 this.#turtle.error = 'No seeds in inventory';
@@ -333,27 +353,35 @@ class TurtleController {
             if (didSelect) {
                 const [didPlace] = await this.#turtle.placeDown();
                 if (didPlace) {
-                    this.#turtle.state = {
-                        ...this.#turtle.state,
-                        noopTiles: 0,
-                    };
+                    if (this.#turtle.state) {
+                        this.#turtle.state = {
+                            ...this.#turtle.state,
+                            noopTiles: 0,
+                        };
+                    }
                 } else {
-                    this.#turtle.state = {
-                        ...this.#turtle.state,
-                        noopTiles: this.#turtle.state.noopTiles + 1,
-                    };
+                    if (this.#turtle.state) {
+                        this.#turtle.state = {
+                            ...this.#turtle.state,
+                            noopTiles: ((this.#turtle.state as BaseState & FarmingState)?.noopTiles ?? 0) + 1,
+                        };
+                    }
                 }
             } else {
-                this.#turtle.state = {
-                    ...this.#turtle.state,
-                    noopTiles: this.#turtle.state.noopTiles + 1,
-                };
+                if (this.#turtle.state) {
+                    this.#turtle.state = {
+                        ...this.#turtle.state,
+                        noopTiles: ((this.#turtle.state as BaseState & FarmingState)?.noopTiles ?? 0) + 1,
+                    };
+                }
             }
 
-            this.#turtle.state = {
-                ...this.#turtle.state,
-                currentAreaFarmIndex: (currentAreaFarmIndex + 1) % farmArea.area.length,
-            };
+            if (this.#turtle.state) {
+                this.#turtle.state = {
+                    ...this.#turtle.state,
+                    currentAreaFarmIndex: (currentAreaFarmIndex + 1) % farmArea.area.length,
+                };
+            }
         } else {
             const farmingBlockToFarmingDetails = blockToFarmingDetailsMapObject[block.name];
             let shouldMoveForward = !farmingBlockToFarmingDetails;
@@ -367,17 +395,17 @@ class TurtleController {
                     await this.#farmBlock(farmingBlockToFarmingDetails.seed);
                     shouldMoveForward = true;
                 }
-                if (this.#turtle.state.noopTiles !== 0) {
+                if (this.#turtle.state?.noopTiles !== 0) {
                     this.#turtle.state = {
                         ...this.#turtle.state,
                         noopTiles: 0,
-                    };
+                    } as BaseState & FarmingState;
                 }
             } else {
                 this.#turtle.state = {
                     ...this.#turtle.state,
-                    noopTiles: this.#turtle.state.noopTiles + 1,
-                };
+                    noopTiles: ((this.#turtle.state as BaseState & FarmingState)?.noopTiles ?? 0) + 1,
+                } as BaseState & FarmingState;
             }
 
             if (moveContinously || shouldMoveForward) {
@@ -423,17 +451,14 @@ class TurtleController {
             }
         }
 
-        const location = await this.#turtle.gpsLocate();
-        const x = location?.[0];
-        const y = location?.[1];
-        const z = location?.[2];
+        const [x, y, z] = await this.#turtle.gpsLocate();
         if (movedBackwards) {
             await this.#turtle.forward();
         } else {
             await this.#turtle.back();
         }
 
-        if (x === undefined || y === undefined || z === undefined) {
+        if (x === null || y === null || z === null) {
             this.#turtle.error = 'Could not determine position';
             return;
         }
@@ -455,11 +480,8 @@ class TurtleController {
             return;
         }
 
-        const location = await this.#turtle.gpsLocate();
-        const x = location?.[0];
-        const y = location?.[1];
-        const z = location?.[2];
-        if (x === undefined || y === undefined || z === undefined) {
+        const [x, y, z] = await this.#turtle.gpsLocate();
+        if (x === null || y === null || z === null) {
             this.#turtle.error = 'Could not determine position';
             return;
         }
@@ -490,19 +512,31 @@ class TurtleController {
         }
     }
 
-    async #moveToAndMineObstacles(targetX, targetY, targetZ, minableBlocksWhitelist) {
-        const mineableObstaclesMap = minableBlocksWhitelist.reduce((acc, curr) => {
-            acc[`${curr.x},${curr.y},${curr.z}`] = true;
-            return acc;
-        }, {});
+    async #moveToAndMineObstacles(
+        targetX: number,
+        targetY: number,
+        targetZ: number,
+        minableBlocksWhitelist: {
+            x: number;
+            y: number;
+            z: number;
+        }[]
+    ) {
+        const mineableObstaclesMap = minableBlocksWhitelist.reduce(
+            (acc, curr) => {
+                acc[`${curr.x},${curr.y},${curr.z}`] = true;
+                return acc;
+            },
+            {} as {[key: string]: boolean}
+        );
 
         let {x: px, y: py, z: pz} = this.#turtle.location;
         if (!(px === targetX && py === targetY && pz === targetZ)) {
             let moves = 0;
-            const obstacles = [];
-            const obstaclesHash = {};
+            const obstacles: Coordinates[] = [];
+            const obstaclesHash: {[key: string]: boolean} = {};
             const env = {
-                moveTo: async (s) => {
+                moveTo: async (s: Coordinates) => {
                     moves++;
                     px = s.x;
                     py = s.y;
@@ -639,7 +673,7 @@ class TurtleController {
         }
     }
 
-    async #moveTo(targetX, targetY, targetZ) {
+    async #moveTo(targetX: number, targetY: number, targetZ: number) {
         return await this.#moveToAndMineObstacles(targetX, targetY, targetZ, []);
     }
 }
@@ -651,14 +685,13 @@ const runAll = async () => {
 
 setTimeout(runAll, 1);
 
-module.exports = {
-    addTurtle: (turtle) => {
-        if (!turtle?.id) return false;
-        if (turtleMap.has(turtle.id)) return true;
-        turtleMap.set(turtle.id, new TurtleController(turtle));
-        return true;
-    },
-    removeTurtle: (turtle) => {
-        return turtleMap.delete(turtle.id);
-    },
+export const addTurtle = (turtle: Turtle) => {
+    if (!turtle?.id) return false;
+    if (turtleMap.has(turtle.id)) return true;
+    turtleMap.set(turtle.id, new TurtleController(turtle));
+    return true;
+};
+
+export const removeTurtle = (turtle: Turtle) => {
+    return turtleMap.delete(turtle.id);
 };

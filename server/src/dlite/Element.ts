@@ -1,4 +1,4 @@
-module.exports = class Element {
+export default class Element {
     constructor(state, key) {
         this.s = state;
         this.k = key;
@@ -11,4 +11,4 @@ module.exports = class Element {
     hashCode() {
         return this.s.hashCode();
     }
-};
+}

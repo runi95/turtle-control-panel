@@ -1,10 +1,10 @@
-const State = require('./State');
-const Pair = require('./Pair');
-const Coordinates = require('./Coordinates');
-const PriorityQueue = require('./PriorityQueue');
-const logger = require('../logger/server');
+import State from './State';
+import Pair from './Pair';
+import Coordinates from './Coordinates';
+import PriorityQueue from './PriorityQueue';
+import logger from '../logger/server';
 
-module.exports = class DStarLite {
+export default class DStarLite {
     constructor(maxSteps = 80000) {
         this.maxSteps = maxSteps;
         this.U = undefined;
@@ -201,4 +201,4 @@ module.exports = class DStarLite {
             throw new Error('Path is unreachable');
         }
     }
-};
+}
