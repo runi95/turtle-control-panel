@@ -3,37 +3,59 @@ import {Row, Col, Button, Modal, Form, InputGroup} from 'react-bootstrap';
 import styled from 'styled-components';
 import './TurtleMap.css';
 import {useParams} from 'react-router-dom';
+import {Action, Areas, Blocks, Location, Turtle, Turtles} from '../../App';
 
 const circleSizeMul = 0.35;
 const spriteSize = 10;
 const spriteRadius = 0.5 * spriteSize;
 const colors = ['#ff0000', '#ff6a00', '#ffd800', '#4cff00', '#00ffff', '#0094ff', '#0026ff', '#b200ff', '#ff006e'];
 
-const TurtleMap = (props) => {
-    const {serverId, id} = useParams();
+interface TurtleMapProps {
+    style?: React.CSSProperties;
+    canvasSize: number;
+    turtles: Turtles;
+    blocks: Blocks;
+    areas: Areas;
+    action: Action;
+}
+
+const TurtleMap = (props: TurtleMapProps) => {
+    const {serverId, id} = useParams() as {serverId: string; id: string};
     const {canvasSize, turtles, blocks, areas, action, ...rest} = props;
-    const canvasRef = useRef(undefined);
-    const [mousePosition, setMousePosition] = useState(undefined);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const [mousePosition, setMousePosition] = useState<[number, number] | undefined>(undefined);
     const [isCreatingArea, setIsCreatingArea] = useState(false);
     const [isClearingCreateArea, setIsClearingCreateArea] = useState(false);
-    const [createdArea, setCreatedArea] = useState({});
+    const [createdArea, setCreatedArea] = useState<{
+        [key: string]: {
+            x: number;
+            y: number;
+        };
+    }>({});
     const [isMouseDown, setIsMouseDown] = useState(false);
     const [isModalShown, setIsModalShown] = useState(false);
     const [areaName, setAreaName] = useState('');
     const [isFormValidated, setIsFormValidated] = useState(false);
     const [selectedColor, setSelectedColor] = useState(colors[0]);
-    const [yLevel, setYLevel] = useState(undefined);
-    const [upperYLevel, setUpperYLevel] = useState(undefined);
+    const [yLevel, setYLevel] = useState<number | undefined>(undefined);
+    const [upperYLevel, setUpperYLevel] = useState<number | undefined>(undefined);
     const turtle = turtles?.[id];
 
     useEffect(() => {
         const canvas = canvasRef.current;
+        if (!canvas) return;
         const context = canvas.getContext('2d');
-        let animationFrameId;
+        let animationFrameId: number;
 
         const render = () => {
-            const draw = (ctx, canvasSize, turtles, blocks, turtle) => {
-                if (!turtle || !blocks) {
+            const draw = (
+                ctx: CanvasRenderingContext2D | null,
+                canvasSize: number,
+                turtles: Turtles,
+                blocks: Blocks,
+                turtle: Turtle
+            ) => {
+                if (!ctx || !turtle || !blocks) {
                     return;
                 }
 
@@ -122,11 +144,11 @@ const TurtleMap = (props) => {
 
                 // Draw areas
                 const areaKeys = Object.keys(areas);
-                for (let key of areaKeys) {
+                for (const key of areaKeys) {
                     let smallestX = Number.POSITIVE_INFINITY;
                     let smallestY = Number.POSITIVE_INFINITY;
                     ctx.fillStyle = areas[key].color;
-                    for (let position of areas[key].area) {
+                    for (const position of areas[key].area) {
                         const posX = (position.x - turtle.location.x) * spriteSize + centerX - spriteRadius;
                         const posY = (position.z - turtle.location.z) * spriteSize + centerY - spriteRadius;
                         smallestX = Math.min(smallestX, posX);
@@ -137,8 +159,8 @@ const TurtleMap = (props) => {
                     ctx.textAlign = 'start';
                     ctx.font = '12px Ariel';
                     ctx.lineWidth = 4;
-                    ctx.strokeText(areas[key].id, smallestX, smallestY - spriteRadius);
-                    ctx.fillText(areas[key].id, smallestX, smallestY - spriteRadius);
+                    ctx.strokeText(areas[key].id.toString(), smallestX, smallestY - spriteRadius);
+                    ctx.fillText(areas[key].id.toString(), smallestX, smallestY - spriteRadius);
                 }
 
                 // Draw creatingArea
@@ -154,7 +176,7 @@ const TurtleMap = (props) => {
 
                 // Draw other turtles
                 const keys = Object.keys(turtles);
-                for (let key of keys) {
+                for (const key of keys) {
                     if (key !== turtle.id.toString()) {
                         const otherTurtle = turtles[key];
                         if (otherTurtle?.location?.y === turtle?.location?.y) {
@@ -199,7 +221,7 @@ const TurtleMap = (props) => {
         };
     });
 
-    const handleFormSubmit = (e) => {
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         setIsFormValidated(true);
@@ -208,7 +230,7 @@ const TurtleMap = (props) => {
             const {x, y, z} = turtle.location;
             const minYLevel = Math.min(yLevel || y, upperYLevel || y);
             const maxYLevel = Math.max(yLevel || y, upperYLevel || y);
-            let area = [];
+            let area: Location[] = [];
             for (let i = minYLevel; i <= maxYLevel; i++) {
                 area = area.concat(
                     Object.keys(createdArea)
@@ -284,9 +306,9 @@ const TurtleMap = (props) => {
                                     type='number'
                                     min='1'
                                     max='255'
-                                    placeholder={turtle?.location?.y || ''}
+                                    placeholder={turtle?.location?.y?.toString() ?? ''}
                                     value={yLevel}
-                                    onChange={(e) => setYLevel(e.target.value)}
+                                    onChange={(e) => setYLevel(Number(e.target.value))}
                                 />
                                 <div className='input-group-prepend input-group-append'>
                                     <InputGroup.Text>-</InputGroup.Text>
@@ -295,9 +317,9 @@ const TurtleMap = (props) => {
                                     type='number'
                                     min='1'
                                     max='255'
-                                    placeholder={turtle?.location?.y || ''}
+                                    placeholder={turtle?.location?.y?.toString() ?? ''}
                                     value={upperYLevel}
-                                    onChange={(e) => setUpperYLevel(e.target.value)}
+                                    onChange={(e) => setUpperYLevel(Number(e.target.value))}
                                 />
                                 <Form.Control.Feedback type='invalid'>Please enter valid numbers</Form.Control.Feedback>
                             </InputGroup>

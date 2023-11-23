@@ -1,7 +1,12 @@
 import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 import styled from 'styled-components';
 
-function FuelInfo(props) {
+export interface FuelInfoProps {
+    fuelLevel: number;
+    fuelLimit: number;
+}
+
+function FuelInfo(props: FuelInfoProps) {
     const {fuelLevel, fuelLimit} = props;
     const fuelPercentage = fuelLevel / fuelLimit;
     const coloredFuelBoxCount = Math.round(10 * fuelPercentage);

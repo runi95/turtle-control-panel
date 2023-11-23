@@ -1,35 +1,37 @@
 import styled from 'styled-components';
 import {Container, Row, Col, Form, Button, InputGroup, Modal} from 'react-bootstrap';
 import FuelInfo from '../FuelInfo';
-import TurtleMap from './TurtleMap';
 import Inventory from './Inventory';
 import {useParams} from 'react-router-dom';
 import {useCallback, useEffect, useState} from 'react';
 import LocationModal from './LocationModal';
+import {Action, Servers} from '../../App';
 
-const canvasSize = 160;
-const canvasRadius = 0.5 * canvasSize;
+export interface TurtleProps {
+    servers: Servers;
+    action: Action;
+}
 
-function Turtle(props) {
-    const {serverId, id} = useParams();
+function Turtle(props: TurtleProps) {
+    const {serverId, id} = useParams() as {serverId: string; id: string};
     const [editNameState, setEditNameState] = useState(false);
     const [isModalShown, setIsModalShown] = useState(false);
 
-    const escFunc = useCallback((e) => {
+    const escFunc = useCallback((e: KeyboardEvent) => {
         if (e.key === 'Escape') {
             setEditNameState(false);
         }
-    });
+    }, []);
     useEffect(() => {
         document.addEventListener('keydown', escFunc, false);
 
         return () => document.removeEventListener('keydown', escFunc, false);
     });
 
-    const directionToString = (direction) => {
+    const directionToString = (direction: number) => {
         return ['W', 'N', 'E', 'S'][direction - 1];
     };
-    const {servers} = props;
+    const {servers, action} = props;
     const turtles = servers?.[serverId]?.turtles;
     const blocks = servers?.[serverId]?.blocks;
     const turtle = turtles?.[id];
@@ -46,10 +48,13 @@ function Turtle(props) {
                                 style={{marginBottom: '.5rem'}}
                                 onSubmit={(e) => {
                                     e.preventDefault();
-                                    props.action({
+                                    action({
                                         type: 'ACTION',
                                         action: 'rename',
-                                        data: {id: turtle.id, newName: e.target[0].value},
+                                        data: {
+                                            id: turtle.id,
+                                            newName: ((e.target as HTMLFormElement)[0] as HTMLInputElement).value,
+                                        },
                                     });
                                     setEditNameState(false);
                                 }}
@@ -98,7 +103,7 @@ function Turtle(props) {
             </Row>
             <Row>
                 <Col>
-                    <FuelInfo {...(turtle ? turtle : {})} />
+                    <FuelInfo fuelLevel={turtle?.fuelLevel} fuelLimit={turtle?.fuelLimit} />
                 </Col>
                 <Col md='auto'>
                     <Modal show={isModalShown} onHide={() => setIsModalShown(false)}>
@@ -123,17 +128,7 @@ function Turtle(props) {
                 </Col>
             </Row>
             <hr />
-            <Row>
-                <Inventory turtle={turtle} action={props.action} areas={areas}></Inventory>
-                <TurtleMap
-                    style={{border: '1px solid #fff', borderRadius: canvasRadius}}
-                    canvasSize={canvasSize}
-                    turtles={turtles}
-                    blocks={blocks}
-                    areas={areas}
-                    action={props.action}
-                />
-            </Row>
+            <Inventory turtles={turtles} turtle={turtle} blocks={blocks} areas={areas} action={action}></Inventory>
         </Container>
     );
 }

@@ -1,7 +1,14 @@
 import {useState} from 'react';
 import {Modal, Form, Button, InputGroup} from 'react-bootstrap';
+import {Action, Turtle} from '../../App';
 
-function LocationModal(props) {
+export interface LocationModalProps {
+    turtle: Turtle;
+    action: Action;
+    hideModal: () => void;
+}
+
+function LocationModal(props: LocationModalProps) {
     const [state, setState] = useState({
         isFormValidated: false,
         location: {
@@ -12,7 +19,7 @@ function LocationModal(props) {
         direction: props.turtle?.direction,
     });
 
-    const handleFormSubmit = (e) => {
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         const form = e.currentTarget;
@@ -52,7 +59,7 @@ function LocationModal(props) {
                                     ...state,
                                     location: {
                                         ...state.location,
-                                        x: e.target.value,
+                                        x: Number(e.target.value),
                                     },
                                 })
                             }
@@ -67,7 +74,7 @@ function LocationModal(props) {
                                     ...state,
                                     location: {
                                         ...state.location,
-                                        y: e.target.value,
+                                        y: Number(e.target.value),
                                     },
                                 })
                             }
@@ -82,7 +89,7 @@ function LocationModal(props) {
                                     ...state,
                                     location: {
                                         ...state.location,
-                                        z: e.target.value,
+                                        z: Number(e.target.value),
                                     },
                                 })
                             }
@@ -95,9 +102,8 @@ function LocationModal(props) {
                     <InputGroup>
                         <Form.Control
                             value={state.direction}
-                            onChange={(e) => setState({...state, direction: e.target.value})}
+                            onChange={(e) => setState({...state, direction: Number(e.target.value)})}
                             as='select'
-                            custom
                             required
                         >
                             <option value='' key='empty'>

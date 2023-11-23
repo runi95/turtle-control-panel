@@ -3,8 +3,14 @@ import {Table} from 'react-bootstrap';
 import FuelInfo from './FuelInfo';
 import './Dashboard.css';
 import {useNavigate} from 'react-router-dom';
+import {Servers} from '../App';
+import {CSSProperties} from 'react';
 
-function Dashboard(props) {
+export interface DashboardProps {
+    servers: Servers;
+}
+
+function Dashboard(props: DashboardProps) {
     const navigate = useNavigate();
     const {servers} = props;
 
@@ -15,11 +21,13 @@ function Dashboard(props) {
                     <summary>{server.name ?? server.id}:</summary>
                     <Table
                         hover
-                        style={{
-                            '--bs-table-bg': 'inherit',
-                            '--bs-table-color': 'inherit',
-                            '--bs-table-hover-color': 'inherit',
-                        }}
+                        style={
+                            {
+                                '--bs-table-bg': 'inherit',
+                                '--bs-table-color': 'inherit',
+                                '--bs-table-hover-color': 'inherit',
+                            } as CSSProperties
+                        }
                     >
                         <thead>
                             <tr>

@@ -1,8 +1,22 @@
 import {useState} from 'react';
 import {Modal, Form, Button, InputGroup} from 'react-bootstrap';
+import {Action, Turtle} from '../../App';
 
-function MineModal(props) {
-    const [state, setState] = useState({
+export interface MineModalProps {
+    turtle: Turtle;
+    action: Action;
+    hideModal: () => void;
+    areas: number[];
+}
+
+function MineModal(props: MineModalProps) {
+    const [state, setState] = useState<{
+        isFormValidated: boolean;
+        selectedOption: string;
+        selectedArea: string;
+        selectedYLevel: number | undefined;
+        selectedDirection: string;
+    }>({
         isFormValidated: false,
         selectedOption: 'area',
         selectedArea: '',
@@ -10,10 +24,9 @@ function MineModal(props) {
         selectedDirection: '',
     });
 
-    const handleFormSubmit = (e) => {
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        let isFormValidated = true;
         let selectedArea = state.selectedArea;
         let selectedYLevel = state.selectedYLevel;
         let selectedDirection = state.selectedDirection;
@@ -40,14 +53,14 @@ function MineModal(props) {
                 data: {id: props.turtle.id, mineType: state.selectedOption, mineTarget: target},
             });
             selectedArea = '';
-            selectedYLevel = '';
+            selectedYLevel = undefined;
             selectedDirection = '';
             props.hideModal();
         } else {
             e.stopPropagation();
         }
 
-        setState({...state, isFormValidated, selectedArea, selectedYLevel, selectedDirection});
+        setState({...state, isFormValidated: true, selectedArea, selectedYLevel, selectedDirection});
     };
 
     const renderFormInput = () => {
@@ -67,7 +80,7 @@ function MineModal(props) {
                                     -- select an area to mine --
                                 </option>
                                 {Object.keys(props.areas).map((key) => (
-                                    <option key={key}>{props.areas[key]}</option>
+                                    <option key={key}>{props.areas[Number(key)]}</option>
                                 ))}
                             </Form.Control>
                             <Form.Control.Feedback type='invalid'>Please select a valid area</Form.Control.Feedback>
@@ -83,9 +96,9 @@ function MineModal(props) {
                                 type='number'
                                 min='1'
                                 max='255'
-                                placeholder={props.turtle.location.y}
+                                placeholder={props.turtle.location.y.toString()}
                                 value={state.selectedYLevel}
-                                onChange={(e) => setState({...state, selectedYLevel: e.target.value})}
+                                onChange={(e) => setState({...state, selectedYLevel: Number(e.target.value)})}
                             />
                             <Form.Control.Feedback type='invalid'>Please select a valid y-level</Form.Control.Feedback>
                         </InputGroup>

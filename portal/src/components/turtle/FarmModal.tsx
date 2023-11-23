@@ -1,27 +1,35 @@
 import {useState} from 'react';
 import {Modal, Form, Button, InputGroup} from 'react-bootstrap';
+import {Action, Turtle} from '../../App';
 
-function FarmModal(props) {
+export interface FarmModalProps {
+    action: Action;
+    turtle: Turtle;
+    areas: number[];
+    hideModal: () => void;
+}
+
+function FarmModal(props: FarmModalProps) {
+    const {action, hideModal} = props;
     const [state, setState] = useState({
         isFormValidated: false,
         selectedArea: '',
     });
 
-    const handleFormSubmit = (e) => {
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        let isFormValidated = true;
         let selectedArea = state.selectedArea;
         const form = e.currentTarget;
         if (form.checkValidity() === true) {
-            props.action({type: 'ACTION', action: 'farm', data: {id: props.turtle.id, areaId: selectedArea}});
+            action({type: 'ACTION', action: 'farm', data: {id: props.turtle.id, areaId: selectedArea}});
             selectedArea = '';
-            props.hideModal();
+            hideModal();
         } else {
             e.stopPropagation();
         }
 
-        setState({...state, isFormValidated, selectedArea});
+        setState({...state, isFormValidated: true, selectedArea});
     };
 
     return (
@@ -37,14 +45,13 @@ function FarmModal(props) {
                             value={state.selectedArea}
                             onChange={(e) => setState({...state, selectedArea: e.target.value})}
                             as='select'
-                            custom
                             required
                         >
                             <option value='' key='empty'>
                                 -- select an area to farm --
                             </option>
                             {Object.keys(props.areas).map((key) => (
-                                <option key={key}>{props.areas[key]}</option>
+                                <option key={key}>{props.areas[Number(key)]}</option>
                             ))}
                         </Form.Control>
                         <Form.Control.Feedback type='invalid'>Please select a valid area</Form.Control.Feedback>

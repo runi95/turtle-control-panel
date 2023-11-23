@@ -7,12 +7,145 @@ import Dashboard from './components/Dashboard';
 import Turtle from './components/turtle/Turtle';
 import useWebSocket, {ReadyState} from 'react-use-websocket';
 
+export enum Direction {
+    West = 1,
+    North = 2,
+    East = 3,
+    South = 4,
+}
+
+export interface Inventory {
+    [key: number]: ItemDetail | undefined;
+}
+
+export interface BaseState {
+    id: number;
+    error?: string;
+    name: string;
+    [key: string]: unknown;
+}
+
+export interface Location {
+    x: number;
+    y: number;
+    z: number;
+}
+
+export interface Enchantment {
+    level: number;
+    name: string;
+    displayName: string;
+}
+
+export interface ItemDetail {
+    enchantments?: Enchantment[];
+    durability: number;
+    maxDamage: number;
+    damage: number;
+    nbt: string;
+    name: string;
+    tags: {
+        [key: string]: string;
+    };
+    count: number;
+    maxCount: string;
+    displayName: string;
+}
+
+export interface BlockState {
+    [key: string]: string;
+}
+
+export interface BlockTags {
+    [key: string]: string;
+}
+
+export interface Turtle {
+    serverId: number;
+    id: number;
+    name: string;
+    isOnline: boolean;
+    fuelLevel: number;
+    fuelLimit: number;
+    selectedSlot: number;
+    inventory: Inventory;
+    stepsSinceLastRecharge: number;
+    state?: BaseState;
+    location: Location;
+    direction: Direction;
+}
+
+export interface Turtles {
+    [key: string]: Turtle;
+}
+
+export interface Block {
+    state: BlockState;
+    name: string;
+    tags: BlockTags;
+    x: number;
+    y: number;
+    z: number;
+}
+
+export interface Blocks {
+    [key: string]: Block;
+}
+
+export interface Area {
+    id: number;
+    color: string;
+    area: Location[];
+}
+
+export interface Areas {
+    [key: string]: Area;
+}
+
+export interface Server {
+    id: number;
+    name?: string;
+    remoteAddress: string;
+    turtles: Turtles;
+    blocks: Blocks;
+    areas: Areas;
+}
+
+export interface Servers {
+    [key: string]: Server;
+}
+
+export interface ActionMessage {
+    type: 'HANDSHAKE' | 'ACTION' | 'AREA';
+    action: string;
+    data: {
+        [key: string]: unknown;
+    };
+}
+
+export type Action = (msg: ActionMessage) => void;
+
+export interface Dashboard {
+    id: number;
+    name?: string;
+    remoteAddress: string;
+    turtles: Turtle[];
+    blocks: Block[];
+    areas: Area[];
+}
+
+export interface OnlineStatuses {
+    serverId: number;
+    id: number;
+    onlineStatus: boolean;
+}
+
 function App() {
     const navigate = useNavigate();
     const location = useLocation();
 
     //Public API that will echo messages sent to it back to the client
-    const [servers, setServers] = useState({});
+    const [servers, setServers] = useState<Servers>({});
     const {sendMessage, readyState} = useWebSocket('ws://localhost:6868', {
         onOpen: () => {
             console.info('[open] Connection established');
@@ -28,26 +161,29 @@ function App() {
             switch (obj.type) {
                 case 'HANDSHAKE':
                     setServers(
-                        obj.message.dashboard.reduce(
-                            (acc, server) => (
-                                (acc[server.id] = {
+                        (obj.message.dashboard as Dashboard[]).reduce(
+                            (acc: {[key: string]: Server}, server) => (
+                                (acc[server.id.toString()] = {
                                     ...server,
                                     turtles: server.turtles.reduce(
                                         (acc, curr) => (
                                             (acc[curr.id] = {
                                                 ...curr,
-                                                isOnline: obj.message.onlineStatuses.some(
+                                                isOnline: (obj.message.onlineStatuses as OnlineStatuses[]).some(
                                                     ({serverId, id}) => serverId === server.id && id === curr.id
                                                 ),
                                             }),
                                             acc
                                         ),
-                                        {}
+                                        {} as {[key: string]: Turtle}
                                     ),
-                                    areas: server.areas.reduce((acc, curr) => ((acc[curr.id] = curr), acc), {}),
+                                    areas: server.areas.reduce(
+                                        (acc, curr) => ((acc[curr.id] = curr), acc),
+                                        {} as {[key: string]: Area}
+                                    ),
                                     blocks: server.blocks.reduce(
-                                        (acc, curr) => ((acc[`${curr.x},${curr.y},${curr.z}`] = curr), acc),
-                                        {}
+                                        (acc, curr) => ((acc[`${curr.x.toString()},${curr.y},${curr.z}`] = curr), acc),
+                                        {} as {[key: string]: Block}
                                     ),
                                 }),
                                 acc
@@ -148,7 +284,7 @@ function App() {
         },
         shouldReconnect: () => true,
     });
-    const handleSendMessage = useCallback((msg) => sendMessage(msg), [sendMessage]);
+    const handleSendMessage = useCallback((msg: string) => sendMessage(msg), [sendMessage]);
 
     return (
         <Routes>
@@ -163,8 +299,8 @@ function App() {
                             readyState === ReadyState.CLOSED
                                 ? 'Failed to connect'
                                 : readyState === ReadyState.OPEN
-                                ? 'Connected...'
-                                : ''
+                                  ? 'Connected...'
+                                  : ''
                         }
                     />
                 }
@@ -237,7 +373,7 @@ function App() {
                         </Navbar>
                         <Turtle
                             servers={servers}
-                            action={(msg) => {
+                            action={(msg: ActionMessage) => {
                                 handleSendMessage(JSON.stringify(msg));
                             }}
                         />

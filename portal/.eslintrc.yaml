@@ -2,14 +2,22 @@ extends:
     - eslint:recommended
     - plugin:react/recommended
     - plugin:prettier/recommended
+    - plugin:@typescript-eslint/recommended
 env:
     browser: true
     node: true
+parser: '@typescript-eslint/parser'
 parserOptions:
     ecmaVersion: latest
     sourceType: module
-    ecmaFeatures:
-        jsx: true
+    project:
+        - ./tsconfig.json
+plugins:
+    - react
+    - '@typescript-eslint'
+settings:
+    react:
+        version: detect
 rules:
     react/react-in-jsx-scope: off
     react/jsx-uses-react: off
@@ -17,8 +25,4 @@ rules:
         - error
         - endOfLine: auto
     react/prop-types: off
-    no-unused-vars:
-        - warn
-        - argsIgnorePattern: ^_
-          varsIgnorePattern: ^_
 
