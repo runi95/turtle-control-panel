@@ -18,7 +18,7 @@ function Dashboard(props: DashboardProps) {
         <div className='container-fluid'>
             {Object.values(servers).map((server) => (
                 <details key={server.id} open>
-                    <summary>{server.name ?? server.id}:</summary>
+                    <summary>{server.name ?? server.remoteAddress}:</summary>
                     <Table
                         hover
                         style={
