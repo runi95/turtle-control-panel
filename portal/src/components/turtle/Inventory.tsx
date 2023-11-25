@@ -57,7 +57,7 @@ function Inventory(props: InventoryProps) {
 
     const {inventory, selectedSlot} = turtle;
     return (
-        <Row>
+        <Row data-bs-theme='light'>
             <Col key='inventory-grid' md='auto'>
                 <Modal show={state.isModalShown} onHide={() => setState({...state, isModalShown: false})}>
                     {renderModal(turtle)}
@@ -99,7 +99,11 @@ function Inventory(props: InventoryProps) {
                             const itemDetail = inventory[itemIndex];
                             if (itemDetail === undefined) {
                                 return (
-                                    <OverlayTrigger key={i} placement='top' overlay={<Tooltip>Empty</Tooltip>}>
+                                    <OverlayTrigger
+                                        key={i}
+                                        placement='top'
+                                        overlay={<Tooltip data-bs-theme='light'>Empty</Tooltip>}
+                                    >
                                         <ItemSlotStyle
                                             onClick={() => {
                                                 props.action({
@@ -124,7 +128,11 @@ function Inventory(props: InventoryProps) {
                             const spriteX = 32 * (spritePosition - spriteY - 1);
 
                             return (
-                                <OverlayTrigger key={i} placement='top' overlay={<Tooltip>{displayName}</Tooltip>}>
+                                <OverlayTrigger
+                                    key={i}
+                                    placement='top'
+                                    overlay={<Tooltip data-bs-theme='light'>{displayName}</Tooltip>}
+                                >
                                     <ItemSlotStyle
                                         onClick={() => {
                                             props.action({
