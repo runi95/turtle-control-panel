@@ -26,6 +26,24 @@ body {
     animation: blink 2s ease-in infinite;
 }
 
+.accordion-item {
+    --bs-accordion-bg: transparent;
+}
+
+.accordion-button {
+    --bs-accordion-btn-bg: rgb(39, 41, 61);
+    --bs-accordion-border-color: transparent;
+}
+
+.accordion-button:not(.collapsed) {
+    --bs-accordion-active-color: white;
+    --bs-accordion-active-bg: rgb(39, 41, 61);
+}
+
+.accordion-button:focus {
+    --bs-accordion-btn-focus-box-shadow: none;
+}
+
 .input-group > .form-control {
     background-color: transparent;
     color: white;
