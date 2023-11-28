@@ -26,6 +26,13 @@ import {
     getServerByRemoteAddress,
 } from '../db';
 
+const turtleWssPort = process.env.TURTLE_WSS_PORT ? Number(process.env.TURTLE_WSS_PORT) : 5757;
+const wss = new WebSocketServer({port: turtleWssPort});
+wss.on('connection', (ws, req) => {
+    logger.info('Incoming connection...');
+    initializeHandshake(ws, req.socket.remoteAddress as string);
+});
+
 export enum Direction {
     West = 1,
     North = 2,
