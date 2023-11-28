@@ -337,34 +337,9 @@ function App() {
                             )}
                         </Navbar>
                         <Dashboard
-                            servers={{
-                                ...servers,
-                                [2]: {
-                                    name: 'Hello! c:',
-                                    id: 2,
-                                    remoteAddress: 'localhost',
-                                    areas: {},
-                                    blocks: {},
-                                    turtles: {
-                                        '1': {
-                                            id: 1,
-                                            isOnline: false,
-                                            name: 'bla',
-                                            fuelLevel: 0,
-                                            fuelLimit: 100,
-                                            selectedSlot: 1,
-                                            serverId: 2,
-                                            stepsSinceLastRecharge: 0,
-                                            inventory: {},
-                                            location: {
-                                                x: 0,
-                                                y: 0,
-                                                z: 0,
-                                            },
-                                            direction: 1,
-                                        },
-                                    },
-                                },
+                            servers={servers}
+                            action={(msg: ActionMessage) => {
+                                handleSendMessage(JSON.stringify(msg));
                             }}
                         />
                     </div>
