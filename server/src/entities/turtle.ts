@@ -33,6 +33,8 @@ wss.on('connection', (ws, req) => {
     initializeHandshake(ws, req.socket.remoteAddress as string);
 });
 
+logger.info(`Turtle WebSocket listening on port \x1b[36m${turtleWssPort}\x1b[0m`);
+
 export enum Direction {
     West = 1,
     North = 2,
@@ -1349,12 +1351,6 @@ const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
     });
     ws.send(JSON.stringify({type: 'HANDSHAKE', uuid, logLevel: turtleLogLevel}));
 };
-
-const wss = new WebSocketServer({port: 5757});
-wss.on('connection', (ws, req) => {
-    logger.info('Incoming connection...');
-    initializeHandshake(ws, req.socket.remoteAddress as string);
-});
 
 export const getOnlineTurtles = () => connectedTurtlesMap.values();
 export const getOnlineTurtleById = (id: number) => connectedTurtlesMap.get(id);

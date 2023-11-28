@@ -160,4 +160,4 @@ wssWebsite.on('connection', (ws) => {
     });
 });
 
-logger.info(`Listening on port \x1b[36m${wssPort}\x1b[0m`);
+logger.info(`Portal WebSocket listening on port \x1b[36m${wssPort}\x1b[0m`);
