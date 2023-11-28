@@ -109,6 +109,9 @@ wssWebsite.on('connection', (ws) => {
                         case 'create':
                             addArea(obj.data.serverId, obj.data.color, obj.data.area);
                             break;
+                        default:
+                            logger.warn(`Received invalid AREA action [${obj.action}]`);
+                            break;
                     }
                     break;
                 default:
