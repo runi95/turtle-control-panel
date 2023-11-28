@@ -22,7 +22,23 @@ function DashboardEditor(props: DashboardEditorProps) {
         <Container fluid>
             <Row className='mt-3'>
                 <Col>
-                    <Form style={{marginBottom: '.5rem'}}>
+                    <Form
+                        style={{marginBottom: '.5rem'}}
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            Object.keys(formData).forEach((key) => {
+                                action({
+                                    type: 'SERVER',
+                                    action: 'rename',
+                                    data: {
+                                        id: key,
+                                        newName: formData[key],
+                                    },
+                                });
+                            });
+                            closeEditMode();
+                        }}
+                    >
                         {Object.values(servers).map((server) => (
                             <Form.Group className='mb-2' key={server.id}>
                                 <InputGroup>
@@ -54,23 +70,7 @@ function DashboardEditor(props: DashboardEditorProps) {
                             >
                                 Cancel
                             </Button>
-                            <Button
-                                variant='outline-success'
-                                size='sm'
-                                onClick={() => {
-                                    Object.keys(formData).forEach((key) => {
-                                        action({
-                                            type: 'SERVER',
-                                            action: 'rename',
-                                            data: {
-                                                id: key,
-                                                newName: formData[key],
-                                            },
-                                        });
-                                    });
-                                    closeEditMode();
-                                }}
-                            >
+                            <Button variant='outline-success' size='sm' type='submit'>
                                 Update
                             </Button>
                         </InputGroup>
