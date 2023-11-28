@@ -2,7 +2,7 @@ import {WebSocketServer} from 'ws';
 import {getOnlineTurtleById, getOnlineTurtles} from './entities/turtle';
 import globalEventEmitter from './globalEventEmitter';
 import logger from './logger/server';
-import {addArea, getDashboard} from './db';
+import {addArea, getDashboard, renameServer} from './db';
 
 logger.info('Starting server...');
 
@@ -114,6 +114,17 @@ wssWebsite.on('connection', (ws) => {
                             break;
                     }
                     break;
+                case 'SERVER':
+                    switch (obj.action) {
+                        case 'rename':
+                            renameServer(obj.data.id, obj.data.newName);
+                            globalEventEmitter.emit('supdate', {id: obj.data.id, name: obj.data.newName});
+                            break;
+                        default:
+                            logger.warn(`Received invalid SERVER action [${obj.action}]`);
+                            break;
+                    }
+                    break;
                 default:
                     logger.warn(`Received invalid message type [${obj.type}]`);
                     break;
@@ -135,6 +146,8 @@ wssWebsite.on('connection', (ws) => {
     globalEventEmitter.on('wupdate', wupdate);
     const wdelete = (obj) => ws.send(JSON.stringify({type: 'WDELETE', message: obj}));
     globalEventEmitter.on('wdelete', wdelete);
+    const supdate = (obj) => ws.send(JSON.stringify({type: 'SUPDATE', message: obj}));
+    globalEventEmitter.on('supdate', supdate);
 
     ws.on('close', () => {
         globalEventEmitter.off('tconnect', tconnect);
@@ -143,6 +156,7 @@ wssWebsite.on('connection', (ws) => {
         globalEventEmitter.off('tupdate', tupdate);
         globalEventEmitter.off('wupdate', wupdate);
         globalEventEmitter.off('wdelete', wdelete);
+        globalEventEmitter.off('supdate', supdate);
     });
 });
 

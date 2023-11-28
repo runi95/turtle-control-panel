@@ -103,6 +103,7 @@ const selectServerByRemoteAddress = db.prepare('SELECT * FROM `servers` WHERE `r
 const insertServer = db.prepare(
     'INSERT INTO `servers` (`remote_address`, `name`) VALUES (:remote_address, :name) ON CONFLICT DO UPDATE SET name = :name'
 );
+const setServerName = db.prepare('UPDATE `servers` SET `name` = ? WHERE `id` = ?');
 const selectArea = db.prepare(`SELECT json_object(
     'id', \`a\`.\`id\`,
     'color', \`a\`.\`color\`,
@@ -171,6 +172,7 @@ export const upsertServer = (remoteAddress: string, name: string) =>
         remote_address: remoteAddress,
         name,
     });
+export const renameServer = (id: number, name: string) => setServerName.run(name, id);
 export const getServerByRemoteAddress = (remoteAddress: string) => selectServerByRemoteAddress.get(remoteAddress);
 export const getArea = (serverId: number, id: number) => selectArea.get(serverId, id);
 export const addArea = (serverId: number, color: string, area: JSON) =>

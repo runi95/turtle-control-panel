@@ -116,7 +116,7 @@ export interface Servers {
 }
 
 export interface ActionMessage {
-    type: 'HANDSHAKE' | 'ACTION' | 'AREA';
+    type: 'HANDSHAKE' | 'ACTION' | 'AREA' | 'SERVER';
     action: string;
     data: {
         [key: string]: unknown;
@@ -274,6 +274,15 @@ function App() {
                                 ...servers[obj.message.serverId].blocks,
                                 [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message.block,
                             },
+                        },
+                    }));
+                    break;
+                case 'SUPDATE':
+                    setServers((servers) => ({
+                        ...servers,
+                        [obj.message.id]: {
+                            ...servers[obj.message.id],
+                            name: obj.message.name,
                         },
                     }));
                     break;
