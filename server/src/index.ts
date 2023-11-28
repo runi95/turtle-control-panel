@@ -10,109 +10,113 @@ const wssPort = process.env.WSS_PORT ? Number(process.env.WSS_PORT) : 6868;
 const wssWebsite = new WebSocketServer({port: wssPort});
 wssWebsite.on('connection', (ws) => {
     ws.on('message', (msg: string) => {
-        const obj = JSON.parse(msg);
-        switch (obj.type) {
-            case 'HANDSHAKE':
-                ws.send(
-                    JSON.stringify({
-                        type: 'HANDSHAKE',
-                        message: {
-                            dashboard: getDashboard(),
-                            onlineStatuses: Array.from(getOnlineTurtles()).map((turtle) => ({
-                                serverId: turtle.serverId,
-                                id: turtle.id,
-                                onlineStatus: turtle.onlineStatus,
-                            })),
-                        },
-                    })
-                );
-                break;
-            case 'ACTION':
-                const turtle = getOnlineTurtleById(obj.data.id);
-                if (turtle === undefined) {
-                    logger.error(`Attempted to [${obj.action}] on invalid turtle [${obj.data.id}]`);
-                    return;
-                }
+        try {
+            const obj = JSON.parse(msg);
+            switch (obj.type) {
+                case 'HANDSHAKE':
+                    ws.send(
+                        JSON.stringify({
+                            type: 'HANDSHAKE',
+                            message: {
+                                dashboard: getDashboard(),
+                                onlineStatuses: Array.from(getOnlineTurtles()).map((turtle) => ({
+                                    serverId: turtle.serverId,
+                                    id: turtle.id,
+                                    onlineStatus: turtle.onlineStatus,
+                                })),
+                            },
+                        })
+                    );
+                    break;
+                case 'ACTION':
+                    const turtle = getOnlineTurtleById(obj.data.id);
+                    if (turtle === undefined) {
+                        logger.error(`Attempted to [${obj.action}] on invalid turtle [${obj.data.id}]`);
+                        return;
+                    }
 
-                switch (obj.action) {
-                    case 'refuel':
-                        turtle.state = {id: 1, name: 'refueling'};
-                        break;
-                    case 'mine':
-                        turtle.state = {
-                            id: 2,
-                            name: 'mining',
-                            mineType: obj.data.mineType,
-                            mineTarget: obj.data.mineTarget,
-                        };
-                        break;
-                    case 'move':
-                        turtle.state = {
-                            id: 3,
-                            name: 'moving',
-                            x: obj.data.x,
-                            y: obj.data.y,
-                            z: obj.data.z,
-                        };
-                        break;
-                    case 'farm':
-                        turtle.state = {
-                            id: 4,
-                            name: 'farming',
-                            areaId: obj.data.areaId,
-                            currentAreaFarmIndex: 0,
-                            noopTiles: 0,
-                        };
-                        break;
-                    case 'stop':
-                        turtle.state = undefined;
-                        break;
-                    case 'refresh-inventory':
-                        turtle.state = {
-                            id: 7,
-                            name: 'refreshing inventory',
-                            nextState: turtle.state,
-                        };
-                        break;
-                    case 'craft':
-                        turtle.state = {
-                            id: 8,
-                            name: 'craft',
-                            nextState: turtle.state?.id === 8 ? undefined : turtle.state,
-                        };
-                        break;
-                    case 'drop':
-                        turtle.state = {
-                            id: 9,
-                            name: 'drop',
-                            nextState: turtle.state,
-                        };
-                        break;
-                    case 'select':
-                        turtle.select(obj.data.slot + 1);
-                        break;
-                    case 'rename':
-                        turtle.rename(obj.data.newName);
-                        break;
-                    case 'update-location':
-                        turtle.location = obj.data.location;
-                        turtle.direction = obj.data.direction;
-                        break;
-                    default:
-                        logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);
-                        break;
-                }
-                break;
-            case 'AREA':
-                switch (obj.action) {
-                    case 'create':
-                        addArea(obj.data.serverId, obj.data.color, obj.data.area);
-                        break;
-                }
-                break;
-            default:
-                logger.warn(`Received invalid message type [${obj.type}]`);
-                break;
+                    switch (obj.action) {
+                        case 'refuel':
+                            turtle.state = {id: 1, name: 'refueling'};
+                            break;
+                        case 'mine':
+                            turtle.state = {
+                                id: 2,
+                                name: 'mining',
+                                mineType: obj.data.mineType,
+                                mineTarget: obj.data.mineTarget,
+                            };
+                            break;
+                        case 'move':
+                            turtle.state = {
+                                id: 3,
+                                name: 'moving',
+                                x: obj.data.x,
+                                y: obj.data.y,
+                                z: obj.data.z,
+                            };
+                            break;
+                        case 'farm':
+                            turtle.state = {
+                                id: 4,
+                                name: 'farming',
+                                areaId: obj.data.areaId,
+                                currentAreaFarmIndex: 0,
+                                noopTiles: 0,
+                            };
+                            break;
+                        case 'stop':
+                            turtle.state = undefined;
+                            break;
+                        case 'refresh-inventory':
+                            turtle.state = {
+                                id: 7,
+                                name: 'refreshing inventory',
+                                nextState: turtle.state,
+                            };
+                            break;
+                        case 'craft':
+                            turtle.state = {
+                                id: 8,
+                                name: 'craft',
+                                nextState: turtle.state?.id === 8 ? undefined : turtle.state,
+                            };
+                            break;
+                        case 'drop':
+                            turtle.state = {
+                                id: 9,
+                                name: 'drop',
+                                nextState: turtle.state,
+                            };
+                            break;
+                        case 'select':
+                            turtle.select(obj.data.slot + 1);
+                            break;
+                        case 'rename':
+                            turtle.rename(obj.data.newName);
+                            break;
+                        case 'update-location':
+                            turtle.location = obj.data.location;
+                            turtle.direction = obj.data.direction;
+                            break;
+                        default:
+                            logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);
+                            break;
+                    }
+                    break;
+                case 'AREA':
+                    switch (obj.action) {
+                        case 'create':
+                            addArea(obj.data.serverId, obj.data.color, obj.data.area);
+                            break;
+                    }
+                    break;
+                default:
+                    logger.warn(`Received invalid message type [${obj.type}]`);
+                    break;
+            }
+        } catch (err) {
+            logger.error(err);
         }
     });
 
