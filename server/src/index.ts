@@ -110,6 +110,9 @@ wssWebsite.on('connection', (ws) => {
                         break;
                 }
                 break;
+            default:
+                logger.warn(`Received invalid message type [${obj.type}]`);
+                break;
         }
     });
 
