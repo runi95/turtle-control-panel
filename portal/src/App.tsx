@@ -140,7 +140,7 @@ export interface OnlineStatuses {
     onlineStatus: boolean;
 }
 
-const wssServerUrl = process.env.REACT_APP_WSS_SERVER ?? 'ws://localhost:6868';
+const wssServerUrl = process.env.REACT_APP_WSS_SERVER_URL ?? 'ws://localhost:6868';
 
 function App() {
     const navigate = useNavigate();
