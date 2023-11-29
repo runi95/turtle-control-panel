@@ -32,6 +32,13 @@ npm run build
 npm start
 ```
 
+#### Environment variables (all optional)
+
+- `WSS_PORT` - Port for the WebSocket server used by the portal  (defaults to 6868) 
+- `TURTLE_WSS_PORT` - Port for the second WebSocket server used by the turtles (defaults to 5757)
+- `LOG_LEVEL` - Log level for the server (defaults to info). Possible values are: emerg, alert, crit, error, warning, notice, info, debug
+- `TURTLE_LOG_LEVEL` - Log level for the connected turtles (defaults to INFO). Possible values are ERROR, WARNING, INFO, DEBUG 
+
 ### Portal
 
 ```sh
@@ -44,6 +51,10 @@ npm install
 # Start the portal
 npm start
 ```
+
+#### Environment variables (all optional)
+
+- `REACT_APP_WSS_SERVER_URL` - URL to use when connecting to the WebSocket server (defaults to ws://localhost:6868)
 
 ### Turtle
 
