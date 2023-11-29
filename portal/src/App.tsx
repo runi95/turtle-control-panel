@@ -140,13 +140,15 @@ export interface OnlineStatuses {
     onlineStatus: boolean;
 }
 
+const wssServerUrl = process.env.REACT_APP_WSS_SERVER ?? 'ws://localhost:6868';
+
 function App() {
     const navigate = useNavigate();
     const location = useLocation();
 
     // Public API that will echo messages sent to it back to the client
     const [servers, setServers] = useState<Servers>({});
-    const {sendMessage, readyState} = useWebSocket('ws://localhost:6868', {
+    const {sendMessage, readyState} = useWebSocket(wssServerUrl, {
         onOpen: () => {
             console.info('[open] Connection established');
             sendMessage(JSON.stringify({type: 'HANDSHAKE'}));
