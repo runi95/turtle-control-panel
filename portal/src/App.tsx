@@ -144,7 +144,7 @@ function App() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    //Public API that will echo messages sent to it back to the client
+    // Public API that will echo messages sent to it back to the client
     const [servers, setServers] = useState<Servers>({});
     const {sendMessage, readyState} = useWebSocket('ws://localhost:6868', {
         onOpen: () => {
