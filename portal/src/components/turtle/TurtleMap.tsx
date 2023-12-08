@@ -78,7 +78,6 @@ const TurtleMap = (props: TurtleMapProps) => {
                         for (let k = y + 10; k > y - 10; k--) {
                             const block = blocks[`${wX},${k},${wZ}`];
                             if (block !== undefined) {
-                                // console.log(block.name);
                                 ctx.fillStyle = SpriteTable[block.name]?.avg_color ?? '#fff';
                                 ctx.fillRect(
                                     (i + drawRange) * spriteSize - spriteRadius,
