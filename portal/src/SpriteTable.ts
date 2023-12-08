@@ -9,7 +9,7 @@ export default {
     },
     '???': {
         index: 1770,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:acacia_boat': {
         index: 637,
@@ -213,7 +213,7 @@ export default {
     },
     'minecraft:barrier': {
         index: 3595,
-        avg_color: '#d611',
+        avg_color: '#d60101',
     },
     'minecraft:basalt': {
         index: 148,
@@ -326,7 +326,7 @@ export default {
     },
     'minecraft:black_bed': {
         index: 3171,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:black_candle': {
         index: 395,
@@ -458,7 +458,7 @@ export default {
     },
     'minecraft:redstone_block': {
         index: 3331,
-        avg_color: '#b51a7',
+        avg_color: '#b51a07',
     },
     'minecraft:stripped_bamboo_block': {
         index: 700,
@@ -470,7 +470,7 @@ export default {
     },
     'minecraft:blue_bed': {
         index: 3172,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:blue_candle': {
         index: 397,
@@ -596,7 +596,7 @@ export default {
     },
     'minecraft:brown_bed': {
         index: 3173,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:brown_candle': {
         index: 398,
@@ -753,7 +753,7 @@ export default {
     },
     'minecraft:cherry_fence': {
         index: 1181,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:cherry_fence_gate': {
         index: 1190,
@@ -789,7 +789,7 @@ export default {
     },
     'minecraft:cherry_slab': {
         index: 1183,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:cherry_stairs': {
         index: 1184,
@@ -1027,7 +1027,7 @@ export default {
     },
     'minecraft:crimson_roots': {
         index: 190,
-        avg_color: '#83a2b',
+        avg_color: '#830a2b',
     },
     'minecraft:crimson_sign': {
         index: 177,
@@ -1090,7 +1090,7 @@ export default {
     },
     'minecraft:cyan_bed': {
         index: 3174,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:cyan_candle': {
         index: 405,
@@ -1428,7 +1428,7 @@ export default {
     },
     'minecraft:dragon_egg': {
         index: 3187,
-        avg_color: '#10b13',
+        avg_color: '#100b13',
     },
     'minecraft:dragon_head': {
         index: 965,
@@ -1491,7 +1491,7 @@ export default {
     },
     'minecraft:end_portal_frame': {
         index: 3189,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:end_rod': {
         index: 3190,
@@ -1737,7 +1737,7 @@ export default {
     },
     'minecraft:gray_bed': {
         index: 3175,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:gray_candle': {
         index: 406,
@@ -1788,7 +1788,7 @@ export default {
     },
     'minecraft:green_bed': {
         index: 3176,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:green_candle': {
         index: 407,
@@ -2122,7 +2122,7 @@ export default {
     },
     'minecraft:light_blue_bed': {
         index: 3177,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:light_blue_candle': {
         index: 409,
@@ -2173,7 +2173,7 @@ export default {
     },
     'minecraft:light_gray_bed': {
         index: 3178,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:light_gray_candle': {
         index: 410,
@@ -2244,7 +2244,7 @@ export default {
     },
     'minecraft:lime_bed': {
         index: 3179,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:lime_candle': {
         index: 416,
@@ -2306,7 +2306,7 @@ export default {
     },
     'minecraft:magenta_bed': {
         index: 3180,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:magenta_candle': {
         index: 417,
@@ -2627,7 +2627,7 @@ export default {
     },
     'minecraft:nether_wart_block': {
         index: 3282,
-        avg_color: '#7588',
+        avg_color: '#750808',
     },
     'minecraft:netherite_axe': {
         index: 137,
@@ -2750,7 +2750,7 @@ export default {
     },
     'minecraft:orange_bed': {
         index: 3181,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:orange_candle': {
         index: 419,
@@ -2861,7 +2861,7 @@ export default {
     },
     'minecraft:pink_bed': {
         index: 3182,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:pink_candle': {
         index: 420,
@@ -3105,7 +3105,7 @@ export default {
     },
     'minecraft:purple_bed': {
         index: 3183,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:purple_candle': {
         index: 421,
@@ -3231,7 +3231,7 @@ export default {
     },
     'minecraft:red_bed': {
         index: 3184,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:red_candle': {
         index: 422,
@@ -3278,7 +3278,7 @@ export default {
     },
     'minecraft:red_nether_bricks': {
         index: 1367,
-        avg_color: '#49bd',
+        avg_color: '#490b0d',
     },
     'minecraft:red_sand': {
         index: 3374,
@@ -3326,7 +3326,7 @@ export default {
     },
     'minecraft:redstone': {
         index: 3528,
-        avg_color: '#7e82',
+        avg_color: '#7e0802',
     },
     'minecraft:comparator': {
         index: 3345,
@@ -4270,7 +4270,7 @@ export default {
     },
     'minecraft:weeping_vines': {
         index: 160,
-        avg_color: '#6a30',
+        avg_color: '#6a0300',
     },
     'minecraft:wet_sponge': {
         index: 3617,
@@ -4286,7 +4286,7 @@ export default {
     },
     'minecraft:white_bed': {
         index: 3185,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:white_candle': {
         index: 437,
@@ -4367,7 +4367,7 @@ export default {
     },
     'minecraft:yellow_bed': {
         index: 3186,
-        avg_color: '#000',
+        avg_color: '#000000',
     },
     'minecraft:yellow_candle': {
         index: 438,
