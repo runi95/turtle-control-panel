@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import './TurtleMap.css';
 import {useParams} from 'react-router-dom';
 import {Action, Areas, Blocks, Location, Turtle, Turtles} from '../../App';
+import SpriteTable from '../../SpriteTable';
 
 const circleSizeMul = 0.35;
 const spriteSize = 10;
@@ -69,20 +70,24 @@ const TurtleMap = (props: TurtleMapProps) => {
                 // Clear
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-                ctx.fillStyle = '#323232';
-
                 // Draw floor
                 for (let i = -drawRange; i <= drawRange; i++) {
                     for (let j = -drawRange; j <= drawRange; j++) {
                         const wX = x + i;
                         const wZ = z + j;
-                        if (blocks[`${wX},${y - 1},${wZ}`] !== undefined) {
-                            ctx.fillRect(
-                                (i + drawRange) * spriteSize - spriteRadius,
-                                (j + drawRange) * spriteSize - spriteRadius,
-                                spriteSize,
-                                spriteSize
-                            );
+                        for (let k = y + 10; k > y - 10; k--) {
+                            const block = blocks[`${wX},${k},${wZ}`];
+                            if (block !== undefined) {
+                                // console.log(block.name);
+                                ctx.fillStyle = SpriteTable[block.name]?.avg_color ?? '#fff';
+                                ctx.fillRect(
+                                    (i + drawRange) * spriteSize - spriteRadius,
+                                    (j + drawRange) * spriteSize - spriteRadius,
+                                    spriteSize,
+                                    spriteSize
+                                );
+                                break;
+                            }
                         }
                     }
                 }
