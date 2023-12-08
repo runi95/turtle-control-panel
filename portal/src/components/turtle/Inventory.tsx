@@ -120,12 +120,9 @@ function Inventory(props: InventoryProps) {
                             }
 
                             const {name, count, displayName} = itemDetail;
-                            const nameSplit = name.split(':');
-                            const itemNameFromSplit = nameSplit[nameSplit.length - 1];
-                            const spritePosition =
-                                SpriteTable[displayName] ?? SpriteTable[itemNameFromSplit] ?? SpriteTable['???'];
-                            const spriteY = 32 * Math.floor(spritePosition / 32);
-                            const spriteX = 32 * (spritePosition - spriteY - 1);
+                            const sprite = SpriteTable[name] ?? SpriteTable['???'];
+                            const spriteY = 32 * Math.floor(sprite.index / 32);
+                            const spriteX = 32 * (sprite.index - spriteY - 1);
 
                             return (
                                 <OverlayTrigger
