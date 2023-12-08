@@ -1234,18 +1234,39 @@ export class Turtle {
 
     #execRaw<R>(f: string): Promise<R> {
         const uuid = uuid4();
+        const messageConstructorObject: {[key: number]: string} = {};
         this.lastPromise = new Promise<R>((resolve, reject) =>
             this.lastPromise.finally(() => {
-                const listener = (msg: string) => {
-                    const obj = JSON.parse(msg);
-                    if (obj.uuid !== uuid) {
-                        logger.error(`${obj.uuid} does not match ${uuid}!`);
+                const listener = (msg: Buffer) => {
+                    if (msg.length < 42) {
+                        logger.warn(`Invalid WebSocket message received: ${msg}`);
                         return;
                     }
+            
+                    if (msg[0] !== 0x01) {
+                        logger.warn(`Turtle WebSocket message does not start with 0x01 (start of heading)`);
+                        return;
+                    }
+            
+                    const messageIndex = parseInt(msg.toString('hex', 1, 5), 16);
+                    
+                    const messageUuid = msg.toString('utf-8', 5, 41);
+                    if (messageUuid !== uuid) {
+                        logger.error(`${messageUuid} does not match ${uuid}!`);
+                        return;
+                    }
+            
+                    const isFinalMessage = msg[msg.length - 1] === 0x04;
+                    const str = msg.toString('utf-8', 42, isFinalMessage ? msg.length - 1 : undefined);
+                    messageConstructorObject[messageIndex] = str;
+                    if (!isFinalMessage) return;
 
+                    const jsonStr = Object.values(messageConstructorObject).reduce((acc, curr) => acc + curr, '');
+
+                    const obj = JSON.parse(jsonStr);
                     if (obj.type === 'ERROR') {
                         logger.error(obj.message);
-                        return reject(obj.message);
+                        return;
                     }
 
                     if (obj.type !== 'EVAL') {
@@ -1267,13 +1288,32 @@ export class Turtle {
 const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
     logger.info('Initiating handshake...');
     const uuid = uuid4();
-    const listener = async (msg: string) => {
-        const obj = JSON.parse(msg);
-        if (obj.uuid !== uuid) {
-            logger.error(`${obj.uuid} does not match ${uuid}!`);
+    const messageConstructorObject: {[key: number]: string} = {};
+    const listener = async (msg: Buffer) => {
+        if (msg.length < 42) {
+            logger.warn(`Invalid WebSocket message received: ${msg}`);
             return;
         }
 
+        if (msg[0] !== 0x01) {
+            logger.warn(`Turtle WebSocket message does not start with 0x01 (start of heading)`);
+            return;
+        }
+
+        const messageIndex = parseInt(msg.toString('hex', 1, 5), 16);
+        
+        const messageUuid = msg.toString('utf-8', 5, 41);
+        if (messageUuid !== uuid) {
+            logger.error(`${messageUuid} does not match ${uuid}!`);
+            return;
+        }
+
+        const isFinalMessage = msg[msg.length - 1] === 0x04;
+        const str = msg.toString('utf-8', 42, isFinalMessage ? msg.length - 1 : undefined);
+        messageConstructorObject[messageIndex] = str;
+        if (!isFinalMessage) return;
+
+        const obj = JSON.parse(Object.values(messageConstructorObject).reduce((acc, curr) => acc + curr, ''));
         if (obj.type === 'ERROR') {
             logger.error(obj.message);
             return;
