@@ -1281,9 +1281,9 @@ export default {
     'minecraft:cactus': {
         index: 3410,
         avg_color: {
-            r: 156,
-            g: 123,
-            b: 97,
+            r: 98,
+            g: 149,
+            b: 49,
         },
     },
     'minecraft:cake': {
