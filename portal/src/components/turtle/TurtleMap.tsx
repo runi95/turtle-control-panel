@@ -125,25 +125,6 @@ const TurtleMap = (props: TurtleMapProps) => {
                     ctx.fill();
                 }
 
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = 'black';
-
-                // Draw blocks
-                for (let i = -drawRange; i <= drawRange; i++) {
-                    for (let j = -drawRange; j <= drawRange; j++) {
-                        const wX = x + i;
-                        const wZ = z + j;
-                        if (blocks[`${wX},${y},${wZ}`] !== undefined) {
-                            ctx.fillRect(
-                                (i + drawRange) * spriteSize - spriteRadius,
-                                (j + drawRange) * spriteSize - spriteRadius,
-                                spriteSize,
-                                spriteSize
-                            );
-                        }
-                    }
-                }
-
                 ctx.globalAlpha = 0.4;
 
                 // Draw areas
