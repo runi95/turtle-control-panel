@@ -83,12 +83,12 @@ const TurtleMap = (props: TurtleMapProps) => {
                                     g: 255,
                                     b: 255,
                                 };
-                                if (k > y) {
+                                if (k > y - 1) {
                                     ctx.fillStyle = `#${fillColor.r.toString(16)}${fillColor.g.toString(
                                         16
                                     )}${fillColor.b.toString(16)}`;
                                 } else {
-                                    const diff = y - k + 1;
+                                    const diff = y - k;
                                     ctx.fillStyle = `#${Math.floor(Math.sqrt(Math.pow(fillColor.r, 2) / diff)).toString(
                                         16
                                     )}${Math.floor(Math.sqrt(Math.pow(fillColor.g, 2) / diff)).toString(
