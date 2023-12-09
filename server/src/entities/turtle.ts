@@ -307,7 +307,7 @@ export class Turtle {
             id: this.id,
             serverId: this.serverId,
             data: {
-                state: this.state,
+                state: this.state ?? null,
             },
         });
         updateTurtleState(this.serverId, this.id, this.state);
