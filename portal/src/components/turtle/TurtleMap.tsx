@@ -414,16 +414,48 @@ const TurtleMap = (props: TurtleMapProps) => {
                         onMouseUp={(e) => {
                             if (!isCreatingArea && turtle?.isOnline) {
                                 const {x, y, z} = turtle.location;
-                                let bestYLevel = y;
-                                if (blocks[`${x},${y},${z}`] !== undefined) {
-                                    for (let k = y + 10; k > y - 10; k--) {
-                                        if (k === y) continue;
-                                        const block = blocks[`${x},${k},${z}`];
+                                const tx =
+                                    (Math.floor((e.nativeEvent.offsetX - spriteRadius) / spriteSize) * spriteSize +
+                                        spriteRadius +
+                                        spriteRadius -
+                                        canvasSize * 0.5) /
+                                        spriteSize +
+                                    x;
+                                const tz =
+                                    (Math.floor((e.nativeEvent.offsetY - spriteRadius) / spriteSize) * spriteSize +
+                                        spriteRadius +
+                                        spriteRadius -
+                                        canvasSize * 0.5) /
+                                        spriteSize +
+                                    z;
+
+                                let ty = null;
+                                let previousOpenSpace = null;
+
+                                // Attempt to go down
+                                for (let k = y; k > -60; k--) {
+                                    const block = blocks[`${tx},${k},${tz}`];
+                                    if (block === undefined) {
+                                        previousOpenSpace = k;
+                                    } else if (previousOpenSpace !== null) {
+                                        ty = previousOpenSpace;
+                                        break;
+                                    }
+                                }
+
+                                // Attempt to go up
+                                if (ty === null) {
+                                    for (let k = y; k < 256; k++) {
+                                        const block = blocks[`${tx},${k},${tz}`];
                                         if (block === undefined) {
-                                            bestYLevel = k;
+                                            ty = k;
                                             break;
                                         }
                                     }
+                                }
+
+                                if (ty === null) {
+                                    ty = y;
                                 }
 
                                 action({
@@ -431,23 +463,9 @@ const TurtleMap = (props: TurtleMapProps) => {
                                     action: 'move',
                                     data: {
                                         id: turtle.id,
-                                        x:
-                                            (Math.floor((e.nativeEvent.offsetX - spriteRadius) / spriteSize) *
-                                                spriteSize +
-                                                spriteRadius +
-                                                spriteRadius -
-                                                canvasSize * 0.5) /
-                                                spriteSize +
-                                            x,
-                                        y: bestYLevel,
-                                        z:
-                                            (Math.floor((e.nativeEvent.offsetY - spriteRadius) / spriteSize) *
-                                                spriteSize +
-                                                spriteRadius +
-                                                spriteRadius -
-                                                canvasSize * 0.5) /
-                                                spriteSize +
-                                            z,
+                                        x: tx,
+                                        y: ty,
+                                        z: tz,
                                     },
                                 });
                             }
