@@ -78,7 +78,23 @@ const TurtleMap = (props: TurtleMapProps) => {
                         for (let k = y + 10; k > y - 10; k--) {
                             const block = blocks[`${wX},${k},${wZ}`];
                             if (block !== undefined) {
-                                ctx.fillStyle = SpriteTable[block.name]?.avg_color ?? '#fff';
+                                const fillColor = SpriteTable[block.name]?.avg_color ?? {
+                                    r: 255,
+                                    g: 255,
+                                    b: 255,
+                                };
+                                if (k > y) {
+                                    ctx.fillStyle = `#${fillColor.r.toString(16)}${fillColor.g.toString(
+                                        16
+                                    )}${fillColor.b.toString(16)}`;
+                                } else {
+                                    const diff = y - k + 1;
+                                    ctx.fillStyle = `#${Math.floor(Math.sqrt(Math.pow(fillColor.r, 2) / diff)).toString(
+                                        16
+                                    )}${Math.floor(Math.sqrt(Math.pow(fillColor.g, 2) / diff)).toString(
+                                        16
+                                    )}${Math.floor(Math.sqrt(Math.pow(fillColor.b, 2) / diff)).toString(16)}`;
+                                }
                                 ctx.fillRect(
                                     (i + drawRange) * spriteSize - spriteRadius,
                                     (j + drawRange) * spriteSize - spriteRadius,
