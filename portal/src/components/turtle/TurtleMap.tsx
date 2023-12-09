@@ -414,6 +414,18 @@ const TurtleMap = (props: TurtleMapProps) => {
                         onMouseUp={(e) => {
                             if (!isCreatingArea && turtle?.isOnline) {
                                 const {x, y, z} = turtle.location;
+                                let bestYLevel = y;
+                                if (blocks[`${x},${y},${z}`] !== undefined) {
+                                    for (let k = y + 10; k > y - 10; k--) {
+                                        if (k === y) continue;
+                                        const block = blocks[`${x},${k},${z}`];
+                                        if (block === undefined) {
+                                            bestYLevel = k;
+                                            break;
+                                        }
+                                    }
+                                }
+
                                 action({
                                     type: 'ACTION',
                                     action: 'move',
@@ -427,7 +439,7 @@ const TurtleMap = (props: TurtleMapProps) => {
                                                 canvasSize * 0.5) /
                                                 spriteSize +
                                             x,
-                                        y,
+                                        y: bestYLevel,
                                         z:
                                             (Math.floor((e.nativeEvent.offsetY - spriteRadius) / spriteSize) *
                                                 spriteSize +
