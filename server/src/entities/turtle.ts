@@ -779,7 +779,14 @@ export class Turtle {
                 (block as Block).state,
                 (block as Block).tags
             );
-            globalEventEmitter.emit('wupdate', {serverId: this.serverId, x: x + xChange, y, z: z + zChange, block});
+            globalEventEmitter.emit('wupdate', {serverId: this.serverId, blocks: [{
+                x: x + xChange,
+                y,
+                z: z + zChange,
+                name: (block as Block).name,
+                state: (block as Block).state,
+                tags: (block as Block).tags
+            }]});
         }
         return block;
     }
@@ -822,7 +829,14 @@ export class Turtle {
                 (block as Block).state,
                 (block as Block).tags
             );
-            globalEventEmitter.emit('wupdate', {serverId: this.serverId, x, y: y + 1, z, block});
+            globalEventEmitter.emit('wupdate', {serverId: this.serverId, blocks: [{
+                x,
+                y: y + 1,
+                z,
+                name: (block as Block).name,
+                state: (block as Block).state,
+                tags: (block as Block).tags
+            }]});
         }
         return block;
     }
@@ -865,7 +879,14 @@ export class Turtle {
                 (block as Block).state,
                 (block as Block).tags
             );
-            globalEventEmitter.emit('wupdate', {serverId: this.serverId, x, y: y - 1, z, block});
+            globalEventEmitter.emit('wupdate', {serverId: this.serverId, blocks: [{
+                x,
+                y: y - 1,
+                z,
+                name: (block as Block).name,
+                state: (block as Block).state,
+                tags: (block as Block).tags
+            }]});
         }
         return block;
     }

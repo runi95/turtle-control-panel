@@ -256,16 +256,22 @@ function App() {
                     // TODO: Implement?
                     break;
                 case 'WUPDATE':
-                    setServers((servers) => ({
-                        ...servers,
-                        [obj.message.serverId]: {
-                            ...servers[obj.message.serverId],
-                            blocks: {
-                                ...servers[obj.message.serverId].blocks,
-                                [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message.block,
+                    setServers((servers) => {
+                        const newServers: Servers = {
+                            ...servers,
+                            [obj.message.serverId]: {
+                                ...servers[obj.message.serverId],
+                                blocks: {
+                                    ...servers[obj.message.serverId].blocks,
+                                },
                             },
-                        },
-                    }));
+                        };
+                        for (const block of obj.message.blocks) {
+                            newServers[obj.message.serverId].blocks[`${block.x},${block.y},${block.z}`] = block;
+                        }
+
+                        return newServers;
+                    });
                     break;
                 case 'WDELETE':
                     setServers((servers) => ({
