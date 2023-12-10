@@ -224,6 +224,16 @@ export const upsertBlock = (
         state: JSON.stringify(state),
         tags: JSON.stringify(tags),
     });
+export const upsertBlocks = (serverId: number, blocks: {
+    x: number;
+    y: number;
+    z: number;
+    name: string;
+    state: BlockState;
+    tags: BlockTags;
+}[]) => db.transaction(() => {
+    for (const block of blocks) upsertBlock(serverId, block.x, block.y, block.z, block.name, block.state, block.tags);
+})();
 export const deleteBlock = (serverId: number, x: number, y: number, z: number) =>
     deleteBlockStatement.run(serverId, x, y, z);
 export const updateTurtleName = (serverId: number, id: number, name: string) => setTurtleName.run(name, serverId, id);

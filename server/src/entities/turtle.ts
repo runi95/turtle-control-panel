@@ -1166,6 +1166,10 @@ export class Turtle {
         return await this.#exec<[boolean]>(`peripheral.find("${peripheralName}") ~= nil`);
     }
 
+    async usePeripheralWithName<R>(peripheralName: string, method: string, ...args: string[]): Promise<R> {
+        return await this.#exec<R>(`peripheral.find("${peripheralName}").${method}(${args?.join(', ')})`);
+    }
+
     async gpsLocate(): Promise<[number, number, number] | [null, null, null]> {
         return await this.#exec(
             '(function(x, y, z) return x and y and z and x, y, z or textutils.json_null end)(gps.locate())'

@@ -99,6 +99,13 @@ wssWebsite.on('connection', (ws) => {
                             turtle.location = obj.data.location;
                             turtle.direction = obj.data.direction;
                             break;
+                        case 'scan':
+                            turtle.state = {
+                                id: 10,
+                                name: 'scan',
+                                nextState: turtle.state
+                            }
+                            break;
                         default:
                             logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);
                             break;

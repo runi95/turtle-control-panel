@@ -201,6 +201,18 @@ function Inventory(props: InventoryProps) {
                         </Button>
                     </div>
                 </Row>
+                <Row style={{marginTop: 5}}>
+                    <div>
+                        <Button
+                            onClick={() => props.action({type: 'ACTION', action: 'scan', data: {id: turtle.id}})}
+                            variant='outline-info'
+                            size='sm'
+                            disabled={!turtle.isOnline}
+                        >
+                            Scan
+                        </Button>
+                    </div>
+                </Row>
                 <Row style={{marginTop: 10}}>
                     <div>
                         <Button

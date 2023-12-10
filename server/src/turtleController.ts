@@ -1,11 +1,11 @@
-import {BaseState, FarmingState, MiningState, Turtle} from './entities/turtle';
+import {BaseState, Block, FarmingState, MiningState, Turtle} from './entities/turtle';
 import Coordinates from './dlite/Coordinates';
 import DStarLite from './dlite';
 import {blockToFarmingDetailsMapObject, farmingSeedNames} from './helpers/farming';
 import {getLocalCoordinatesForDirection} from './helpers/coordinates';
 import globalEventEmitter from './globalEventEmitter';
 import logger from './logger/server';
-import {getArea, getBlocks} from './db';
+import {getArea, getBlocks, upsertBlocks} from './db';
 
 const turtleMap = new Map();
 
@@ -69,10 +69,47 @@ class TurtleController {
                 case 9:
                     await this.#drop();
                     break;
+                case 10:
+                    await this.#scan();
+                    break;
             }
 
             yield;
         }
+    }
+
+    async #scan() {
+        const [hasGeoScanner] = await this.#turtle.hasPeripheralWithName('geoScanner');
+        if (!hasGeoScanner) {
+            this.#turtle.error = 'No Geo Scanner to scan with (requires Advanced Peripherals mod)';
+            return;
+        }
+
+        const [scannedBlocks, scanMessage] = await this.#turtle.usePeripheralWithName<
+            [(Block & {x: number; y: number; z: number})[], string]
+        >('geoScanner', 'scan', '16');
+        if (scannedBlocks === null) {
+            this.#turtle.error = scanMessage;
+            return;
+        }
+
+        const {x, y, z} = this.#turtle.location;
+        const blocks = scannedBlocks
+            .filter((scannedBlock) => scannedBlock.x !== 0 || scannedBlock.y !== 0 || scannedBlock.z !== 0)
+            .map((scannedBlock) => ({
+                ...scannedBlock,
+                x: scannedBlock.x + x,
+                y: scannedBlock.y + y,
+                z: scannedBlock.z + z,
+            }));
+
+        upsertBlocks(this.#turtle.serverId, blocks);
+        globalEventEmitter.emit('wupdate', {
+            serverId: this.#turtle.serverId,
+            blocks,
+        });
+
+        this.#turtle.state = undefined;
     }
 
     #hasSpaceForItem(name: string, count = 1) {
