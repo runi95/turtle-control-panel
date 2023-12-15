@@ -3,6 +3,8 @@ import {getOnlineTurtleById, getOnlineTurtles} from './entities/turtle';
 import globalEventEmitter from './globalEventEmitter';
 import logger from './logger/server';
 import {addArea, getDashboard, renameServer} from './db';
+import {Turtle} from './db/turtle.type';
+import {Block} from './db/block.type';
 
 logger.info('Starting server...');
 
@@ -66,7 +68,7 @@ wssWebsite.on('connection', (ws) => {
                             };
                             break;
                         case 'stop':
-                            turtle.state = undefined;
+                            turtle.state = null;
                             break;
                         case 'refresh-inventory':
                             turtle.state = {
@@ -141,23 +143,44 @@ wssWebsite.on('connection', (ws) => {
         }
     });
 
-    const tconnect = (obj) => ws.send(JSON.stringify({type: 'TCONNECT', message: obj}));
+    const tconnect = (obj: {
+        id: number;
+        serverId: number;
+        turtle: Turtle;
+    }) => ws.send(JSON.stringify({type: 'TCONNECT', message: obj}));
     globalEventEmitter.on('tconnect', tconnect);
-    const tdisconnect = (obj) => ws.send(JSON.stringify({type: 'TDISCONNECT', message: obj}));
+    const tdisconnect = (obj: {
+        id: number;
+        serverId: number;
+    }) => ws.send(JSON.stringify({type: 'TDISCONNECT', message: obj}));
     globalEventEmitter.on('tdisconnect', tdisconnect);
-    const tupdate = (obj) => ws.send(JSON.stringify({type: 'TUPDATE', message: obj}));
+    const tupdate = (obj: {
+        id: number;
+        serverId: number;
+        data: Partial<Turtle>;
+    }) => ws.send(JSON.stringify({type: 'TUPDATE', message: obj}));
     globalEventEmitter.on('tupdate', tupdate);
-    const wupdate = (obj) => ws.send(JSON.stringify({type: 'WUPDATE', message: obj}));
+    const wupdate = (obj: {
+        serverId: number;
+        blocks: Block[];
+    }) => ws.send(JSON.stringify({type: 'WUPDATE', message: obj}));
     globalEventEmitter.on('wupdate', wupdate);
-    const wdelete = (obj) => ws.send(JSON.stringify({type: 'WDELETE', message: obj}));
+    const wdelete = (obj: {
+        serverId: number;
+        x: number;
+        y: number;
+        z: number;
+    }) => ws.send(JSON.stringify({type: 'WDELETE', message: obj}));
     globalEventEmitter.on('wdelete', wdelete);
-    const supdate = (obj) => ws.send(JSON.stringify({type: 'SUPDATE', message: obj}));
+    const supdate = (obj: {
+        id: number;
+        name: string;
+    }) => ws.send(JSON.stringify({type: 'SUPDATE', message: obj}));
     globalEventEmitter.on('supdate', supdate);
 
     ws.on('close', () => {
         globalEventEmitter.off('tconnect', tconnect);
         globalEventEmitter.off('tdisconnect', tdisconnect);
-        globalEventEmitter.off('tlocation', tlocation);
         globalEventEmitter.off('tupdate', tupdate);
         globalEventEmitter.off('wupdate', wupdate);
         globalEventEmitter.off('wdelete', wdelete);

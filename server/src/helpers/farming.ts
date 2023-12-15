@@ -7,7 +7,13 @@
 // - chorus fruit => ? => maxAge: 5
 // - mushrooms => ?
 // - cactus => minecraft:cactus => maxAge: 15
-export const blockToFarmingDetailsMapObject = {
+export const blockToFarmingDetailsMapObject: {
+    [key: string]: {
+        seed: string;
+        harvest: string;
+        maxAge: number;
+    }
+} = {
     'minecraft:wheat': {
         seed: 'minecraft:wheat_seeds',
         harvest: 'minecraft:wheat',

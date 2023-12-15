@@ -1,5 +1,8 @@
-import {BlockState, BlockTags, Direction, Inventory, Location, BaseState} from './entities/turtle';
 import Database from 'better-sqlite3';
+import {Server} from './server.type';
+import {Block, BlockState, BlockTags} from './block.type';
+import {BaseState, Direction, Inventory, Location, Turtle} from './turtle.type';
+import {Area} from './area.type';
 
 const db = new Database('db/server.db');
 db.pragma('journal_mode = WAL');
@@ -166,18 +169,18 @@ const setTurtleFuel = db.prepare(
     'UPDATE `turtles` SET `fuel_level` = ?, `inventory` = ? WHERE `server_id` = ? AND `id` = ?'
 );
 
-export const getDashboard = () => preparedDashboard.all().map((server: string) => JSON.parse(server));
-export const upsertServer = (remoteAddress: string, name: string) =>
+export const getDashboard = () => preparedDashboard.all().map((server: unknown) => JSON.parse(server as string));
+export const upsertServer = (remoteAddress: string, name: string | null) =>
     insertServer.run({
         remote_address: remoteAddress,
         name,
     });
 export const renameServer = (id: number, name: string) => setServerName.run(name, id);
-export const getServerByRemoteAddress = (remoteAddress: string) => selectServerByRemoteAddress.get(remoteAddress);
-export const getArea = (serverId: number, id: number) => selectArea.get(serverId, id);
+export const getServerByRemoteAddress = (remoteAddress: string) => selectServerByRemoteAddress.get(remoteAddress) as Server;
+export const getArea = (serverId: number, id: number) => selectArea.get(serverId, id) as Area;
 export const addArea = (serverId: number, color: string, area: JSON) =>
     insertArea.run(serverId, color, JSON.stringify(area));
-export const getTurtle = (serverId: number, id: number) => selectTurtle.get(serverId, id);
+export const getTurtle = (serverId: number, id: number) => selectTurtle.get(serverId, id) as Turtle;
 export const upsertTurtle = (
     serverId: number,
     id: number,
@@ -187,7 +190,7 @@ export const upsertTurtle = (
     selectedSlot: number,
     inventory: Inventory,
     stepsSinceLastRefuel: number,
-    state: BaseState,
+    state: BaseState | null,
     location: Location,
     direction: Direction
 ) =>
@@ -204,8 +207,8 @@ export const upsertTurtle = (
         location: JSON.stringify(location),
         direction,
     });
-export const getBlocks = (serverId: number) => selectBlocks.all(serverId);
-export const getBlock = (serverId: number, x: number, y: number, z: number) => selectBlock.get(serverId, x, y, z);
+export const getBlocks = (serverId: number) => selectBlocks.all(serverId) as Block[];
+export const getBlock = (serverId: number, x: number, y: number, z: number) => selectBlock.get(serverId, x, y, z) as Block;
 export const upsertBlock = (
     serverId: number,
     x: number,
@@ -245,7 +248,7 @@ export const updateTurtleInventory = (serverId: number, id: number, inventory: I
     setTurtleInventory.run(JSON.stringify(inventory), serverId, id);
 export const updateTurtleStepsSinceLastRefuel = (serverId: number, id: number, stepsSinceLastRefuel: number) =>
     setTurtleStepsSinceLastRefuel.run(stepsSinceLastRefuel, serverId, id);
-export const updateTurtleState = (serverId: number, id: number, state: BaseState) =>
+export const updateTurtleState = (serverId: number, id: number, state: BaseState | null) =>
     setTurtleState.run(JSON.stringify(state), serverId, id);
 export const updateTurtleLocation = (serverId: number, id: number, location: Location) =>
     setTurtleLocation.run(JSON.stringify(location), serverId, id);

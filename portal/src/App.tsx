@@ -69,7 +69,7 @@ export interface Turtle {
     fuelLimit: number;
     selectedSlot: number;
     inventory: Inventory;
-    stepsSinceLastRecharge: number;
+    stepsSinceLastRefuel: number;
     state?: BaseState;
     location: Location;
     direction: Direction;

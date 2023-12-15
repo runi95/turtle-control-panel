@@ -25,6 +25,8 @@ import {
     upsertServer,
     getServerByRemoteAddress,
 } from '../db';
+import {Block} from '../db/block.type';
+import {BaseState, Turtle as DBTurtle, Direction, Inventory, ItemDetail, Location} from '../db/turtle.type';
 
 const turtleWssPort = process.env.TURTLE_WSS_PORT ? Number(process.env.TURTLE_WSS_PORT) : 5757;
 const wss = new WebSocketServer({port: turtleWssPort});
@@ -34,24 +36,6 @@ wss.on('connection', (ws, req) => {
 });
 
 logger.info(`Turtle WebSocket listening on port \x1b[36m${turtleWssPort}\x1b[0m`);
-
-export enum Direction {
-    West = 1,
-    North = 2,
-    East = 3,
-    South = 4,
-}
-
-export interface Inventory {
-    [key: number]: ItemDetail | undefined;
-}
-
-export interface BaseState {
-    id: number;
-    error?: string;
-    name: string;
-    [key: string]: unknown;
-}
 
 export interface MiningState {
     mineType: string;
@@ -64,59 +48,8 @@ export interface FarmingState {
     noopTiles: number;
 }
 
-export interface Location {
-    x: number;
-    y: number;
-    z: number;
-}
-
-export interface Enchantment {
-    level: number;
-    name: string;
-    displayName: string;
-}
-
-export interface ItemDetail {
-    enchantments?: Enchantment[];
-    durability: number;
-    maxDamage: number;
-    damage: number;
-    nbt: string;
-    name: string;
-    tags: {
-        [key: string]: string;
-    };
-    count: number;
-    maxCount: string;
-    displayName: string;
-}
-
-export interface BlockState {
-    [key: string]: string;
-}
-
-export interface BlockTags {
-    [key: string]: string;
-}
-
-export interface Block {
-    state: BlockState;
-    name: string;
-    tags: BlockTags;
-}
-
-export interface Area {}
-
-export interface Server {
-    id: number;
-    remoteAddress: string;
-    turtles: Turtle[];
-    areas: Area[];
-    blocks: Block[];
-}
-
 const connectedTurtlesMap = new Map();
-export class Turtle {
+export class Turtle implements DBTurtle {
     // Database properties
     public readonly serverId: number;
     public readonly id: number;
@@ -127,8 +60,8 @@ export class Turtle {
     #fuelLimit: number;
     #selectedSlot: number;
     #inventory: Inventory;
-    #stepsSinceLastRecharge: number;
-    #state?: BaseState;
+    #stepsSinceLastRefuel: number;
+    #state: BaseState | null;
     #location: Location;
     #direction: Direction;
 
@@ -145,8 +78,8 @@ export class Turtle {
         fuelLimit: number,
         selectedSlot: number,
         inventory: Inventory,
-        stepsSinceLastRecharge: number,
-        state: BaseState,
+        stepsSinceLastRefuel: number,
+        state: BaseState | null,
         location: Location,
         direction: Direction,
         ws: WebSocket
@@ -159,7 +92,7 @@ export class Turtle {
         this.#fuelLimit = fuelLimit;
         this.#selectedSlot = selectedSlot;
         this.#inventory = inventory;
-        this.#stepsSinceLastRecharge = stepsSinceLastRecharge;
+        this.#stepsSinceLastRefuel = stepsSinceLastRefuel;
         this.#state = state;
         this.#location = location;
         this.#direction = direction;
@@ -278,20 +211,20 @@ export class Turtle {
         updateTurtleInventory(this.serverId, this.id, this.inventory);
     }
 
-    public get stepsSinceLastRecharge() {
-        return this.#stepsSinceLastRecharge;
+    public get stepsSinceLastRefuel() {
+        return this.#stepsSinceLastRefuel;
     }
 
-    public set stepsSinceLastRecharge(stepsSinceLastRecharge) {
-        this.#stepsSinceLastRecharge = stepsSinceLastRecharge;
+    public set stepsSinceLastRefuel(stepsSinceLastRefuel) {
+        this.#stepsSinceLastRefuel = stepsSinceLastRefuel;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
             serverId: this.serverId,
             data: {
-                stepsSinceLastRecharge: this.stepsSinceLastRecharge,
+                stepsSinceLastRefuel: this.stepsSinceLastRefuel,
             },
         });
-        updateTurtleStepsSinceLastRefuel(this.serverId, this.id, this.stepsSinceLastRecharge);
+        updateTurtleStepsSinceLastRefuel(this.serverId, this.id, this.stepsSinceLastRefuel);
     }
 
     /**
@@ -301,7 +234,7 @@ export class Turtle {
         return this.#state;
     }
 
-    public set state(state) {
+    public set state(state: BaseState | null) {
         this.#state = state;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -310,7 +243,7 @@ export class Turtle {
                 state: this.state ?? null,
             },
         });
-        updateTurtleState(this.serverId, this.id, this.state);
+        updateTurtleState(this.serverId, this.id, this.state ?? null);
     }
 
     public set error(message: string) {
@@ -376,7 +309,7 @@ export class Turtle {
         const [didMove] = forward;
         if (didMove) {
             this.#fuelLevel--;
-            this.#stepsSinceLastRecharge++;
+            this.#stepsSinceLastRefuel++;
             const [xChange, zChange] = getLocalCoordinatesForDirection(this.direction);
             const {x, y, z} = this.location;
             this.#location = {x: x + xChange, y, z: z + zChange};
@@ -386,7 +319,7 @@ export class Turtle {
                 serverId: this.serverId,
                 data: {
                     fuelLevel: this.fuelLevel,
-                    stepsSinceLastRecharge: this.stepsSinceLastRecharge,
+                    stepsSinceLastRefuel: this.stepsSinceLastRefuel,
                     location: this.location,
                 },
             });
@@ -397,7 +330,7 @@ export class Turtle {
                 z: this.location.z,
             });
 
-            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRecharge, this.location);
+            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRefuel, this.location);
             deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
         return forward;
@@ -419,7 +352,7 @@ export class Turtle {
         const [didMove] = back;
         if (didMove) {
             this.#fuelLevel--;
-            this.#stepsSinceLastRecharge++;
+            this.#stepsSinceLastRefuel++;
             const [xChange, zChange] = getLocalCoordinatesForDirection((((this.direction % 4) + 1) % 4) + 1);
             const {x, y, z} = this.location;
             this.#location = {x: x + xChange, y, z: z + zChange};
@@ -429,7 +362,7 @@ export class Turtle {
                 serverId: this.serverId,
                 data: {
                     fuelLevel: this.fuelLevel,
-                    stepsSinceLastRecharge: this.stepsSinceLastRecharge,
+                    stepsSinceLastRefuel: this.stepsSinceLastRefuel,
                     location: this.location,
                 },
             });
@@ -440,7 +373,7 @@ export class Turtle {
                 z: this.location.z,
             });
 
-            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRecharge, this.location);
+            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRefuel, this.location);
             deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
         return back;
@@ -462,7 +395,7 @@ export class Turtle {
         const [didMove] = up;
         if (didMove) {
             this.#fuelLevel--;
-            this.#stepsSinceLastRecharge++;
+            this.#stepsSinceLastRefuel++;
             const {x, y, z} = this.location;
             this.#location = {x, y: y + 1, z};
 
@@ -471,7 +404,7 @@ export class Turtle {
                 serverId: this.serverId,
                 data: {
                     fuelLevel: this.fuelLevel,
-                    stepsSinceLastRecharge: this.stepsSinceLastRecharge,
+                    stepsSinceLastRefuel: this.stepsSinceLastRefuel,
                     location: this.location,
                 },
             });
@@ -482,7 +415,7 @@ export class Turtle {
                 z: this.location.z,
             });
 
-            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRecharge, this.location);
+            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRefuel, this.location);
             deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
         return up;
@@ -504,7 +437,7 @@ export class Turtle {
         const [didMove] = down;
         if (didMove) {
             this.#fuelLevel--;
-            this.#stepsSinceLastRecharge++;
+            this.#stepsSinceLastRefuel++;
             const {x, y, z} = this.location;
             this.#location = {x, y: y - 1, z};
 
@@ -513,7 +446,7 @@ export class Turtle {
                 serverId: this.serverId,
                 data: {
                     fuelLevel: this.fuelLevel,
-                    stepsSinceLastRecharge: this.stepsSinceLastRecharge,
+                    stepsSinceLastRefuel: this.stepsSinceLastRefuel,
                     location: this.location,
                 },
             });
@@ -524,7 +457,7 @@ export class Turtle {
                 z: this.location.z,
             });
 
-            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRecharge, this.location);
+            updateTurtleMovement(this.serverId, this.id, this.fuelLevel, this.stepsSinceLastRefuel, this.location);
             deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
         return down;
@@ -1356,7 +1289,7 @@ const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
 
         upsertServer(remoteAddress, null);
         const {id: serverId} = getServerByRemoteAddress(remoteAddress);
-        const {stepsSinceLastRecharge, state, location, direction} = getTurtle(serverId, id) ?? {};
+        const {stepsSinceLastRefuel, state, location, direction} = getTurtle(serverId, id) ?? {};
         logger.info(`${name || '<unnamed>'} [${id}] has connected!`);
         ws.off('message', listener);
         const isOnline = true;
@@ -1369,7 +1302,7 @@ const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
             fuelLimit,
             selectedSlot,
             inventoryAsObject,
-            stepsSinceLastRecharge,
+            stepsSinceLastRefuel,
             state,
             location,
             direction,
@@ -1389,7 +1322,7 @@ const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
                 fuelLimit,
                 selectedSlot,
                 inventory: inventoryAsObject,
-                stepsSinceLastRecharge,
+                stepsSinceLastRefuel,
                 state,
                 location,
                 direction,
@@ -1404,7 +1337,7 @@ const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
             fuelLimit,
             selectedSlot,
             inventoryAsObject,
-            stepsSinceLastRecharge,
+            stepsSinceLastRefuel,
             state,
             location,
             direction

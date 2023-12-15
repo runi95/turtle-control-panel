@@ -1,4 +1,4 @@
-import {BaseState, Block, FarmingState, MiningState, Turtle} from './entities/turtle';
+import {FarmingState, MiningState, Turtle} from './entities/turtle';
 import DStarLite from './dlite';
 import {blockToFarmingDetailsMapObject, farmingSeedNames} from './helpers/farming';
 import {getLocalCoordinatesForDirection} from './helpers/coordinates';
@@ -6,6 +6,8 @@ import globalEventEmitter from './globalEventEmitter';
 import logger from './logger/server';
 import {getArea, getBlocks, upsertBlocks} from './db';
 import {Point} from './dlite/Point';
+import {BaseState} from './db/turtle.type';
+import {Block} from './db/block.type';
 
 const turtleMap = new Map();
 
@@ -27,7 +29,7 @@ class TurtleController {
                     this.#turtle.state = {id: 5, name: 'locating'};
                 } else if (
                     this.#turtle.fuelLevel < this.#turtle.fuelLimit * 0.1 ||
-                    this.#turtle.stepsSinceLastRecharge >=
+                    this.#turtle.stepsSinceLastRefuel >=
                         this.#turtle.fuelLimit - this.#turtle.fuelLevel + this.#turtle.fuelLimit * 0.1
                 ) {
                     this.#turtle.state = {id: 1, name: 'refueling'};
@@ -109,7 +111,7 @@ class TurtleController {
             blocks,
         });
 
-        this.#turtle.state = undefined;
+        this.#turtle.state = null;
     }
 
     #hasSpaceForItem(name: string, count = 1) {
@@ -131,7 +133,7 @@ class TurtleController {
         await this.#turtle.refreshInventoryState();
         this.#turtle.state =
             (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState?.id === 7
-                ? undefined
+                ? null
                 : (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState;
         globalEventEmitter.emit('tupdate', {
             id: this.#turtle.id,
@@ -146,7 +148,7 @@ class TurtleController {
         await this.#turtle.craft();
         this.#turtle.state =
             (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState?.id === 8
-                ? undefined
+                ? null
                 : (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState;
     }
 
@@ -154,7 +156,7 @@ class TurtleController {
         await this.#turtle.drop();
         this.#turtle.state =
             (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState?.id === 9
-                ? undefined
+                ? null
                 : (this.#turtle.state as BaseState & {nextState: BaseState})?.nextState;
     }
 
@@ -224,7 +226,7 @@ class TurtleController {
                 }
             }
         } else {
-            this.#turtle.state = undefined;
+            this.#turtle.state = null;
         }
     }
 
@@ -250,7 +252,7 @@ class TurtleController {
                 throw new Error('Invalid mine target');
         }
 
-        this.#turtle.state = undefined;
+        this.#turtle.state = null;
     }
 
     async #mine() {
@@ -269,7 +271,7 @@ class TurtleController {
             return await this.#mineToYLevel(Number(mineTarget));
         } else if (mineType === 'area') {
             const currentIndex = (this.#turtle.state as BaseState & {index?: number})?.index || 0;
-            const mineArea = getArea(this.#turtle.serverId, mineTarget);
+            const mineArea = getArea(this.#turtle.serverId, Number(mineTarget));
             if (mineArea === undefined) {
                 throw new Error('Given mining area does not exist');
             }
@@ -286,7 +288,7 @@ class TurtleController {
                     };
                 }
             } else {
-                this.#turtle.state = undefined;
+                this.#turtle.state = null;
             }
         } else {
             throw new Error('Invalid mine type');
@@ -297,7 +299,7 @@ class TurtleController {
         // Turtle already has enough fuel (80% or above)
         const currentFuelLevel = this.#turtle.fuelLevel;
         if (currentFuelLevel > 0.8 * this.#turtle.fuelLimit) {
-            this.#turtle.state = undefined;
+            this.#turtle.state = null;
             return;
         }
 
@@ -312,7 +314,7 @@ class TurtleController {
 
         // Refuel successful! (refuelled to 10% or above)
         if (this.#turtle.fuelLevel > this.#turtle.fuelLimit * 0.1) {
-            this.#turtle.state = undefined;
+            this.#turtle.state = null;
             return;
         }
 
@@ -507,7 +509,7 @@ class TurtleController {
 
         const direction = diff[0] + Math.abs(diff[0]) * 2 + diff[2] + Math.abs(diff[2]) * 3;
         this.#turtle.direction = direction;
-        this.#turtle.state = undefined;
+        this.#turtle.state = null;
     }
 
     async #locate() {
@@ -524,7 +526,7 @@ class TurtleController {
         }
 
         this.#turtle.location = {x, y, z};
-        this.#turtle.state = undefined;
+        this.#turtle.state = null;
     }
 
     async #digSuckItemAndMoveForward() {
@@ -646,7 +648,7 @@ class TurtleController {
         }
 
         if (this.#turtle.state?.id === 3) {
-            this.#turtle.state = undefined;
+            this.#turtle.state = null;
         }
     }
 
