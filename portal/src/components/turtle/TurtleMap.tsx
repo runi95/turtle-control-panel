@@ -7,7 +7,7 @@ import {Action, Areas, Blocks, Location, Turtle, Turtles} from '../../App';
 import SpriteTable from '../../SpriteTable';
 
 const circleSizeMul = 0.35;
-const spriteSize = 10;
+const spriteSize = 8;
 const spriteRadius = 0.5 * spriteSize;
 const colors = ['#ff0000', '#ff6a00', '#ffd800', '#4cff00', '#00ffff', '#0094ff', '#0026ff', '#b200ff', '#ff006e'];
 
