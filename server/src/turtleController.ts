@@ -1,11 +1,11 @@
 import {BaseState, Block, FarmingState, MiningState, Turtle} from './entities/turtle';
-import Coordinates from './dlite/Coordinates';
 import DStarLite from './dlite';
 import {blockToFarmingDetailsMapObject, farmingSeedNames} from './helpers/farming';
 import {getLocalCoordinatesForDirection} from './helpers/coordinates';
 import globalEventEmitter from './globalEventEmitter';
 import logger from './logger/server';
 import {getArea, getBlocks, upsertBlocks} from './db';
+import {Point} from './dlite/Point';
 
 const turtleMap = new Map();
 
@@ -570,135 +570,75 @@ class TurtleController {
         let {x: px, y: py, z: pz} = this.#turtle.location;
         if (!(px === targetX && py === targetY && pz === targetZ)) {
             let moves = 0;
-            const obstacles: Coordinates[] = [];
-            const obstaclesHash: {[key: string]: boolean} = {};
-            const env = {
-                moveTo: async (s: Coordinates) => {
-                    moves++;
-                    px = s.x;
-                    py = s.y;
-                    pz = s.z;
+            const moveTo = async (s: Point) => {
+                moves++;
+                px = s.x;
+                py = s.y;
+                pz = s.z;
 
-                    const {x, y, z} = this.#turtle.location;
-                    if (py - y > 0) {
-                        const [didMoveUp] = await this.#turtle.up();
-                        if (!didMoveUp) {
-                            const upLocation = `${x},${y + 1},${z}`;
-                            if (mineableObstaclesMap[upLocation]) {
-                                await this.#turtle.digUp();
-                                await this.#turtle.suckUp();
-                                await this.#turtle.up();
-                                return true;
-                            } else {
-                                obstaclesHash[upLocation] = true;
-                                obstacles.push(new Coordinates(x, y + 1, z));
-                                return false;
-                            }
-                        }
-                    } else if (py - y < 0) {
-                        const [didMoveDown] = await this.#turtle.down();
-                        if (didMoveDown) {
-                            return true;
-                        }
-
-                        const downLocation = `${x},${y - 1},${z}`;
-                        if (mineableObstaclesMap[downLocation]) {
-                            await this.#turtle.digDown();
-                            await this.#turtle.suckDown();
-                            const [didMoveDown] = await this.#turtle.down();
-                            if (!didMoveDown) {
-                                return false;
-                            }
-                            return true;
-                        } else {
-                            obstaclesHash[downLocation] = true;
-                            obstacles.push(new Coordinates(x, y - 1, z));
-                            return false;
-                        }
-                    } else {
-                        const heading = {x: px - x, y: py - y, z: pz - z};
-                        const direction = heading.x + Math.abs(heading.x) * 2 + (heading.z + Math.abs(heading.z) * 3);
-                        await this.#turnToDirection(direction);
-
-                        const [didMoveForwar] = await this.#turtle.forward();
-                        if (didMoveForwar) return true;
-
-                        const [xChange, zChange] = getLocalCoordinatesForDirection(this.#turtle.direction);
-                        const forwardLocation = `${x + xChange},${y},${z + zChange}`;
-                        if (mineableObstaclesMap[forwardLocation]) {
-                            await this.#digSuckItemAndMoveForward();
-                            return true;
-                        } else {
-                            obstaclesHash[forwardLocation] = true;
-                            obstacles.push(new Coordinates(x + xChange, y, z + zChange));
-                            return false;
-                        }
-                    }
-                },
-                getInitialObstacles: async () => {
-                    const allBlocks = getBlocks(this.#turtle.serverId);
-                    return Object.keys(allBlocks)
-                        .filter((key) => !mineableObstaclesMap[key])
-                        .map((key) => {
-                            const keySplit = key.split(',');
-                            return {
-                                x: keySplit[0],
-                                y: keySplit[1],
-                                z: keySplit[2],
-                            };
-                        });
-                },
-                getObstaclesInVision: async () => {
-                    const {x, y, z} = this.#turtle.location;
-                    const coordinatesInFront = getLocalCoordinatesForDirection(this.#turtle.direction);
-                    const inFrontX = x + coordinatesInFront[0];
-                    const inFrontZ = z + coordinatesInFront[1];
-                    const frontLocation = `${inFrontX},${y},${inFrontZ}`;
-                    if (obstaclesHash[frontLocation] === undefined) {
-                        if (await this.#turtle.inspect()) {
-                            if (mineableObstaclesMap[frontLocation]) {
-                                await this.#turtle.dig();
-                                await this.#turtle.suck();
-                            } else {
-                                obstaclesHash[frontLocation] = true;
-                                obstacles.push(new Coordinates(inFrontX, y, inFrontZ));
-                            }
-                        }
+                const {x, y, z} = this.#turtle.location;
+                if (py - y > 0) {
+                    const [didMoveUp] = await this.#turtle.up();
+                    if (didMoveUp) {
+                        return true;
                     }
 
                     const upLocation = `${x},${y + 1},${z}`;
-                    if (obstaclesHash[upLocation] === undefined) {
-                        if (await this.#turtle.inspectUp()) {
-                            if (mineableObstaclesMap[upLocation]) {
-                                await this.#turtle.digUp();
-                                await this.#turtle.suckUp();
-                            } else {
-                                obstaclesHash[upLocation] = true;
-                                obstacles.push(new Coordinates(x, y + 1, z));
-                            }
-                        }
+                    if (mineableObstaclesMap[upLocation]) {
+                        await this.#turtle.digUp();
+                        await this.#turtle.suckUp();
+                        await this.#turtle.up();
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else if (py - y < 0) {
+                    const [didMoveDown] = await this.#turtle.down();
+                    if (didMoveDown) {
+                        return true;
                     }
 
                     const downLocation = `${x},${y - 1},${z}`;
-                    if (obstaclesHash[downLocation] === undefined) {
-                        if (await this.#turtle.inspectDown()) {
-                            if (mineableObstaclesMap[downLocation]) {
-                                await this.#turtle.digDown();
-                                await this.#turtle.suckDown();
-                            } else {
-                                obstaclesHash[downLocation] = true;
-                                obstacles.push(new Coordinates(x, y - 1, z));
-                            }
+                    if (mineableObstaclesMap[downLocation]) {
+                        await this.#turtle.digDown();
+                        await this.#turtle.suckDown();
+                        const [didMoveDown] = await this.#turtle.down();
+                        if (!didMoveDown) {
+                            return false;
                         }
+                        return true;
+                    } else {
+                        return false;
                     }
+                } else {
+                    const heading = {x: px - x, y: py - y, z: pz - z};
+                    const direction = heading.x + Math.abs(heading.x) * 2 + (heading.z + Math.abs(heading.z) * 3);
+                    await this.#turnToDirection(direction);
 
-                    return obstacles;
-                },
+                    const [didMoveForwar] = await this.#turtle.forward();
+                    if (didMoveForwar) return true;
+
+                    const [xChange, zChange] = getLocalCoordinatesForDirection(this.#turtle.direction);
+                    const forwardLocation = `${x + xChange},${y},${z + zChange}`;
+                    if (mineableObstaclesMap[forwardLocation]) {
+                        await this.#digSuckItemAndMoveForward();
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
             };
 
-            const dStarLite = new DStarLite();
+            const dStarLite = new DStarLite(this.#turtle.serverId);
             try {
-                await dStarLite.runDStarLite(px, py, pz, targetX, targetY, targetZ, env);
+                const solution = await dStarLite.search(new Point(px, py, pz), new Point(targetX, targetY, targetZ));
+                for (const point of solution) {
+                    const didMove = await moveTo(point);
+                    if (!didMove) {
+                        throw new Error(`Failed to move to (${point.x}, ${point.y}, ${point.z})`);
+                    }
+                }
+
                 logger.debug(`Moves: ${moves}`);
             } catch (err) {
                 logger.error(err);

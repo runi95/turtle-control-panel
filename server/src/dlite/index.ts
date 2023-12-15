@@ -1,204 +1,186 @@
-import State from './State';
-import Pair from './Pair';
-import Coordinates from './Coordinates';
-import PriorityQueue from './PriorityQueue';
-import logger from '../logger/server';
+import {PriorityQueue} from './PriorityQueue';
+import {Node} from './Node';
+import {Point} from './Point';
+import {getBlock} from '../db';
+
+const heuristic = {
+    calculate(a: Point, b: Point): number {
+        return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2) + Math.pow(a.z - b.z, 2));
+    },
+};
 
 export default class DStarLite {
-    constructor(maxSteps = 80000) {
+    private readonly maxSteps: number;
+    private readonly serverId: number;
+    private readonly cachedNodes = new Map<string, Node>();
+
+    constructor(serverId: number, maxSteps = 80000) {
         this.maxSteps = maxSteps;
-        this.U = undefined;
-        this.S = undefined;
-        this.km = undefined;
-        this.sgoal = undefined;
-        this.sstart = undefined;
+        this.serverId = serverId;
     }
 
-    async runDStarLite(sx, sy, sz, gx, gy, gz, env) {
-        this.sstart = new State();
-        this.sstart.x = sx;
-        this.sstart.y = sy;
-        this.sstart.z = sz;
-        this.sgoal = new State();
-        this.sgoal.x = gx;
-        this.sgoal.y = gy;
-        this.sgoal.z = gz;
-        let slast = this.sstart;
-        this.initialize(await env.getInitialObstacles());
-        try {
-            this.computeShortestPath();
-        } catch (err) {}
-        while (!this.sstart.equals(this.sgoal)) {
-            if (this.sstart.g === Number.POSITIVE_INFINITY) {
-                return false;
+    public async search(source: Point, destination: Point) {
+        const startNode = new Node(source, false);
+        this.cachedNodes.set(`${source.x},${source.y},${source.z}`, startNode);
+        const destinationNode = new Node(destination, false);
+        this.cachedNodes.set(`${destination.x},${destination.y},${destination.z}`, destinationNode);
+
+        destinationNode.rhs = 0;
+        destinationNode.key = [heuristic.calculate(startNode.point, destinationNode.point), 0];
+
+        const compareKey = (a: [number, number], b: [number, number]) => {
+            if (a[0] > b[0]) {
+                return 1;
             }
 
-            const obstacleCoord = await env.getObstaclesInVision();
-            const oldkm = this.km;
-            const oldslast = slast;
-            this.km += this.heuristic(this.sstart, slast);
-            slast = this.sstart;
-            let change = false;
-            for (let i = 0; i < obstacleCoord.length; i++) {
-                const c = obstacleCoord[i];
-                const s = this.S.get(c.x, c.y, c.z);
-
-                if (s.obstacle) continue; // is already known
-                change = true;
-                s.obstacle = true;
-                const pred = s.getPred(this.S);
-                for (let j = 0; j < pred.length; j++) {
-                    const p = pred[j];
-                    this.updateVertex(p);
-                }
-            }
-            if (!change) {
-                this.km = oldkm;
-                slast = oldslast;
-            }
-            const possibleMoveLocation = this.minSuccState(this.sstart);
-            if (possibleMoveLocation === undefined) {
-                return false;
-            }
-            const didMove = await env.moveTo(
-                new Coordinates(possibleMoveLocation.x, possibleMoveLocation.y, possibleMoveLocation.z)
-            );
-            if (didMove) {
-                this.sstart = possibleMoveLocation;
-            } else {
-                // possibleMoveLocation.obstacle = true;
+            if (a[0] < b[0]) {
+                return -1;
             }
 
-            try {
-                this.computeShortestPath();
-            } catch (err) {
-                logger.error(err);
-                return false;
+            if (a[1] > b[1]) {
+                return 1;
             }
-        }
 
-        return true;
-    }
+            if (a[1] < b[1]) {
+                return -1;
+            }
 
-    calculateKey(s) {
-        return new Pair(Math.min(s.g, s.rhs) + this.heuristic(s, this.sstart) + this.km, Math.min(s.g, s.rhs));
-    }
-
-    heuristic(a, b) {
-        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + Math.abs(a.z - b.z);
-    }
-
-    initialize(initialObstacles) {
-        this.U = new PriorityQueue();
-        this.S = {
-            get: (x, y, z) => {
-                const pos = `${x},${y},${z}`;
-                let s = this.S[pos];
-                if (s === undefined) {
-                    s = new State();
-                    s.x = x;
-                    s.y = y;
-                    s.z = z;
-                    s.g = Number.POSITIVE_INFINITY;
-                    s.rhs = Number.POSITIVE_INFINITY;
-
-                    this.S[pos] = s;
-                }
-
-                return s;
-            },
-            add: (s) => {
-                this.S[`${s.x},${s.y},${s.z}`] = s;
-            },
+            return 0;
         };
-        this.km = 0;
+        const compareNodes = (a: Node, b: Node) => compareKey(a.key, b.key);
 
-        for (let i = 0; i < initialObstacles.length; i++) {
-            const s = this.S.get(initialObstacles[i].x, initialObstacles[i].y, initialObstacles[i].z);
-            s.obstacle = true;
-        }
+        const openHeap = new PriorityQueue<Node>(compareNodes);
+        openHeap.add(destinationNode);
 
-        this.sgoal = this.S.get(this.sgoal.x, this.sgoal.y, this.sgoal.z);
-        this.sstart = this.S.get(this.sstart.x, this.sstart.y, this.sstart.z);
-        this.sgoal.rhs = 0;
-        this.U.add(this.sgoal, this.calculateKey(this.sgoal));
-    }
+        const updateVertex = (u: Node) => {
+            openHeap.remove(u);
 
-    updateVertex(u) {
-        if (!u.equals(this.sgoal)) {
-            u.rhs = this.minSucc(u);
-        }
-        if (this.U.contains(u)) {
-            this.U.remove(u);
-        }
-        if (u.g != u.rhs) {
-            this.U.add(u, this.calculateKey(u));
-        }
-    }
-
-    minSuccState(u) {
-        let min = Number.POSITIVE_INFINITY;
-        let n;
-        const uS = u.getSucc(this.S);
-        for (let i = 0; i < uS.length; i++) {
-            const s = uS[i];
-            const val = s.g + 1;
-            if (val <= min && !s.obstacle) {
-                min = val;
-                n = s;
+            if (u.g !== u.rhs) {
+                u.key = this.calculateKey(u, startNode);
+                openHeap.add(u);
             }
-        }
+        };
 
-        return n;
-    }
+        let u: Node | null;
+        while ((u = openHeap.poll()) !== null) {
+            console.log(`Checking: (${u.point.x}, ${u.point.y}, ${u.point.z})`);
+            u.visited = true;
+            if (compareNodes(u, startNode) >= 0) break;
+            if (startNode.rhs > startNode.g) break;
+            const k_old = u.key;
+            const k_new = this.calculateKey(u, startNode);
 
-    minSucc(u) {
-        let min = Number.POSITIVE_INFINITY;
-        const uS = u.getSucc(this.S);
-        for (let i = 0; i < uS.length; i++) {
-            const s = uS[i];
-            const val = 1 + s.g;
-            if (val < min && !s.obstacle) min = val;
-        }
-        return min;
-    }
-
-    computeShortestPath() {
-        let steps = 0;
-        let u;
-        while (
-            ((u = this.U.peek()) && u.k.compareTo(this.calculateKey(this.sstart)) < 0) ||
-            this.sstart.rhs != this.sstart.g
-        ) {
-            if (steps++ > this.maxSteps) {
-                throw new Error('Maximum number of path steps exceeded');
-            }
-
-            const kold = this.U.peek().k;
-            const u = this.U.poll().s;
-            if (u == undefined) break;
-            if (kold.compareTo(this.calculateKey(u)) < 0) {
-                this.U.add(u, this.calculateKey(u));
+            if (compareKey(k_old, k_new) === -1) {
+                u.key = k_new;
+                openHeap.add(u);
             } else if (u.g > u.rhs) {
                 u.g = u.rhs;
-                const uPred = u.getPred(this.S);
-                for (let i = 0; i < uPred.length; i++) {
-                    const s = uPred[i];
-                    this.updateVertex(s);
+                const pred: Node[] = this.succ(u);
+                for (const s of pred) {
+                    s.parent = u;
+                    if (s !== destinationNode) {
+                        s.rhs = Math.min(s.rhs, this.c(s, u) + u.g);
+                    }
+
+                    updateVertex(s);
                 }
             } else {
+                const g_old = u.g;
                 u.g = Number.POSITIVE_INFINITY;
-                this.updateVertex(u);
-                const uPred = u.getPred(this.S);
-                for (let i = 0; i < uPred.length; i++) {
-                    const s = uPred[i];
-                    this.updateVertex(s);
+                const pred: Node[] = this.succ(u);
+                pred.push(u);
+                for (const s of pred) {
+                    if (s.rhs === this.c(s, u) + g_old) {
+                        if (s !== destinationNode) {
+                            let min_s = Number.POSITIVE_INFINITY;
+                            let nparent = null;
+                            const succ: Node[] = this.succ(u);
+                            for (const s_ of succ) {
+                                const temp = this.c(s, s_) + s_.g;
+                                if (min_s > temp) {
+                                    nparent = s_;
+                                    min_s = temp;
+                                }
+                            }
+
+                            s.rhs = min_s;
+                            s.parent = nparent;
+                        }
+                    }
+
+                    updateVertex(u);
                 }
+                openHeap.add(u);
             }
         }
 
-        if (u === null) {
-            throw new Error('Path is unreachable');
+        if (startNode.rhs < Number.POSITIVE_INFINITY) {
+            let curr = startNode.parent as Node;
+            const ret: Point[] = [];
+            while (curr.parent) {
+                ret.push(curr.point);
+                curr = curr.parent;
+            }
+
+            if (!destinationNode.isWall) {
+                ret.push(destination);
+            }
+            
+            return ret;
         }
+
+        throw new Error('No valid path');
+    }
+
+    private calculateKey(s: Node, start: Node): [number, number] {
+        const h = heuristic.calculate(start.point, s.point);
+        return [
+            Math.min(s.g, s.rhs) + h, // + k_m?
+            Math.min(s.g, s.rhs),
+        ];
+    }
+
+    private c(u: Node, v: Node): number {
+        if (u.isWall || v.isWall) return Number.POSITIVE_INFINITY;
+        return heuristic.calculate(u.point, v.point);
+    }
+
+    private getCachedNode(x: number, y: number, z: number): Node {
+        const nodePath = `${x},${y},${z}`;
+        const cachedNode = this.cachedNodes.get(nodePath);
+        if (cachedNode) return cachedNode;
+        const block = getBlock(this.serverId, x, y, z);
+        if (!block) {
+            const node = new Node(new Point(x, y, z), false);
+            this.cachedNodes.set(nodePath, node);
+            return node;
+        }
+
+        const node = new Node(new Point(x, y, z), true);
+        this.cachedNodes.set(nodePath, node);
+        return node;
+    }
+
+    private succ(u: Node): Node[] {
+        const neighbors: Node[] = [];
+
+        const east = this.getCachedNode(u.point.x + 1, u.point.y, u.point.z);
+        if (!east.visited) neighbors.push(east); 
+        if (u.point.y < 255) {
+            const up = this.getCachedNode(u.point.x, u.point.y + 1, u.point.z);
+            if (!up.visited) neighbors.push(up); 
+        }
+        const south = this.getCachedNode(u.point.x, u.point.y, u.point.z + 1);
+        if (!south.visited) neighbors.push(south); 
+        const west = this.getCachedNode(u.point.x - 1, u.point.y, u.point.z);
+        if (!west.visited) neighbors.push(west);
+        if (u.point.y > -59) {
+            const down = this.getCachedNode(u.point.x, u.point.y - 1, u.point.z);
+            if (!down.visited) neighbors.push(down); 
+        }
+        const north = this.getCachedNode(u.point.x, u.point.y, u.point.z - 1);
+        if (!north.visited) neighbors.push(north);
+
+        return neighbors;
     }
 }

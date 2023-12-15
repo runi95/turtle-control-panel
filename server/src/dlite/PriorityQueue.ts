@@ -1,113 +1,112 @@
-import Element from './Element';
-
-export default class PriorityQueue {
-    constructor() {
-        this.hash = {};
-        this.queue = [];
-        this.size = 0;
+export class PriorityQueue<T> {
+    private _size = 0;
+    private _queue: T[] = [];
+    private readonly comparator: (a: T, b: T) => number = (a: T, b: T) => {
+      if (a > b) {
+        return 1;
+      }
+  
+      if (a < b) {
+        return -1;
+      }
+  
+      return 0;
+    };
+  
+    constructor(comparator?: (a: T, b: T) => number) {
+      if (comparator) {
+        this.comparator = comparator;
+      }
     }
-
-    siftDown(k, x) {
-        const half = this.size >>> 1;
-        while (k < half) {
-            let child = (k << 1) + 1;
-            let c = this.queue[child];
-            const right = child + 1;
-            if (right < this.size && c.compareTo(this.queue[right]) > 0) c = this.queue[(child = right)];
-            if (x.compareTo(c) <= 0) break;
-            this.queue[k] = c;
-            this.hash[c.hashCode()] = k;
-            k = child;
+  
+    public add(e: T): boolean {
+      return this.offer(e);
+    }
+  
+    public offer(e: T): boolean {
+      const i = this._size;
+      this._size++;
+      if (i === 0) {
+        this._queue[0] = e;
+      } else {
+        this.siftUp(i, e);
+      }
+  
+      return true;
+    }
+  
+    private siftUp(k: number, key: T): void {
+      while (k > 0) {
+        const parent = (k - 1) >>> 1;
+        const e = this._queue[parent];
+        if (this.comparator(key, e) >= 0) break;
+  
+        this._queue[k] = e;
+        k = parent;
+      }
+      this._queue[k] = key;
+    }
+  
+    private siftDown(k: number, key: T) {
+      const half = this._size >>> 1;
+      while (k < half) {
+        let child = (k << 1) + 1;
+        let c = this._queue[child];
+        const right = child + 1;
+        if (right < this._size && this.comparator(c, this._queue[right]) === 1) {
+          c = this._queue[child = right];
         }
-        this.queue[k] = x;
-        this.hash[x.hashCode()] = k;
+        if (this.comparator(key, c) <= 0) break;
+  
+        this._queue[k] = c;
+        k = child;
+      }
+  
+      this._queue[k] = key;
     }
-
-    isEmpty() {
-        return this.size === 0;
+  
+    public poll(): T | null {
+      if (this._size === 0) return null;
+  
+      const s = --this._size;
+      const result = this._queue[0];
+      const x = this._queue[s];
+      this._queue.pop();
+      if (s !== 0) {
+        this.siftDown(0, x);
+      }
+  
+      return result;
     }
-
-    poll() {
-        if (this.size === 0) {
-            return null;
-        }
-
-        const s = --this.size;
-        const result = this.queue[0];
-        const x = this.queue.pop();
-        delete this.hash[result.hashCode()];
-        if (s !== 0) {
-            this.siftDown(0, x);
-        }
-
-        return result;
-    }
-
-    peek() {
-        return this.size === 0 ? null : this.queue[0];
-    }
-
-    siftUp(k, x) {
-        while (k > 0) {
-            const parent = (k - 1) >>> 1;
-            const e = this.queue[parent];
-            if (x.compareTo(e) >= 0) break;
-            if (k === this.size - 1) {
-                this.queue.push(e);
-                this.hash[e.hashCode()] = k;
-            } else {
-                this.queue[k] = e;
-                this.hash[e.hashCode()] = k;
-            }
-            k = parent;
-        }
-        this.queue[k] = x;
-        this.hash[x.hashCode()] = k;
-    }
-
-    offer(e) {
-        const i = this.size++;
-        if (i === 0) {
-            this.hash[e.hashCode()] = 0;
-            this.queue.push(e);
-        } else {
-            this.siftUp(i, e);
-        }
+  
+    public remove(o: T): boolean {
+      const i = this._queue.indexOf(o);
+      if (i === -1) {
+        return false;
+      } else {
+        this.removeAt(i);
         return true;
+      }
     }
-
-    add(e, k) {
-        if (e === undefined) {
-            throw new Error("Can't add undefined");
+  
+    private removeAt(i: number): T | null {
+      const s = --this._size;
+      const moved = this._queue.pop() as T;
+      if (s !== i) {
+        this.siftDown(i, moved);
+        if (this.comparator(this._queue[i], moved) === 0) {
+          this.siftUp(i, moved);
+          if (this.comparator(this._queue[i], moved) !== 0) {
+            return moved;
+          }
         }
-
-        if (this.contains(e)) {
-            this.remove(e);
-        }
-        return this.offer(new Element(e, k));
+      }
+  
+      return null;
     }
-
-    remove(e) {
-        const removedHashCode = e.hashCode();
-        const i = this.hash[removedHashCode];
-        const s = --this.size;
-        const moved = this.queue.pop();
-        delete this.hash[removedHashCode];
-        if (s !== i) {
-            this.siftDown(i, moved);
-            if (this.queue[i].compareTo(moved) === 0) {
-                this.siftUp(i, moved);
-            }
-        }
+  
+    get size(): number {
+      return this._size;
     }
-
-    contains(s) {
-        return this.hash[s.hashCode()] !== undefined;
-    }
-
-    clear() {
-        this.queue = [];
-        this.hash = {};
-        this.size = 0;
-    }
-}
+  }
+  
