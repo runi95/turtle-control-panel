@@ -4,7 +4,7 @@ import {blockToFarmingDetailsMapObject, farmingSeedNames} from './helpers/farmin
 import {getLocalCoordinatesForDirection} from './helpers/coordinates';
 import globalEventEmitter from './globalEventEmitter';
 import logger from './logger/server';
-import {getArea, getBlocks, upsertBlocks} from './db';
+import {getArea, upsertBlocks} from './db';
 import {Point} from './dlite/Point';
 import {BaseState} from './db/turtle.type';
 import {Block} from './db/block.type';
