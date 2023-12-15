@@ -192,7 +192,7 @@ const TurtleMap = (props: TurtleMapProps) => {
 
                             ctx.textAlign = 'center';
                             ctx.strokeStyle = 'black';
-                            ctx.font = '10px Ariel';
+                            ctx.font = '11px Tahoma';
                             ctx.lineWidth = 4;
                             ctx.strokeText(otherTurtle.name, posX, posY - spriteRadius);
                             ctx.fillText(otherTurtle.name, posX, posY - spriteRadius);
@@ -208,7 +208,7 @@ const TurtleMap = (props: TurtleMapProps) => {
 
                 ctx.textAlign = 'center';
                 ctx.strokeStyle = 'black';
-                ctx.font = '10px Ariel';
+                ctx.font = '11px Tahoma';
                 ctx.lineWidth = 4;
                 ctx.strokeText(turtle.name, centerX, centerY - spriteRadius);
                 ctx.fillText(turtle.name, centerX, centerY - spriteRadius);
