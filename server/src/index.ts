@@ -145,8 +145,6 @@ wssWebsite.on('connection', (ws) => {
     globalEventEmitter.on('tconnect', tconnect);
     const tdisconnect = (obj) => ws.send(JSON.stringify({type: 'TDISCONNECT', message: obj}));
     globalEventEmitter.on('tdisconnect', tdisconnect);
-    const tlocation = (obj) => ws.send(JSON.stringify({type: 'TLOCATION', message: obj}));
-    globalEventEmitter.on('tlocation', tlocation);
     const tupdate = (obj) => ws.send(JSON.stringify({type: 'TUPDATE', message: obj}));
     globalEventEmitter.on('tupdate', tupdate);
     const wupdate = (obj) => ws.send(JSON.stringify({type: 'WUPDATE', message: obj}));

@@ -206,22 +206,6 @@ function App() {
                         },
                     }));
                     break;
-                case 'TLOCATION':
-                    setServers((servers) => ({
-                        ...servers,
-                        [obj.message.serverId]: {
-                            ...servers[obj.message.serverId],
-                            turtles: {
-                                ...servers[obj.message.serverId].turtles,
-                                [obj.message.id]: {
-                                    ...servers[obj.message.serverId].turtles[obj.message.id],
-                                    location: obj.message.location,
-                                    fuel_level: obj.message.fuel_level,
-                                },
-                            },
-                        },
-                    }));
-                    break;
                 case 'TDISCONNECT':
                     setServers((servers) => ({
                         ...servers,
