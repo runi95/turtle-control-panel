@@ -16,7 +16,7 @@ export interface InventoryProps {
     action: Action;
 }
 
-const canvasSize = 160;
+const canvasSize = 208;
 const canvasRadius = 0.5 * canvasSize;
 
 function Inventory(props: InventoryProps) {

@@ -113,7 +113,7 @@ const TurtleMap = (props: TurtleMapProps) => {
 
                 // Draw lines
                 for (let i = -drawRange; i <= drawRange; i++) {
-                    const lineLength = (i + drawRange) * spriteSize - spriteRadius;
+                    const lineLength = (i + drawRange) * spriteSize - spriteRadius + 0.5;
 
                     // Horizontal
                     ctx.beginPath();
