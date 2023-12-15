@@ -8,12 +8,15 @@
             "type": "node",
             "request": "launch",
             "name": "Debug Server",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
             "cwd": "${workspaceFolder}/server",
-            "program": "${workspaceFolder}/server/src",
-            "outputCapture": "std"
+            "program": "${workspaceFolder}/server/src/index.ts",
+            "sourceMaps": true,
+            "smartStep": true,
+            "internalConsoleOptions": "openOnSessionStart",
+            "preLaunchTask": "npm: build - server",
+            "outFiles": [
+                "${workspaceFolder}/server/dist/**/*.js",
+            ],
         }
     ]
 }
