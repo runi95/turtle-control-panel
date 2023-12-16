@@ -24,7 +24,7 @@ wssWebsite.on('connection', (ws) => {
                                 onlineStatuses: Array.from(getOnlineTurtles()).map((turtle) => ({
                                     serverId: turtle.serverId,
                                     id: turtle.id,
-                                    onlineStatus: turtle.onlineStatus,
+                                    isOnline: turtle.isOnline,
                                 })),
                             },
                         })

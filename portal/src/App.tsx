@@ -137,7 +137,7 @@ export interface Dashboard {
 export interface OnlineStatuses {
     serverId: number;
     id: number;
-    onlineStatus: boolean;
+    isOnline: boolean;
 }
 
 const wssServerUrl = process.env.REACT_APP_WSS_SERVER_URL ?? 'ws://localhost:6868';
@@ -172,7 +172,8 @@ function App() {
                                             (acc[curr.id] = {
                                                 ...curr,
                                                 isOnline: (obj.message.onlineStatuses as OnlineStatuses[]).some(
-                                                    ({serverId, id}) => serverId === server.id && id === curr.id
+                                                    ({serverId, id}) =>
+                                                        serverId === server.id && id === curr.id && curr.isOnline
                                                 ),
                                             }),
                                             acc
