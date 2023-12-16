@@ -62,7 +62,10 @@ export default class DStarLite {
         };
 
         let u: Node | null;
+        let steps = 0;
         while ((u = openHeap.poll()) !== null) {
+            if (steps++ > this.maxSteps) throw new Error(`Reached max steps of ${this.maxSteps}`);
+
             u.visited = true;
             if (compareNodes(u, startNode) >= 0) break;
             if (startNode.rhs > startNode.g) break;
