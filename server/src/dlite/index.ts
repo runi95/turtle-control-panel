@@ -19,6 +19,10 @@ export default class DStarLite {
         this.serverId = serverId;
     }
 
+    public updateNodeState(point: Point, isWall: boolean) {
+        this.cachedNodes.set(`${point.x},${point.y},${point.z}`, new Node(point, isWall));
+    }
+
     public async search(source: Point, destination: Point) {
         const startNode = new Node(source, false);
         this.cachedNodes.set(`${source.x},${source.y},${source.z}`, startNode);

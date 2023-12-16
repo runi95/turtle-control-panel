@@ -3,13 +3,24 @@ import DStarLite from './dlite';
 import {blockToFarmingDetailsMapObject, farmingSeedNames} from './helpers/farming';
 import {getLocalCoordinatesForDirection} from './helpers/coordinates';
 import globalEventEmitter from './globalEventEmitter';
-import logger from './logger/server';
 import {getArea, upsertBlocks} from './db';
 import {Point} from './dlite/Point';
 import {BaseState} from './db/turtle.type';
 import {Block} from './db/block.type';
 
 const turtleMap = new Map();
+
+interface TurtleMoveMetadata {
+    algorithm: DStarLite;
+    targetPoint: Point;
+    solution?: {
+        points: Point[];
+        index: number;
+    };
+    mineableObstaclesMap: {
+        [key: string]: boolean;
+    };
+}
 
 class TurtleController {
     #turtle;
@@ -47,11 +58,7 @@ class TurtleController {
                     await this.#mine();
                     break;
                 case 3:
-                    await this.#moveTo(
-                        (this.#turtle.state as BaseState & {x: number}).x,
-                        (this.#turtle.state as BaseState & {y: number}).y,
-                        (this.#turtle.state as BaseState & {z: number}).z
-                    );
+                    await this.#move();
                     break;
                 case 4:
                     await this.#farm();
@@ -256,6 +263,11 @@ class TurtleController {
     }
 
     async #mine() {
+        if (this.#turtle.state?.meta?.algorithm !== undefined) {
+            await this.#resumeMovement();
+            return;
+        }
+
         const {mineType, mineTarget} = (this.#turtle.state as MiningState).data;
         if (mineType === 'direction') {
             return await this.#mineInDirection(mineTarget);
@@ -286,7 +298,7 @@ class TurtleController {
                         ...this.#turtle.state,
                         data: {
                             ...this.#turtle.state.data,
-                            index: newIndex
+                            index: newIndex,
                         },
                     };
                 }
@@ -364,12 +376,14 @@ class TurtleController {
     }
 
     async #farm(moveContinously = false) {
+        if (this.#turtle.state?.meta?.algorithm !== undefined) {
+            await this.#resumeMovement();
+            return;
+        }
+
         const {areaId, currentAreaFarmIndex} = (this.#turtle.state as FarmingState).data;
         const farmArea = getArea(this.#turtle.serverId, areaId);
-        if (
-            farmArea.area.length > 4 &&
-            (this.#turtle.state as FarmingState)?.data?.noopTiles >= farmArea.area.length
-        ) {
+        if (farmArea.area.length > 4 && (this.#turtle.state as FarmingState)?.data?.noopTiles >= farmArea.area.length) {
             const didSelect = await this.#selectAnySeedInInventory();
             if (!didSelect) {
                 this.#turtle.error = 'No seeds in inventory';
@@ -380,7 +394,7 @@ class TurtleController {
             return;
         }
 
-        await this.#moveTo(
+        await this.#moveToAndMineObstacles(
             farmArea.area[currentAreaFarmIndex].x,
             farmArea.area[currentAreaFarmIndex].y + 1,
             farmArea.area[currentAreaFarmIndex].z
@@ -401,7 +415,7 @@ class TurtleController {
                             data: {
                                 ...this.#turtle.state.data,
                                 noopTiles: 0,
-                            }
+                            },
                         };
                     }
                 } else {
@@ -410,8 +424,8 @@ class TurtleController {
                             ...this.#turtle.state,
                             data: {
                                 ...this.#turtle.state.data,
-                                noopTiles:  ((this.#turtle.state as FarmingState)?.data?.noopTiles ?? 0) + 1
-                            }
+                                noopTiles: ((this.#turtle.state as FarmingState)?.data?.noopTiles ?? 0) + 1,
+                            },
                         };
                     }
                 }
@@ -421,8 +435,8 @@ class TurtleController {
                         ...this.#turtle.state,
                         data: {
                             ...this.#turtle.state.data,
-                            noopTiles: ((this.#turtle.state as FarmingState)?.data?.noopTiles ?? 0) + 1
-                        }
+                            noopTiles: ((this.#turtle.state as FarmingState)?.data?.noopTiles ?? 0) + 1,
+                        },
                     };
                 }
             }
@@ -432,8 +446,8 @@ class TurtleController {
                     ...this.#turtle.state,
                     data: {
                         ...this.#turtle.state.data,
-                        currentAreaFarmIndex: (currentAreaFarmIndex + 1) % farmArea.area.length
-                    }
+                        currentAreaFarmIndex: (currentAreaFarmIndex + 1) % farmArea.area.length,
+                    },
                 };
             }
         } else {
@@ -455,7 +469,7 @@ class TurtleController {
                         data: {
                             ...this.#turtle.state?.data,
                             noopTiles: 0,
-                        }
+                        },
                     } as FarmingState;
                 }
             } else {
@@ -464,7 +478,7 @@ class TurtleController {
                     data: {
                         ...this.#turtle.state?.data,
                         noopTiles: ((this.#turtle.state as FarmingState)?.data?.noopTiles ?? 0) + 1,
-                    }
+                    },
                 } as FarmingState;
             }
 
@@ -474,7 +488,7 @@ class TurtleController {
                     data: {
                         ...this.#turtle.state.data,
                         currentAreaFarmIndex: (currentAreaFarmIndex + 1) % farmArea.area.length,
-                    }
+                    },
                 };
             }
         }
@@ -575,6 +589,110 @@ class TurtleController {
         }
     }
 
+    async #move() {
+        if (this.#turtle.state?.meta?.algorithm !== undefined) {
+            await this.#resumeMovement();
+            return;
+        }
+
+        await this.#moveToAndMineObstacles(
+            this.#turtle.state?.data?.x as number,
+            this.#turtle.state?.data?.y as number,
+            this.#turtle.state?.data?.z as number,
+        );
+    }
+
+    async #moveToPoint(s: Point): Promise<boolean> {
+        const {x, y, z} = this.#turtle.location;
+        if (s.y - y > 0) {
+            const [didMoveUp] = await this.#turtle.up();
+            if (didMoveUp) {
+                return true;
+            }
+
+            const upLocation = `${x},${y + 1},${z}`;
+            if ((this.#turtle?.state?.meta?.mineableObstaclesMap as {[key: string]: boolean})?.[upLocation]) {
+                await this.#turtle.digUp();
+                await this.#turtle.suckUp();
+                await this.#turtle.up();
+                return true;
+            } else {
+                return false;
+            }
+        } else if (s.y - y < 0) {
+            const [didMoveDown] = await this.#turtle.down();
+            if (didMoveDown) {
+                return true;
+            }
+
+            const downLocation = `${x},${y - 1},${z}`;
+            if ((this.#turtle?.state?.meta?.mineableObstaclesMap as {[key: string]: boolean})?.[downLocation]) {
+                await this.#turtle.digDown();
+                await this.#turtle.suckDown();
+                const [didMoveDown] = await this.#turtle.down();
+                if (!didMoveDown) {
+                    return false;
+                }
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            const heading = {x: s.x - x, y: s.y - y, z: s.z - z};
+            const direction = heading.x + Math.abs(heading.x) * 2 + (heading.z + Math.abs(heading.z) * 3);
+            await this.#turnToDirection(direction);
+
+            const [didMoveForwar] = await this.#turtle.forward();
+            if (didMoveForwar) return true;
+
+            const [xChange, zChange] = getLocalCoordinatesForDirection(this.#turtle.direction);
+            const forwardLocation = `${x + xChange},${y},${z + zChange}`;
+            if ((this.#turtle?.state?.meta?.mineableObstaclesMap as {[key: string]: boolean})?.[forwardLocation]) {
+                await this.#digSuckItemAndMoveForward();
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    async #resumeMovement() {
+        if (this.#turtle.state === null) return;
+        if (this.#turtle.state.meta === undefined) return;
+
+        const meta = this.#turtle.state.meta as unknown as TurtleMoveMetadata;
+        if (meta.solution === undefined) {
+            const {x, y, z} = this.#turtle.location;
+            meta.solution = {
+                points: await meta.algorithm.search(new Point(x, y, z), meta.targetPoint),
+                index: 0,
+            };
+        }
+
+        const point = meta.solution.points[meta.solution.index];
+        const didMove = await this.#moveToPoint(point);
+        if (didMove) {
+            meta.solution.index++;
+
+            if (meta.solution.index === meta.solution.points.length) {
+                if (this.#turtle.state?.id === 3) {
+                    this.#turtle.state = null;
+                } else {
+                    this.#turtle.state.meta = undefined;
+                }
+            }
+        } else {
+            if (this.#turtle.fuelLevel < 100) {
+                this.#turtle.error = 'Out of fuel';
+                return;
+            } else {
+                meta.algorithm.updateNodeState(point, true);
+                meta.solution = undefined;
+                return;
+            }
+        }
+    }
+
     async #moveToAndMineObstacles(
         targetX: number,
         targetY: number,
@@ -583,101 +701,24 @@ class TurtleController {
             x: number;
             y: number;
             z: number;
-        }[]
+        }[] = []
     ) {
-        const mineableObstaclesMap = minableBlocksWhitelist.reduce(
-            (acc, curr) => {
-                acc[`${curr.x},${curr.y},${curr.z}`] = true;
-                return acc;
-            },
-            {} as {[key: string]: boolean}
-        );
+        if (this.#turtle.state === null) return;
 
-        let {x: px, y: py, z: pz} = this.#turtle.location;
-        if (!(px === targetX && py === targetY && pz === targetZ)) {
-            let moves = 0;
-            const moveTo = async (s: Point) => {
-                moves++;
-                px = s.x;
-                py = s.y;
-                pz = s.z;
+        const {x, y, z} = this.#turtle.location;
+        if (x === targetX && y === targetY && z === targetZ) return;
 
-                const {x, y, z} = this.#turtle.location;
-                if (py - y > 0) {
-                    const [didMoveUp] = await this.#turtle.up();
-                    if (didMoveUp) {
-                        return true;
-                    }
-
-                    const upLocation = `${x},${y + 1},${z}`;
-                    if (mineableObstaclesMap[upLocation]) {
-                        await this.#turtle.digUp();
-                        await this.#turtle.suckUp();
-                        await this.#turtle.up();
-                        return true;
-                    } else {
-                        return false;
-                    }
-                } else if (py - y < 0) {
-                    const [didMoveDown] = await this.#turtle.down();
-                    if (didMoveDown) {
-                        return true;
-                    }
-
-                    const downLocation = `${x},${y - 1},${z}`;
-                    if (mineableObstaclesMap[downLocation]) {
-                        await this.#turtle.digDown();
-                        await this.#turtle.suckDown();
-                        const [didMoveDown] = await this.#turtle.down();
-                        if (!didMoveDown) {
-                            return false;
-                        }
-                        return true;
-                    } else {
-                        return false;
-                    }
-                } else {
-                    const heading = {x: px - x, y: py - y, z: pz - z};
-                    const direction = heading.x + Math.abs(heading.x) * 2 + (heading.z + Math.abs(heading.z) * 3);
-                    await this.#turnToDirection(direction);
-
-                    const [didMoveForwar] = await this.#turtle.forward();
-                    if (didMoveForwar) return true;
-
-                    const [xChange, zChange] = getLocalCoordinatesForDirection(this.#turtle.direction);
-                    const forwardLocation = `${x + xChange},${y},${z + zChange}`;
-                    if (mineableObstaclesMap[forwardLocation]) {
-                        await this.#digSuckItemAndMoveForward();
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-            };
-
-            const dStarLite = new DStarLite(this.#turtle.serverId);
-            try {
-                const solution = await dStarLite.search(new Point(px, py, pz), new Point(targetX, targetY, targetZ));
-                for (const point of solution) {
-                    const didMove = await moveTo(point);
-                    if (!didMove) {
-                        throw new Error(`Failed to move to (${point.x}, ${point.y}, ${point.z})`);
-                    }
-                }
-
-                logger.debug(`Moves: ${moves}`);
-            } catch (err) {
-                logger.error(err);
-            }
-        }
-
-        if (this.#turtle.state?.id === 3) {
-            this.#turtle.state = null;
-        }
-    }
-
-    async #moveTo(targetX: number, targetY: number, targetZ: number) {
-        return await this.#moveToAndMineObstacles(targetX, targetY, targetZ, []);
+        this.#turtle.state.meta = {
+            mineableObstaclesMap: minableBlocksWhitelist.reduce(
+                (acc, curr) => {
+                    acc[`${curr.x},${curr.y},${curr.z}`] = true;
+                    return acc;
+                },
+                {} as {[key: string]: boolean}
+            ),
+            algorithm: new DStarLite(this.#turtle.serverId),
+            targetPoint: new Point(targetX, targetY, targetZ)
+        };
     }
 }
 
