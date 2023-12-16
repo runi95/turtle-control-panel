@@ -63,7 +63,6 @@ export default class DStarLite {
 
         let u: Node | null;
         while ((u = openHeap.poll()) !== null) {
-            console.log(`Checking: (${u.point.x}, ${u.point.y}, ${u.point.z})`);
             u.visited = true;
             if (compareNodes(u, startNode) >= 0) break;
             if (startNode.rhs > startNode.g) break;
