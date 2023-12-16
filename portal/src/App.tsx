@@ -172,8 +172,8 @@ function App() {
                                             (acc[curr.id] = {
                                                 ...curr,
                                                 isOnline: (obj.message.onlineStatuses as OnlineStatuses[]).some(
-                                                    ({serverId, id}) =>
-                                                        serverId === server.id && id === curr.id && curr.isOnline
+                                                    ({serverId, id, isOnline}) =>
+                                                        serverId === server.id && id === curr.id && isOnline
                                                 ),
                                             }),
                                             acc
