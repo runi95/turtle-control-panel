@@ -32,9 +32,10 @@ export interface Inventory {
 
 export interface BaseState {
     id: number;
-    error?: string;
     name: string;
-    [key: string]: unknown;
+    error?: string;
+    meta?: Record<string, unknown>;
+    data?: Record<string, unknown>;
 }
 
 export interface Location {

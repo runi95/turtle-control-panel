@@ -37,18 +37,22 @@ wss.on('connection', (ws, req) => {
 
 logger.info(`Turtle WebSocket listening on port \x1b[36m${turtleWssPort}\x1b[0m`);
 
-export interface MiningState {
-    mineType: string;
-    mineTarget: string;
+export interface MiningState extends BaseState {
+    data: {
+        mineType: string;
+        mineTarget: string;
+    }
 }
 
-export interface FarmingState {
-    areaId: number;
-    currentAreaFarmIndex: number;
-    noopTiles: number;
+export interface FarmingState extends BaseState {
+    data: {
+        areaId: number;
+        currentAreaFarmIndex: number;
+        noopTiles: number;
+    }
 }
 
-const connectedTurtlesMap = new Map();
+const connectedTurtlesMap = new Map<number, Turtle>();
 export class Turtle implements DBTurtle {
     // Database properties
     public readonly serverId: number;

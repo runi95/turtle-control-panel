@@ -256,7 +256,7 @@ class TurtleController {
     }
 
     async #mine() {
-        const {mineType, mineTarget} = this.#turtle.state as BaseState & MiningState;
+        const {mineType, mineTarget} = (this.#turtle.state as MiningState).data;
         if (mineType === 'direction') {
             return await this.#mineInDirection(mineTarget);
         }
@@ -284,7 +284,10 @@ class TurtleController {
                 if (this.#turtle.state) {
                     this.#turtle.state = {
                         ...this.#turtle.state,
-                        index: newIndex,
+                        data: {
+                            ...this.#turtle.state.data,
+                            index: newIndex
+                        },
                     };
                 }
             } else {
@@ -361,11 +364,11 @@ class TurtleController {
     }
 
     async #farm(moveContinously = false) {
-        const {areaId, currentAreaFarmIndex} = this.#turtle.state as BaseState & FarmingState;
+        const {areaId, currentAreaFarmIndex} = (this.#turtle.state as FarmingState).data;
         const farmArea = getArea(this.#turtle.serverId, areaId);
         if (
             farmArea.area.length > 4 &&
-            (this.#turtle.state as BaseState & FarmingState)?.noopTiles >= farmArea.area.length
+            (this.#turtle.state as FarmingState)?.data?.noopTiles >= farmArea.area.length
         ) {
             const didSelect = await this.#selectAnySeedInInventory();
             if (!didSelect) {
@@ -395,14 +398,20 @@ class TurtleController {
                     if (this.#turtle.state) {
                         this.#turtle.state = {
                             ...this.#turtle.state,
-                            noopTiles: 0,
+                            data: {
+                                ...this.#turtle.state.data,
+                                noopTiles: 0,
+                            }
                         };
                     }
                 } else {
                     if (this.#turtle.state) {
                         this.#turtle.state = {
                             ...this.#turtle.state,
-                            noopTiles: ((this.#turtle.state as BaseState & FarmingState)?.noopTiles ?? 0) + 1,
+                            data: {
+                                ...this.#turtle.state.data,
+                                noopTiles:  ((this.#turtle.state as FarmingState)?.data?.noopTiles ?? 0) + 1
+                            }
                         };
                     }
                 }
@@ -410,7 +419,10 @@ class TurtleController {
                 if (this.#turtle.state) {
                     this.#turtle.state = {
                         ...this.#turtle.state,
-                        noopTiles: ((this.#turtle.state as BaseState & FarmingState)?.noopTiles ?? 0) + 1,
+                        data: {
+                            ...this.#turtle.state.data,
+                            noopTiles: ((this.#turtle.state as FarmingState)?.data?.noopTiles ?? 0) + 1
+                        }
                     };
                 }
             }
@@ -418,7 +430,10 @@ class TurtleController {
             if (this.#turtle.state) {
                 this.#turtle.state = {
                     ...this.#turtle.state,
-                    currentAreaFarmIndex: (currentAreaFarmIndex + 1) % farmArea.area.length,
+                    data: {
+                        ...this.#turtle.state.data,
+                        currentAreaFarmIndex: (currentAreaFarmIndex + 1) % farmArea.area.length
+                    }
                 };
             }
         } else {
@@ -434,23 +449,32 @@ class TurtleController {
                     await this.#farmBlock(farmingBlockToFarmingDetails.seed);
                     shouldMoveForward = true;
                 }
-                if (this.#turtle.state?.noopTiles !== 0) {
+                if (this.#turtle.state?.data?.noopTiles !== 0) {
                     this.#turtle.state = {
                         ...this.#turtle.state,
-                        noopTiles: 0,
-                    } as BaseState & FarmingState;
+                        data: {
+                            ...this.#turtle.state?.data,
+                            noopTiles: 0,
+                        }
+                    } as FarmingState;
                 }
             } else {
                 this.#turtle.state = {
                     ...this.#turtle.state,
-                    noopTiles: ((this.#turtle.state as BaseState & FarmingState)?.noopTiles ?? 0) + 1,
-                } as BaseState & FarmingState;
+                    data: {
+                        ...this.#turtle.state?.data,
+                        noopTiles: ((this.#turtle.state as FarmingState)?.data?.noopTiles ?? 0) + 1,
+                    }
+                } as FarmingState;
             }
 
             if (moveContinously || shouldMoveForward) {
                 this.#turtle.state = {
                     ...this.#turtle.state,
-                    currentAreaFarmIndex: (currentAreaFarmIndex + 1) % farmArea.area.length,
+                    data: {
+                        ...this.#turtle.state.data,
+                        currentAreaFarmIndex: (currentAreaFarmIndex + 1) % farmArea.area.length,
+                    }
                 };
             }
         }

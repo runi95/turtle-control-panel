@@ -248,8 +248,14 @@ export const updateTurtleInventory = (serverId: number, id: number, inventory: I
     setTurtleInventory.run(JSON.stringify(inventory), serverId, id);
 export const updateTurtleStepsSinceLastRefuel = (serverId: number, id: number, stepsSinceLastRefuel: number) =>
     setTurtleStepsSinceLastRefuel.run(stepsSinceLastRefuel, serverId, id);
-export const updateTurtleState = (serverId: number, id: number, state: BaseState | null) =>
-    setTurtleState.run(JSON.stringify(state), serverId, id);
+export const updateTurtleState = (serverId: number, id: number, baseState: BaseState | null) => {
+    if (baseState !== null) {
+        const {meta: _meta, ...state} = baseState;
+        setTurtleState.run(JSON.stringify(state), serverId, id);
+    } else {
+        setTurtleState.run(null, serverId, id);
+    }
+}
 export const updateTurtleLocation = (serverId: number, id: number, location: Location) =>
     setTurtleLocation.run(JSON.stringify(location), serverId, id);
 export const updateTurtleDirection = (serverId: number, id: number, direction: Direction) =>

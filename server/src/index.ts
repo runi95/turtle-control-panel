@@ -45,26 +45,32 @@ wssWebsite.on('connection', (ws) => {
                             turtle.state = {
                                 id: 2,
                                 name: 'mining',
-                                mineType: obj.data.mineType,
-                                mineTarget: obj.data.mineTarget,
+                                data: {
+                                    mineType: obj.data.mineType,
+                                    mineTarget: obj.data.mineTarget
+                                },
                             };
                             break;
                         case 'move':
                             turtle.state = {
                                 id: 3,
                                 name: 'moving',
-                                x: obj.data.x,
-                                y: obj.data.y,
-                                z: obj.data.z,
+                                data: {
+                                    x: obj.data.x,
+                                    y: obj.data.y,
+                                    z: obj.data.z,
+                                }
                             };
                             break;
                         case 'farm':
                             turtle.state = {
                                 id: 4,
                                 name: 'farming',
-                                areaId: obj.data.areaId,
-                                currentAreaFarmIndex: 0,
-                                noopTiles: 0,
+                                data: {
+                                    areaId: obj.data.areaId,
+                                    currentAreaFarmIndex: 0,
+                                    noopTiles: 0,
+                                }
                             };
                             break;
                         case 'stop':
@@ -74,21 +80,27 @@ wssWebsite.on('connection', (ws) => {
                             turtle.state = {
                                 id: 7,
                                 name: 'refreshing inventory',
-                                nextState: turtle.state,
+                                data: {
+                                    nextState: turtle.state,
+                                }
                             };
                             break;
                         case 'craft':
                             turtle.state = {
                                 id: 8,
                                 name: 'craft',
-                                nextState: turtle.state?.id === 8 ? undefined : turtle.state,
+                                data: {
+                                    nextState: turtle.state?.id === 8 ? undefined : turtle.state,
+                                }
                             };
                             break;
                         case 'drop':
                             turtle.state = {
                                 id: 9,
                                 name: 'drop',
-                                nextState: turtle.state,
+                                data: {
+                                    nextState: turtle.state,
+                                }
                             };
                             break;
                         case 'select':
@@ -105,7 +117,9 @@ wssWebsite.on('connection', (ws) => {
                             turtle.state = {
                                 id: 10,
                                 name: 'scan',
-                                nextState: turtle.state
+                                data: {
+                                    nextState: turtle.state
+                                }
                             }
                             break;
                         default:
