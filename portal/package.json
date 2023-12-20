@@ -19,10 +19,12 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@tanstack/react-query": "^5.14.0",
         "@testing-library/jest-dom": "^6.1.4",
         "@testing-library/react": "^14.1.2",
         "@testing-library/user-event": "^14.5.1",
         "bootstrap": "^5.3.2",
+        "fetch": "^1.1.0",
         "react": "^18.2.0",
         "react-bootstrap": "^2.9.1",
         "react-dom": "^18.2.0",

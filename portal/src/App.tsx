@@ -6,6 +6,7 @@ import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import Turtle from './components/turtle/Turtle';
 import useWebSocket, {ReadyState} from 'react-use-websocket';
+import {wssServerUrl} from './api';
 
 export enum Direction {
     West = 1,
@@ -107,7 +108,6 @@ export interface Server {
     name?: string;
     remoteAddress: string;
     turtles: Turtles;
-    blocks: Blocks;
     areas: Areas;
 }
 
@@ -130,7 +130,6 @@ export interface Dashboard {
     name?: string;
     remoteAddress: string;
     turtles: Turtle[];
-    blocks: Block[];
     areas: Area[];
 }
 
@@ -140,15 +139,13 @@ export interface OnlineStatuses {
     isOnline: boolean;
 }
 
-const wssServerUrl = process.env.REACT_APP_WSS_SERVER_URL ?? 'ws://localhost:6868';
-
 function App() {
     const navigate = useNavigate();
     const location = useLocation();
 
     // Public API that will echo messages sent to it back to the client
     const [servers, setServers] = useState<Servers>({});
-    const {sendMessage, readyState} = useWebSocket(wssServerUrl, {
+    const {sendMessage, readyState} = useWebSocket(`${wssServerUrl}/`, {
         onOpen: () => {
             console.info('[open] Connection established');
             sendMessage(JSON.stringify({type: 'HANDSHAKE'}));
@@ -183,10 +180,6 @@ function App() {
                                     areas: server.areas.reduce(
                                         (acc, curr) => ((acc[curr.id] = curr), acc),
                                         {} as {[key: string]: Area}
-                                    ),
-                                    blocks: server.blocks.reduce(
-                                        (acc, curr) => ((acc[`${curr.x.toString()},${curr.y},${curr.z}`] = curr), acc),
-                                        {} as {[key: string]: Block}
                                     ),
                                 }),
                                 acc
@@ -241,34 +234,8 @@ function App() {
                     // TODO: Implement?
                     break;
                 case 'WUPDATE':
-                    setServers((servers) => {
-                        const newServers: Servers = {
-                            ...servers,
-                            [obj.message.serverId]: {
-                                ...servers[obj.message.serverId],
-                                blocks: {
-                                    ...servers[obj.message.serverId].blocks,
-                                },
-                            },
-                        };
-                        for (const block of obj.message.blocks) {
-                            newServers[obj.message.serverId].blocks[`${block.x},${block.y},${block.z}`] = block;
-                        }
-
-                        return newServers;
-                    });
                     break;
                 case 'WDELETE':
-                    setServers((servers) => ({
-                        ...servers,
-                        [obj.message.serverId]: {
-                            ...servers[obj.message.serverId],
-                            blocks: {
-                                ...servers[obj.message.serverId].blocks,
-                                [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message.block,
-                            },
-                        },
-                    }));
                     break;
                 case 'SUPDATE':
                     setServers((servers) => ({

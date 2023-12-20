@@ -83,15 +83,6 @@ const preparedDashboard = db
                 'id', \`a\`.\`id\`,
                 'color', \`a\`.\`color\`,
                 'area', \`a\`.\`area\`
-            )), json_array()),
-            'blocks', iif(\`b\`.\`server_id\` IS NOT NULL, json_group_array(json_object(
-                'serverId', \`b\`.\`server_id\`,
-                'x', \`b\`.\`x\`,
-                'y', \`b\`.\`y\`,
-                'z', \`b\`.\`z\`,
-                'name', \`b\`.\`name\`,
-                'state', json(\`b\`.\`state\`),
-                'tags', json(\`b\`.\`tags\`)
             )), json_array())
         ) FROM \`servers\` AS \`s\`
         LEFT JOIN \`turtles\` AS \`t\` ON \`t\`.\`server_id\` = \`s\`.\`id\`
@@ -136,7 +127,16 @@ const selectBlocks = db.prepare(`SELECT json_object(
     'name', \`b\`.\`name\`,
     'state', json(\`b\`.\`state\`),
     'tags', json(\`b\`.\`tags\`)
-) FROM \`blocks\` AS \`b\` WHERE \`server_id\` = ?`);
+) FROM \`blocks\` AS \`b\`
+    LEFT JOIN
+    (
+        SELECT \`server_id\`, \`x\`, MAX(\`y\`) max, \`z\`
+        FROM \`blocks\`
+        WHERE \`server_id\` = :server_id AND \`x\` >= :from_x AND \`x\` <= :to_x AND \`y\` >= :from_y AND \`y\` <= :to_y AND \`z\` >= :from_z AND \`z\` <= :to_z
+        GROUP BY \`x\`, \`z\`
+    ) \`lb\`
+    ON \`lb\`.\`server_id\` = \`b\`.\`server_id\` AND \`lb\`.\`x\` = \`b\`.\`x\` AND \`lb\`.\`max\` = \`b\`.\`y\` AND \`lb\`.\`z\` = \`b\`.\`z\`
+WHERE \`b\`.\`server_id\` = :server_id AND \`b\`.\`x\` >= :from_x AND \`b\`.\`x\` <= :to_x AND \`b\`.\`y\` >= :from_y AND \`b\`.\`y\` <= :to_y AND \`b\`.\`z\` >= :from_z AND \`b\`.\`z\` <= :to_z`).pluck();
 const selectBlock = db.prepare(`SELECT json_object(
     'serverId', \`b\`.\`server_id\`,
     'x', \`b\`.\`x\`,
@@ -207,7 +207,23 @@ export const upsertTurtle = (
         location: JSON.stringify(location),
         direction,
     });
-export const getBlocks = (serverId: number) => selectBlocks.all(serverId) as Block[];
+export interface GetBlocksOptions {
+    fromX: number;
+    toX: number;
+    fromY: number;
+    toY: number;
+    fromZ: number;
+    toZ: number;
+}
+export const getBlocks = (serverId: number, options: GetBlocksOptions) => selectBlocks.all({
+    server_id: serverId,
+    from_x: options.fromX,
+    to_x: options.toX,
+    from_y: options.fromY,
+    to_y: options.toY,
+    from_z: options.fromZ,
+    to_z: options.toZ
+}).map((block) => JSON.parse(block as string)) as Block[];
 export const getBlock = (serverId: number, x: number, y: number, z: number) => selectBlock.get(serverId, x, y, z) as Block;
 export const upsertBlock = (
     serverId: number,

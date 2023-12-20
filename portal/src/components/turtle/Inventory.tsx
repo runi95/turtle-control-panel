@@ -5,13 +5,12 @@ import MineModal from './MineModal';
 import SpriteTable from '../../SpriteTable';
 import {useState} from 'react';
 import './Inventory.css';
-import {Action, Areas, Blocks, Turtle, Turtles} from '../../App';
+import {Action, Areas, Turtle, Turtles} from '../../App';
 import TurtleMap from './TurtleMap';
 
 export interface InventoryProps {
     turtles: Turtles;
     turtle: Turtle;
-    blocks: Blocks;
     areas: Areas;
     action: Action;
 }
@@ -20,7 +19,7 @@ const canvasSize = 208;
 const canvasRadius = 0.5 * canvasSize;
 
 function Inventory(props: InventoryProps) {
-    const {turtles, turtle, blocks, areas, action} = props;
+    const {turtles, turtle, areas, action} = props;
     const [state, setState] = useState<{isModalShown: boolean; modalState: string | undefined}>({
         isModalShown: false,
         modalState: undefined,
@@ -230,7 +229,6 @@ function Inventory(props: InventoryProps) {
                 style={{border: '1px solid #fff', borderRadius: canvasRadius}}
                 canvasSize={canvasSize}
                 turtles={turtles}
-                blocks={blocks}
                 areas={areas}
                 action={action}
             />

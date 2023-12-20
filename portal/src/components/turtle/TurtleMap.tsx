@@ -5,6 +5,7 @@ import './TurtleMap.css';
 import {useParams} from 'react-router-dom';
 import {Action, Areas, Blocks, Location, Turtle, Turtles} from '../../App';
 import SpriteTable from '../../SpriteTable';
+import {useBlocks} from '../../api/UseBlocks';
 
 const circleSizeMul = 0.35;
 const spriteSize = 8;
@@ -15,14 +16,13 @@ interface TurtleMapProps {
     style?: React.CSSProperties;
     canvasSize: number;
     turtles: Turtles;
-    blocks: Blocks;
     areas: Areas;
     action: Action;
 }
 
 const TurtleMap = (props: TurtleMapProps) => {
     const {serverId, id} = useParams() as {serverId: string; id: string};
-    const {canvasSize, turtles, blocks, areas, action, ...rest} = props;
+    const {canvasSize, turtles, areas, action, ...rest} = props;
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [mousePosition, setMousePosition] = useState<[number, number] | undefined>(undefined);
     const [isCreatingArea, setIsCreatingArea] = useState(false);
@@ -41,6 +41,14 @@ const TurtleMap = (props: TurtleMapProps) => {
     const [yLevel, setYLevel] = useState<number | undefined>(undefined);
     const [upperYLevel, setUpperYLevel] = useState<number | undefined>(undefined);
     const turtle = turtles?.[id];
+    const {data: blocks} = useBlocks(serverId, {
+        fromX: turtle.location.x - 15,
+        toX: turtle.location.x + 15,
+        fromY: turtle.location.y - 10,
+        toY: turtle.location.y + 10,
+        fromZ: turtle.location.z - 15,
+        toZ: turtle.location.z + 15,
+    });
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -53,7 +61,7 @@ const TurtleMap = (props: TurtleMapProps) => {
                 ctx: CanvasRenderingContext2D | null,
                 canvasSize: number,
                 turtles: Turtles,
-                blocks: Blocks,
+                blocks: Blocks | undefined,
                 turtle: Turtle
             ) => {
                 if (!ctx || !turtle || !blocks) {
@@ -414,6 +422,8 @@ const TurtleMap = (props: TurtleMapProps) => {
                             setMousePosition([mouseX, mouseY]);
                         }}
                         onMouseUp={(e) => {
+                            if (!blocks) return;
+
                             if (!isCreatingArea && turtle?.isOnline) {
                                 const {x, y, z} = turtle.location;
                                 const tx =

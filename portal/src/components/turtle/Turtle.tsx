@@ -33,7 +33,6 @@ function Turtle(props: TurtleProps) {
     };
     const {servers, action} = props;
     const turtles = servers?.[serverId]?.turtles;
-    const blocks = servers?.[serverId]?.blocks;
     const turtle = turtles?.[id];
     const areas = servers?.[serverId]?.areas;
 
@@ -128,7 +127,7 @@ function Turtle(props: TurtleProps) {
                 </Col>
             </Row>
             <hr />
-            <Inventory turtles={turtles} turtle={turtle} blocks={blocks} areas={areas} action={action}></Inventory>
+            <Inventory turtles={turtles} turtle={turtle} areas={areas} action={action}></Inventory>
         </Container>
     );
 }
