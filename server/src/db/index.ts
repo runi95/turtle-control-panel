@@ -87,7 +87,6 @@ const preparedDashboard = db
         ) FROM \`servers\` AS \`s\`
         LEFT JOIN \`turtles\` AS \`t\` ON \`t\`.\`server_id\` = \`s\`.\`id\`
         LEFT JOIN \`areas\` AS \`a\` ON \`a\`.\`server_id\` = \`s\`.\`id\`
-        LEFT JOIN \`blocks\` AS \`b\` ON \`b\`.\`server_id\` = \`s\`.\`id\`
         GROUP BY \`s\`.\`id\``
     )
     .pluck();
