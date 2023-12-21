@@ -371,26 +371,28 @@ const TurtleMap = (props: TurtleMapProps) => {
                         height={canvasSize}
                         width={canvasSize}
                         onMouseDown={(e) => {
-                            const tileX =
-                                Math.floor((e.nativeEvent.offsetX - spriteRadius) / spriteSize) * spriteSize +
-                                spriteRadius;
-                            const tileY =
-                                Math.floor((e.nativeEvent.offsetY - spriteRadius) / spriteSize) * spriteSize +
-                                spriteRadius;
+                            if (isCreatingArea) {
+                                const tileX =
+                                    Math.floor((e.nativeEvent.offsetX - spriteRadius) / spriteSize) * spriteSize +
+                                    spriteRadius;
+                                const tileY =
+                                    Math.floor((e.nativeEvent.offsetY - spriteRadius) / spriteSize) * spriteSize +
+                                    spriteRadius;
 
-                            if (createdArea[`${tileX},${tileY}`]) {
-                                delete createdArea[`${tileX},${tileY}`];
-                                setCreatedArea(createdArea);
-                                setIsClearingCreateArea(true);
-                            } else {
-                                setCreatedArea({
-                                    ...createdArea,
-                                    [`${tileX},${tileY}`]: {
-                                        x: tileX,
-                                        y: tileY,
-                                    },
-                                });
-                                setIsClearingCreateArea(false);
+                                if (createdArea[`${tileX},${tileY}`]) {
+                                    delete createdArea[`${tileX},${tileY}`];
+                                    setCreatedArea(createdArea);
+                                    setIsClearingCreateArea(true);
+                                } else {
+                                    setCreatedArea({
+                                        ...createdArea,
+                                        [`${tileX},${tileY}`]: {
+                                            x: tileX,
+                                            y: tileY,
+                                        },
+                                    });
+                                    setIsClearingCreateArea(false);
+                                }
                             }
 
                             setIsMouseDown(true);
