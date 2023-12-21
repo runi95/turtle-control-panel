@@ -102,8 +102,9 @@ const setServerName = db.prepare('UPDATE `servers` SET `name` = ? WHERE `id` = ?
 const selectArea = db.prepare(`SELECT json_object(
     'id', \`a\`.\`id\`,
     'color', \`a\`.\`color\`,
-    'area', \`a\`.\`area\`
-) FROM \`areas\` AS \`a\` WHERE \`server_id\` = ? AND \`id\` = ?`);
+    'name', \`a\`.\`name\`,
+    'area', json(\`a\`.\`area\`)
+) FROM \`areas\` AS \`a\` WHERE \`server_id\` = ? AND \`id\` = ?`).pluck();
 const insertArea = db.prepare('INSERT INTO `areas` (`server_id`, `name`, `color`, `area`) VALUES (?, ?, ?, ?)');
 const selectTurtle = db.prepare(`SELECT json_object(
     'id', \`t\`.\`id\`,
@@ -116,7 +117,7 @@ const selectTurtle = db.prepare(`SELECT json_object(
     'state', json(\`t\`.\`state\`),
     'location', json(\`t\`.\`location\`),
     'direction', \`t\`.\`direction\`
-) FROM \`turtles\` AS \`t\` WHERE \`server_id\` = ? AND \`id\` = ?`);
+) FROM \`turtles\` AS \`t\` WHERE \`server_id\` = ? AND \`id\` = ?`).pluck();
 const insertTurtle = db.prepare(
     'INSERT INTO `turtles` VALUES (:server_id, :id, :name, :fuel_level, :fuel_limit, :selected_slot, :inventory, :steps_since_last_refuel, :state, :location, :direction) ON CONFLICT DO UPDATE SET name = :name, fuel_level = :fuel_level, fuel_limit = :fuel_limit, selected_slot = :selected_slot, inventory = :inventory, steps_since_last_refuel = :steps_since_last_refuel, state = :state, location = :location, direction = :direction'
 );
@@ -146,7 +147,7 @@ const selectBlock = db.prepare(`SELECT json_object(
     'name', \`b\`.\`name\`,
     'state', json(\`b\`.\`state\`),
     'tags', json(\`b\`.\`tags\`)
-) FROM \`blocks\` AS \`b\` WHERE \`server_id\` = ? AND \`x\` = ? AND \`y\` = ? AND \`z\` = ?`);
+) FROM \`blocks\` AS \`b\` WHERE \`server_id\` = ? AND \`x\` = ? AND \`y\` = ? AND \`z\` = ?`).pluck();
 const insertBlock = db.prepare(
     'INSERT INTO `blocks` VALUES (:server_id, :x, :y, :z, :name, :state, :tags) ON CONFLICT DO UPDATE SET `name` = :name, `state` = :state, `tags` = :tags'
 );
@@ -178,10 +179,10 @@ export const upsertServer = (remoteAddress: string, name: string | null) =>
     });
 export const renameServer = (id: number, name: string) => setServerName.run(name, id);
 export const getServerByRemoteAddress = (remoteAddress: string) => selectServerByRemoteAddress.get(remoteAddress) as Server;
-export const getArea = (serverId: number, id: number) => selectArea.get(serverId, id) as Area;
+export const getArea = (serverId: number, id: number) => JSON.parse(selectArea.get(serverId, id) as string) as Area;
 export const addArea = (serverId: number, name: string, color: string, area: JSON) =>
     insertArea.run(serverId, name, color, JSON.stringify(area));
-export const getTurtle = (serverId: number, id: number) => selectTurtle.get(serverId, id) as Turtle;
+export const getTurtle = (serverId: number, id: number) => JSON.parse(selectTurtle.get(serverId, id) as string) as Turtle;
 export const upsertTurtle = (
     serverId: number,
     id: number,
@@ -225,7 +226,7 @@ export const getBlocks = (serverId: number, options: GetBlocksOptions) => select
     from_z: options.fromZ,
     to_z: options.toZ
 }).map((block) => JSON.parse(block as string)) as Block[];
-export const getBlock = (serverId: number, x: number, y: number, z: number) => selectBlock.get(serverId, x, y, z) as Block;
+export const getBlock = (serverId: number, x: number, y: number, z: number) => JSON.parse(selectBlock.get(serverId, x, y, z) as string) as Block;
 export const upsertBlock = (
     serverId: number,
     x: number,
