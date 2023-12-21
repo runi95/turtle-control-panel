@@ -32,7 +32,7 @@ function Inventory(props: InventoryProps) {
                     <FarmModal
                         turtle={turtle}
                         action={action}
-                        areas={Object.keys(areas || {}).map((key) => areas[key].id)}
+                        areas={areas}
                         hideModal={() => setState({...state, isModalShown: false})}
                     />
                 );
@@ -41,7 +41,7 @@ function Inventory(props: InventoryProps) {
                     <MineModal
                         turtle={turtle}
                         action={action}
-                        areas={Object.keys(areas || {}).map((key) => areas[key].id)}
+                        areas={areas}
                         hideModal={() => setState({...state, isModalShown: false})}
                     />
                 );

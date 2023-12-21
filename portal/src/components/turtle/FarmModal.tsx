@@ -1,11 +1,11 @@
 import {useState} from 'react';
 import {Modal, Form, Button, InputGroup} from 'react-bootstrap';
-import {Action, Turtle} from '../../App';
+import {Action, Areas, Turtle} from '../../App';
 
 export interface FarmModalProps {
     action: Action;
     turtle: Turtle;
-    areas: number[];
+    areas: Areas;
     hideModal: () => void;
 }
 
@@ -51,7 +51,9 @@ function FarmModal(props: FarmModalProps) {
                                 -- select an area to farm --
                             </option>
                             {Object.keys(props.areas).map((key) => (
-                                <option key={key}>{props.areas[Number(key)]}</option>
+                                <option key={key} value={props.areas[key].id}>
+                                    {props.areas[key].name}
+                                </option>
                             ))}
                         </Form.Control>
                         <Form.Control.Feedback type='invalid'>Please select a valid area</Form.Control.Feedback>

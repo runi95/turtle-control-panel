@@ -85,7 +85,7 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                                     id: 4,
                                     name: 'farming',
                                     data: {
-                                        areaId: obj.data.areaId,
+                                        areaId: Number(obj.data.areaId),
                                         currentAreaFarmIndex: 0,
                                         noopTiles: 0,
                                     }

@@ -1,12 +1,12 @@
 import {useState} from 'react';
 import {Modal, Form, Button, InputGroup} from 'react-bootstrap';
-import {Action, Turtle} from '../../App';
+import {Action, Areas, Turtle} from '../../App';
 
 export interface MineModalProps {
     turtle: Turtle;
     action: Action;
     hideModal: () => void;
-    areas: number[];
+    areas: Areas;
 }
 
 function MineModal(props: MineModalProps) {
@@ -80,7 +80,9 @@ function MineModal(props: MineModalProps) {
                                     -- select an area to mine --
                                 </option>
                                 {Object.keys(props.areas).map((key) => (
-                                    <option key={key}>{props.areas[Number(key)]}</option>
+                                    <option key={key} value={props.areas[key].id}>
+                                        {props.areas[key].name}
+                                    </option>
                                 ))}
                             </Form.Control>
                             <Form.Control.Feedback type='invalid'>Please select a valid area</Form.Control.Feedback>
