@@ -226,7 +226,11 @@ export const getBlocks = (serverId: number, options: GetBlocksOptions) => select
     from_z: options.fromZ,
     to_z: options.toZ
 }).map((block) => JSON.parse(block as string)) as Block[];
-export const getBlock = (serverId: number, x: number, y: number, z: number) => JSON.parse(selectBlock.get(serverId, x, y, z) as string) as Block;
+export const getBlock = (serverId: number, x: number, y: number, z: number) => {
+    const block = selectBlock.get(serverId, x, y, z);
+    if (!block) return null;
+    return JSON.parse(block as string) as Block;
+};
 export const upsertBlock = (
     serverId: number,
     x: number,
