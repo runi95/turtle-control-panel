@@ -670,9 +670,6 @@ class TurtleController {
         }
 
         const point = meta.solution.points[meta.solution.index];
-        if (point === undefined) {
-            // console.log(meta);
-        }
         const didMove = await this.#moveToPoint(point);
         if (didMove) {
             meta.solution.index++;
