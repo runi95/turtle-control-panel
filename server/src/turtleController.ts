@@ -274,7 +274,7 @@ class TurtleController {
         }
 
         const item = await this.#turtle.getItemDetail(16);
-        if (item !== undefined) {
+        if (item !== null) {
             this.#turtle.error = 'Inventory is full';
             return;
         }
