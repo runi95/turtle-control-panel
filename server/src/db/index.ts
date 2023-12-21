@@ -82,7 +82,7 @@ const preparedDashboard = db
             'areas', iif(\`a\`.\`id\` IS NOT NULL, json_group_array(json_object(
                 'id', \`a\`.\`id\`,
                 'color', \`a\`.\`color\`,
-                'area', \`a\`.\`area\`
+                'area', json(\`a\`.\`area\`)
             )), json_array())
         ) FROM \`servers\` AS \`s\`
         LEFT JOIN \`turtles\` AS \`t\` ON \`t\`.\`server_id\` = \`s\`.\`id\`
