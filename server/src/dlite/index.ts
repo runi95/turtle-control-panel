@@ -23,14 +23,9 @@ export default class DStarLite {
         this.cachedNodes.set(`${point.x},${point.y},${point.z}`, new Node(point, isWall));
     }
 
-    public async search(source: Point, destination: Point) {
+    public async search(source: Point, destinations: Point[]) {
         const startNode = new Node(source, false);
         this.cachedNodes.set(`${source.x},${source.y},${source.z}`, startNode);
-        const destinationNode = new Node(destination, false);
-        this.cachedNodes.set(`${destination.x},${destination.y},${destination.z}`, destinationNode);
-
-        destinationNode.rhs = 0;
-        destinationNode.key = [heuristic.calculate(startNode.point, destinationNode.point), 0];
 
         const compareKey = (a: [number, number], b: [number, number]) => {
             if (a[0] > b[0]) {
@@ -54,7 +49,17 @@ export default class DStarLite {
         const compareNodes = (a: Node, b: Node) => compareKey(a.key, b.key);
 
         const openHeap = new PriorityQueue<Node>(compareNodes);
-        openHeap.add(destinationNode);
+        const destinationNodes: Node[] = [];
+        for (const destination of destinations) {
+
+            const destinationNode = new Node(destination, false);
+            this.cachedNodes.set(`${destination.x},${destination.y},${destination.z}`, destinationNode);
+    
+            destinationNode.rhs = 0;
+            destinationNode.key = [heuristic.calculate(startNode.point, destinationNode.point), 0];
+            openHeap.add(destinationNode);
+            destinationNodes.push(destinationNode);
+        }
 
         const updateVertex = (u: Node) => {
             openHeap.remove(u);
@@ -84,7 +89,7 @@ export default class DStarLite {
                 const pred: Node[] = this.succ(u);
                 for (const s of pred) {
                     s.parent = u;
-                    if (s !== destinationNode) {
+                    if (!destinationNodes.includes(s)) {
                         s.rhs = Math.min(s.rhs, this.c(s, u) + u.g);
                     }
 
@@ -97,7 +102,7 @@ export default class DStarLite {
                 pred.push(u);
                 for (const s of pred) {
                     if (s.rhs === this.c(s, u) + g_old) {
-                        if (s !== destinationNode) {
+                        if (!destinationNodes.includes(s)) {
                             let min_s = Number.POSITIVE_INFINITY;
                             let nparent = null;
                             const succ: Node[] = this.succ(u);
@@ -128,10 +133,8 @@ export default class DStarLite {
                 curr = curr.parent;
             }
 
-            if (!destinationNode.isWall) {
-                ret.push(destination);
-            }
-            
+            ret.push(curr.point);
+
             return ret;
         }
 

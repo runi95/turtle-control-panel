@@ -5,14 +5,14 @@ import {getLocalCoordinatesForDirection} from './helpers/coordinates';
 import globalEventEmitter from './globalEventEmitter';
 import {getArea, upsertBlocks} from './db';
 import {Point} from './dlite/Point';
-import {BaseState} from './db/turtle.type';
+import {BaseState, Location} from './db/turtle.type';
 import {Block} from './db/block.type';
 
 const turtleMap = new Map();
 
 interface TurtleMoveMetadata {
     algorithm: DStarLite;
-    targetPoint: Point;
+    targetPoints: Point[];
     solution?: {
         points: Point[];
         index: number;
@@ -289,7 +289,7 @@ class TurtleController {
             }
 
             const mineTargetArea = mineArea.area[currentIndex];
-            await this.#moveToAndMineObstacles(mineTargetArea.x, mineTargetArea.y, mineTargetArea.z, mineArea.area);
+            await this.#moveToAndMineObstacles(mineArea.area, mineArea.area);
 
             const newIndex = currentIndex + 1;
             if (newIndex < mineArea.area.length) {
@@ -394,11 +394,11 @@ class TurtleController {
             return;
         }
 
-        await this.#moveToAndMineObstacles(
-            farmArea.area[currentAreaFarmIndex].x,
-            farmArea.area[currentAreaFarmIndex].y + 1,
-            farmArea.area[currentAreaFarmIndex].z
-        );
+        await this.#moveToAndMineObstacles([{
+            x: farmArea.area[currentAreaFarmIndex].x,
+            y: farmArea.area[currentAreaFarmIndex].y + 1,
+            z: farmArea.area[currentAreaFarmIndex].z
+        }]);
         const block = await this.#turtle.inspectDown();
 
         // Sow if possible
@@ -595,11 +595,11 @@ class TurtleController {
             return;
         }
 
-        await this.#moveToAndMineObstacles(
-            this.#turtle.state?.data?.x as number,
-            this.#turtle.state?.data?.y as number,
-            this.#turtle.state?.data?.z as number,
-        );
+        await this.#moveToAndMineObstacles([{
+            x: this.#turtle.state?.data?.x as number,
+            y: this.#turtle.state?.data?.y as number,
+            z: this.#turtle.state?.data?.z as number,
+        }]);
     }
 
     async #moveToPoint(s: Point): Promise<boolean> {
@@ -664,12 +664,15 @@ class TurtleController {
         if (meta.solution === undefined) {
             const {x, y, z} = this.#turtle.location;
             meta.solution = {
-                points: await meta.algorithm.search(new Point(x, y, z), meta.targetPoint),
+                points: await meta.algorithm.search(new Point(x, y, z), meta.targetPoints),
                 index: 0,
             };
         }
 
         const point = meta.solution.points[meta.solution.index];
+        if (point === undefined) {
+            // console.log(meta);
+        }
         const didMove = await this.#moveToPoint(point);
         if (didMove) {
             meta.solution.index++;
@@ -694,9 +697,7 @@ class TurtleController {
     }
 
     async #moveToAndMineObstacles(
-        targetX: number,
-        targetY: number,
-        targetZ: number,
+        possibleDestinations: Location[],
         minableBlocksWhitelist: {
             x: number;
             y: number;
@@ -704,9 +705,9 @@ class TurtleController {
         }[] = []
     ) {
         if (this.#turtle.state === null) return;
-
+        
         const {x, y, z} = this.#turtle.location;
-        if (x === targetX && y === targetY && z === targetZ) return;
+        if (possibleDestinations.some(({x: targetX, y: targetY, z: targetZ}) => x === targetX && y === targetY && z === targetZ)) return;
 
         this.#turtle.state.meta = {
             mineableObstaclesMap: minableBlocksWhitelist.reduce(
@@ -717,7 +718,7 @@ class TurtleController {
                 {} as {[key: string]: boolean}
             ),
             algorithm: new DStarLite(this.#turtle.serverId),
-            targetPoint: new Point(targetX, targetY, targetZ)
+            targetPoints: possibleDestinations.map(({x: targetX, y: targetY, z: targetZ}) => new Point(targetX, targetY, targetZ))
         };
     }
 }
