@@ -37,6 +37,7 @@ db.exec(
     `CREATE TABLE IF NOT EXISTS \`areas\` (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     server_id INT NOT NULL,
+    name VARCHAR(32) NOT NULL,
     color INT NOT NULL,
     area JSON NOT NULL,
     FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
@@ -81,6 +82,7 @@ const preparedDashboard = db
             )), json_array()),
             'areas', iif(\`a\`.\`id\` IS NOT NULL, json_group_array(json_object(
                 'id', \`a\`.\`id\`,
+                'name', \`a\`.\`name\`,
                 'color', \`a\`.\`color\`,
                 'area', json(\`a\`.\`area\`)
             )), json_array())
@@ -102,7 +104,7 @@ const selectArea = db.prepare(`SELECT json_object(
     'color', \`a\`.\`color\`,
     'area', \`a\`.\`area\`
 ) FROM \`areas\` AS \`a\` WHERE \`server_id\` = ? AND \`id\` = ?`);
-const insertArea = db.prepare('INSERT INTO `areas` (`server_id`, `color`, `area`) VALUES (?, ?, ?)');
+const insertArea = db.prepare('INSERT INTO `areas` (`server_id`, `name`, `color`, `area`) VALUES (?, ?, ?, ?)');
 const selectTurtle = db.prepare(`SELECT json_object(
     'id', \`t\`.\`id\`,
     'name', \`t\`.\`name\`,
@@ -177,8 +179,8 @@ export const upsertServer = (remoteAddress: string, name: string | null) =>
 export const renameServer = (id: number, name: string) => setServerName.run(name, id);
 export const getServerByRemoteAddress = (remoteAddress: string) => selectServerByRemoteAddress.get(remoteAddress) as Server;
 export const getArea = (serverId: number, id: number) => selectArea.get(serverId, id) as Area;
-export const addArea = (serverId: number, color: string, area: JSON) =>
-    insertArea.run(serverId, color, JSON.stringify(area));
+export const addArea = (serverId: number, name: string, color: string, area: JSON) =>
+    insertArea.run(serverId, name, color, JSON.stringify(area));
 export const getTurtle = (serverId: number, id: number) => selectTurtle.get(serverId, id) as Turtle;
 export const upsertTurtle = (
     serverId: number,

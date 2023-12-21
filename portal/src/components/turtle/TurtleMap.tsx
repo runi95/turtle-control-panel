@@ -168,10 +168,10 @@ const TurtleMap = (props: TurtleMapProps) => {
                     }
 
                     ctx.textAlign = 'start';
-                    ctx.font = '12px Ariel';
+                    ctx.font = '10px Tahoma';
                     ctx.lineWidth = 4;
-                    ctx.strokeText(areas[key].id.toString(), smallestX, smallestY - spriteRadius);
-                    ctx.fillText(areas[key].id.toString(), smallestX, smallestY - spriteRadius);
+                    ctx.strokeText(areas[key].name.toString(), smallestX, smallestY - spriteRadius);
+                    ctx.fillText(areas[key].name.toString(), smallestX, smallestY - spriteRadius);
                 }
 
                 // Draw creatingArea
@@ -270,7 +270,7 @@ const TurtleMap = (props: TurtleMapProps) => {
                 action: 'create',
                 data: {
                     serverId,
-                    id: areaName,
+                    name: areaName,
                     color: selectedColor,
                     area,
                 },

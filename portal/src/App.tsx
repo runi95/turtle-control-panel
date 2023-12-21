@@ -96,6 +96,7 @@ export interface Blocks {
 export interface Area {
     id: number;
     color: string;
+    name: string;
     area: Location[];
 }
 

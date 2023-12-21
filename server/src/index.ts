@@ -148,7 +148,7 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                     case 'AREA':
                         switch (obj.action) {
                             case 'create':
-                                addArea(obj.data.serverId, obj.data.color, obj.data.area);
+                                addArea(obj.data.serverId, obj.data.name, obj.data.color, obj.data.area);
                                 break;
                             default:
                                 logger.warn(`Received invalid AREA action [${obj.action}]`);
