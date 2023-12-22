@@ -263,14 +263,16 @@ class TurtleController {
     }
 
     async #mine() {
-        if (this.#turtle.state?.meta?.algorithm !== undefined) {
-            await this.#resumeMovement();
-            return;
-        }
-
         const {mineType, mineTarget} = (this.#turtle.state as MiningState).data;
         if (mineType === 'direction') {
             return await this.#mineInDirection(mineTarget);
+        } else if (mineType === 'yLevel') {
+            return await this.#mineToYLevel(Number(mineTarget));
+        }
+        
+        if (this.#turtle.state?.meta?.algorithm !== undefined) {
+            await this.#resumeMovement();
+            return;
         }
 
         const item = await this.#turtle.getItemDetail(16);
@@ -279,9 +281,7 @@ class TurtleController {
             return;
         }
 
-        if (mineType === 'ylevel') {
-            return await this.#mineToYLevel(Number(mineTarget));
-        } else if (mineType === 'area') {
+        if (mineType === 'area') {
             const currentIndex = (this.#turtle.state as BaseState & {index?: number})?.index || 0;
             const mineArea = getArea(this.#turtle.serverId, Number(mineTarget));
             if (mineArea === undefined) {
