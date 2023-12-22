@@ -24,6 +24,8 @@ export default class DStarLite {
     }
 
     public async search(source: Point, destinations: Point[]) {
+        if (destinations.some((d) => d.x === source.x && d.y === source.y && d.z === source.z)) return [];
+
         const startNode = new Node(source, false);
         this.cachedNodes.set(`${source.x},${source.y},${source.z}`, startNode);
 
