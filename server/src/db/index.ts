@@ -1,8 +1,10 @@
 import Database from 'better-sqlite3';
 import {Server} from './server.type';
 import {Block, BlockState, BlockTags} from './block.type';
-import {BaseState, Direction, Inventory, Location, Turtle} from './turtle.type';
+import {Direction, Inventory, Location, Turtle} from './turtle.type';
 import {Area} from './area.type';
+import {StateData} from '../entities/states/base';
+import {StateDataTypes} from '../entities/states/helpers';
 
 const db = new Database('db/server.db');
 db.pragma('journal_mode = WAL');
@@ -192,7 +194,7 @@ export const upsertTurtle = (
     selectedSlot: number,
     inventory: Inventory,
     stepsSinceLastRefuel: number,
-    state: BaseState | null,
+    state: StateData<StateDataTypes> | null,
     location: Location,
     direction: Direction
 ) =>
@@ -270,10 +272,9 @@ export const updateTurtleInventory = (serverId: number, id: number, inventory: I
     setTurtleInventory.run(JSON.stringify(inventory), serverId, id);
 export const updateTurtleStepsSinceLastRefuel = (serverId: number, id: number, stepsSinceLastRefuel: number) =>
     setTurtleStepsSinceLastRefuel.run(stepsSinceLastRefuel, serverId, id);
-export const updateTurtleState = (serverId: number, id: number, baseState: BaseState | null) => {
-    if (baseState !== null) {
-        const {meta: _meta, ...state} = baseState;
-        setTurtleState.run(JSON.stringify(state), serverId, id);
+export const updateTurtleState = (serverId: number, id: number, stateData: StateData<StateDataTypes> | null) => {
+    if (stateData !== null) {
+        setTurtleState.run(JSON.stringify(stateData), serverId, id);
     } else {
         setTurtleState.run(null, serverId, id);
     }

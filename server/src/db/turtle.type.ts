@@ -1,3 +1,6 @@
+import {StateData} from '../entities/states/base';
+import {StateDataTypes} from '../entities/states/helpers';
+
 export enum Direction {
     West = 1,
     North = 2,
@@ -30,14 +33,6 @@ export interface Inventory {
     [key: number]: ItemDetail | undefined;
 }
 
-export interface BaseState {
-    id: number;
-    name: string;
-    error?: string;
-    meta?: Record<string, unknown>;
-    data?: Record<string, unknown>;
-}
-
 export interface Location {
     x: number;
     y: number;
@@ -52,7 +47,7 @@ export interface Turtle {
     selectedSlot: number;
     inventory: Inventory;
     stepsSinceLastRefuel: number;
-    state: BaseState | null;
+    state: StateData<StateDataTypes> | null;
     location: Location;
     direction: Direction;
 }

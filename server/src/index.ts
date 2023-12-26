@@ -7,6 +7,12 @@ import logger from './logger/server';
 import {addArea, getBlocks, getDashboard, renameServer} from './db';
 import {Turtle} from './db/turtle.type';
 import {Block} from './db/block.type';
+import {TurtleFarmingState} from './entities/states/farming';
+import {TurtleRefuelingState} from './entities/states/refueling';
+import {TurtleMoveState} from './entities/states/move';
+import {TurtleMiningState} from './entities/states/mining';
+import {TurtleScanState} from './entities/states/scan';
+import {TURTLE_STATES} from './entities/states/helpers';
 
 logger.info('Starting server...');
 
@@ -57,69 +63,38 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
     
                         switch (obj.action) {
                             case 'refuel':
-                                turtle.state = {id: 1, name: 'refueling'};
+                                turtle.state = new TurtleRefuelingState(turtle);
                                 break;
                             case 'mine':
-                                turtle.state = {
-                                    id: 2,
-                                    name: 'mining',
-                                    data: {
-                                        mineType: obj.data.mineType,
-                                        mineTarget: obj.data.mineTarget
-                                    },
-                                };
+                                turtle.state = new TurtleMiningState(turtle, {
+                                    areaId: Number(obj.data.mineTarget),
+                                    currentAreaFarmIndex: 0
+                                });
                                 break;
                             case 'move':
-                                turtle.state = {
-                                    id: 3,
-                                    name: 'moving',
-                                    data: {
-                                        x: obj.data.x,
-                                        y: obj.data.y,
-                                        z: obj.data.z,
-                                    }
-                                };
+                                turtle.state = new TurtleMoveState(turtle, {
+                                    x: obj.data.x,
+                                    y: obj.data.y,
+                                    z: obj.data.z
+                                });
                                 break;
                             case 'farm':
-                                turtle.state = {
-                                    id: 4,
-                                    name: 'farming',
-                                    data: {
-                                        areaId: Number(obj.data.areaId),
-                                        currentAreaFarmIndex: 0,
-                                        noopTiles: 0,
-                                    }
-                                };
+                                turtle.state = new TurtleFarmingState(turtle, {
+                                    areaId: Number(obj.data.areaId),
+                                    currentAreaFarmIndex: 0
+                                });
                                 break;
                             case 'stop':
                                 turtle.state = null;
                                 break;
                             case 'refresh-inventory':
-                                turtle.state = {
-                                    id: 7,
-                                    name: 'refreshing inventory',
-                                    data: {
-                                        nextState: turtle.state,
-                                    }
-                                };
+                                turtle.refreshInventoryState();
                                 break;
                             case 'craft':
-                                turtle.state = {
-                                    id: 8,
-                                    name: 'craft',
-                                    data: {
-                                        nextState: turtle.state?.id === 8 ? undefined : turtle.state,
-                                    }
-                                };
+                                turtle.craft();
                                 break;
                             case 'drop':
-                                turtle.state = {
-                                    id: 9,
-                                    name: 'drop',
-                                    data: {
-                                        nextState: turtle.state,
-                                    }
-                                };
+                                turtle.drop();
                                 break;
                             case 'select':
                                 turtle.select(obj.data.slot + 1);
@@ -132,13 +107,7 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                                 turtle.direction = obj.data.direction;
                                 break;
                             case 'scan':
-                                turtle.state = {
-                                    id: 10,
-                                    name: 'scan',
-                                    data: {
-                                        nextState: turtle.state
-                                    }
-                                }
+                                turtle.state = new TurtleScanState(turtle);
                                 break;
                             default:
                                 logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);

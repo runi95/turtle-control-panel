@@ -7,6 +7,9 @@ export interface BlockTags {
 }
 
 export interface Block {
+    x: number;
+    y: number;
+    z: number;
     state: BlockState;
     name: string;
     tags: BlockTags;

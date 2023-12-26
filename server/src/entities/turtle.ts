@@ -1,7 +1,6 @@
 import WebSocket, {WebSocketServer} from 'ws';
 import {v4 as uuid4} from 'uuid';
 import globalEventEmitter from '../globalEventEmitter';
-import {removeTurtle, addTurtle} from '../turtleController';
 import nameList from '../names';
 import {getLocalCoordinatesForDirection} from '../helpers/coordinates';
 import turtleLogLevel from '../logger/turtle';
@@ -26,7 +25,14 @@ import {
     getServerByRemoteAddress,
 } from '../db';
 import {Block} from '../db/block.type';
-import {BaseState, Turtle as DBTurtle, Direction, Inventory, ItemDetail, Location} from '../db/turtle.type';
+import {Direction, Inventory, ItemDetail, Location} from '../db/turtle.type';
+import {StateData, TurtleBaseState} from './states/base';
+import {StateDataTypes, TURTLE_STATES} from './states/helpers';
+import {FarmingStateData, TurtleFarmingState} from './states/farming';
+import {MovingStateData, TurtleMoveState} from './states/move';
+import {MiningStateData, TurtleMiningState} from './states/mining';
+import {TurtleRefuelingState} from './states/refueling';
+import {TurtleScanState} from './states/scan';
 
 const turtleWssPort = process.env.TURTLE_WSS_PORT ? Number(process.env.TURTLE_WSS_PORT) : 5757;
 const wss = new WebSocketServer({port: turtleWssPort});
@@ -37,23 +43,8 @@ wss.on('connection', (ws, req) => {
 
 logger.info(`Turtle WebSocket listening on port \x1b[36m${turtleWssPort}\x1b[0m`);
 
-export interface MiningState extends BaseState {
-    data: {
-        mineType: string;
-        mineTarget: string;
-    }
-}
-
-export interface FarmingState extends BaseState {
-    data: {
-        areaId: number;
-        currentAreaFarmIndex: number;
-        noopTiles: number;
-    }
-}
-
 const connectedTurtlesMap = new Map<number, Turtle>();
-export class Turtle implements DBTurtle {
+export class Turtle {
     // Database properties
     public readonly serverId: number;
     public readonly id: number;
@@ -65,13 +56,14 @@ export class Turtle implements DBTurtle {
     #selectedSlot: number;
     #inventory: Inventory;
     #stepsSinceLastRefuel: number;
-    #state: BaseState | null;
+    #state: TurtleBaseState<StateDataTypes> | null;
     #location: Location;
     #direction: Direction;
 
     // Private properties
     private readonly ws;
     private lastPromise: Promise<unknown> = new Promise<void>((resolve) => resolve());
+    private actTimeout: NodeJS.Timeout | null = null;
 
     constructor(
         serverId: number,
@@ -83,7 +75,7 @@ export class Turtle implements DBTurtle {
         selectedSlot: number,
         inventory: Inventory,
         stepsSinceLastRefuel: number,
-        state: BaseState | null,
+        state: StateData<StateDataTypes> | null,
         location: Location,
         direction: Direction,
         ws: WebSocket
@@ -97,7 +89,7 @@ export class Turtle implements DBTurtle {
         this.#selectedSlot = selectedSlot;
         this.#inventory = inventory;
         this.#stepsSinceLastRefuel = stepsSinceLastRefuel;
-        this.#state = state;
+        this.#state = this.getRecoveredState(state);
         this.#location = location;
         this.#direction = direction;
 
@@ -119,7 +111,6 @@ export class Turtle implements DBTurtle {
                     this.id ?? '<uninitialized turtle>'
                 }] has disconnected with code ${code} and message ${message?.toString() || '<none>'}`
             );
-            removeTurtle(this);
             if (this.id) {
                 connectedTurtlesMap.delete(this.id);
                 this.isOnline = false;
@@ -231,14 +222,25 @@ export class Turtle implements DBTurtle {
         updateTurtleStepsSinceLastRefuel(this.serverId, this.id, this.stepsSinceLastRefuel);
     }
 
+    private runActLoop() {
+        const cb = async () => {
+            await this.state?.act();
+            if (this.state !== null) {
+                this.runActLoop();
+            }
+        };
+        this.actTimeout = setTimeout(cb, 0);
+    }
+
     /**
-     * Undefined: Standby
+     * Null = Standby
      */
     public get state() {
         return this.#state;
     }
 
-    public set state(state: BaseState | null) {
+    public set state(state: TurtleBaseState<StateDataTypes> | null) {
+        const previousStateWasNull = this.state === null;
         this.#state = state;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -247,15 +249,37 @@ export class Turtle implements DBTurtle {
                 state: this.state ?? null,
             },
         });
-        updateTurtleState(this.serverId, this.id, this.state ?? null);
+        updateTurtleState(this.serverId, this.id, this.state?.data ?? null);
+
+        if (state === null && this.actTimeout !== null) {
+            clearTimeout(this.actTimeout);
+        } else if (previousStateWasNull) {
+            this.runActLoop();
+        }
+    }
+
+    private getRecoveredState(data: StateData<StateDataTypes> | null): TurtleBaseState<StateDataTypes> | null {
+        if (data === null) return null;
+
+        switch (data.id) {
+            case TURTLE_STATES.FARMING:
+                return new TurtleFarmingState(this, data as FarmingStateData);
+            case TURTLE_STATES.MOVING:
+                return new TurtleMoveState(this, data as MovingStateData);
+            case TURTLE_STATES.REFUELING:
+                return new TurtleRefuelingState(this);
+            case TURTLE_STATES.MINING:
+                return new TurtleMiningState(this, data as MiningStateData);
+            case TURTLE_STATES.SCANNING:
+                return new TurtleScanState(this);
+            default:
+                return null;
+        }
     }
 
     public set error(message: string) {
         if (this.state) {
-            this.state = {
-                ...this.state,
-                error: message,
-            };
+            this.state.error = message;
         }
     }
 
@@ -285,7 +309,7 @@ export class Turtle implements DBTurtle {
         return this.#direction;
     }
 
-    public set direction(direction) {
+    public set direction(direction: Direction) {
         this.#direction = direction;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -465,6 +489,18 @@ export class Turtle implements DBTurtle {
             deleteBlock(this.serverId, this.location.x, this.location.y, this.location.z);
         }
         return down;
+    }
+
+    public async turnToDirection(direction: Direction) {
+        const turn = (direction - this.direction + 4) % 4;
+        if (turn === 1) {
+            await this.turnRight();
+        } else if (turn === 2) {
+            await this.turnLeft();
+            await this.turnLeft();
+        } else if (turn === 3) {
+            await this.turnLeft();
+        }
     }
 
     /**
@@ -1332,7 +1368,6 @@ const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
                 direction,
             },
         });
-        addTurtle(turtle);
         upsertTurtle(
             serverId,
             id,

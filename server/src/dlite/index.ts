@@ -2,6 +2,8 @@ import {PriorityQueue} from './PriorityQueue';
 import {Node} from './Node';
 import {Point} from './Point';
 import {getBlock} from '../db';
+import {Block} from '../db/block.type';
+import logger from '../logger/server';
 
 const heuristic = {
     calculate(a: Point, b: Point): number {
@@ -9,25 +11,31 @@ const heuristic = {
     },
 };
 
+export type IsBlockMineableFunc = (x: number, y: number, z: number, block: Block | null) => boolean;
+export interface DStarLiteOptions {
+    maxSteps?: number;
+    isBlockMineableFunc?: IsBlockMineableFunc;
+}
+
 export default class DStarLite {
     private readonly maxSteps: number;
     private readonly serverId: number;
-    private readonly cachedNodes = new Map<string, Node>();
+    private readonly cachedBlocks = new Map<string, Block | null>();
+    private readonly isBlockMineableFunc: IsBlockMineableFunc | null;
 
-    constructor(serverId: number, maxSteps = 80000) {
-        this.maxSteps = maxSteps;
+    constructor(serverId: number, options?: DStarLiteOptions) {
         this.serverId = serverId;
-    }
-
-    public updateNodeState(point: Point, isWall: boolean) {
-        this.cachedNodes.set(`${point.x},${point.y},${point.z}`, new Node(point, isWall));
+        this.maxSteps = options?.maxSteps ?? 80000;
+        this.isBlockMineableFunc = options?.isBlockMineableFunc ?? null;
     }
 
     public async search(source: Point, destinations: Point[]) {
-        if (destinations.some((d) => d.x === source.x && d.y === source.y && d.z === source.z)) return [];
+        if (destinations.length === 0) return null;
+        if (destinations.some((d) => d.x === source.x && d.y === source.y && d.z === source.z)) return null;
 
-        const startNode = new Node(source, false);
-        this.cachedNodes.set(`${source.x},${source.y},${source.z}`, startNode);
+        const startNode = new Node(source, false, false);
+        const cachedNodes = new Map<string, Node>();
+        cachedNodes.set(`${source.x},${source.y},${source.z}`, startNode);
 
         const compareKey = (a: [number, number], b: [number, number]) => {
             if (a[0] > b[0]) {
@@ -53,9 +61,8 @@ export default class DStarLite {
         const openHeap = new PriorityQueue<Node>(compareNodes);
         const destinationNodes: Node[] = [];
         for (const destination of destinations) {
-
-            const destinationNode = new Node(destination, false);
-            this.cachedNodes.set(`${destination.x},${destination.y},${destination.z}`, destinationNode);
+            const destinationNode = this.getCachedNode(cachedNodes, destination.x, destination.y, destination.z);
+            cachedNodes.set(`${destination.x},${destination.y},${destination.z}`, destinationNode);
     
             destinationNode.rhs = 0;
             destinationNode.key = [heuristic.calculate(startNode.point, destinationNode.point), 0];
@@ -88,7 +95,7 @@ export default class DStarLite {
                 openHeap.add(u);
             } else if (u.g > u.rhs) {
                 u.g = u.rhs;
-                const pred: Node[] = this.succ(u);
+                const pred: Node[] = this.succ(u, cachedNodes);
                 for (const s of pred) {
                     s.parent = u;
                     if (!destinationNodes.includes(s)) {
@@ -100,14 +107,14 @@ export default class DStarLite {
             } else {
                 const g_old = u.g;
                 u.g = Number.POSITIVE_INFINITY;
-                const pred: Node[] = this.succ(u);
+                const pred: Node[] = this.succ(u, cachedNodes);
                 pred.push(u);
                 for (const s of pred) {
                     if (s.rhs === this.c(s, u) + g_old) {
                         if (!destinationNodes.includes(s)) {
                             let min_s = Number.POSITIVE_INFINITY;
                             let nparent = null;
-                            const succ: Node[] = this.succ(u);
+                            const succ: Node[] = this.succ(u, cachedNodes);
                             for (const s_ of succ) {
                                 const temp = this.c(s, s_) + s_.g;
                                 if (min_s > temp) {
@@ -128,18 +135,10 @@ export default class DStarLite {
         }
 
         if (startNode.rhs < Number.POSITIVE_INFINITY) {
-            let curr = startNode.parent as Node;
-            const ret: Point[] = [];
-            while (curr.parent) {
-                ret.push(curr.point);
-                curr = curr.parent;
-            }
-
-            ret.push(curr.point);
-
-            return ret;
+            return startNode.parent;
         }
 
+        logger.debug(`No valid path to: ${destinations.map(({x, y, z}) => `(${x},${y},${z})`).join(', ')}`);
         throw new Error('No valid path');
     }
 
@@ -152,44 +151,53 @@ export default class DStarLite {
     }
 
     private c(u: Node, v: Node): number {
-        if (u.isWall || v.isWall) return Number.POSITIVE_INFINITY;
+        if ((u.isWall && !u.isMineable) || (v.isWall && !v.isMineable)) return Number.POSITIVE_INFINITY;
         return heuristic.calculate(u.point, v.point);
     }
 
-    private getCachedNode(x: number, y: number, z: number): Node {
+    private getCachedBlock(x: number, y: number, z: number): Block | null {
+        const blockPath = `${x},${y},${z}`;
+        const cachedBlock = this.cachedBlocks.get(blockPath);
+        if (cachedBlock !== undefined) return cachedBlock;
+        const block = getBlock(this.serverId, x, y, z);
+        this.cachedBlocks.set(blockPath, block);
+        return block;
+    }
+
+    private getCachedNode(cachedNodes: Map<string, Node>, x: number, y: number, z: number): Node {
         const nodePath = `${x},${y},${z}`;
-        const cachedNode = this.cachedNodes.get(nodePath);
+        const cachedNode = cachedNodes.get(nodePath);
         if (cachedNode) return cachedNode;
         const block = getBlock(this.serverId, x, y, z);
         if (!block) {
-            const node = new Node(new Point(x, y, z), false);
-            this.cachedNodes.set(nodePath, node);
+            const node = new Node(new Point(x, y, z), false, this.isBlockMineableFunc !== null ? this.isBlockMineableFunc(x, y, z, block) : false);
+            cachedNodes.set(nodePath, node);
             return node;
         }
 
-        const node = new Node(new Point(x, y, z), true);
-        this.cachedNodes.set(nodePath, node);
+        const node = new Node(new Point(x, y, z), true, this.isBlockMineableFunc !== null ? this.isBlockMineableFunc(x, y, z, block) : false);
+        cachedNodes.set(nodePath, node);
         return node;
     }
 
-    private succ(u: Node): Node[] {
+    private succ(u: Node, cachedNodes: Map<string, Node>): Node[] {
         const neighbors: Node[] = [];
 
-        const east = this.getCachedNode(u.point.x + 1, u.point.y, u.point.z);
+        const east = this.getCachedNode(cachedNodes, u.point.x + 1, u.point.y, u.point.z);
         if (!east.visited) neighbors.push(east); 
         if (u.point.y < 255) {
-            const up = this.getCachedNode(u.point.x, u.point.y + 1, u.point.z);
+            const up = this.getCachedNode(cachedNodes, u.point.x, u.point.y + 1, u.point.z);
             if (!up.visited) neighbors.push(up); 
         }
-        const south = this.getCachedNode(u.point.x, u.point.y, u.point.z + 1);
+        const south = this.getCachedNode(cachedNodes, u.point.x, u.point.y, u.point.z + 1);
         if (!south.visited) neighbors.push(south); 
-        const west = this.getCachedNode(u.point.x - 1, u.point.y, u.point.z);
+        const west = this.getCachedNode(cachedNodes, u.point.x - 1, u.point.y, u.point.z);
         if (!west.visited) neighbors.push(west);
         if (u.point.y > -59) {
-            const down = this.getCachedNode(u.point.x, u.point.y - 1, u.point.z);
+            const down = this.getCachedNode(cachedNodes, u.point.x, u.point.y - 1, u.point.z);
             if (!down.visited) neighbors.push(down); 
         }
-        const north = this.getCachedNode(u.point.x, u.point.y, u.point.z - 1);
+        const north = this.getCachedNode(cachedNodes, u.point.x, u.point.y, u.point.z - 1);
         if (!north.visited) neighbors.push(north);
 
         return neighbors;
