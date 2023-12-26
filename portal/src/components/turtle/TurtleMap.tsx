@@ -315,8 +315,6 @@ const TurtleMap = (props: TurtleMapProps) => {
                             <InputGroup>
                                 <Form.Control
                                     type='number'
-                                    min='1'
-                                    max='255'
                                     placeholder={turtle?.location?.y?.toString() ?? ''}
                                     value={yLevel}
                                     onChange={(e) => setYLevel(Number(e.target.value))}
@@ -326,8 +324,6 @@ const TurtleMap = (props: TurtleMapProps) => {
                                 </div>
                                 <Form.Control
                                     type='number'
-                                    min='1'
-                                    max='255'
                                     placeholder={turtle?.location?.y?.toString() ?? ''}
                                     value={upperYLevel}
                                     onChange={(e) => setUpperYLevel(Number(e.target.value))}
