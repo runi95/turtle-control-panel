@@ -238,6 +238,21 @@ function App() {
                     break;
                 case 'WDELETE':
                     break;
+                case 'AUPDATE':
+                    setServers((servers) => ({
+                        ...servers,
+                        [obj.message.serverId]: {
+                            ...servers[obj.message.serverId],
+                            areas: {
+                                ...servers[obj.message.serverId].areas,
+                                [obj.message.id]: {
+                                    ...servers[obj.message.serverId].areas[obj.message.id],
+                                    ...obj.message.data,
+                                },
+                            },
+                        },
+                    }));
+                    break;
                 case 'SUPDATE':
                     setServers((servers) => ({
                         ...servers,

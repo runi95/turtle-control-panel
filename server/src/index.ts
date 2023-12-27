@@ -13,6 +13,8 @@ import {TurtleMoveState} from './entities/states/move';
 import {TurtleMiningState} from './entities/states/mining';
 import {TurtleScanState} from './entities/states/scan';
 import {TURTLE_STATES} from './entities/states/helpers';
+import Database from 'better-sqlite3';
+import {Area} from './db/area.type';
 
 logger.info('Starting server...');
 
@@ -120,7 +122,14 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                     case 'AREA':
                         switch (obj.action) {
                             case 'create':
-                                addArea(obj.data.serverId, obj.data.name, obj.data.color, obj.data.area);
+                                const runResult: Database.RunResult = addArea(obj.data.serverId, obj.data.name, obj.data.color, obj.data.area);
+                                globalEventEmitter.emit('aupdate', {
+                                    serverId: obj.data.serverId,
+                                    data: {
+                                        ...obj.data,
+                                        id: runResult.lastInsertRowid
+                                    }
+                                });
                                 break;
                             default:
                                 logger.warn(`Received invalid AREA action [${obj.action}]`);
@@ -181,6 +190,11 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
             name: string;
         }) => connection.socket.send(JSON.stringify({type: 'SUPDATE', message: obj}));
         globalEventEmitter.on('supdate', supdate);
+        const aupdate = (obj: {
+            serverId: number;
+            data: Partial<Area>;
+        }) => connection.socket.send(JSON.stringify({type: 'AUPDATE', message: obj}))
+        globalEventEmitter.on('aupdate', aupdate);
     
         connection.socket.on('close', () => {
             globalEventEmitter.off('tconnect', tconnect);
