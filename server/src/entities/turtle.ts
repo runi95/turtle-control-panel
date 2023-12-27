@@ -1226,6 +1226,15 @@ export class Turtle {
         this.name = name;
     }
 
+    async inventoryTransfer(fromSlot: number, toSlot: number): Promise<void> {
+        const currentSlot = this.selectedSlot;
+        const [didSelect] = await this.select(fromSlot);
+        if (didSelect) {
+            await this.transferTo(toSlot);
+            await this.select(currentSlot);
+        }
+    }
+
     #exec<R>(f: string): Promise<R> {
         return this.#execRaw(`return ${f}`);
     }

@@ -109,6 +109,9 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                             case 'scan':
                                 turtle.state = new TurtleScanState(turtle);
                                 break;
+                            case 'inventory-transfer':
+                                turtle.inventoryTransfer(obj.data.fromSlot, obj.data.toSlot);
+                                break;
                             default:
                                 logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);
                                 break;

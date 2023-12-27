@@ -104,6 +104,24 @@ function Inventory(props: InventoryProps) {
                                         overlay={<Tooltip data-bs-theme='light'>Empty</Tooltip>}
                                     >
                                         <ItemSlotStyle
+                                            data-inventory-slot={itemIndex}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                const toSlot = (e.target as HTMLBaseElement)?.dataset?.inventorySlot;
+                                                const fromSlot = e.dataTransfer.getData('fromSlot');
+                                                if (fromSlot && toSlot && fromSlot !== toSlot) {
+                                                    props.action({
+                                                        type: 'ACTION',
+                                                        action: 'inventory-transfer',
+                                                        data: {
+                                                            id: turtle.id,
+                                                            fromSlot,
+                                                            toSlot,
+                                                        },
+                                                    });
+                                                }
+                                            }}
                                             onClick={() => {
                                                 props.action({
                                                     type: 'ACTION',
@@ -112,7 +130,7 @@ function Inventory(props: InventoryProps) {
                                                 });
                                             }}
                                         >
-                                            <EmptyItemImage />
+                                            <EmptyItemImage data-inventory-slot={itemIndex} />
                                         </ItemSlotStyle>
                                     </OverlayTrigger>
                                 );
@@ -130,6 +148,28 @@ function Inventory(props: InventoryProps) {
                                     overlay={<Tooltip data-bs-theme='light'>{displayName}</Tooltip>}
                                 >
                                     <ItemSlotStyle
+                                        draggable
+                                        data-inventory-slot={itemIndex}
+                                        onDragStart={(e) => {
+                                            e.dataTransfer.setData('fromSlot', itemIndex.toString());
+                                        }}
+                                        onDragOver={(e) => e.preventDefault()}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            const toSlot = (e.target as HTMLBaseElement)?.dataset?.inventorySlot;
+                                            const fromSlot = e.dataTransfer.getData('fromSlot');
+                                            if (fromSlot && toSlot && fromSlot !== toSlot) {
+                                                props.action({
+                                                    type: 'ACTION',
+                                                    action: 'inventory-transfer',
+                                                    data: {
+                                                        id: turtle.id,
+                                                        fromSlot,
+                                                        toSlot,
+                                                    },
+                                                });
+                                            }
+                                        }}
                                         onClick={() => {
                                             props.action({
                                                 type: 'ACTION',
@@ -139,12 +179,13 @@ function Inventory(props: InventoryProps) {
                                         }}
                                     >
                                         <ItemImage
+                                            data-inventory-slot={itemIndex}
                                             style={{
                                                 backgroundImage: 'url(/sprites.png)',
                                                 backgroundPosition: `-${spriteX}px -${spriteY}px`,
                                             }}
                                         />
-                                        <ItemCount>{count}</ItemCount>
+                                        <ItemCount data-inventory-slot={itemIndex}>{count}</ItemCount>
                                     </ItemSlotStyle>
                                 </OverlayTrigger>
                             );
