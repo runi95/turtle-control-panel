@@ -82,19 +82,17 @@ function Turtle(props: TurtleProps) {
                             </Form>
                         ) : (
                             <div style={{display: 'flex'}}>
-                                <h3>
-                                    {turtle?.isOnline ? <GreenOnlineBox /> : <GreyOnlineBox />}
-                                    {turtle?.name ?? 'Unknown Turtle'}
-                                </h3>
-                                <div
-                                    className='text-secondary'
-                                    style={{marginLeft: 4, cursor: 'pointer'}}
+                                <h3
+                                    style={{
+                                        cursor: 'pointer',
+                                    }}
                                     onClick={() => {
                                         setEditNameState(true);
                                     }}
                                 >
-                                    ✎
-                                </div>
+                                    {turtle?.isOnline ? <GreenOnlineBox /> : <GreyOnlineBox />}
+                                    {turtle?.name ?? 'Unknown Turtle'}
+                                </h3>
                             </div>
                         )}
                     </div>
