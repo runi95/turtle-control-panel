@@ -203,6 +203,7 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
             globalEventEmitter.off('wupdate', wupdate);
             globalEventEmitter.off('wdelete', wdelete);
             globalEventEmitter.off('supdate', supdate);
+            globalEventEmitter.off('aupdate', aupdate);
         });
     });
     
