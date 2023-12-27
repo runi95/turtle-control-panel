@@ -11,7 +11,7 @@ export interface QueryParams {
     toZ: number;
 }
 
-export const useBlocks = (serverId: string, query: QueryParams) => {
+export const useBlocks = (serverId: string, query: QueryParams, isEnabled: boolean) => {
     return useQuery<Blocks>({
         queryKey: ['blocks', {query}],
         queryFn: () =>
@@ -25,5 +25,6 @@ export const useBlocks = (serverId: string, query: QueryParams) => {
                         {} as {[key: string]: Block}
                     )
                 ),
+        enabled: isEnabled,
     });
 };

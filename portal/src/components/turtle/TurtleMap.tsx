@@ -41,14 +41,18 @@ const TurtleMap = (props: TurtleMapProps) => {
     const [yLevel, setYLevel] = useState<number | undefined>(undefined);
     const [upperYLevel, setUpperYLevel] = useState<number | undefined>(undefined);
     const turtle = turtles?.[id];
-    const {data: blocks} = useBlocks(serverId, {
-        fromX: turtle.location.x - 15,
-        toX: turtle.location.x + 15,
-        fromY: turtle.location.y - 10,
-        toY: turtle.location.y + 10,
-        fromZ: turtle.location.z - 15,
-        toZ: turtle.location.z + 15,
-    });
+    const {data: blocks} = useBlocks(
+        serverId,
+        {
+            fromX: turtle.location?.x - 15,
+            toX: turtle.location?.x + 15,
+            fromY: turtle.location?.y - 10,
+            toY: turtle.location?.y + 10,
+            fromZ: turtle.location?.z - 15,
+            toZ: turtle.location?.z + 15,
+        },
+        turtle.location !== null && turtle.direction !== null
+    );
 
     useEffect(() => {
         const canvas = canvasRef.current;
