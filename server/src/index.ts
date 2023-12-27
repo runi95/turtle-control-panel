@@ -97,7 +97,7 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                                 turtle.drop();
                                 break;
                             case 'select':
-                                turtle.select(obj.data.slot + 1);
+                                turtle.select(obj.data.slot);
                                 break;
                             case 'rename':
                                 turtle.rename(obj.data.newName);

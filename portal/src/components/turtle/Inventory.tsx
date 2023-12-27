@@ -108,7 +108,7 @@ function Inventory(props: InventoryProps) {
                                                 props.action({
                                                     type: 'ACTION',
                                                     action: 'select',
-                                                    data: {id: turtle.id, slot: i},
+                                                    data: {id: turtle.id, slot: itemIndex},
                                                 });
                                             }}
                                         >
@@ -134,7 +134,7 @@ function Inventory(props: InventoryProps) {
                                             props.action({
                                                 type: 'ACTION',
                                                 action: 'select',
-                                                data: {id: turtle.id, slot: i},
+                                                data: {id: turtle.id, slot: itemIndex},
                                             });
                                         }}
                                     >
