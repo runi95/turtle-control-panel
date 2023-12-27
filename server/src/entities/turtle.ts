@@ -57,8 +57,8 @@ export class Turtle {
     #inventory: Inventory;
     #stepsSinceLastRefuel: number;
     #state: TurtleBaseState<StateDataTypes> | null;
-    #location: Location;
-    #direction: Direction;
+    #location: Location | null;
+    #direction: Direction | null;
 
     // Private properties
     private readonly ws;
@@ -76,8 +76,8 @@ export class Turtle {
         inventory: Inventory,
         stepsSinceLastRefuel: number,
         state: StateData<StateDataTypes> | null,
-        location: Location,
-        direction: Direction,
+        location: Location | null,
+        direction: Direction | null,
         ws: WebSocket
     ) {
         this.serverId = serverId;
@@ -309,7 +309,7 @@ export class Turtle {
         return this.#direction;
     }
 
-    public set direction(direction: Direction) {
+    public set direction(direction: Direction | null) {
         this.#direction = direction;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
@@ -492,6 +492,8 @@ export class Turtle {
     }
 
     public async turnToDirection(direction: Direction) {
+        if (this.direction === null) return;
+
         const turn = (direction - this.direction + 4) % 4;
         if (turn === 1) {
             await this.turnRight();
@@ -604,6 +606,8 @@ export class Turtle {
      *   - An optional string describing an the reason no block was broken.
      */
     async dig(): Promise<[boolean, string | undefined]> {
+        if (this.location === null) return [false, 'Turtle location is null'];
+
         const selectedSlot = this.selectedSlot;
         const dig = await this.#exec<[boolean, string | undefined]>('turtle.dig()');
         const [didDig] = dig;
@@ -644,6 +648,8 @@ export class Turtle {
      *   - An optional string describing an the reason no block was broken.
      */
     async digUp(): Promise<[boolean, string | undefined]> {
+        if (this.location === null) return [false, 'Turtle location is null'];
+
         const selectedSlot = this.selectedSlot;
         const digUp = await this.#exec<[boolean, string | undefined]>('turtle.digUp()');
         const [didDig] = digUp;
@@ -684,6 +690,8 @@ export class Turtle {
      *   - An optional string describing an the reason no block was broken.
      */
     async digDown(): Promise<[boolean, string | undefined]> {
+        if (this.location === null) return [false, 'Turtle location is null'];
+
         const selectedSlot = this.selectedSlot;
         const digDown = await this.#exec<[boolean, string | undefined]>('turtle.digDown()');
         const [didDig] = digDown;
@@ -725,6 +733,9 @@ export class Turtle {
      *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
     async inspect(): Promise<Block | undefined> {
+        if (this.location === null) throw new Error('Turtle location is null');
+        if (this.direction === null) throw new Error('Turtle direction is null');
+
         const {x, y, z} = this.location;
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.direction);
         const [didInspect, block] = await this.#exec<[boolean, Block | undefined]>('turtle.inspect()');
@@ -776,6 +787,9 @@ export class Turtle {
      *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
     async inspectUp(): Promise<Block | undefined> {
+        if (this.location === null) throw new Error('Turtle location is null');
+        if (this.direction === null) throw new Error('Turtle direction is null');
+
         const {x, y, z} = this.location;
         const [didInspect, block] = await this.#exec<[boolean, Block | undefined]>('turtle.inspectUp()');
         if (!didInspect) {
@@ -826,6 +840,9 @@ export class Turtle {
      *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
     async inspectDown(): Promise<Block | undefined> {
+        if (this.location === null) throw new Error('Turtle location is null');
+        if (this.direction === null) throw new Error('Turtle direction is null');
+
         const {x, y, z} = this.location;
         const [didInspect, block] = await this.#exec<[boolean, Block | undefined]>('turtle.inspectDown()');
         if (!didInspect) {
@@ -1338,7 +1355,12 @@ const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
 
         upsertServer(remoteAddress, null);
         const {id: serverId} = getServerByRemoteAddress(remoteAddress);
-        const {stepsSinceLastRefuel, state, location, direction} = getTurtle(serverId, id) ?? {};
+        const {stepsSinceLastRefuel, state, location, direction} = getTurtle(serverId, id) ?? {
+            stepsSinceLastRefuel: 0,
+            state: null,
+            location: null,
+            direction: null
+        };
         logger.info(`${name || '<unnamed>'} [${id}] has connected!`);
         ws.off('message', listener);
         const isOnline = true;

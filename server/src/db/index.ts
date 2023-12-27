@@ -184,7 +184,10 @@ export const getServerByRemoteAddress = (remoteAddress: string) => selectServerB
 export const getArea = (serverId: number, id: number) => JSON.parse(selectArea.get(serverId, id) as string) as Area;
 export const addArea = (serverId: number, name: string, color: string, area: JSON) =>
     insertArea.run(serverId, name, color, JSON.stringify(area));
-export const getTurtle = (serverId: number, id: number) => JSON.parse(selectTurtle.get(serverId, id) as string) as Turtle;
+export const getTurtle = (serverId: number, id: number) => {
+    const turtleString = selectTurtle.get(serverId, id) as string | undefined;
+    return turtleString === undefined ? null : JSON.parse(turtleString) as Turtle;
+};
 export const upsertTurtle = (
     serverId: number,
     id: number,
@@ -195,8 +198,8 @@ export const upsertTurtle = (
     inventory: Inventory,
     stepsSinceLastRefuel: number,
     state: StateData<StateDataTypes> | null,
-    location: Location,
-    direction: Direction
+    location: Location | null,
+    direction: Direction | null
 ) =>
     insertTurtle.run({
         server_id: serverId,
@@ -279,9 +282,9 @@ export const updateTurtleState = (serverId: number, id: number, stateData: State
         setTurtleState.run(null, serverId, id);
     }
 }
-export const updateTurtleLocation = (serverId: number, id: number, location: Location) =>
+export const updateTurtleLocation = (serverId: number, id: number, location: Location | null) =>
     setTurtleLocation.run(JSON.stringify(location), serverId, id);
-export const updateTurtleDirection = (serverId: number, id: number, direction: Direction) =>
+export const updateTurtleDirection = (serverId: number, id: number, direction: Direction | null) =>
     setTurtleDirection.run(direction, serverId, id);
 export const updateTurtleMovement = (
     serverId: number,
