@@ -117,7 +117,7 @@ export interface Servers {
 }
 
 export interface ActionMessage {
-    type: 'HANDSHAKE' | 'ACTION' | 'AREA' | 'SERVER';
+    type: 'HANDSHAKE' | 'ACTION' | 'AREA' | 'SERVER' | 'TURTLE';
     action: string;
     data: {
         [key: string]: unknown;
@@ -228,6 +228,19 @@ function App() {
                                     ...obj.message.data,
                                 },
                             },
+                        },
+                    }));
+                    break;
+                case 'TDELETE':
+                    setServers((servers) => ({
+                        ...servers,
+                        [obj.message.serverId]: {
+                            ...servers[obj.message.serverId],
+                            turtles: Object.keys(servers[obj.message.serverId].turtles).reduce((acc, curr) => {
+                                if (curr === obj.message.id.toString()) return acc;
+                                acc[curr] = servers[obj.message.serverId].turtles[curr];
+                                return acc;
+                            }, {} as Turtles),
                         },
                     }));
                     break;

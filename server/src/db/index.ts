@@ -156,6 +156,9 @@ const insertBlock = db.prepare(
 const deleteBlockStatement = db.prepare(
     'DELETE FROM `blocks` WHERE `server_id` = ? AND `x` = ? AND `y` = ? AND `z` = ?'
 );
+const deleteTurtleStatement = db.prepare(
+    'DELETE FROM `turtles` WHERE `server_id` = ? AND `id` = ?'
+);
 const setTurtleName = db.prepare('UPDATE `turtles` SET `name` = ? WHERE `server_id` = ? AND `id` = ?');
 const setTurtleFuelLevel = db.prepare('UPDATE `turtles` SET `fuel_level` = ? WHERE `server_id` = ? AND `id` = ?');
 const setTurtleSelectedSlot = db.prepare('UPDATE `turtles` SET `selected_slot` = ? WHERE `server_id` = ? AND `id` = ?');
@@ -266,6 +269,8 @@ export const upsertBlocks = (serverId: number, blocks: {
 })();
 export const deleteBlock = (serverId: number, x: number, y: number, z: number) =>
     deleteBlockStatement.run(serverId, x, y, z);
+export const deleteTurtle = (serverId: number, id: number) =>
+    deleteTurtleStatement.run(serverId, id);
 export const updateTurtleName = (serverId: number, id: number, name: string) => setTurtleName.run(name, serverId, id);
 export const updateTurtleFuelLevel = (serverId: number, id: number, fuelLevel: number) =>
     setTurtleFuelLevel.run(fuelLevel, serverId, id);

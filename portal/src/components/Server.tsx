@@ -2,16 +2,17 @@ import styled from 'styled-components';
 import {Accordion, Table} from 'react-bootstrap';
 import {useNavigate} from 'react-router-dom';
 import {CSSProperties} from 'react';
-import {Server as APIServer} from '../App';
+import {Server as APIServer, Action} from '../App';
 import FuelInfo from './FuelInfo';
 
 export interface ServerProps {
     server: APIServer;
+    action: Action;
 }
 
 function Server(props: ServerProps) {
     const navigate = useNavigate();
-    const {server} = props;
+    const {server, action} = props;
 
     return (
         <Accordion defaultActiveKey='0'>
@@ -36,26 +37,51 @@ function Server(props: ServerProps) {
                                 <th style={{width: 100}}>Activity</th>
                                 <th style={{width: 220}}>Fuel</th>
                                 <th>Error</th>
+                                <th style={{width: 28}}></th>
                             </tr>
                         </thead>
                         <tbody>
                             {Object.values(server.turtles).map((turtle) => (
-                                <tr
-                                    key={`${server.id}-${turtle.id}`}
-                                    onClick={() => navigate(`/servers/${server.id}/turtles/${turtle.id}`)}
-                                >
-                                    <td>{turtle.id}</td>
-                                    <td>
+                                <tr key={`${server.id}-${turtle.id}`}>
+                                    <td onClick={() => navigate(`/servers/${server.id}/turtles/${turtle.id}`)}>
+                                        {turtle.id}
+                                    </td>
+                                    <td onClick={() => navigate(`/servers/${server.id}/turtles/${turtle.id}`)}>
                                         {turtle.isOnline ? <GreenText>Online</GreenText> : <GreyText>Offline</GreyText>}
                                     </td>
-                                    <td>{turtle.name}</td>
-                                    <td>{turtle.state ? turtle.state.name : 'idle'}</td>
-                                    <td style={{verticalAlign: 'middle'}}>
+                                    <td onClick={() => navigate(`/servers/${server.id}/turtles/${turtle.id}`)}>
+                                        {turtle.name}
+                                    </td>
+                                    <td onClick={() => navigate(`/servers/${server.id}/turtles/${turtle.id}`)}>
+                                        {turtle.state ? turtle.state.name : 'idle'}
+                                    </td>
+                                    <td
+                                        style={{verticalAlign: 'middle'}}
+                                        onClick={() => navigate(`/servers/${server.id}/turtles/${turtle.id}`)}
+                                    >
                                         <FuelInfo {...turtle} />
                                     </td>
-                                    <td>
+                                    <td onClick={() => navigate(`/servers/${server.id}/turtles/${turtle.id}`)}>
                                         <span className='text-danger'>{turtle.state?.error}</span>
                                     </td>
+                                    {!turtle.isOnline ? (
+                                        <td
+                                            onClick={() => {
+                                                action({
+                                                    type: 'TURTLE',
+                                                    action: 'delete',
+                                                    data: {
+                                                        serverId: server.id,
+                                                        id: turtle.id,
+                                                    },
+                                                });
+                                            }}
+                                        >
+                                            <span className='text-secondary'>✖</span>
+                                        </td>
+                                    ) : (
+                                        <td></td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

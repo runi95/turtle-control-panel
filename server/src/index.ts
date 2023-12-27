@@ -4,7 +4,7 @@ import fastifyCorsPlugin from '@fastify/cors'
 import {getOnlineTurtleById, getOnlineTurtles} from './entities/turtle';
 import globalEventEmitter from './globalEventEmitter';
 import logger from './logger/server';
-import {addArea, getBlocks, getDashboard, renameServer} from './db';
+import {addArea, deleteTurtle, getBlocks, getDashboard, renameServer} from './db';
 import {Turtle} from './db/turtle.type';
 import {Block} from './db/block.type';
 import {TurtleFarmingState} from './entities/states/farming';
@@ -147,6 +147,25 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                                 break;
                         }
                         break;
+                    case 'TURTLE':
+                        switch (obj.action) {
+                            case 'delete':
+                                const turtle = getOnlineTurtleById(obj.data.id);
+                                if (turtle !== undefined) {
+                                    turtle.state = null;
+                                }
+
+                                deleteTurtle(obj.data.serverId, obj.data.id);
+                                globalEventEmitter.emit('tdelete', {
+                                    serverId: obj.data.serverId,
+                                    id: obj.data.id,
+                                });
+
+                                break;
+                            default:
+                                logger.warning(`Received invalid TURTLE action [${obj.action}]`);
+                        }
+                        break;
                     default:
                         logger.warning(`Received invalid message type [${obj.type}]`);
                         break;
@@ -173,6 +192,11 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
             data: Partial<Turtle>;
         }) => connection.socket.send(JSON.stringify({type: 'TUPDATE', message: obj}));
         globalEventEmitter.on('tupdate', tupdate);
+        const tdelete = (obj: {
+            id: number;
+            serverId: number;
+        }) => connection.socket.send(JSON.stringify({type: 'TDELETE', message: obj}));
+        globalEventEmitter.on('tdelete', tdelete);
         const wupdate = (obj: {
             serverId: number;
             blocks: Block[];
@@ -200,6 +224,7 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
             globalEventEmitter.off('tconnect', tconnect);
             globalEventEmitter.off('tdisconnect', tdisconnect);
             globalEventEmitter.off('tupdate', tupdate);
+            globalEventEmitter.off('tdelete', tdelete);
             globalEventEmitter.off('wupdate', wupdate);
             globalEventEmitter.off('wdelete', wdelete);
             globalEventEmitter.off('supdate', supdate);

@@ -21,7 +21,7 @@ function Dashboard(props: DashboardProps) {
             {Object.values(servers).map((server) => (
                 <Row key={server.id} className='mt-3'>
                     <Col>
-                        <Server server={server} />
+                        <Server server={server} action={action} />
                     </Col>
                 </Row>
             ))}
