@@ -132,7 +132,7 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                                 });
                                 break;
                             default:
-                                logger.warn(`Received invalid AREA action [${obj.action}]`);
+                                logger.warning(`Received invalid AREA action [${obj.action}]`);
                                 break;
                         }
                         break;
@@ -143,12 +143,12 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                                 globalEventEmitter.emit('supdate', {id: obj.data.id, name: obj.data.newName});
                                 break;
                             default:
-                                logger.warn(`Received invalid SERVER action [${obj.action}]`);
+                                logger.warning(`Received invalid SERVER action [${obj.action}]`);
                                 break;
                         }
                         break;
                     default:
-                        logger.warn(`Received invalid message type [${obj.type}]`);
+                        logger.warning(`Received invalid message type [${obj.type}]`);
                         break;
                 }
             } catch (err) {

@@ -1246,12 +1246,12 @@ export class Turtle {
             this.lastPromise.finally(() => {
                 const listener = (msg: Buffer) => {
                     if (msg.length < 42) {
-                        logger.warn(`Invalid WebSocket message received: ${msg}`);
+                        logger.warning(`Invalid WebSocket message received: ${msg}`);
                         return;
                     }
             
                     if (msg[0] !== 0x01) {
-                        logger.warn(`Turtle WebSocket message does not start with 0x01 (start of heading)`);
+                        logger.warning(`Turtle WebSocket message does not start with 0x01 (start of heading)`);
                         return;
                     }
             
@@ -1298,12 +1298,12 @@ const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
     const messageConstructorObject: {[key: number]: string} = {};
     const listener = async (msg: Buffer) => {
         if (msg.length < 42) {
-            logger.warn(`Invalid WebSocket message received: ${msg}`);
+            logger.warning(`Invalid WebSocket message received: ${msg}`);
             return;
         }
 
         if (msg[0] !== 0x01) {
-            logger.warn(`Turtle WebSocket message does not start with 0x01 (start of heading)`);
+            logger.warning(`Turtle WebSocket message does not start with 0x01 (start of heading)`);
             return;
         }
 
