@@ -1044,12 +1044,12 @@ export class Turtle {
      * @param {number} slot
      * @param {number} count
      */
-    async transferTo(slot: number, count: number): Promise<[boolean]> {
+    async transferTo(slot: number, count?: number): Promise<[boolean]> {
         const selectedSlot = this.selectedSlot;
         if (slot === selectedSlot) return [true];
         const transfer = count
-            ? await this.#exec<[boolean]>(`transferTo(${slot}, ${count})`)
-            : await this.#exec<[boolean]>(`transferTo(${slot})`);
+            ? await this.#exec<[boolean]>(`turtle.transferTo(${slot}, ${count})`)
+            : await this.#exec<[boolean]>(`turtle.transferTo(${slot})`);
         const [didTransfer] = transfer;
         if (didTransfer) {
             const [itemDetail] = await this.#exec<[ItemDetail | null]>(
