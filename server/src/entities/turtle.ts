@@ -1047,23 +1047,23 @@ export class Turtle {
     async transferTo(slot: number, count?: number): Promise<[boolean]> {
         const selectedSlot = this.selectedSlot;
         if (slot === selectedSlot) return [true];
+        // NOTE:
+        // CC:Tweaked documentation is wrong for turtle.transferTo,
+        // it returns [true] only if ALL items successfully transfer and returns [false] otherwise
         const transfer = count
             ? await this.#exec<[boolean]>(`turtle.transferTo(${slot}, ${count})`)
             : await this.#exec<[boolean]>(`turtle.transferTo(${slot})`);
-        const [didTransfer] = transfer;
-        if (didTransfer) {
-            const [itemDetail] = await this.#exec<[ItemDetail | null]>(
-                `turtle.getItemDetail(${slot}, true) or textutils.json_null`
-            );
-            const [selectedItemDetail] = await this.#exec<[ItemDetail | null]>(
-                `turtle.getItemDetail(${selectedSlot}, true) or textutils.json_null`
-            );
-            this.inventory = {
-                ...this.inventory,
-                [slot]: itemDetail ?? undefined,
-                [selectedSlot]: selectedItemDetail ?? undefined,
-            };
-        }
+        const [itemDetail] = await this.#exec<[ItemDetail | null]>(
+            `turtle.getItemDetail(${slot}, true) or textutils.json_null`
+        );
+        const [selectedItemDetail] = await this.#exec<[ItemDetail | null]>(
+            `turtle.getItemDetail(${selectedSlot}, true) or textutils.json_null`
+        );
+        this.inventory = {
+            ...this.inventory,
+            [slot]: itemDetail ?? undefined,
+            [selectedSlot]: selectedItemDetail ?? undefined,
+        };
 
         return transfer;
     }
