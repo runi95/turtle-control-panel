@@ -33,12 +33,177 @@ import {MovingStateData, TurtleMoveState} from './states/move';
 import {MiningStateData, TurtleMiningState} from './states/mining';
 import {TurtleRefuelingState} from './states/refueling';
 import {TurtleScanState} from './states/scan';
+import {EventEmitter} from 'events';
+
+interface MessageConstructorObject {
+    [key: number]: string;
+}
 
 const turtleWssPort = process.env.TURTLE_WSS_PORT ? Number(process.env.TURTLE_WSS_PORT) : 5757;
 const wss = new WebSocketServer({port: turtleWssPort});
 wss.on('connection', (ws, req) => {
     logger.info('Incoming connection...');
-    initializeHandshake(ws, req.socket.remoteAddress as string);
+    const remoteAddress = req.socket.remoteAddress as string;
+    const turtleEventEmitter = new EventEmitter();
+
+    const messageConstructorMap = new Map<string, MessageConstructorObject>();
+    const messageConstructor = async (msg: Buffer) => {
+        if (msg.length < 42) {
+            logger.warning(`Invalid WebSocket message received: ${msg}`);
+            return;
+        }
+
+        if (msg[0] !== 0x01) {
+            logger.warning(`Turtle WebSocket message does not start with 0x01 (start of heading)`);
+            return;
+        }
+
+        const messageIndex = parseInt(msg.toString('hex', 1, 5), 16);
+
+        const messageUuid = msg.toString('utf-8', 5, 41);
+        const isFinalMessage = msg[msg.length - 1] === 0x04;
+        const str = msg.toString('utf-8', 42, isFinalMessage ? msg.length - 1 : undefined);
+        if (isFinalMessage && messageIndex === 1) {
+            const obj = JSON.parse(
+                messageIndex === 1
+                    ? str
+                    : Object.values(messageConstructorMap.get(messageUuid) as MessageConstructorObject).reduce(
+                          (acc, curr) => acc + curr,
+                          ''
+                      ) + str
+            );
+            messageConstructorMap.delete(messageUuid);
+            if (obj.type === 'ERROR') {
+                logger.error(obj.message);
+                return;
+            }
+
+            turtleEventEmitter.emit(messageUuid, obj);
+            return;
+        }
+
+        if (!messageConstructorMap.has(messageUuid)) {
+            messageConstructorMap.set(messageUuid, {});
+        }
+
+        const messageConstructorObject = messageConstructorMap.get(messageUuid) as MessageConstructorObject;
+        messageConstructorObject[messageIndex] = str;
+    };
+
+    ws.on('message', messageConstructor);
+    ws.on('error', (err) => {
+        logger.error(err);
+    });
+
+    // Handshake
+    (() => {
+        const uuid = uuid4();
+        logger.info('Initiating handshake...');
+        ws.send(JSON.stringify({type: 'HANDSHAKE', uuid, logLevel: turtleLogLevel}));
+        const handshake = (obj: {
+            type: 'HANDSHAKE';
+            message: {
+                id: number;
+                label: string;
+                fuel: {
+                    level: number;
+                    limit: number;
+                };
+                inventory: {
+                    '1': ItemDetail;
+                    '2': ItemDetail;
+                    '3': ItemDetail;
+                    '4': ItemDetail;
+                    '5': ItemDetail;
+                    '6': ItemDetail;
+                    '7': ItemDetail;
+                    '8': ItemDetail;
+                    '9': ItemDetail;
+                    '10': ItemDetail;
+                    '11': ItemDetail;
+                    '12': ItemDetail;
+                    '13': ItemDetail;
+                    '14': ItemDetail;
+                    '15': ItemDetail;
+                    '16': ItemDetail;
+                };
+                selectedSlot: number;
+            };
+        }) => {
+            const {message} = obj;
+            const {id, label, fuel, selectedSlot, inventory} = message;
+            const inventoryAsObject = Array.isArray(inventory) ? {} : inventory;
+            const {level: fuelLevel, limit: fuelLimit} = fuel;
+            let name = label;
+            if (!name) {
+                name = nameList[Math.floor(Math.random() * (nameList.length - 1))];
+                ws.send(JSON.stringify({type: 'RENAME', message: name}));
+            }
+
+            upsertServer(remoteAddress, null);
+            const {id: serverId} = getServerByRemoteAddress(remoteAddress);
+            const {stepsSinceLastRefuel, state, location, direction} = getTurtle(serverId, id) ?? {
+                stepsSinceLastRefuel: 0,
+                state: null,
+                location: null,
+                direction: null,
+            };
+            logger.info(`${name || '<unnamed>'} [${id}] has connected!`);
+            turtleEventEmitter.off(uuid, handshake);
+            const isOnline = true;
+            const turtle = new Turtle(
+                serverId,
+                id,
+                name,
+                isOnline,
+                fuelLevel,
+                fuelLimit,
+                selectedSlot,
+                inventoryAsObject,
+                stepsSinceLastRefuel,
+                state,
+                location,
+                direction,
+                ws,
+                turtleEventEmitter
+            );
+            connectedTurtlesMap.set(id, turtle);
+
+            globalEventEmitter.emit('tconnect', {
+                id,
+                serverId,
+                turtle: {
+                    serverId,
+                    id,
+                    name,
+                    isOnline,
+                    fuelLevel,
+                    fuelLimit,
+                    selectedSlot,
+                    inventory: inventoryAsObject,
+                    stepsSinceLastRefuel,
+                    state,
+                    location,
+                    direction,
+                },
+            });
+            upsertTurtle(
+                serverId,
+                id,
+                name,
+                fuelLevel,
+                fuelLimit,
+                selectedSlot,
+                inventoryAsObject,
+                stepsSinceLastRefuel,
+                state,
+                location,
+                direction
+            );
+        };
+
+        turtleEventEmitter.on(uuid, handshake);
+    })();
 });
 
 logger.info(`Turtle WebSocket listening on port \x1b[36m${turtleWssPort}\x1b[0m`);
@@ -62,6 +227,7 @@ export class Turtle {
 
     // Private properties
     private readonly ws;
+    private readonly turtleEventEmitter;
     private lastPromise: Promise<unknown> = new Promise<void>((resolve) => resolve());
     private actTimeout: NodeJS.Timeout | null = null;
 
@@ -78,7 +244,8 @@ export class Turtle {
         state: StateData<StateDataTypes> | null,
         location: Location | null,
         direction: Direction | null,
-        ws: WebSocket
+        ws: WebSocket,
+        eventEmitter: EventEmitter
     ) {
         this.serverId = serverId;
         this.id = id;
@@ -94,6 +261,7 @@ export class Turtle {
         this.#direction = direction;
 
         this.ws = ws;
+        this.turtleEventEmitter = eventEmitter;
         this.ws.on('close', (code, message) => {
             logger.info(
                 `${this.name ?? '<unnamed>'}[${
@@ -763,14 +931,19 @@ export class Turtle {
                 (block as Block).state,
                 (block as Block).tags
             );
-            globalEventEmitter.emit('wupdate', {serverId: this.serverId, blocks: [{
-                x: x + xChange,
-                y,
-                z: z + zChange,
-                name: (block as Block).name,
-                state: (block as Block).state,
-                tags: (block as Block).tags
-            }]});
+            globalEventEmitter.emit('wupdate', {
+                serverId: this.serverId,
+                blocks: [
+                    {
+                        x: x + xChange,
+                        y,
+                        z: z + zChange,
+                        name: (block as Block).name,
+                        state: (block as Block).state,
+                        tags: (block as Block).tags,
+                    },
+                ],
+            });
         }
         return block;
     }
@@ -816,14 +989,19 @@ export class Turtle {
                 (block as Block).state,
                 (block as Block).tags
             );
-            globalEventEmitter.emit('wupdate', {serverId: this.serverId, blocks: [{
-                x,
-                y: y + 1,
-                z,
-                name: (block as Block).name,
-                state: (block as Block).state,
-                tags: (block as Block).tags
-            }]});
+            globalEventEmitter.emit('wupdate', {
+                serverId: this.serverId,
+                blocks: [
+                    {
+                        x,
+                        y: y + 1,
+                        z,
+                        name: (block as Block).name,
+                        state: (block as Block).state,
+                        tags: (block as Block).tags,
+                    },
+                ],
+            });
         }
         return block;
     }
@@ -869,14 +1047,19 @@ export class Turtle {
                 (block as Block).state,
                 (block as Block).tags
             );
-            globalEventEmitter.emit('wupdate', {serverId: this.serverId, blocks: [{
-                x,
-                y: y - 1,
-                z,
-                name: (block as Block).name,
-                state: (block as Block).state,
-                tags: (block as Block).tags
-            }]});
+            globalEventEmitter.emit('wupdate', {
+                serverId: this.serverId,
+                blocks: [
+                    {
+                        x,
+                        y: y - 1,
+                        z,
+                        name: (block as Block).name,
+                        state: (block as Block).state,
+                        tags: (block as Block).tags,
+                    },
+                ],
+            });
         }
         return block;
     }
@@ -1258,49 +1441,20 @@ export class Turtle {
 
     #execRaw<R>(f: string): Promise<R> {
         const uuid = uuid4();
-        const messageConstructorObject: {[key: number]: string} = {};
         this.lastPromise = new Promise<R>((resolve, reject) =>
             this.lastPromise.finally(() => {
-                const listener = (msg: Buffer) => {
-                    if (msg.length < 42) {
-                        logger.warning(`Invalid WebSocket message received: ${msg}`);
-                        return;
-                    }
-            
-                    if (msg[0] !== 0x01) {
-                        logger.warning(`Turtle WebSocket message does not start with 0x01 (start of heading)`);
-                        return;
-                    }
-            
-                    const messageIndex = parseInt(msg.toString('hex', 1, 5), 16);
-                    
-                    const messageUuid = msg.toString('utf-8', 5, 41);
-                    if (messageUuid !== uuid) {
-                        logger.error(`${messageUuid} does not match ${uuid}!`);
-                        return;
-                    }
-            
-                    const isFinalMessage = msg[msg.length - 1] === 0x04;
-                    const str = msg.toString('utf-8', 42, isFinalMessage ? msg.length - 1 : undefined);
-                    messageConstructorObject[messageIndex] = str;
-                    if (!isFinalMessage) return;
-
-                    const jsonStr = Object.values(messageConstructorObject).reduce((acc, curr) => acc + curr, '');
-
-                    const obj = JSON.parse(jsonStr);
-                    if (obj.type === 'ERROR') {
-                        logger.error(obj.message);
-                        return;
-                    }
-
+                const listener = (obj: {
+                    type: string;
+                    message: R;
+                }) => {
                     if (obj.type !== 'EVAL') {
                         return reject(`Unknown response type "${obj.type}" from turtle with message "${obj.message}"`);
                     }
 
-                    this.ws.off('message', listener);
+                    this.turtleEventEmitter.off(uuid, listener);
                     return resolve(obj.message);
                 };
-                this.ws.on('message', listener);
+                this.turtleEventEmitter.on(uuid, listener);
                 this.ws.send(JSON.stringify({type: 'EVAL', uuid, function: f}));
             })
         );
@@ -1308,117 +1462,6 @@ export class Turtle {
         return this.lastPromise as Promise<R>;
     }
 }
-
-const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
-    logger.info('Initiating handshake...');
-    const uuid = uuid4();
-    const messageConstructorObject: {[key: number]: string} = {};
-    const listener = async (msg: Buffer) => {
-        if (msg.length < 42) {
-            logger.warning(`Invalid WebSocket message received: ${msg}`);
-            return;
-        }
-
-        if (msg[0] !== 0x01) {
-            logger.warning(`Turtle WebSocket message does not start with 0x01 (start of heading)`);
-            return;
-        }
-
-        const messageIndex = parseInt(msg.toString('hex', 1, 5), 16);
-        
-        const messageUuid = msg.toString('utf-8', 5, 41);
-        if (messageUuid !== uuid) {
-            logger.error(`${messageUuid} does not match ${uuid}!`);
-            return;
-        }
-
-        const isFinalMessage = msg[msg.length - 1] === 0x04;
-        const str = msg.toString('utf-8', 42, isFinalMessage ? msg.length - 1 : undefined);
-        messageConstructorObject[messageIndex] = str;
-        if (!isFinalMessage) return;
-
-        const obj = JSON.parse(Object.values(messageConstructorObject).reduce((acc, curr) => acc + curr, ''));
-        if (obj.type === 'ERROR') {
-            logger.error(obj.message);
-            return;
-        }
-
-        const {message} = obj;
-        const {id, label, fuel, selectedSlot, inventory} = message;
-        const inventoryAsObject = Array.isArray(inventory) ? {} : inventory;
-        const {level: fuelLevel, limit: fuelLimit} = fuel;
-        let name = label;
-        if (!name) {
-            name = nameList[Math.floor(Math.random() * (nameList.length - 1))];
-            ws.send(JSON.stringify({type: 'RENAME', message: name}));
-        }
-
-        upsertServer(remoteAddress, null);
-        const {id: serverId} = getServerByRemoteAddress(remoteAddress);
-        const {stepsSinceLastRefuel, state, location, direction} = getTurtle(serverId, id) ?? {
-            stepsSinceLastRefuel: 0,
-            state: null,
-            location: null,
-            direction: null
-        };
-        logger.info(`${name || '<unnamed>'} [${id}] has connected!`);
-        ws.off('message', listener);
-        const isOnline = true;
-        const turtle = new Turtle(
-            serverId,
-            id,
-            name,
-            isOnline,
-            fuelLevel,
-            fuelLimit,
-            selectedSlot,
-            inventoryAsObject,
-            stepsSinceLastRefuel,
-            state,
-            location,
-            direction,
-            ws
-        );
-        connectedTurtlesMap.set(id, turtle);
-
-        globalEventEmitter.emit('tconnect', {
-            id,
-            serverId,
-            turtle: {
-                serverId,
-                id,
-                name,
-                isOnline,
-                fuelLevel,
-                fuelLimit,
-                selectedSlot,
-                inventory: inventoryAsObject,
-                stepsSinceLastRefuel,
-                state,
-                location,
-                direction,
-            },
-        });
-        upsertTurtle(
-            serverId,
-            id,
-            name,
-            fuelLevel,
-            fuelLimit,
-            selectedSlot,
-            inventoryAsObject,
-            stepsSinceLastRefuel,
-            state,
-            location,
-            direction
-        );
-    };
-    ws.on('message', listener);
-    ws.on('error', (err) => {
-        logger.error(err);
-    });
-    ws.send(JSON.stringify({type: 'HANDSHAKE', uuid, logLevel: turtleLogLevel}));
-};
 
 export const getOnlineTurtles = () => connectedTurtlesMap.values();
 export const getOnlineTurtleById = (id: number) => connectedTurtlesMap.get(id);
