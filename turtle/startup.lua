@@ -46,6 +46,12 @@ local function handshake(uuid)
         local item = turtle.getItemDetail(i, true) or textutils.json_null
         inventory[tostring(i)] = item
     end
+    local peripherals = {}
+    local peripheralNames = peripheral.getNames()
+
+    for k, v in pairs(peripheralNames) do
+        peripherals[v] = {peripheral.getType(v)}
+    end
     local fuelLevel = turtle.getFuelLevel()
     local fuelLimit = turtle.getFuelLimit()
     if logLevel < 3 then
@@ -57,7 +63,7 @@ local function handshake(uuid)
     end
     local fuel = { level = fuelLevel, limit = fuelLimit }
     local selectedSlot = turtle.getSelectedSlot()
-    local computer = { id = id, label = label, fuel = fuel, inventory = inventory, selectedSlot = selectedSlot }
+    local computer = { id = id, label = label, fuel = fuel, inventory = inventory, selectedSlot = selectedSlot, peripherals = peripherals }
     local response = { type = "HANDSHAKE", message = computer }
     send(textutils.serializeJSON(response), uuid)
 end
@@ -180,16 +186,39 @@ local function inventoryUpdate()
     end
 end
 
-local function peripheralChanged()
+local function peripheralAttached()
+    local function waitForEvent()
+        os.pullEvent("peripheral")
+    end
+
+    local function peripheralUpdate()
+        local peripherals = {}
+        local names = peripheral.getNames()
+
+        for k, v in pairs(names) do
+            peripherals[v] = {peripheral.getType(v)}
+        end
+
+        if ws then
+            send(textutils.serializeJSON({ type = "PERIPHERAL_ATTACHED", message = peripherals }), "update")
+        end
+    end
+
+    waitForEvent()
+
     while true do
-        local event, side = os.pullEvent("peripheral")
+        parallel.waitForAll(waitForEvent, peripheralUpdate)
     end
 end
 
 local function peripheralDetached()
     while true do
-        local event, side = os.pullEvent("peripheral_detach")
+        local _, side = os.pullEvent("peripheral_detach")
+
+        if not peripheral.isPresent(side) and ws then
+            send(textutils.serializeJSON({ type = "PERIPHERAL_DETACHED", message = side }), "update")
+        end
     end
 end
 
-parallel.waitForAny(wrappedMain, inventoryUpdate, peripheralChanged, peripheralDetached)
+parallel.waitForAny(wrappedMain, inventoryUpdate, peripheralAttached, peripheralDetached)

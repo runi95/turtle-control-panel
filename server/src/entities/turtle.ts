@@ -23,9 +23,10 @@ import {
     upsertBlock,
     upsertServer,
     getServerByRemoteAddress,
+    updateTurtlePeripherals,
 } from '../db';
 import {Block} from '../db/block.type';
-import {Direction, Inventory, ItemDetail, Location} from '../db/turtle.type';
+import {Direction, Inventory, ItemDetail, Location, Peripherals} from '../db/turtle.type';
 import {StateData, TurtleBaseState} from './states/base';
 import {StateDataTypes, TURTLE_STATES} from './states/helpers';
 import {FarmingStateData, TurtleFarmingState} from './states/farming';
@@ -129,10 +130,11 @@ wss.on('connection', (ws, req) => {
                     '16': ItemDetail;
                 };
                 selectedSlot: number;
+                peripherals: Peripherals;
             };
         }) => {
             const {message} = obj;
-            const {id, label, fuel, selectedSlot, inventory} = message;
+            const {id, label, fuel, selectedSlot, inventory, peripherals} = message;
             const inventoryAsObject = Array.isArray(inventory) ? {} : inventory;
             const {level: fuelLevel, limit: fuelLimit} = fuel;
             let name = label;
@@ -165,6 +167,7 @@ wss.on('connection', (ws, req) => {
                 state,
                 location,
                 direction,
+                peripherals,
                 ws,
                 turtleEventEmitter
             );
@@ -199,7 +202,8 @@ wss.on('connection', (ws, req) => {
                 stepsSinceLastRefuel,
                 state,
                 location,
-                direction
+                direction,
+                peripherals,
             );
         };
 
@@ -225,6 +229,7 @@ export class Turtle {
     #state: TurtleBaseState<StateDataTypes> | null = null;
     #location: Location | null;
     #direction: Direction | null;
+    #peripherals: Peripherals;
 
     // Private properties
     private readonly ws;
@@ -245,6 +250,7 @@ export class Turtle {
         state: StateData<StateDataTypes> | null,
         location: Location | null,
         direction: Direction | null,
+        peripherals: Peripherals,
         ws: WebSocket,
         eventEmitter: EventEmitter
     ) {
@@ -259,6 +265,7 @@ export class Turtle {
         this.#stepsSinceLastRefuel = stepsSinceLastRefuel;
         this.#location = location;
         this.#direction = direction;
+        this.#peripherals = peripherals;
 
         this.ws = ws;
         this.turtleEventEmitter = eventEmitter;
@@ -291,10 +298,20 @@ export class Turtle {
             type: string;
             message: unknown;
         }) => {
-            if (obj.type === 'INVENTORY_UPDATE') {
-                this.inventory = obj.message as Inventory;
-            } else {
-                logger.warning(`Unknown update type: ${obj.type}`);
+            const {type, message} = obj;
+            switch (type) {
+                case 'INVENTORY_UPDATE':
+                    this.inventory = message as Inventory;
+                    break;
+                case 'PERIPHERAL_ATTACHED':
+                    this.peripherals = message as Peripherals;
+                    break;
+                case 'PERIPHERAL_DETACHED':
+                    this.peripherals = (({[message as string]: _, ...peripherals}) => peripherals)(this.peripherals);
+                    break;
+                default:
+                    logger.warning(`Unknown update type: ${obj.type}`);
+                    break;
             }
         });
     }
@@ -499,6 +516,22 @@ export class Turtle {
             },
         });
         updateTurtleDirection(this.serverId, this.id, this.direction);
+    }
+
+    public get peripherals() {
+        return this.#peripherals;
+    }
+
+    public set peripherals(peripherals: Peripherals) {
+        this.#peripherals = peripherals;
+        globalEventEmitter.emit('tupdate', {
+            id: this.id,
+            serverId: this.serverId,
+            data: {
+                peripherals: this.peripherals,
+            },
+        });
+        updateTurtlePeripherals(this.serverId, this.id, this.peripherals);
     }
 
     /**

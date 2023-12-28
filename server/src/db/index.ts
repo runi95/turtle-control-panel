@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import {Server} from './server.type';
 import {Block, BlockState, BlockTags} from './block.type';
-import {Direction, Inventory, Location, Turtle} from './turtle.type';
+import {Direction, Inventory, Location, Peripherals, Turtle} from './turtle.type';
 import {Area} from './area.type';
 import {StateData} from '../entities/states/base';
 import {StateDataTypes} from '../entities/states/helpers';
@@ -30,6 +30,7 @@ db.exec(
     state JSON,
     location JSON,
     direction INT,
+    peripherals JSON,
     CONSTRAINT pk_turtles PRIMARY KEY (\`server_id\`, \`id\`),
     FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
 );`
@@ -80,7 +81,8 @@ const preparedDashboard = db
                 'stepsSinceLastRefuel', \`t\`.\`steps_since_last_refuel\`,
                 'state', json(\`t\`.\`state\`),
                 'location', json(\`t\`.\`location\`),
-                'direction', \`t\`.\`direction\`
+                'direction', \`t\`.\`direction\`,
+                'peripherals', json(\`t\`.\`peripherals\`)
             )), json_array()),
             'areas', iif(\`a\`.\`id\` IS NOT NULL, json_group_array(json_object(
                 'id', \`a\`.\`id\`,
@@ -118,10 +120,11 @@ const selectTurtle = db.prepare(`SELECT json_object(
     'stepsSinceLastRefuel', \`t\`.\`steps_since_last_refuel\`,
     'state', json(\`t\`.\`state\`),
     'location', json(\`t\`.\`location\`),
-    'direction', \`t\`.\`direction\`
+    'direction', \`t\`.\`direction\`,
+    'peripherals', json(\`t\`.\`peripherals\`)
 ) FROM \`turtles\` AS \`t\` WHERE \`server_id\` = ? AND \`id\` = ?`).pluck();
 const insertTurtle = db.prepare(
-    'INSERT INTO `turtles` VALUES (:server_id, :id, :name, :fuel_level, :fuel_limit, :selected_slot, :inventory, :steps_since_last_refuel, :state, :location, :direction) ON CONFLICT DO UPDATE SET name = :name, fuel_level = :fuel_level, fuel_limit = :fuel_limit, selected_slot = :selected_slot, inventory = :inventory, steps_since_last_refuel = :steps_since_last_refuel, state = :state, location = :location, direction = :direction'
+    'INSERT INTO `turtles` VALUES (:server_id, :id, :name, :fuel_level, :fuel_limit, :selected_slot, :inventory, :steps_since_last_refuel, :state, :location, :direction, :peripherals) ON CONFLICT DO UPDATE SET name = :name, fuel_level = :fuel_level, fuel_limit = :fuel_limit, selected_slot = :selected_slot, inventory = :inventory, steps_since_last_refuel = :steps_since_last_refuel, state = :state, location = :location, direction = :direction, peripherals = :peripherals'
 );
 const selectBlocks = db.prepare(`SELECT json_object(
     'serverId', \`b\`.\`server_id\`,
@@ -175,6 +178,9 @@ const setTurtleMovement = db.prepare(
 const setTurtleFuel = db.prepare(
     'UPDATE `turtles` SET `fuel_level` = ? WHERE `server_id` = ? AND `id` = ?'
 );
+const setTurtlePeripherals = db.prepare(
+    'UPDATE `turtles` SET `peripherals` = ? WHERE `server_id` = ? AND `id` = ?'
+);
 
 export const getDashboard = () => preparedDashboard.all().map((server: unknown) => JSON.parse(server as string));
 export const upsertServer = (remoteAddress: string, name: string | null) =>
@@ -202,7 +208,8 @@ export const upsertTurtle = (
     stepsSinceLastRefuel: number,
     state: StateData<StateDataTypes> | null,
     location: Location | null,
-    direction: Direction | null
+    direction: Direction | null,
+    peripherals: Peripherals,
 ) =>
     insertTurtle.run({
         server_id: serverId,
@@ -216,6 +223,7 @@ export const upsertTurtle = (
         state: JSON.stringify(state),
         location: JSON.stringify(location),
         direction,
+        peripherals: JSON.stringify(peripherals),
     });
 export interface GetBlocksOptions {
     fromX: number;
@@ -300,3 +308,5 @@ export const updateTurtleMovement = (
 ) => setTurtleMovement.run(fuelLevel, stepsSinceLastRefuel, JSON.stringify(location), serverId, id);
 export const updateTurtleFuel = (serverId: number, id: number, fuelLevel: number) =>
     setTurtleFuel.run(fuelLevel, serverId, id);
+export const updateTurtlePeripherals = (serverId: number, id: number, peripherals: Peripherals) =>
+    setTurtlePeripherals.run(JSON.stringify(peripherals), serverId, id);

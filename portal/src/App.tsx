@@ -19,6 +19,10 @@ export interface Inventory {
     [key: number]: ItemDetail | undefined;
 }
 
+export interface Peripherals {
+    [key: string]: string[];
+}
+
 export interface BaseState {
     id: number;
     error?: string;
@@ -74,6 +78,7 @@ export interface Turtle {
     state?: BaseState;
     location: Location;
     direction: Direction;
+    peripherals: Peripherals;
 }
 
 export interface Turtles {
