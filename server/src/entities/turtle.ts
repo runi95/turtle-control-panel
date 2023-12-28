@@ -48,7 +48,7 @@ wss.on('connection', (ws, req) => {
 
     const messageConstructorMap = new Map<string, MessageConstructorObject>();
     const messageConstructor = async (msg: Buffer) => {
-        if (msg.length < 42) {
+        if (msg.length < 11) {
             logger.warning(`Invalid WebSocket message received: ${msg}`);
             return;
         }
@@ -59,10 +59,11 @@ wss.on('connection', (ws, req) => {
         }
 
         const messageIndex = parseInt(msg.toString('hex', 1, 5), 16);
+        const uuidLength = parseInt(msg.toString('hex', 5, 9), 16);
 
-        const messageUuid = msg.toString('utf-8', 5, 41);
+        const messageUuid = msg.toString('utf-8', 9, 9 + uuidLength);
         const isFinalMessage = msg[msg.length - 1] === 0x04;
-        const str = msg.toString('utf-8', 42, isFinalMessage ? msg.length - 1 : undefined);
+        const str = msg.toString('utf-8', 10 + uuidLength, isFinalMessage ? msg.length - 1 : undefined);
         if (isFinalMessage && messageIndex === 1) {
             const obj = JSON.parse(
                 messageIndex === 1

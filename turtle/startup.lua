@@ -5,17 +5,22 @@ local logLevel = 0
 local maxBytesPerMessage = 131072
 
 local function send(msg, uuid)
+    if uuid == nil then
+        uuid = ""
+    end
+
     -- msg + end of transmission
     local messageWithEnding = msg .. string.char(0x04)
     local index = 0
     local messageNumber = 1
     local size = string.len(msg)
+    local uuidSize = string.len(uuid)
 
     while index < size do
         if ws then
             -- start of heading + message index + uuid + start of text
-            local maxBodySize = maxBytesPerMessage - 47;
-            ws.send(string.char(0x01) .. string.pack(">i4", messageNumber) .. uuid .. string.char(0x02) .. messageWithEnding:sub(index + 1, index + maxBodySize), true)
+            local maxBodySize = maxBytesPerMessage - (11 + uuidSize);
+            ws.send(string.char(0x01) .. string.pack(">i4", messageNumber) .. string.pack(">i4", uuidSize) .. uuid .. string.char(0x02) .. messageWithEnding:sub(index + 1, index + maxBodySize), true)
             index = index + maxBodySize
             messageNumber = messageNumber + 1
         end
