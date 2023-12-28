@@ -113,6 +113,9 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                             case 'inventory-transfer':
                                 turtle.inventoryTransfer(obj.data.fromSlot, obj.data.toSlot);
                                 break;
+                            case 'locate':
+                                turtle.gpsLocate();
+                                break;
                             default:
                                 logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);
                                 break;

@@ -1217,9 +1217,15 @@ export class Turtle {
     }
 
     async gpsLocate(): Promise<[number, number, number] | [null, null, null]> {
-        return await this.#exec(
+        const locate = await this.#exec<[number, number, number] | [null, null, null]>(
             '(function(x, y, z) return x and y and z and x, y, z or textutils.json_null end)(gps.locate())'
         );
+        const [x, y, z] = locate;
+        if (x !== null && y !== null && z !== null) {
+            this.location = {x, y, z};
+        }
+
+        return locate;
     }
 
     async detect() {

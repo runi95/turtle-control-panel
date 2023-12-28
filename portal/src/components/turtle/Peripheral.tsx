@@ -26,6 +26,7 @@ function Peripheral(props: PeripheralProps) {
         return (
             <div>
                 <Button
+                    onClick={() => action({type: 'ACTION', action: 'locate', data: {id}})}
                     variant={turtle.location === null ? 'outline-success' : 'outline-secondary'}
                     size='sm'
                     disabled={!turtle.isOnline}
