@@ -12,7 +12,6 @@ import {TurtleRefuelingState} from './entities/states/refueling';
 import {TurtleMoveState} from './entities/states/move';
 import {TurtleMiningState} from './entities/states/mining';
 import {TurtleScanState} from './entities/states/scan';
-import {TURTLE_STATES} from './entities/states/helpers';
 import Database from 'better-sqlite3';
 import {Area} from './db/area.type';
 
