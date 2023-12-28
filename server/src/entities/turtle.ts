@@ -221,7 +221,7 @@ export class Turtle {
     #selectedSlot: number;
     #inventory: Inventory;
     #stepsSinceLastRefuel: number;
-    #state: TurtleBaseState<StateDataTypes> | null;
+    #state: TurtleBaseState<StateDataTypes> | null = null;
     #location: Location | null;
     #direction: Direction | null;
 
@@ -256,7 +256,6 @@ export class Turtle {
         this.#selectedSlot = selectedSlot;
         this.#inventory = inventory;
         this.#stepsSinceLastRefuel = stepsSinceLastRefuel;
-        this.#state = this.getRecoveredState(state);
         this.#location = location;
         this.#direction = direction;
 
@@ -285,6 +284,8 @@ export class Turtle {
                 globalEventEmitter.emit('tdisconnect', {id: this.id, serverId: this.serverId});
             }
         });
+
+        this.state = this.getRecoveredState(state);
     }
 
     public get name() {
