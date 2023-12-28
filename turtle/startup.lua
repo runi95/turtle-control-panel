@@ -43,7 +43,7 @@ local function handshake(uuid)
     local label = os.getComputerLabel()
     local inventory = {}
     for i = 1, 16 do
-        local item = turtle.getItemDetail(i, true)
+        local item = turtle.getItemDetail(i, true) or textutils.json_null
         inventory[tostring(i)] = item
     end
     local fuelLevel = turtle.getFuelLevel()
