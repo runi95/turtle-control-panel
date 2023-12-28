@@ -287,6 +287,16 @@ export class Turtle {
         });
 
         this.state = this.getRecoveredState(state);
+        this.turtleEventEmitter.on('update', (obj: {
+            type: string;
+            message: unknown;
+        }) => {
+            if (obj.type === 'INVENTORY_UPDATE') {
+                this.inventory = obj.message as Inventory;
+            } else {
+                logger.warning(`Unknown update type: ${obj.type}`);
+            }
+        });
     }
 
     public get name() {
@@ -778,23 +788,9 @@ export class Turtle {
     async dig(): Promise<[boolean, string | undefined]> {
         if (this.location === null) return [false, 'Turtle location is null'];
 
-        const selectedSlot = this.selectedSlot;
         const dig = await this.#exec<[boolean, string | undefined]>('turtle.dig()');
         const [didDig] = dig;
         if (didDig) {
-            const inventory: Inventory = {};
-            for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec<[ItemDetail | null]>(
-                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
-                );
-                inventory[i] = item ?? undefined;
-                if (item === undefined) break;
-            }
-
-            this.inventory = {
-                ...this.inventory,
-                ...inventory,
-            };
             globalEventEmitter.emit('wdelete', {
                 serverId: this.serverId,
                 x: this.location.x,
@@ -820,23 +816,9 @@ export class Turtle {
     async digUp(): Promise<[boolean, string | undefined]> {
         if (this.location === null) return [false, 'Turtle location is null'];
 
-        const selectedSlot = this.selectedSlot;
         const digUp = await this.#exec<[boolean, string | undefined]>('turtle.digUp()');
         const [didDig] = digUp;
         if (didDig) {
-            const inventory: Inventory = {};
-            for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec<[ItemDetail | null]>(
-                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
-                );
-                inventory[i] = item ?? undefined;
-                if (item === undefined) break;
-            }
-
-            this.inventory = {
-                ...this.inventory,
-                ...inventory,
-            };
             globalEventEmitter.emit('wdelete', {
                 serverId: this.serverId,
                 x: this.location.x,
@@ -862,23 +844,9 @@ export class Turtle {
     async digDown(): Promise<[boolean, string | undefined]> {
         if (this.location === null) return [false, 'Turtle location is null'];
 
-        const selectedSlot = this.selectedSlot;
         const digDown = await this.#exec<[boolean, string | undefined]>('turtle.digDown()');
         const [didDig] = digDown;
         if (didDig) {
-            const inventory: Inventory = {};
-            for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec<[ItemDetail | null]>(
-                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
-                );
-                inventory[i] = item ?? undefined;
-                if (item === undefined) break;
-            }
-
-            this.inventory = {
-                ...this.inventory,
-                ...inventory,
-            };
             globalEventEmitter.emit('wdelete', {
                 serverId: this.serverId,
                 x: this.location.x,
@@ -1067,12 +1035,9 @@ export class Turtle {
     }
 
     async place(): Promise<[boolean, string | undefined]> {
-        const selectedSlot = this.selectedSlot;
         const place = await this.#exec<[boolean, string | undefined]>('turtle.place()');
         const [didPlace] = place;
         if (didPlace) {
-            const item = await this.getItemDetail(selectedSlot);
-            this.inventory[selectedSlot] = item ?? undefined;
             await this.inspect();
         }
 
@@ -1080,12 +1045,9 @@ export class Turtle {
     }
 
     async placeUp(): Promise<[boolean, string | undefined]> {
-        const selectedSlot = this.selectedSlot;
         const placeUp = await this.#exec<[boolean, string | undefined]>('turtle.placeUp()');
         const [didPlace] = placeUp;
         if (didPlace) {
-            const item = await this.getItemDetail(selectedSlot);
-            this.inventory[selectedSlot] = item ?? undefined;
             await this.inspectUp();
         }
 
@@ -1093,12 +1055,9 @@ export class Turtle {
     }
 
     async placeDown(): Promise<[boolean, string | undefined]> {
-        const selectedSlot = this.selectedSlot;
         const placeDown = await this.#exec<[boolean, string | undefined]>('turtle.placeDown()');
         const [didPlace] = placeDown;
         if (didPlace) {
-            const item = await this.getItemDetail(selectedSlot);
-            this.inventory[selectedSlot] = item ?? undefined;
             await this.inspectDown();
         }
 
@@ -1106,33 +1065,15 @@ export class Turtle {
     }
 
     async drop(): Promise<[boolean, string | undefined]> {
-        const slot = this.selectedSlot;
-        const drop = await this.#exec<[boolean, string | undefined]>('turtle.drop()');
-        const [didDrop] = drop;
-        if (didDrop) {
-            await this.getItemDetail(slot);
-        }
-        return drop;
+        return await this.#exec<[boolean, string | undefined]>('turtle.drop()');
     }
 
     async dropUp(): Promise<[boolean, string | undefined]> {
-        const slot = this.selectedSlot;
-        const dropUp = await this.#exec<[boolean, string | undefined]>('turtle.dropUp()');
-        const [didDrop] = dropUp;
-        if (didDrop) {
-            await this.getItemDetail(slot);
-        }
-        return dropUp;
+        return await this.#exec<[boolean, string | undefined]>('turtle.dropUp()');
     }
 
     async dropDown(): Promise<[boolean, string | undefined]> {
-        const slot = this.selectedSlot;
-        const dropDown = await this.#exec<[boolean, string | undefined]>('turtle.dropDown()');
-        const [didDrop] = dropDown;
-        if (didDrop) {
-            await this.getItemDetail(slot);
-        }
-        return dropDown;
+        return await this.#exec<[boolean, string | undefined]>('turtle.dropDown()');
     }
 
     async select(slot = 1): Promise<[boolean, string | undefined]> {
@@ -1145,90 +1086,30 @@ export class Turtle {
     }
 
     async suck(count?: number): Promise<[boolean, string | undefined]> {
-        const selectedSlot = this.selectedSlot;
-        const suck = await this.#exec<[boolean, string | undefined]>(`turtle.suck(${count ?? ''})`);
-        const [didSuckItems] = suck;
-        if (!didSuckItems) {
-            const inventory: Inventory = {};
-            for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec<[ItemDetail | null]>(
-                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
-                );
-                inventory[i] = item ?? undefined;
-                if (item === undefined) break;
-            }
-
-            this.inventory = {
-                ...this.inventory,
-                ...inventory,
-            };
-        }
-        return suck;
+        return await this.#exec<[boolean, string | undefined]>(`turtle.suck(${count ?? ''})`);
     }
 
     async suckUp(count?: number): Promise<[boolean, string | undefined]> {
-        const selectedSlot = this.selectedSlot;
-        const suckUp = await this.#exec<[boolean, string | undefined]>(`turtle.suckUp(${count ?? ''})`);
-        const [didSuckItems] = suckUp;
-        if (!didSuckItems) {
-            const inventory: Inventory = {};
-            for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec<[ItemDetail | null]>(
-                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
-                );
-                inventory[i] = item ?? undefined;
-                if (item === undefined) break;
-            }
-
-            this.inventory = {
-                ...this.inventory,
-                ...inventory,
-            };
-        }
-        return suckUp;
+        return await this.#exec<[boolean, string | undefined]>(`turtle.suckUp(${count ?? ''})`);
     }
 
     async suckDown(count?: number): Promise<[boolean, string | undefined]> {
-        const selectedSlot = this.selectedSlot;
-        const suckDown = await this.#exec<[boolean, string | undefined]>(`turtle.suckDown(${count ?? ''})`);
-        const [didSuckItems] = suckDown;
-        if (!didSuckItems) {
-            const inventory: Inventory = {};
-            for (let i = selectedSlot; i < 17; i++) {
-                const [item] = await this.#exec<[ItemDetail | null]>(
-                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
-                );
-                inventory[i] = item ?? undefined;
-                if (item === undefined) break;
-            }
-
-            this.inventory = {
-                ...this.inventory,
-                ...inventory,
-            };
-        }
-        return suckDown;
+        return await this.#exec<[boolean, string | undefined]>(`turtle.suckDown(${count ?? ''})`);
     }
 
     async refuel(): Promise<[boolean, string | undefined]> {
-        const selectedSlot = this.selectedSlot;
         const refuel = await this.#exec<[boolean, string | undefined]>('turtle.refuel()');
         const [didRefuel] = refuel;
         if (didRefuel) {
             const [updatedFuelLevel] = await this.#exec<[number | string]>('turtle.getFuelLevel()');
             this.#fuelLevel = typeof updatedFuelLevel === 'string' ? Number.POSITIVE_INFINITY : updatedFuelLevel;
-            const [item] = await this.#exec<[ItemDetail | null]>(
-                `turtle.getItemDetail(${selectedSlot}, true) or textutils.json_null`
-            );
-            this.#inventory[selectedSlot] = item ?? undefined;
 
-            updateTurtleFuel(this.serverId, this.id, this.fuelLevel, this.inventory);
+            updateTurtleFuel(this.serverId, this.id, this.fuelLevel);
             globalEventEmitter.emit('tupdate', {
                 id: this.id,
                 serverId: this.serverId,
                 data: {
                     fuelLevel: this.fuelLevel,
-                    inventory: this.inventory,
                 },
             });
         }
@@ -1252,44 +1133,17 @@ export class Turtle {
         // NOTE:
         // CC:Tweaked documentation is wrong for turtle.transferTo,
         // it returns [true] only if ALL items successfully transfer and returns [false] otherwise
-        const transfer = count
+        return count
             ? await this.#exec<[boolean]>(`turtle.transferTo(${slot}, ${count})`)
             : await this.#exec<[boolean]>(`turtle.transferTo(${slot})`);
-        const [itemDetail] = await this.#exec<[ItemDetail | null]>(
-            `turtle.getItemDetail(${slot}, true) or textutils.json_null`
-        );
-        const [selectedItemDetail] = await this.#exec<[ItemDetail | null]>(
-            `turtle.getItemDetail(${selectedSlot}, true) or textutils.json_null`
-        );
-        this.inventory = {
-            ...this.inventory,
-            [slot]: itemDetail ?? undefined,
-            [selectedSlot]: selectedItemDetail ?? undefined,
-        };
-
-        return transfer;
     }
 
     async equipLeft(): Promise<[boolean, string | undefined]> {
-        const selectedSlot = this.selectedSlot;
-        const equipLeft = await this.#exec<[boolean, string | undefined]>('turtle.equipLeft()');
-        const [didEquip] = equipLeft;
-        if (didEquip) {
-            await this.getItemDetail(selectedSlot);
-        }
-
-        return equipLeft;
+        return await this.#exec<[boolean, string | undefined]>('turtle.equipLeft()');
     }
 
     async equipRight(): Promise<[boolean, string | undefined]> {
-        const selectedSlot = this.selectedSlot;
-        const equipRight = await this.#exec<[boolean, string | undefined]>('turtle.equipRight()');
-        const [didEquip] = equipRight;
-        if (didEquip) {
-            await this.getItemDetail(selectedSlot);
-        }
-
-        return equipRight;
+        return await this.#exec<[boolean, string | undefined]>('turtle.equipRight()');
     }
 
     async getSelectedSlot(): Promise<[number]> {
@@ -1316,23 +1170,7 @@ export class Turtle {
         const [didCraft, craftMessage] = await this.#exec<[boolean, string | undefined]>(
             'peripheral.find("workbench").craft()'
         );
-        if (didCraft) {
-            const inventoryAsObject: Inventory = {};
-            for (let i = 1; i < 17; i++) {
-                const [item] = await this.#exec<[ItemDetail | null]>(
-                    `turtle.getItemDetail(${i}, true) or textutils.json_null`
-                );
-                inventoryAsObject[i] = item ?? undefined;
-            }
-            this.#inventory = inventoryAsObject;
-            globalEventEmitter.emit('tupdate', {
-                id: this.id,
-                serverId: this.serverId,
-                data: {
-                    inventory: this.inventory,
-                },
-            });
-        } else {
+        if (!didCraft) {
             this.error = craftMessage as string;
         }
     }

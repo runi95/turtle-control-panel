@@ -169,21 +169,8 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
     }
 
     private async farmBlock(seedTypeName: string) {
-        const initialItemCount = Object.values(this.turtle.inventory).reduce(
-            (acc, curr) => acc + (curr?.count || 0),
-            0
-        );
         const [didDigDown] = await this.turtle.digDown();
         if (didDigDown) {
-            const currentItemCount = Object.values(this.turtle.inventory).reduce(
-                (acc, curr) => acc + (curr?.count || 0),
-                0
-            );
-            if (currentItemCount === initialItemCount) {
-                this.turtle.error = 'Inventory is full';
-                return;
-            }
-
             const didSelectSeed = await this.selectItemOfType(seedTypeName);
             if (didSelectSeed) {
                 await this.turtle.placeDown();

@@ -173,7 +173,7 @@ const setTurtleMovement = db.prepare(
     'UPDATE `turtles` SET `fuel_level` = ?, `steps_since_last_refuel` = ?, `location` = ? WHERE `server_id` = ? AND `id` = ?'
 );
 const setTurtleFuel = db.prepare(
-    'UPDATE `turtles` SET `fuel_level` = ?, `inventory` = ? WHERE `server_id` = ? AND `id` = ?'
+    'UPDATE `turtles` SET `fuel_level` = ? WHERE `server_id` = ? AND `id` = ?'
 );
 
 export const getDashboard = () => preparedDashboard.all().map((server: unknown) => JSON.parse(server as string));
@@ -298,5 +298,5 @@ export const updateTurtleMovement = (
     stepsSinceLastRefuel: number,
     location: Location
 ) => setTurtleMovement.run(fuelLevel, stepsSinceLastRefuel, JSON.stringify(location), serverId, id);
-export const updateTurtleFuel = (serverId: number, id: number, fuelLevel: number, inventory: Inventory) =>
-    setTurtleFuel.run(fuelLevel, JSON.stringify(inventory), serverId, id);
+export const updateTurtleFuel = (serverId: number, id: number, fuelLevel: number) =>
+    setTurtleFuel.run(fuelLevel, serverId, id);

@@ -150,4 +150,46 @@ local function waitForDisconnect()
     end
 end
 
-parallel.waitForAny(wrappedMain, waitForDisconnect)
+local function inventoryUpdate()
+    os.pullEvent("turtle_inventory")
+
+    local function waitForEvent()
+        os.pullEvent("turtle_inventory")
+    end
+
+    local function inventoryUpdate()
+        local inventory = {}
+        local f = {}
+        for i = 1, 16 do
+            f[i] = function ()
+                local item = turtle.getItemDetail(i, true) or textutils.json_null
+                inventory[tostring(i)] = item
+            end
+        end
+
+        parallel.waitForAll(table.unpack(f))
+
+        if ws then
+            send(textutils.serializeJSON({ type = "INVENTORY_UPDATE", message = inventory }), "update")
+        end
+    end
+
+    local existingUpdateRoutine = nil
+    while true do
+        parallel.waitForAll(waitForEvent, inventoryUpdate)
+    end
+end
+
+local function peripheralChanged()
+    while true do
+        local event, side = os.pullEvent("peripheral")
+    end
+end
+
+local function peripheralDetached()
+    while true do
+        local event, side = os.pullEvent("peripheral_detach")
+    end
+end
+
+parallel.waitForAny(wrappedMain, inventoryUpdate, peripheralChanged, peripheralDetached)
