@@ -4,7 +4,7 @@ local ws
 local logLevel = 0
 local maxBytesPerMessage = 131072
 
-local function send(msg, uuid)
+local function send(msg)
     -- msg + end of transmission
     local messageWithEnding = msg .. string.char(0x04)
     local index = 0
@@ -13,16 +13,16 @@ local function send(msg, uuid)
 
     while index < size do
         if ws then
-            -- start of heading + message index + uuid + start of text
-            local maxBodySize = maxBytesPerMessage - 47;
-            ws.send(string.char(0x01) .. string.pack(">i4", messageNumber) .. uuid .. string.char(0x02) .. messageWithEnding:sub(index + 1, index + maxBodySize), true)
+            -- start of heading + message index + start of text
+            local maxBodySize = maxBytesPerMessage - 11;
+            ws.send(string.char(0x01) .. string.pack(">i4", messageNumber) .. string.char(0x02) .. messageWithEnding:sub(index + 1, index + maxBodySize), true)
             index = index + maxBodySize
             messageNumber = messageNumber + 1
         end
     end
 end
 
-local function eval(f, uuid)
+local function eval(f)
     if logLevel == 0 then
         print("EVAL => " .. f)
     end
@@ -30,10 +30,10 @@ local function eval(f, uuid)
     local result = {func()}
     local type = "EVAL"
     local response = { type = type, message = result }
-    send(textutils.serializeJSON(response), uuid)
+    send(textutils.serializeJSON(response))
 end
 
-local function handshake(uuid)
+local function handshake()
     local id = os.getComputerID()
     local label = os.getComputerLabel()
     local inventory = {}
@@ -54,7 +54,7 @@ local function handshake(uuid)
     local selectedSlot = turtle.getSelectedSlot()
     local computer = { id = id, label = label, fuel = fuel, inventory = inventory, selectedSlot = selectedSlot }
     local response = { type = "HANDSHAKE", message = computer }
-    send(textutils.serializeJSON(response), uuid)
+    send(textutils.serializeJSON(response))
 end
 
 local function main()
@@ -97,13 +97,12 @@ local function main()
                 local obj = textutils.unserializeJSON(message)
                 if obj.type == "HANDSHAKE" then
                     logLevel = obj.logLevel or 0
-                    handshake(obj.uuid)
+                    handshake()
                 elseif obj.type == "RENAME" then
                     os.setComputerLabel(obj["message"])
-                    local response = { type = "RENAME" }
-                    send(textutils.serializeJSON(response), obj.uuid)
+                    send(textutils.serializeJSON({ type = "RENAME" }))
                 elseif obj.type == "EVAL" then
-                    eval(obj["function"], obj.uuid)
+                    eval(obj["function"])
                 elseif obj.type == "DISCONNECT" then
                     if ws then
                         ws.close()

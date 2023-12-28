@@ -1,5 +1,4 @@
 import WebSocket, {WebSocketServer} from 'ws';
-import {v4 as uuid4} from 'uuid';
 import globalEventEmitter from '../globalEventEmitter';
 import nameList from '../names';
 import {getLocalCoordinatesForDirection} from '../helpers/coordinates';
@@ -1257,12 +1256,11 @@ export class Turtle {
     }
 
     #execRaw<R>(f: string): Promise<R> {
-        const uuid = uuid4();
         const messageConstructorObject: {[key: number]: string} = {};
         this.lastPromise = new Promise<R>((resolve, reject) =>
             this.lastPromise.finally(() => {
                 const listener = (msg: Buffer) => {
-                    if (msg.length < 42) {
+                    if (msg.length < 6) {
                         logger.warning(`Invalid WebSocket message received: ${msg}`);
                         return;
                     }
@@ -1273,15 +1271,8 @@ export class Turtle {
                     }
             
                     const messageIndex = parseInt(msg.toString('hex', 1, 5), 16);
-                    
-                    const messageUuid = msg.toString('utf-8', 5, 41);
-                    if (messageUuid !== uuid) {
-                        logger.error(`${messageUuid} does not match ${uuid}!`);
-                        return;
-                    }
-            
                     const isFinalMessage = msg[msg.length - 1] === 0x04;
-                    const str = msg.toString('utf-8', 42, isFinalMessage ? msg.length - 1 : undefined);
+                    const str = msg.toString('utf-8', 6, isFinalMessage ? msg.length - 1 : undefined);
                     messageConstructorObject[messageIndex] = str;
                     if (!isFinalMessage) return;
 
@@ -1301,7 +1292,7 @@ export class Turtle {
                     return resolve(obj.message);
                 };
                 this.ws.on('message', listener);
-                this.ws.send(JSON.stringify({type: 'EVAL', uuid, function: f}));
+                this.ws.send(JSON.stringify({type: 'EVAL', function: f}));
             })
         );
 
@@ -1311,10 +1302,9 @@ export class Turtle {
 
 const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
     logger.info('Initiating handshake...');
-    const uuid = uuid4();
     const messageConstructorObject: {[key: number]: string} = {};
     const listener = async (msg: Buffer) => {
-        if (msg.length < 42) {
+        if (msg.length < 6) {
             logger.warning(`Invalid WebSocket message received: ${msg}`);
             return;
         }
@@ -1325,15 +1315,8 @@ const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
         }
 
         const messageIndex = parseInt(msg.toString('hex', 1, 5), 16);
-        
-        const messageUuid = msg.toString('utf-8', 5, 41);
-        if (messageUuid !== uuid) {
-            logger.error(`${messageUuid} does not match ${uuid}!`);
-            return;
-        }
-
         const isFinalMessage = msg[msg.length - 1] === 0x04;
-        const str = msg.toString('utf-8', 42, isFinalMessage ? msg.length - 1 : undefined);
+        const str = msg.toString('utf-8', 6, isFinalMessage ? msg.length - 1 : undefined);
         messageConstructorObject[messageIndex] = str;
         if (!isFinalMessage) return;
 
@@ -1417,7 +1400,7 @@ const initializeHandshake = (ws: WebSocket, remoteAddress: string) => {
     ws.on('error', (err) => {
         logger.error(err);
     });
-    ws.send(JSON.stringify({type: 'HANDSHAKE', uuid, logLevel: turtleLogLevel}));
+    ws.send(JSON.stringify({type: 'HANDSHAKE', logLevel: turtleLogLevel}));
 };
 
 export const getOnlineTurtles = () => connectedTurtlesMap.values();
