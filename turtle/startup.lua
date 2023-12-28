@@ -151,8 +151,6 @@ local function waitForDisconnect()
 end
 
 local function inventoryUpdate()
-    os.pullEvent("turtle_inventory")
-
     local function waitForEvent()
         os.pullEvent("turtle_inventory")
     end
@@ -173,6 +171,8 @@ local function inventoryUpdate()
             send(textutils.serializeJSON({ type = "INVENTORY_UPDATE", message = inventory }), "update")
         end
     end
+
+    waitForEvent()
 
     local existingUpdateRoutine = nil
     while true do
