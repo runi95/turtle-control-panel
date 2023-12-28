@@ -96,7 +96,7 @@ function Inventory(props: InventoryProps) {
                             const itemIndex = i + 1;
                             const ItemSlotStyle = itemIndex === selectedSlot ? SelectedItemSlot : ItemSlot;
                             const itemDetail = inventory[itemIndex];
-                            if (itemDetail === undefined) {
+                            if (itemDetail === null || itemDetail === undefined) {
                                 return (
                                     <OverlayTrigger
                                         key={i}
