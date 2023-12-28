@@ -7,6 +7,7 @@ import {useState} from 'react';
 import './Inventory.css';
 import {Action, Areas, Turtle, Turtles} from '../../App';
 import TurtleMap from './TurtleMap';
+import Peripheral from './Peripheral';
 
 export interface InventoryProps {
     turtles: Turtles;
@@ -195,74 +196,71 @@ function Inventory(props: InventoryProps) {
             </Col>
             <Col key='inventory-actions'>
                 <Row>
-                    <h5>
-                        Activity: <ins style={{textTransform: 'capitalize'}}>{turtle?.state?.name || 'idle'}</ins>
-                        {turtle?.state?.error ? (
-                            <span>
-                                {' '}
-                                (<span className='text-danger'>{turtle.state.error}</span>)
-                            </span>
-                        ) : null}
-                    </h5>
+                    <div style={{display: 'flex'}}>
+                        <h5>
+                            Activity: <ins style={{textTransform: 'capitalize'}}>{turtle?.state?.name || 'idle'}</ins>
+                            {turtle?.state?.error ? (
+                                <span>
+                                    {' '}
+                                    (<span className='text-danger'>{turtle.state.error}</span>)
+                                </span>
+                            ) : null}
+                        </h5>
+                        <div style={{marginLeft: 25}}>
+                            <Button
+                                onClick={() => props.action({type: 'ACTION', action: 'stop', data: {id: turtle.id}})}
+                                variant='outline-danger'
+                                size='sm'
+                                disabled={!turtle.isOnline}
+                            >
+                                Stop
+                            </Button>
+                        </div>
+                    </div>
                 </Row>
+                <br />
+                <h5>Actions</h5>
                 <Row>
-                    <div>
-                        <Button
-                            onClick={() => setState({...state, isModalShown: true, modalState: 'mine'})}
-                            variant='outline-info'
-                            size='sm'
-                            disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
-                        >
-                            Mine
-                        </Button>
+                    <div style={{display: 'flex', gap: 5}}>
+                        <div>
+                            <Button
+                                onClick={() => setState({...state, isModalShown: true, modalState: 'mine'})}
+                                variant='outline-info'
+                                size='sm'
+                                disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
+                            >
+                                Mine
+                            </Button>
+                        </div>
+                        <div>
+                            <Button
+                                onClick={() => setState({...state, isModalShown: true, modalState: 'farm'})}
+                                variant='outline-info'
+                                size='sm'
+                                disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
+                            >
+                                Farm
+                            </Button>
+                        </div>
+                        <div>
+                            <Button
+                                onClick={() => props.action({type: 'ACTION', action: 'refuel', data: {id: turtle.id}})}
+                                variant='outline-info'
+                                size='sm'
+                                disabled={!turtle.isOnline}
+                            >
+                                Refuel
+                            </Button>
+                        </div>
                     </div>
                 </Row>
+                <br />
+                <h6>Peripherals</h6>
                 <Row style={{marginTop: 5}}>
-                    <div>
-                        <Button
-                            onClick={() => setState({...state, isModalShown: true, modalState: 'farm'})}
-                            variant='outline-info'
-                            size='sm'
-                            disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
-                        >
-                            Farm
-                        </Button>
-                    </div>
-                </Row>
-                <Row style={{marginTop: 5}}>
-                    <div>
-                        <Button
-                            onClick={() => props.action({type: 'ACTION', action: 'refuel', data: {id: turtle.id}})}
-                            variant='outline-info'
-                            size='sm'
-                            disabled={!turtle.isOnline}
-                        >
-                            Refuel
-                        </Button>
-                    </div>
-                </Row>
-                <Row style={{marginTop: 5}}>
-                    <div>
-                        <Button
-                            onClick={() => props.action({type: 'ACTION', action: 'scan', data: {id: turtle.id}})}
-                            variant='outline-info'
-                            size='sm'
-                            disabled={!turtle.isOnline}
-                        >
-                            Scan
-                        </Button>
-                    </div>
-                </Row>
-                <Row style={{marginTop: 10}}>
-                    <div>
-                        <Button
-                            onClick={() => props.action({type: 'ACTION', action: 'stop', data: {id: turtle.id}})}
-                            variant='outline-danger'
-                            size='sm'
-                            disabled={!turtle.isOnline}
-                        >
-                            Stop
-                        </Button>
+                    <div style={{display: 'flex', gap: 5}}>
+                        {Object.values(turtle.peripherals).map((peripheral, i) => (
+                            <Peripheral key={i} action={action} turtle={turtle} types={peripheral} />
+                        ))}
                     </div>
                 </Row>
             </Col>
