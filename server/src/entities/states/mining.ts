@@ -45,7 +45,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
     }
 
     private checkIfTurtleIsInOrAdjacentToArea(): boolean {
-        const {x, y, z} = this.turtle.location;
+        const {x, y, z} = this.turtle.location as Location;
         return this.area.some(({x: areaX, y: areaY, z: areaZ}) => {
             if (areaX === x && areaY === y && areaZ === z) return true;
             if ((areaX === x + 1 || areaX === x - 1) && areaY === y && areaZ === z) return true;
@@ -56,6 +56,11 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
     }
 
     public async act() {
+        if (this.turtle.location === null) {
+            this.turtle.error = 'Unable to mine without knowing turtle location';
+            return;
+        }
+
         if (this.turtle.selectedSlot !== 1) {
             await this.turtle.select(1); // Ensures proper item stacking
         }

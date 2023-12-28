@@ -1,3 +1,4 @@
+import {Location} from '../../db/turtle.type';
 import {Node} from '../../dlite/Node';
 import {Turtle} from '../turtle';
 import {TURTLE_STATES} from './helpers';
@@ -22,7 +23,7 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
     public abstract act(): Promise<void>;
 
     protected async moveToNode(s: Node): Promise<boolean> {
-        const {x, y, z} = this.turtle.location;
+        const {x, y, z} = this.turtle.location as Location;
         if (s.point.y - y > 0) {
             const [didMoveUp] = await this.turtle.up();
             if (didMoveUp) {

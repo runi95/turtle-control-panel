@@ -31,6 +31,11 @@ export class TurtleMoveState extends TurtleBaseState<MovingStateData> {
     }
 
     public async act() {
+        if (this.turtle.location === null) {
+            this.turtle.error = 'Unable to move without knowing turtle location';
+            return;
+        }
+
         const {x, y, z} = this.turtle.location;
         if (this.data.x === x && this.data.y === y && this.data.z === z) {
             this.turtle.state = null;

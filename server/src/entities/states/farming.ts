@@ -38,6 +38,11 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
     }
 
     public async act() {
+        if (this.turtle.location === null) {
+            this.turtle.error = 'Unable to farm without knowing turtle location';
+            return;
+        }
+
         if (this.turtle.selectedSlot !== 1) {
             await this.turtle.select(1); // Ensures proper item stacking
         }
