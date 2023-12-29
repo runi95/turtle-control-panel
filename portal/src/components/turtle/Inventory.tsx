@@ -7,7 +7,7 @@ import './Inventory.css';
 import {Action, Turtle, Turtles} from '../../App';
 import TurtleMap from './TurtleMap';
 import Peripheral from './Peripheral';
-import ItemSprite from './ItemSprite';
+import Item from './Item';
 
 export interface InventoryProps {
     turtles: Turtles;
@@ -172,8 +172,7 @@ function Inventory(props: InventoryProps) {
                                             });
                                         }}
                                     >
-                                        <ItemSprite index={itemIndex} name={name} />
-                                        <ItemCount data-inventory-slot={itemIndex}>{count}</ItemCount>
+                                        <Item count={count} name={name} index={itemIndex} />
                                     </ItemSlotStyle>
                                 </OverlayTrigger>
                             );
@@ -260,15 +259,6 @@ function Inventory(props: InventoryProps) {
         </Row>
     );
 }
-
-const ItemCount = styled.span`
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    font-size: 24px;
-    line-height: 24px;
-    user-select: none;
-`;
 
 const EmptyItemImage = styled.span`
     width: 32px;
