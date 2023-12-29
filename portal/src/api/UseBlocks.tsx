@@ -21,7 +21,7 @@ export const useBlocks = (serverId: string, query: QueryParams, isEnabled: boole
                 .then((res) => res.json())
                 .then((data: Block[]) =>
                     data.reduce(
-                        (acc, curr) => ((acc[`${curr.x.toString()},${curr.y},${curr.z}`] = curr), acc),
+                        (acc, curr) => ((acc[`${curr.x},${curr.y},${curr.z}`] = curr), acc),
                         {} as {[key: string]: Block}
                     )
                 ),
