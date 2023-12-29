@@ -6,6 +6,7 @@ import {useParams} from 'react-router-dom';
 import {Action, Areas, Blocks, Location, Turtle, Turtles} from '../../App';
 import SpriteTable from '../../SpriteTable';
 import {useBlocks} from '../../api/UseBlocks';
+import {useAreas} from '../../api/UseAreas';
 
 const circleSizeMul = 0.35;
 const spriteSize = 8;
@@ -16,13 +17,12 @@ interface TurtleMapProps {
     style?: React.CSSProperties;
     canvasSize: number;
     turtles: Turtles;
-    areas: Areas;
     action: Action;
 }
 
 const TurtleMap = (props: TurtleMapProps) => {
     const {serverId, id} = useParams() as {serverId: string; id: string};
-    const {canvasSize, turtles, areas, action, ...rest} = props;
+    const {canvasSize, turtles, action, ...rest} = props;
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [mousePosition, setMousePosition] = useState<[number, number] | undefined>(undefined);
     const [isCreatingArea, setIsCreatingArea] = useState(false);
@@ -41,6 +41,7 @@ const TurtleMap = (props: TurtleMapProps) => {
     const [yLevel, setYLevel] = useState<number | undefined>(undefined);
     const [upperYLevel, setUpperYLevel] = useState<number | undefined>(undefined);
     const turtle = turtles?.[id];
+    const {data: areas} = useAreas(serverId);
     const {data: blocks} = useBlocks(
         serverId,
         {
@@ -66,6 +67,7 @@ const TurtleMap = (props: TurtleMapProps) => {
                 canvasSize: number,
                 turtles: Turtles,
                 blocks: Blocks | undefined,
+                areas: Areas | undefined,
                 turtle: Turtle
             ) => {
                 if (!ctx || !turtle || !blocks) {
@@ -158,24 +160,26 @@ const TurtleMap = (props: TurtleMapProps) => {
                 ctx.globalAlpha = 0.4;
 
                 // Draw areas
-                const areaKeys = Object.keys(areas);
-                for (const key of areaKeys) {
-                    let smallestX = Number.POSITIVE_INFINITY;
-                    let smallestY = Number.POSITIVE_INFINITY;
-                    ctx.fillStyle = areas[key].color;
-                    for (const position of areas[key].area) {
-                        const posX = (position.x - turtle.location.x) * spriteSize + centerX - spriteRadius;
-                        const posY = (position.z - turtle.location.z) * spriteSize + centerY - spriteRadius;
-                        smallestX = Math.min(smallestX, posX);
-                        smallestY = Math.min(smallestY, posY);
-                        ctx.fillRect(posX, posY, spriteSize, spriteSize);
-                    }
+                if (areas !== undefined) {
+                    const areaKeys = Object.keys(areas);
+                    for (const key of areaKeys) {
+                        let smallestX = Number.POSITIVE_INFINITY;
+                        let smallestY = Number.POSITIVE_INFINITY;
+                        ctx.fillStyle = areas[key].color;
+                        for (const position of areas[key].area) {
+                            const posX = (position.x - turtle.location.x) * spriteSize + centerX - spriteRadius;
+                            const posY = (position.z - turtle.location.z) * spriteSize + centerY - spriteRadius;
+                            smallestX = Math.min(smallestX, posX);
+                            smallestY = Math.min(smallestY, posY);
+                            ctx.fillRect(posX, posY, spriteSize, spriteSize);
+                        }
 
-                    ctx.textAlign = 'start';
-                    ctx.font = '10px Tahoma';
-                    ctx.lineWidth = 4;
-                    ctx.strokeText(areas[key].name.toString(), smallestX, smallestY - spriteRadius);
-                    ctx.fillText(areas[key].name.toString(), smallestX, smallestY - spriteRadius);
+                        ctx.textAlign = 'start';
+                        ctx.font = '10px Tahoma';
+                        ctx.lineWidth = 4;
+                        ctx.strokeText(areas[key].name.toString(), smallestX, smallestY - spriteRadius);
+                        ctx.fillText(areas[key].name.toString(), smallestX, smallestY - spriteRadius);
+                    }
                 }
 
                 // Draw creatingArea
@@ -225,7 +229,7 @@ const TurtleMap = (props: TurtleMapProps) => {
                 ctx.strokeText(turtle.name, centerX, centerY - spriteRadius);
                 ctx.fillText(turtle.name, centerX, centerY - spriteRadius);
             };
-            draw(context, canvasSize, turtles, blocks, turtle);
+            draw(context, canvasSize, turtles, blocks, areas, turtle);
 
             animationFrameId = window.requestAnimationFrame(render);
         };

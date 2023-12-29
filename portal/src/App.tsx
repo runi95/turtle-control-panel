@@ -114,7 +114,6 @@ export interface Server {
     name?: string;
     remoteAddress: string;
     turtles: Turtles;
-    areas: Areas;
 }
 
 export interface Servers {
@@ -136,7 +135,6 @@ export interface Dashboard {
     name?: string;
     remoteAddress: string;
     turtles: Turtle[];
-    areas: Area[];
 }
 
 export interface OnlineStatuses {
@@ -182,10 +180,6 @@ function App() {
                                             acc
                                         ),
                                         {} as {[key: string]: Turtle}
-                                    ),
-                                    areas: server.areas.reduce(
-                                        (acc, curr) => ((acc[curr.id] = curr), acc),
-                                        {} as {[key: string]: Area}
                                     ),
                                 }),
                                 acc
@@ -257,19 +251,6 @@ function App() {
                 case 'WDELETE':
                     break;
                 case 'AUPDATE':
-                    setServers((servers) => ({
-                        ...servers,
-                        [obj.message.serverId]: {
-                            ...servers[obj.message.serverId],
-                            areas: {
-                                ...servers[obj.message.serverId].areas,
-                                [obj.message.id]: {
-                                    ...servers[obj.message.serverId].areas[obj.message.id],
-                                    ...obj.message.data,
-                                },
-                            },
-                        },
-                    }));
                     break;
                 case 'SUPDATE':
                     setServers((servers) => ({

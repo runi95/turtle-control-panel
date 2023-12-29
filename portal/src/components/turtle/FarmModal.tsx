@@ -1,20 +1,24 @@
 import {useState} from 'react';
 import {Modal, Form, Button, InputGroup} from 'react-bootstrap';
-import {Action, Areas, Turtle} from '../../App';
+import {Action, Turtle} from '../../App';
+import {useAreas} from '../../api/UseAreas';
+import {useParams} from 'react-router-dom';
 
 export interface FarmModalProps {
     action: Action;
     turtle: Turtle;
-    areas: Areas;
     hideModal: () => void;
 }
 
 function FarmModal(props: FarmModalProps) {
+    const {serverId} = useParams() as {serverId: string};
     const {action, hideModal} = props;
     const [state, setState] = useState({
         isFormValidated: false,
         selectedArea: '',
     });
+
+    const {data: areas} = useAreas(serverId);
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -31,6 +35,8 @@ function FarmModal(props: FarmModalProps) {
 
         setState({...state, isFormValidated: true, selectedArea});
     };
+
+    if (areas === undefined) return null;
 
     return (
         <Form noValidate validated={state.isFormValidated} onSubmit={handleFormSubmit}>
@@ -50,9 +56,9 @@ function FarmModal(props: FarmModalProps) {
                             <option value='' key='empty'>
                                 -- select an area to farm --
                             </option>
-                            {Object.keys(props.areas).map((key) => (
-                                <option key={key} value={props.areas[key].id}>
-                                    {props.areas[key].name}
+                            {Object.keys(areas).map((key) => (
+                                <option key={key} value={areas[key].id}>
+                                    {areas[key].name}
                                 </option>
                             ))}
                         </Form.Control>

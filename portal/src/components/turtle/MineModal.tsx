@@ -1,15 +1,17 @@
 import {useState} from 'react';
 import {Modal, Form, Button, InputGroup} from 'react-bootstrap';
-import {Action, Areas, Turtle} from '../../App';
+import {Action, Turtle} from '../../App';
+import {useAreas} from '../../api/UseAreas';
+import {useParams} from 'react-router-dom';
 
 export interface MineModalProps {
     turtle: Turtle;
     action: Action;
     hideModal: () => void;
-    areas: Areas;
 }
 
 function MineModal(props: MineModalProps) {
+    const {serverId} = useParams() as {serverId: string};
     const [state, setState] = useState<{
         isFormValidated: boolean;
         selectedArea: string;
@@ -21,6 +23,7 @@ function MineModal(props: MineModalProps) {
         selectedYLevel: undefined,
         selectedDirection: '',
     });
+    const {data: areas} = useAreas(serverId);
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -46,6 +49,8 @@ function MineModal(props: MineModalProps) {
         setState({...state, isFormValidated: true, selectedArea, selectedYLevel, selectedDirection});
     };
 
+    if (areas === undefined) return null;
+
     return (
         <Form noValidate validated={state.isFormValidated} onSubmit={handleFormSubmit}>
             <Modal.Header closeButton>
@@ -64,9 +69,9 @@ function MineModal(props: MineModalProps) {
                             <option value='' key='empty'>
                                 -- select an area to mine --
                             </option>
-                            {Object.keys(props.areas).map((key) => (
-                                <option key={key} value={props.areas[key].id}>
-                                    {props.areas[key].name}
+                            {Object.keys(areas).map((key) => (
+                                <option key={key} value={areas[key].id}>
+                                    {areas[key].name}
                                 </option>
                             ))}
                         </Form.Control>

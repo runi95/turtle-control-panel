@@ -34,7 +34,6 @@ function Turtle(props: TurtleProps) {
     const {servers, action} = props;
     const turtles = servers?.[serverId]?.turtles;
     const turtle = turtles?.[id];
-    const areas = servers?.[serverId]?.areas;
 
     return (
         <Container fluid>
@@ -125,7 +124,7 @@ function Turtle(props: TurtleProps) {
                 </Col>
             </Row>
             <hr />
-            <Inventory turtles={turtles} turtle={turtle} areas={areas} action={action}></Inventory>
+            <Inventory turtles={turtles} turtle={turtle} action={action}></Inventory>
         </Container>
     );
 }

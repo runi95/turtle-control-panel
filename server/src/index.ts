@@ -4,7 +4,7 @@ import fastifyCorsPlugin from '@fastify/cors'
 import {getOnlineTurtleById, getOnlineTurtles} from './entities/turtle';
 import globalEventEmitter from './globalEventEmitter';
 import logger from './logger/server';
-import {addArea, deleteTurtle, getBlocks, getDashboard, renameServer} from './db';
+import {addArea, deleteTurtle, getAreas, getBlocks, getDashboard, renameServer} from './db';
 import {Turtle} from './db/turtle.type';
 import {Block} from './db/block.type';
 import {TurtleFarmingState} from './entities/states/farming';
@@ -33,6 +33,12 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
             fromZ: Number(fromZ),
             toZ: Number(toZ)
         }));
+    });
+
+    server.get('/servers/:id/areas', (req, res) => {
+        const {params} = req;
+        const {id} = params as {id: string};
+        res.send(getAreas(Number(id)));
     });
     
     server.get('/', {websocket: true}, (connection, _req) => {

@@ -5,14 +5,13 @@ import MineModal from './MineModal';
 import SpriteTable from '../../SpriteTable';
 import {useState} from 'react';
 import './Inventory.css';
-import {Action, Areas, Turtle, Turtles} from '../../App';
+import {Action, Turtle, Turtles} from '../../App';
 import TurtleMap from './TurtleMap';
 import Peripheral from './Peripheral';
 
 export interface InventoryProps {
     turtles: Turtles;
     turtle: Turtle;
-    areas: Areas;
     action: Action;
 }
 
@@ -20,7 +19,7 @@ const canvasSize = 208;
 const canvasRadius = 0.5 * canvasSize;
 
 function Inventory(props: InventoryProps) {
-    const {turtles, turtle, areas, action} = props;
+    const {turtles, turtle, action} = props;
     const [state, setState] = useState<{isModalShown: boolean; modalState: string | undefined}>({
         isModalShown: false,
         modalState: undefined,
@@ -33,7 +32,6 @@ function Inventory(props: InventoryProps) {
                     <FarmModal
                         turtle={turtle}
                         action={action}
-                        areas={areas}
                         hideModal={() => setState({...state, isModalShown: false})}
                     />
                 );
@@ -42,7 +40,6 @@ function Inventory(props: InventoryProps) {
                     <MineModal
                         turtle={turtle}
                         action={action}
-                        areas={areas}
                         hideModal={() => setState({...state, isModalShown: false})}
                     />
                 );
@@ -268,7 +265,6 @@ function Inventory(props: InventoryProps) {
                 style={{border: '1px solid #fff', borderRadius: canvasRadius}}
                 canvasSize={canvasSize}
                 turtles={turtles}
-                areas={areas}
                 action={action}
             />
         </Row>

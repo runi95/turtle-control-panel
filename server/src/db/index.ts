@@ -80,16 +80,9 @@ const preparedDashboard = db
                 'location', json(\`t\`.\`location\`),
                 'direction', \`t\`.\`direction\`,
                 'peripherals', json(\`t\`.\`peripherals\`)
-            )), json_array()),
-            'areas', iif(\`a\`.\`id\` IS NOT NULL, json_group_array(json_object(
-                'id', \`a\`.\`id\`,
-                'name', \`a\`.\`name\`,
-                'color', \`a\`.\`color\`,
-                'area', json(\`a\`.\`area\`)
             )), json_array())
         ) FROM \`servers\` AS \`s\`
         LEFT JOIN \`turtles\` AS \`t\` ON \`t\`.\`server_id\` = \`s\`.\`id\`
-        LEFT JOIN \`areas\` AS \`a\` ON \`a\`.\`server_id\` = \`s\`.\`id\`
         GROUP BY \`s\`.\`id\``
     )
     .pluck();
@@ -106,6 +99,12 @@ const selectArea = db.prepare(`SELECT json_object(
     'name', \`a\`.\`name\`,
     'area', json(\`a\`.\`area\`)
 ) FROM \`areas\` AS \`a\` WHERE \`server_id\` = ? AND \`id\` = ?`).pluck();
+const selectAreas = db.prepare(`SELECT json_group_array(json_object(
+    'id', \`a\`.\`id\`,
+    'color', \`a\`.\`color\`,
+    'name', \`a\`.\`name\`,
+    'area', json(\`a\`.\`area\`))
+) FROM \`areas\` AS \`a\` WHERE \`server_id\` = ?`).pluck();
 const insertArea = db.prepare('INSERT INTO `areas` (`server_id`, `name`, `color`, `area`) VALUES (?, ?, ?, ?)');
 const selectTurtle = db.prepare(`SELECT json_object(
     'id', \`t\`.\`id\`,
@@ -188,6 +187,7 @@ export const upsertServer = (remoteAddress: string, name: string | null) =>
 export const renameServer = (id: number, name: string) => setServerName.run(name, id);
 export const getServerByRemoteAddress = (remoteAddress: string) => selectServerByRemoteAddress.get(remoteAddress) as Server;
 export const getArea = (serverId: number, id: number) => JSON.parse(selectArea.get(serverId, id) as string) as Area;
+export const getAreas = (serverId: number) => JSON.parse(selectAreas.get(serverId) as string) as Area;
 export const addArea = (serverId: number, name: string, color: string, area: JSON) =>
     insertArea.run(serverId, name, color, JSON.stringify(area));
 export const getTurtle = (serverId: number, id: number) => {
