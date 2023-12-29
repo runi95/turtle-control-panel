@@ -187,7 +187,7 @@ export const upsertServer = (remoteAddress: string, name: string | null) =>
 export const renameServer = (id: number, name: string) => setServerName.run(name, id);
 export const getServerByRemoteAddress = (remoteAddress: string) => selectServerByRemoteAddress.get(remoteAddress) as Server;
 export const getArea = (serverId: number, id: number) => JSON.parse(selectArea.get(serverId, id) as string) as Area;
-export const getAreas = (serverId: number) => JSON.parse(selectAreas.get(serverId) as string) as Area;
+export const getAreas = (serverId: number) => JSON.parse(selectAreas.get(serverId) as string) as Area[];
 export const addArea = (serverId: number, name: string, color: string, area: JSON) =>
     insertArea.run(serverId, name, color, JSON.stringify(area));
 export const getTurtle = (serverId: number, id: number) => {
