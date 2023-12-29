@@ -56,7 +56,7 @@ db.exec(
     name VARCHAR(64),
     state JSON,
     tags JSON,
-    CONSTRAINT pk_turtles PRIMARY KEY (\`server_id\`, \`x\`, \`y\`, \`z\`),
+    CONSTRAINT pk_blocks PRIMARY KEY (\`server_id\`, \`x\`, \`y\`, \`z\`),
     FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
 );`
 );
