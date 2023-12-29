@@ -1,5 +1,4 @@
 import {Button} from 'react-bootstrap';
-import './Inventory.css';
 import {Action, Turtle} from '../../App';
 
 export interface PeripheralProps {
