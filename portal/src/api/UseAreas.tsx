@@ -4,7 +4,7 @@ import {Area, Areas} from '../App';
 
 export const useAreas = (serverId: string) => {
     return useQuery<Areas>({
-        queryKey: ['areas'],
+        queryKey: ['areas', serverId],
         queryFn: () =>
             fetch(`${httpServerUrl}/servers/${serverId}/areas`)
                 .then((res) => res.json())
