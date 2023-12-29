@@ -2,12 +2,12 @@ import styled from 'styled-components';
 import {OverlayTrigger, Tooltip, Col, Row, Button, Modal} from 'react-bootstrap';
 import FarmModal from './FarmModal';
 import MineModal from './MineModal';
-import SpriteTable from '../../SpriteTable';
 import {useState} from 'react';
 import './Inventory.css';
 import {Action, Turtle, Turtles} from '../../App';
 import TurtleMap from './TurtleMap';
 import Peripheral from './Peripheral';
+import ItemSprite from './ItemSprite';
 
 export interface InventoryProps {
     turtles: Turtles;
@@ -135,10 +135,6 @@ function Inventory(props: InventoryProps) {
                             }
 
                             const {name, count, displayName} = itemDetail;
-                            const sprite = SpriteTable[name] ?? SpriteTable['???'];
-                            const spriteY = 32 * Math.floor(sprite.index / 32);
-                            const spriteX = 32 * (sprite.index - spriteY - 1);
-
                             return (
                                 <OverlayTrigger
                                     key={i}
@@ -176,13 +172,7 @@ function Inventory(props: InventoryProps) {
                                             });
                                         }}
                                     >
-                                        <ItemImage
-                                            data-inventory-slot={itemIndex}
-                                            style={{
-                                                backgroundImage: 'url(/sprites.png)',
-                                                backgroundPosition: `-${spriteX}px -${spriteY}px`,
-                                            }}
-                                        />
+                                        <ItemSprite index={itemIndex} name={name} />
                                         <ItemCount data-inventory-slot={itemIndex}>{count}</ItemCount>
                                     </ItemSlotStyle>
                                 </OverlayTrigger>
@@ -284,14 +274,6 @@ const EmptyItemImage = styled.span`
     width: 32px;
     height: 32px;
     background-color: #8b8b8b;
-`;
-
-const ItemImage = styled.span`
-    image-rendering: crisp-edges;
-    width: 32px;
-    height: 32px;
-    display: inline-block;
-    background-repeat: no-repeat;
 `;
 
 const InventoryGrid = styled.div`
