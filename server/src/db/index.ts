@@ -61,9 +61,6 @@ db.exec(
 );`
 );
 
-// db.exec(`DELETE FROM \`servers\` WHERE \`remote_address\` = 'localhost'`);
-// db.exec(`INSERT INTO \`servers\` (\`remote_address\`) VALUES ('localhost')`);
-
 // Portal database queries
 const preparedDashboard = db
     .prepare(
