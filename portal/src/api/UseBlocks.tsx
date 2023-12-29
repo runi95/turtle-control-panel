@@ -13,7 +13,7 @@ export interface QueryParams {
 
 export const useBlocks = (serverId: string, query: QueryParams, isEnabled: boolean) => {
     return useQuery<Blocks>({
-        queryKey: ['blocks', {query}],
+        queryKey: ['blocks', serverId, {query}],
         queryFn: () =>
             fetch(
                 `${httpServerUrl}/servers/${serverId}/blocks?fromX=${query.fromX}&toX=${query.toX}&fromY=${query.fromY}&toY=${query.toY}&fromZ=${query.fromZ}&toZ=${query.toZ}`
