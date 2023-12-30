@@ -24,6 +24,7 @@ import {
     upsertServer,
     getServerByRemoteAddress,
     updateTurtlePeripherals,
+    upsertExternalInventory,
 } from '../db';
 import {Block} from '../db/block.type';
 import {Direction, Inventory, ItemDetail, Location, Peripherals} from '../db/turtle.type';
@@ -203,7 +204,7 @@ wss.on('connection', (ws, req) => {
                 state,
                 location,
                 direction,
-                peripherals,
+                peripherals
             );
         };
 
@@ -294,10 +295,7 @@ export class Turtle {
         });
 
         this.state = this.getRecoveredState(state);
-        this.turtleEventEmitter.on('update', (obj: {
-            type: string;
-            message: unknown;
-        }) => {
+        this.turtleEventEmitter.on('update', (obj: {type: string; message: unknown}) => {
             const {type, message} = obj;
             switch (type) {
                 case 'INVENTORY_UPDATE':
@@ -524,6 +522,12 @@ export class Turtle {
 
     public set peripherals(peripherals: Peripherals) {
         this.#peripherals = peripherals;
+        Object.keys(this.peripherals)
+            .filter((side) => this.peripherals[side].includes('inventory'))
+            .forEach((side) => {
+                this.connectToInventory(side);
+            });
+
         globalEventEmitter.emit('tupdate', {
             id: this.id,
             serverId: this.serverId,
@@ -1216,6 +1220,20 @@ export class Turtle {
         return await this.#exec<R>(`peripheral.find("${peripheralName}").${method}(${args?.join(', ')})`);
     }
 
+    async hasPeripheralWithSide(side: string): Promise<[boolean]> {
+        return await this.#exec<[boolean]>(`peripheral.isPresent("${side}")`);
+    }
+
+    async usePeripheralWithSide<R>(side: string, method: string, ...args: string[]): Promise<R> {
+        if (args.length > 0) {
+            return await this.#exec<R>(
+                `peripheral.call("${side}", "${method}", ${args.map((arg) => `"${arg}"`).join(', ')})`
+            );
+        } else {
+            return await this.#exec<R>(`peripheral.call("${side}", "${method}")`);
+        }
+    }
+
     async gpsLocate(): Promise<[number, number, number] | [null, null, null]> {
         const locate = await this.#exec<[number, number, number] | [null, null, null]>(
             '(function(x, y, z) return x and y and z and x, y, z or textutils.json_null end)(gps.locate())'
@@ -1314,6 +1332,101 @@ export class Turtle {
         }
     }
 
+    async connectToInventory(side: string): Promise<void> {
+        const direction = this.direction;
+        if (direction === null) return;
+
+        // Ensures they're queued together
+        const [[size], [content]] = await Promise.all([
+            this.usePeripheralWithSide<[number]>(side, 'size'),
+            this.#exec<[Inventory | null]>(
+                `(function(list) return next(list) == nil and textutils.json_null or list end)(peripheral.call("${side}", "list"))`
+            ),
+        ]);
+
+        const location = this.location;
+        if (location === null) return;
+
+        let {x, y, z} = location;
+        if (side === 'top') {
+            y++;
+        } else if (side === 'bottom') {
+            y--;
+        } else if (side === 'front') {
+            switch (direction) {
+                case Direction.West:
+                    x--;
+                    break;
+                case Direction.North:
+                    z--;
+                    break;
+                case Direction.East:
+                    x++;
+                    break;
+                case Direction.South:
+                    z++;
+                    break;
+            }
+        } else if (side === 'back') {
+            switch (direction) {
+                case Direction.West:
+                    x++;
+                    break;
+                case Direction.North:
+                    z++;
+                    break;
+                case Direction.East:
+                    x--;
+                    break;
+                case Direction.South:
+                    z--;
+                    break;
+            }
+        } else if (side === 'left') {
+            switch (direction) {
+                case Direction.West:
+                    z++;
+                    break;
+                case Direction.North:
+                    x--;
+                    break;
+                case Direction.East:
+                    z--;
+                    break;
+                case Direction.South:
+                    x++;
+                    break;
+            }
+        } else if (side === 'right') {
+            switch (direction) {
+                case Direction.West:
+                    z--;
+                    break;
+                case Direction.North:
+                    x++;
+                    break;
+                case Direction.East:
+                    z++;
+                    break;
+                case Direction.South:
+                    x--;
+                    break;
+            }
+        } else {
+            return;
+        }
+
+        upsertExternalInventory(this.serverId, x, y, z, size, content);
+        globalEventEmitter.emit('iupdate', {
+            serverId: this.serverId,
+            x,
+            y,
+            z,
+            size,
+            content,
+        });
+    }
+
     #exec<R>(f: string): Promise<R> {
         return this.#execRaw(`return ${f}`);
     }
@@ -1322,10 +1435,7 @@ export class Turtle {
         const uuid = uuid4();
         this.lastPromise = new Promise<R>((resolve, reject) =>
             this.lastPromise.finally(() => {
-                const listener = (obj: {
-                    type: string;
-                    message: R;
-                }) => {
+                const listener = (obj: {type: string; message: R}) => {
                     if (obj.type !== 'EVAL') {
                         return reject(`Unknown response type "${obj.type}" from turtle with message "${obj.message}"`);
                     }

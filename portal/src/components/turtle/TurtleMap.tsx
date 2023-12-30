@@ -296,7 +296,7 @@ const TurtleMap = (props: TurtleMapProps) => {
     };
 
     return (
-        <Col key='canvas' md='auto'>
+        <Col key='canvas' style={{marginLeft: 'auto'}} md='auto'>
             <Modal show={isModalShown} onHide={() => setIsModalShown(false)}>
                 <Form noValidate validated={isFormValidated} onSubmit={handleFormSubmit}>
                     <Modal.Header closeButton>

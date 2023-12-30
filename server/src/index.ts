@@ -4,7 +4,7 @@ import fastifyCorsPlugin from '@fastify/cors'
 import {getOnlineTurtleById, getOnlineTurtles} from './entities/turtle';
 import globalEventEmitter from './globalEventEmitter';
 import logger from './logger/server';
-import {addArea, deleteTurtle, getAreas, getBlocks, getDashboard, renameServer} from './db';
+import {addArea, deleteTurtle, getAreas, getBlocks, getDashboard, getExternalInventories, renameServer} from './db';
 import {Turtle} from './db/turtle.type';
 import {Block} from './db/block.type';
 import {TurtleFarmingState} from './entities/states/farming';
@@ -14,6 +14,7 @@ import {TurtleMiningState} from './entities/states/mining';
 import {TurtleScanState} from './entities/states/scan';
 import Database from 'better-sqlite3';
 import {Area} from './db/area.type';
+import {ExternalInventory} from './db/inventory.type';
 
 logger.info('Starting server...');
 
@@ -39,6 +40,12 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
         const {params} = req;
         const {id} = params as {id: string};
         res.send(getAreas(Number(id)));
+    });
+
+    server.get('/servers/:id/external-inventories', (req, res) => {
+        const {params} = req;
+        const {id} = params as {id: string};
+        res.send(getExternalInventories(Number(id)));
     });
     
     server.get('/', {websocket: true}, (connection, _req) => {
@@ -121,6 +128,9 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                                 break;
                             case 'locate':
                                 turtle.gpsLocate();
+                                break;
+                            case 'connect-to-inventory':
+                                turtle.connectToInventory(obj.data.side);
                                 break;
                             default:
                                 logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);
@@ -227,6 +237,8 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
             data: Partial<Area>;
         }) => connection.socket.send(JSON.stringify({type: 'AUPDATE', message: obj}))
         globalEventEmitter.on('aupdate', aupdate);
+        const iupdate = (obj: ExternalInventory) => connection.socket.send(JSON.stringify({type: 'IUPDATE', message: obj}))
+        globalEventEmitter.on('iupdate', iupdate);
     
         connection.socket.on('close', () => {
             globalEventEmitter.off('tconnect', tconnect);
@@ -237,6 +249,7 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
             globalEventEmitter.off('wdelete', wdelete);
             globalEventEmitter.off('supdate', supdate);
             globalEventEmitter.off('aupdate', aupdate);
+            globalEventEmitter.off('iupdate', iupdate);
         });
     });
     

@@ -11,16 +11,6 @@ function Peripheral(props: PeripheralProps) {
     const {types, turtle, action} = props;
 
     const {id} = turtle;
-    if (types.includes('inventory')) {
-        return (
-            <div>
-                <Button variant='outline-info' size='sm' disabled={!turtle.isOnline}>
-                    Inventory
-                </Button>
-            </div>
-        );
-    }
-
     if (types.includes('modem')) {
         return (
             <div>

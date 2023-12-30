@@ -7,6 +7,8 @@ import Dashboard from './components/Dashboard';
 import Turtle from './components/turtle/Turtle';
 import useWebSocket, {ReadyState} from 'react-use-websocket';
 import {wssServerUrl} from './api';
+import {useQueryClient} from '@tanstack/react-query';
+import {ExternalInventories} from './api/UseInventories';
 
 export enum Direction {
     West = 1,
@@ -146,6 +148,7 @@ export interface OnlineStatuses {
 function App() {
     const navigate = useNavigate();
     const location = useLocation();
+    const queryClient = useQueryClient();
 
     // Public API that will echo messages sent to it back to the client
     const [servers, setServers] = useState<Servers>({});
@@ -260,6 +263,15 @@ function App() {
                             name: obj.message.name,
                         },
                     }));
+                    break;
+                case 'IUPDATE':
+                    queryClient.setQueryData(
+                        ['external-inventories', obj.message.serverId.toString()],
+                        (oldData: ExternalInventories) => ({
+                            ...oldData,
+                            [`${obj.message.x},${obj.message.y},${obj.message.z}`]: obj.message,
+                        })
+                    );
                     break;
                 default:
                     console.error('Could not parse websocket message', obj);

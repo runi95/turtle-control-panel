@@ -5,6 +5,7 @@ import {Direction, Inventory, Location, Peripherals, Turtle} from './turtle.type
 import {Area} from './area.type';
 import {StateData} from '../entities/states/base';
 import {StateDataTypes} from '../entities/states/helpers';
+import {ExternalInventory} from './inventory.type';
 
 const db = new Database('db/server.db');
 db.pragma('journal_mode = WAL');
@@ -57,6 +58,19 @@ db.exec(
     state JSON,
     tags JSON,
     CONSTRAINT pk_blocks PRIMARY KEY (\`server_id\`, \`x\`, \`y\`, \`z\`),
+    FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
+);`
+);
+
+db.exec(
+    `CREATE TABLE IF NOT EXISTS \`inventories\` (
+    server_id INT NOT NULL,
+    x INT NOT NULL,
+    y INT NOT NULL,
+    z INT NOT NULL,
+    content JSON,
+    size INT,
+    CONSTRAINT pk_inventories PRIMARY KEY (\`server_id\`, \`x\`, \`y\`, \`z\`),
     FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
 );`
 );
@@ -177,6 +191,25 @@ const setTurtleFuel = db.prepare(
 const setTurtlePeripherals = db.prepare(
     'UPDATE `turtles` SET `peripherals` = ? WHERE `server_id` = ? AND `id` = ?'
 );
+const insertInventory = db.prepare(
+    'INSERT INTO `inventories` VALUES (:server_id, :x, :y, :z, :content, :size) ON CONFLICT DO UPDATE SET content = :content, size = :size'
+);
+const selectInventories = db.prepare(`SELECT json_group_array(json_object(
+    'serverId', \`i\`.\`server_id\`,
+    'x', \`i\`.\`x\`,
+    'y', \`i\`.\`y\`,
+    'z', \`i\`.\`z\`,
+    'content', json(\`i\`.\`content\`),
+    'size', \`i\`.\`size\`
+)) FROM \`inventories\` AS \`i\` WHERE \`server_id\` = ?`).pluck();
+const selectInventory = db.prepare(`SELECT json_object(
+    'serverId', \`i\`.\`server_id\`,
+    'x', \`i\`.\`x\`,
+    'y', \`i\`.\`y\`,
+    'z', \`i\`.\`z\`,
+    'content', json(\`i\`.\`content\`),
+    'size', \`i\`.\`size\`
+) FROM \`inventories\` AS \`i\` WHERE \`server_id\` = ? AND \`x\` = ? AND \`y\` = ? AND \`z\` = ?`).pluck();
 
 export const getDashboard = () => preparedDashboard.all().map((server: unknown) => JSON.parse(server as string));
 export const upsertServer = (remoteAddress: string, name: string | null) =>
@@ -307,3 +340,25 @@ export const updateTurtleFuel = (serverId: number, id: number, fuelLevel: number
     setTurtleFuel.run(fuelLevel, serverId, id);
 export const updateTurtlePeripherals = (serverId: number, id: number, peripherals: Peripherals) =>
     setTurtlePeripherals.run(JSON.stringify(peripherals), serverId, id);
+export const upsertExternalInventory = (
+    serverId: number,
+    x: number,
+    y: number,
+    z: number,
+    size: number,
+    content: Inventory | null,
+) =>
+    insertInventory.run({
+        server_id: serverId,
+        x,
+        y,
+        z,
+        size,
+        content: JSON.stringify(content),
+    });
+export const getExternalInventory = (serverId: number, x: number, y: number, z: number) => {
+    const inventory = selectInventory.get(serverId, x, y, z);
+    if (!inventory) return null;
+    return JSON.parse(inventory as string) as ExternalInventory;
+};
+export const getExternalInventories = (serverId: number) => JSON.parse(selectInventories.get(serverId) as string) as ExternalInventory[];

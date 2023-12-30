@@ -8,6 +8,7 @@ import {Action, Turtle, Turtles} from '../../App';
 import TurtleMap from './TurtleMap';
 import Peripheral from './Peripheral';
 import Item from './Item';
+import InventoryPeripheral from './InventoryPeripheral';
 
 export interface InventoryProps {
     turtles: Turtles;
@@ -53,6 +54,11 @@ function Inventory(props: InventoryProps) {
     }
 
     const {inventory, selectedSlot} = turtle;
+
+    const inventorySides = turtle.peripherals
+        ? Object.keys(turtle.peripherals).filter((side) => turtle.peripherals[side].includes('inventory'))
+        : [];
+
     return (
         <Row data-bs-theme='light'>
             <Col key='inventory-grid' md='auto'>
@@ -180,7 +186,7 @@ function Inventory(props: InventoryProps) {
                     </InventoryGrid>
                 </div>
             </Col>
-            <Col key='inventory-actions'>
+            <Col key='inventory-actions' md='auto'>
                 <Row>
                     <div style={{display: 'flex'}}>
                         <h5>
@@ -246,6 +252,20 @@ function Inventory(props: InventoryProps) {
                     <div style={{display: 'flex', gap: 5}}>
                         {Object.values(turtle.peripherals).map((peripheral, i) => (
                             <Peripheral key={i} action={action} turtle={turtle} types={peripheral} />
+                        ))}
+                    </div>
+                </Row>
+                <Row>
+                    <div style={{marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10}}>
+                        {inventorySides.map((side, i) => (
+                            <InventoryPeripheral
+                                key={i}
+                                side={side}
+                                turtle={turtle}
+                                action={action}
+                                size={null}
+                                connected={false}
+                            />
                         ))}
                     </div>
                 </Row>
