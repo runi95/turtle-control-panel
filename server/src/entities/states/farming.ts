@@ -67,7 +67,13 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
             }
 
             if (this.solution === null) {
-                this.solution = await this.algorithm.search(new Point(x, y, z), this.area);
+                const solution = await this.algorithm.search(new Point(x, y, z), this.area);
+                if (solution === undefined) {
+                    this.turtle.error = 'Stuck; unable to reach destination';
+                    return; // Error
+                }
+
+                this.solution = solution;
                 return; // Yield
             }
 
@@ -136,10 +142,16 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
         }
 
         if (this.solution === null) {
-            this.solution = await this.algorithm.search(
+            const solution = await this.algorithm.search(
                 new Point(x, y, z),
                 this.remainingAreaIndexes.map((i) => this.area[i])
             );
+            if (solution === undefined) {
+                this.turtle.error = 'Stuck; unable to reach destination';
+                return; // Error
+            }
+
+            this.solution = solution;
             return; // Yield
         }
 

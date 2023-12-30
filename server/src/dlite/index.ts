@@ -29,7 +29,7 @@ export default class DStarLite {
         this.isBlockMineableFunc = options?.isBlockMineableFunc ?? null;
     }
 
-    public async search(source: Point, destinations: Point[]) {
+    public async search(source: Point, destinations: Point[]): Promise<Node | null | undefined> {
         if (destinations.length === 0) return null;
         if (destinations.some((d) => d.x === source.x && d.y === source.y && d.z === source.z)) return null;
 
@@ -82,7 +82,10 @@ export default class DStarLite {
         let u: Node | null;
         let steps = 0;
         while ((u = openHeap.poll()) !== null) {
-            if (steps++ > this.maxSteps) throw new Error(`Reached max steps of ${this.maxSteps}`);
+            if (steps++ > this.maxSteps) {
+                logger.debug(`Reached max steps of ${this.maxSteps}`);
+                return undefined;
+            }
 
             u.visited = true;
             if (compareNodes(u, startNode) >= 0) break;
@@ -139,7 +142,7 @@ export default class DStarLite {
         }
 
         logger.debug(`No valid path to: ${destinations.map(({x, y, z}) => `(${x},${y},${z})`).join(', ')}`);
-        throw new Error('No valid path');
+        return undefined;
     }
 
     private calculateKey(s: Node, start: Node): [number, number] {

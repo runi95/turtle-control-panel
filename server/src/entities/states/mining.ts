@@ -78,7 +78,13 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
 
             if (this.solution === null) {
                 const {x, y, z} = this.turtle.location;
-                this.solution = await this.algorithm.search(new Point(x, y, z), this.area);
+                const solution = await this.algorithm.search(new Point(x, y, z), this.area);
+                if (solution === undefined) {
+                    this.turtle.error = 'Stuck; unable to reach destination';
+                    return; // Error
+                }
+
+                this.solution = solution; 
                 return; // Yield
             }
 
@@ -117,10 +123,16 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                 this.remainingAreaIndexes.splice(areaIndexOfTurtle, 1);
             }
 
-            this.solution = await this.algorithm.search(
+            const solution = await this.algorithm.search(
                 new Point(x, y, z),
                 this.remainingAreaIndexes.map((i) => this.area[i])
             );
+            if (solution === undefined) {
+                this.turtle.error = 'Stuck; unable to reach destination';
+                return; // Error
+            }
+
+            this.solution = solution;
             return; // Yield
         }
 

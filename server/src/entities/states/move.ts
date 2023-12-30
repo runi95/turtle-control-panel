@@ -43,10 +43,16 @@ export class TurtleMoveState extends TurtleBaseState<MovingStateData> {
         }
 
         if (this.solution === null) {
-            this.solution = await this.algorithm.search(
+            const solution = await this.algorithm.search(
                 new Point(x, y, z),
                 [new Point(this.data.x, this.data.y, this.data.z)]
             );
+            if (solution === undefined) {
+                this.turtle.error = 'Stuck; unable to reach destination';
+                return; // Error
+            }
+
+            this.solution = solution;
             return; // Yield
         }
 
