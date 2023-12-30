@@ -79,14 +79,19 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
         const tiles = [];
         for (let i = 0; i < externalInventory.size; i++) {
             const itemDetail = externalInventory.content[i];
+            const isEmpty = itemDetail == null;
             tiles.push(
-                <ItemSlot key={i}>
-                    {itemDetail != null ? (
-                        <Item key={i} index={i} name={itemDetail.name} count={itemDetail.count} />
-                    ) : (
-                        <EmptyItemImage data-inventory-slot={i} />
-                    )}
-                </ItemSlot>
+                <Item
+                    key={i}
+                    displayName={isEmpty ? 'Empty' : itemDetail.displayName ?? itemDetail.name}
+                    isSelected={false}
+                    index={i}
+                    item={isEmpty ? null : {name: itemDetail.name, count: itemDetail.count}}
+                    onDrop={(fromSlot: number, toSlot: number) => {
+                        // Intentionally left empty
+                    }}
+                    onClick={undefined}
+                />
             );
         }
 
@@ -127,26 +132,6 @@ const InventoryGrid = styled.div`
     display: inline-grid;
     grid-template-columns: auto auto auto auto auto auto auto auto auto;
     grid-gap: 6px;
-`;
-
-const ItemSlot = styled.div`
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    cursor: pointer;
-    align-items: center;
-    background-color: #8b8b8b;
-    border: 1px solid #373737;
-    padding: 2px;
-    width: 64px;
-    height: 64px;
-`;
-
-const EmptyItemImage = styled.span`
-    width: 32px;
-    height: 32px;
-    background-color: #8b8b8b;
 `;
 
 export default InventoryPeripheral;

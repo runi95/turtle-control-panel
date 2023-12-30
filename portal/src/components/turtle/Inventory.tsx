@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import {OverlayTrigger, Tooltip, Col, Row, Button, Modal} from 'react-bootstrap';
+import {Col, Row, Button, Modal} from 'react-bootstrap';
 import FarmModal from './FarmModal';
 import MineModal from './MineModal';
 import {useState} from 'react';
@@ -98,89 +98,35 @@ function Inventory(props: InventoryProps) {
                         </ButtonSlot>
                         {Array.from(Array(16), (_, i) => i).map((i) => {
                             const itemIndex = i + 1;
-                            const ItemSlotStyle = itemIndex === selectedSlot ? SelectedItemSlot : ItemSlot;
                             const itemDetail = inventory[itemIndex];
-                            if (itemDetail === null || itemDetail === undefined) {
-                                return (
-                                    <OverlayTrigger
-                                        key={i}
-                                        placement='top'
-                                        overlay={<Tooltip data-bs-theme='light'>Empty</Tooltip>}
-                                    >
-                                        <ItemSlotStyle
-                                            data-inventory-slot={itemIndex}
-                                            onDragOver={(e) => e.preventDefault()}
-                                            onDrop={(e) => {
-                                                e.preventDefault();
-                                                const toSlot = (e.target as HTMLBaseElement)?.dataset?.inventorySlot;
-                                                const fromSlot = e.dataTransfer.getData('fromSlot');
-                                                if (fromSlot && toSlot && fromSlot !== toSlot) {
-                                                    props.action({
-                                                        type: 'ACTION',
-                                                        action: 'inventory-transfer',
-                                                        data: {
-                                                            id: turtle.id,
-                                                            fromSlot,
-                                                            toSlot,
-                                                        },
-                                                    });
-                                                }
-                                            }}
-                                            onClick={() => {
-                                                props.action({
-                                                    type: 'ACTION',
-                                                    action: 'select',
-                                                    data: {id: turtle.id, slot: itemIndex},
-                                                });
-                                            }}
-                                        >
-                                            <EmptyItemImage data-inventory-slot={itemIndex} />
-                                        </ItemSlotStyle>
-                                    </OverlayTrigger>
-                                );
-                            }
+                            const isEmpty = itemDetail === null || itemDetail === undefined;
 
-                            const {name, count, displayName} = itemDetail;
                             return (
-                                <OverlayTrigger
-                                    key={i}
-                                    placement='top'
-                                    overlay={<Tooltip data-bs-theme='light'>{displayName}</Tooltip>}
-                                >
-                                    <ItemSlotStyle
-                                        draggable
-                                        data-inventory-slot={itemIndex}
-                                        onDragStart={(e) => {
-                                            e.dataTransfer.setData('fromSlot', itemIndex.toString());
-                                        }}
-                                        onDragOver={(e) => e.preventDefault()}
-                                        onDrop={(e) => {
-                                            e.preventDefault();
-                                            const toSlot = (e.target as HTMLBaseElement)?.dataset?.inventorySlot;
-                                            const fromSlot = e.dataTransfer.getData('fromSlot');
-                                            if (fromSlot && toSlot && fromSlot !== toSlot) {
-                                                props.action({
-                                                    type: 'ACTION',
-                                                    action: 'inventory-transfer',
-                                                    data: {
-                                                        id: turtle.id,
-                                                        fromSlot,
-                                                        toSlot,
-                                                    },
-                                                });
-                                            }
-                                        }}
-                                        onClick={() => {
-                                            props.action({
-                                                type: 'ACTION',
-                                                action: 'select',
-                                                data: {id: turtle.id, slot: itemIndex},
-                                            });
-                                        }}
-                                    >
-                                        <Item count={count} name={name} index={itemIndex} />
-                                    </ItemSlotStyle>
-                                </OverlayTrigger>
+                                <Item
+                                    key={itemIndex}
+                                    displayName={isEmpty ? 'Empty' : itemDetail.displayName}
+                                    isSelected={itemIndex === selectedSlot}
+                                    index={itemIndex}
+                                    item={isEmpty ? null : {name: itemDetail.name, count: itemDetail.count}}
+                                    onDrop={(fromSlot: number, toSlot: number) => {
+                                        props.action({
+                                            type: 'ACTION',
+                                            action: 'inventory-transfer',
+                                            data: {
+                                                id: turtle.id,
+                                                fromSlot,
+                                                toSlot,
+                                            },
+                                        });
+                                    }}
+                                    onClick={() => {
+                                        props.action({
+                                            type: 'ACTION',
+                                            action: 'select',
+                                            data: {id: turtle.id, slot: itemIndex},
+                                        });
+                                    }}
+                                />
                             );
                         })}
                     </InventoryGrid>
@@ -280,12 +226,6 @@ function Inventory(props: InventoryProps) {
     );
 }
 
-const EmptyItemImage = styled.span`
-    width: 32px;
-    height: 32px;
-    background-color: #8b8b8b;
-`;
-
 const InventoryGrid = styled.div`
     width: 276px;
     display: inline-grid;
@@ -301,24 +241,6 @@ const ButtonSlot = styled.div`
     padding: 2px;
     width: 64px;
     height: 40px;
-`;
-
-const ItemSlot = styled.div`
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    cursor: pointer;
-    align-items: center;
-    background-color: #8b8b8b;
-    border: 1px solid #373737;
-    padding: 2px;
-    width: 64px;
-    height: 64px;
-`;
-
-const SelectedItemSlot = styled(ItemSlot)`
-    border: 3px solid #264d8c;
 `;
 
 export default Inventory;
