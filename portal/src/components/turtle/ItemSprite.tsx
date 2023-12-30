@@ -9,7 +9,7 @@ export interface ItemSpriteProps {
 function ItemSprite(props: ItemSpriteProps) {
     const {name, index} = props;
     const sprite = SpriteTable[name] ?? SpriteTable['???'];
-    const spriteY = 32 * Math.floor(sprite.index / 32);
+    const spriteY = 32 * Math.floor((sprite.index - 1) / 32);
     const spriteX = 32 * (sprite.index - spriteY - 1);
 
     return (
