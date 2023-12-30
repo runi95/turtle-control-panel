@@ -38,7 +38,7 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
 
             if (!s.isMineable) {
                 await this.turtle.inspectUp();
-                return [false, 'Block is not mineable'];
+                return [false, upMessage];
             }
 
             const [didDigUp, didDigUpMessage] = await this.turtle.digUp();
@@ -67,7 +67,7 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
 
             if (!s.isMineable) {
                 await this.turtle.inspectDown();
-                return [false, 'Block is not mineable'];
+                return [false, downMessage];
             }
 
             const [didDigDown, digDownMessage] = await this.turtle.digDown();
@@ -100,7 +100,7 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
 
             if (!s.isMineable) {
                 await this.turtle.inspect();
-                return [false, 'Block is not mineable'];
+                return [false, forwardMessage];
             }
 
             const [didDig, digMessage] = await this.turtle.dig();
