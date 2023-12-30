@@ -4,7 +4,18 @@ import fastifyCorsPlugin from '@fastify/cors';
 import {getOnlineTurtleById, getOnlineTurtles} from './entities/turtle';
 import globalEventEmitter from './globalEventEmitter';
 import logger from './logger/server';
-import {addArea, deleteTurtle, getAreas, getBlocks, getDashboard, getExternalInventories, renameServer} from './db';
+import {
+    addArea,
+    deleteTurtle,
+    getAreas,
+    getBlocks,
+    getChunk,
+    getChunks,
+    getDashboard,
+    getExternalInventories,
+    renameServer,
+    upsertChunk,
+} from './db';
 import {Turtle} from './db/turtle.type';
 import {Block} from './db/block.type';
 import {TurtleFarmingState} from './entities/states/farming';
@@ -51,6 +62,13 @@ server
             const {params} = req;
             const {id} = params as {id: string};
             res.send(getExternalInventories(Number(id)));
+        });
+
+        server.get('/servers/:id/chunks', (req, res) => {
+            const {params, query} = req;
+            const {id} = params as {id: string};
+            const {x, z} = query as {x: string; z: string;}
+            res.send(getChunk(Number(id), Number(x), Number(z)));
         });
 
         server.get('/', {websocket: true}, (connection, _req) => {
@@ -127,6 +145,25 @@ server
                                     break;
                                 case 'scan':
                                     turtle.state = new TurtleScanState(turtle);
+                                    break;
+                                case 'analyze':
+                                    turtle.hasPeripheralWithName('geoScanner').then(([hasPeripheral]) => {
+                                        if (hasPeripheral) {
+                                            turtle
+                                                .usePeripheralWithName<
+                                                    [{[key: string]: number}, undefined] | [null, string]
+                                                >('geoScanner', 'chunkAnalyze')
+                                                .then(([analysis, analysisFailMessage]) => {
+                                                    if (analysis !== null) {
+                                                        const chunk = turtle.chunk;
+                                                        if (chunk !== null) {
+                                                            const [x, z] = chunk;
+                                                            upsertChunk(turtle.serverId, x, z, analysis);
+                                                        }
+                                                    }
+                                                });
+                                        }
+                                    });
                                     break;
                                 case 'inventory-transfer':
                                     turtle.inventoryTransfer(obj.data.fromSlot, obj.data.toSlot);

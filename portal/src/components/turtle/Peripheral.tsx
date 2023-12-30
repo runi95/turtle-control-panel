@@ -47,6 +47,14 @@ function Peripheral(props: PeripheralProps) {
                     >
                         Scan
                     </Button>
+                    <Button
+                        onClick={() => action({type: 'ACTION', action: 'analyze', data: {id}})}
+                        variant='outline-info'
+                        size='sm'
+                        disabled={!turtle.isOnline}
+                    >
+                        Analyze
+                    </Button>
                 </PeripheralContainer>
             </PeripheralGroup>
         );

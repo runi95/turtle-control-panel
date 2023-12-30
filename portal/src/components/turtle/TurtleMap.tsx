@@ -7,6 +7,7 @@ import {Action, Areas, Blocks, Location, Turtle, Turtles} from '../../App';
 import SpriteTable from '../../SpriteTable';
 import {useBlocks} from '../../api/UseBlocks';
 import {useAreas} from '../../api/UseAreas';
+import {useChunk} from '../../api/UseChunk';
 
 const circleSizeMul = 0.35;
 const spriteSize = 8;
@@ -54,6 +55,9 @@ const TurtleMap = (props: TurtleMapProps) => {
         },
         turtle.location !== null && turtle.direction !== null
     );
+    const chunkX = Math.floor(turtle.location?.x / 16);
+    const chunkZ = Math.floor(turtle.location?.z / 16);
+    const {data: chunk} = useChunk(serverId, chunkX, chunkZ);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -533,6 +537,21 @@ const TurtleMap = (props: TurtleMapProps) => {
                     )}
                 </Col>
             </Row>
+            {chunk ? (
+                <Row>
+                    <Col>
+                        <div style={{marginTop: 10}}>
+                            <hr />
+                            <div>Chunk analysis:</div>
+                            {Object.keys(chunk.analysis).map((key, i) => (
+                                <div key={i}>
+                                    {key}: {chunk.analysis[key]}
+                                </div>
+                            ))}
+                        </div>
+                    </Col>
+                </Row>
+            ) : null}
         </Col>
     );
 };

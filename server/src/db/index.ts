@@ -6,6 +6,7 @@ import {Area} from './area.type';
 import {StateData} from '../entities/states/base';
 import {StateDataTypes} from '../entities/states/helpers';
 import {ExternalInventory} from './inventory.type';
+import {Chunk, ChunkAnalysis} from './chunk.type';
 
 const db = new Database('db/server.db');
 db.pragma('journal_mode = WAL');
@@ -71,6 +72,17 @@ db.exec(
     content JSON,
     size INT,
     CONSTRAINT pk_inventories PRIMARY KEY (\`server_id\`, \`x\`, \`y\`, \`z\`),
+    FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
+);`
+);
+
+db.exec(
+    `CREATE TABLE IF NOT EXISTS \`chunks\` (
+    server_id INT NOT NULL,
+    x INT NOT NULL,
+    z INT NOT NULL,
+    analysis JSON,
+    CONSTRAINT pk_chunks PRIMARY KEY (\`server_id\`, \`x\`, \`z\`),
     FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
 );`
 );
@@ -210,6 +222,22 @@ const selectInventory = db.prepare(`SELECT json_object(
     'content', json(\`i\`.\`content\`),
     'size', \`i\`.\`size\`
 ) FROM \`inventories\` AS \`i\` WHERE \`server_id\` = ? AND \`x\` = ? AND \`y\` = ? AND \`z\` = ?`).pluck();
+const insertChunk = db.prepare(
+    'INSERT INTO `chunks` VALUES (:server_id, :x, :z, :analysis) ON CONFLICT DO UPDATE SET analysis = :analysis'
+);
+const selectChunks = db.prepare(`SELECT json_object(
+    'serverId', \`c\`.\`server_id\`,
+    'x', \`c\`.\`x\`,
+    'z', \`c\`.\`z\`,
+    'analysis', json(\`c\`.\`analysis\`)
+) FROM \`chunks\` AS \`c\`
+WHERE \`c\`.\`server_id\` = :server_id AND \`c\`.\`x\` >= :from_x AND \`c\`.\`x\` <= :to_x AND \`c\`.\`z\` >= :from_z AND \`c\`.\`z\` <= :to_z`).pluck();
+const selectChunk = db.prepare(`SELECT json_object(
+    'serverId', \`c\`.\`server_id\`,
+    'x', \`c\`.\`x\`,
+    'z', \`c\`.\`z\`,
+    'analysis', json(\`c\`.\`analysis\`)
+) FROM \`chunks\` AS \`c\` WHERE \`server_id\` = ? AND \`x\` = ? AND \`z\` = ?`).pluck();
 
 export const getDashboard = () => preparedDashboard.all().map((server: unknown) => JSON.parse(server as string));
 export const upsertServer = (remoteAddress: string, name: string | null) =>
@@ -362,3 +390,33 @@ export const getExternalInventory = (serverId: number, x: number, y: number, z: 
     return JSON.parse(inventory as string) as ExternalInventory;
 };
 export const getExternalInventories = (serverId: number) => JSON.parse(selectInventories.get(serverId) as string) as ExternalInventory[];
+export const upsertChunk = (
+    serverId: number,
+    x: number,
+    z: number,
+    analysis: ChunkAnalysis,
+) =>
+    insertChunk.run({
+        server_id: serverId,
+        x,
+        z,
+        analysis: JSON.stringify(analysis),
+    });
+export const getChunk = (serverId: number, x: number, z: number) => {
+    const chunk = selectChunk.get(serverId, x, z);
+    if (!chunk) return null;
+    return JSON.parse(chunk as string) as Chunk;
+};
+export interface GetChunksOptions {
+    fromX: number;
+    toX: number;
+    fromZ: number;
+    toZ: number;
+}
+export const getChunks = (serverId: number, options: GetBlocksOptions) => selectChunks.all({
+    server_id: serverId,
+    from_x: options.fromX,
+    to_x: options.toX,
+    from_z: options.fromZ,
+    to_z: options.toZ
+}).map((chunk) => JSON.parse(chunk as string)) as Chunk[];
