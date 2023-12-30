@@ -51,12 +51,18 @@ export class TurtleMoveState extends TurtleBaseState<MovingStateData> {
         }
 
         const [didMoveToNode, failedMoveMessage] = await this.moveToNode(this.solution);
-        if (didMoveToNode) {
-            this.solution = this.solution.parent;
+        if (!didMoveToNode) {
+            switch (failedMoveMessage) {
+                case 'Movement obstructed':
+                    this.solution = null;
+                    break;
+                default:
+                    this.turtle.error = failedMoveMessage;
+                    break;
+            }
             return; // Yield
-        } else {
-            this.turtle.error = 'Unable to move';
-            return;
         }
+
+        this.solution = this.solution.parent;
     }
 }
