@@ -105,6 +105,11 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
         if (farmlandIndexOfBlock > -1) {
             const block = await this.turtle.inspectDown();
             if (block === undefined) {
+                this.turtle.error = 'No turtle location set';
+                return; // Error
+            }
+
+            if (block === null) {
                 await this.turtle.digDown();
                 const didSelect = await this.selectAnySeedInInventory();
                 if (didSelect) {

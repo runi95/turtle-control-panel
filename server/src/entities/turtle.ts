@@ -1037,15 +1037,15 @@ export class Turtle {
      *
      * This method asynchronously executes the 'turtle.inspect()' command and interacts with the world database based on the result.
      *
-     * @returns {Promise<object | undefined>} A Promise resolving to an object representing the inspected block or undefined if inspection fails.
+     * @returns {Promise<Block | null | undefined>} A Promise resolving to an object representing the inspected block or undefined if inspection fails.
      * The details object includes the following properties:
      *   - `state` - An object containing details about the block state if there is any
      *   - `name` - The name of the block
      *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
-    async inspect(): Promise<Block | undefined> {
-        if (this.location === null) throw new Error('Turtle location is null');
-        if (this.direction === null) throw new Error('Turtle direction is null');
+    async inspect(): Promise<Block | null | undefined> {
+        if (this.location === null) return undefined;
+        if (this.direction === null) return undefined;
 
         const {x, y, z} = this.location;
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.direction);
@@ -1062,7 +1062,7 @@ export class Turtle {
                 z: this.location.z + zChange,
             });
             deleteBlock(this.serverId, this.location.x + xChange, this.location.y, this.location.z + zChange);
-            return undefined;
+            return null;
         }
 
         const dbBlock = getBlock(this.serverId, x + xChange, y, z + zChange);
@@ -1098,15 +1098,15 @@ export class Turtle {
      *
      * This method asynchronously executes the 'turtle.inspectUp()' command and interacts with the world database based on the result.
      *
-     * @returns {Promise<object | undefined>} A Promise resolving to an object representing the inspected block or undefined if inspection fails.
+     * @returns {Promise<Block | null | undefined>} A Promise resolving to an object representing the inspected block or undefined if inspection fails.
      * The details object includes the following properties:
      *   - `state` - An object containing details about the block state if there is any
      *   - `name` - The name of the block
      *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
-    async inspectUp(): Promise<Block | undefined> {
-        if (this.location === null) throw new Error('Turtle location is null');
-        if (this.direction === null) throw new Error('Turtle direction is null');
+    async inspectUp(): Promise<Block | null | undefined> {
+        if (this.location === null) return undefined;
+        if (this.direction === null) return undefined;
 
         const {x, y, z} = this.location;
         const [didInspect, block] = await this.#exec<[true, Block] | [false, 'No block to inspect']>(
@@ -1122,7 +1122,7 @@ export class Turtle {
                 z: this.location.z,
             });
             deleteBlock(this.serverId, this.location.x, this.location.y + 1, this.location.z);
-            return undefined;
+            return null;
         }
 
         const dbBlock = getBlock(this.serverId, x, y + 1, z);
@@ -1158,15 +1158,15 @@ export class Turtle {
      *
      * This method asynchronously executes the 'turtle.inspectDown()' command and interacts with the world database based on the result.
      *
-     * @returns {Promise<object | undefined>} A Promise resolving to an object representing the inspected block or undefined if inspection fails.
+     * @returns {Promise<Block | null | undefined>} A Promise resolving to an object representing the inspected block or undefined if inspection fails.
      * The details object includes the following properties:
      *   - `state` - An object containing details about the block state if there is any
      *   - `name` - The name of the block
      *   - `tags` - Tags used by Minecraft for block sorting and grouping
      */
-    async inspectDown(): Promise<Block | undefined> {
-        if (this.location === null) throw new Error('Turtle location is null');
-        if (this.direction === null) throw new Error('Turtle direction is null');
+    async inspectDown(): Promise<Block | null | undefined> {
+        if (this.location === null) return undefined;
+        if (this.direction === null) return undefined;
 
         const {x, y, z} = this.location;
         const [didInspect, block] = await this.#exec<[true, Block] | [false, 'No block to inspect']>(
@@ -1182,7 +1182,7 @@ export class Turtle {
                 z: this.location.z,
             });
             deleteBlock(this.serverId, this.location.x, this.location.y + 1, this.location.z);
-            return undefined;
+            return null;
         }
 
         const dbBlock = getBlock(this.serverId, x, y - 1, z);
