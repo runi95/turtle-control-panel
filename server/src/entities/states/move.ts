@@ -54,11 +54,18 @@ export class TurtleMoveState extends TurtleBaseState<MovingStateData> {
         if (!didMoveToNode) {
             switch (failedMoveMessage) {
                 case 'Movement obstructed':
-                    this.solution = null;
-                    break;
+                        this.solution = null;
+                        return; // Yield
+                case 'Out of fuel':
+                case 'Movement failed':
+                case 'Too low to move':
+                case 'Too high to move':
+                case 'Cannot leave the world':
+                case 'Cannot leave loaded world':
+                case 'Cannot pass the world border':
                 default:
                     this.turtle.error = failedMoveMessage;
-                    break;
+                    return; // Error
             }
             return; // Yield
         }
