@@ -221,13 +221,6 @@ const TurtleMap = (props: TurtleMapProps) => {
                 ctx.fillStyle = 'yellow';
                 ctx.arc(centerX, centerY, circleSizeMul * spriteSize, 0, 2 * Math.PI, false);
                 ctx.fill();
-
-                ctx.textAlign = 'center';
-                ctx.strokeStyle = 'black';
-                ctx.font = '11px Tahoma';
-                ctx.lineWidth = 4;
-                ctx.strokeText(turtle.name, centerX, centerY - spriteRadius);
-                ctx.fillText(turtle.name, centerX, centerY - spriteRadius);
             };
             draw(context, canvasSize, turtles, blocks, areas, turtle);
 
