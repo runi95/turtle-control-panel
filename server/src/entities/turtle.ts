@@ -562,8 +562,38 @@ export class Turtle {
      *
      * This method asynchronously executes the 'turtle.forward()' command and updates the turtle's state based on the result.
      */
-    async forward(): Promise<[true, undefined] | [false, 'Movement obstructed' | 'Out of fuel' | 'Movement failed' | 'Too low to move' | 'Too high to move' | 'Cannot leave the world' | 'Cannot leave loaded world' | 'Cannot pass the world border']> {
-        const forward = await this.#exec<[true, undefined] | [false, 'Movement obstructed' | 'Out of fuel' | 'Movement failed' | 'Too low to move' | 'Too high to move' | 'Cannot leave the world' | 'Cannot leave loaded world' | 'Cannot pass the world border']>('turtle.forward()');
+    async forward(): Promise<
+        | [true, undefined]
+        | [
+              false,
+              (
+                  | 'Movement obstructed'
+                  | 'Out of fuel'
+                  | 'Movement failed'
+                  | 'Too low to move'
+                  | 'Too high to move'
+                  | 'Cannot leave the world'
+                  | 'Cannot leave loaded world'
+                  | 'Cannot pass the world border'
+              ),
+          ]
+    > {
+        const forward = await this.#exec<
+            | [true, undefined]
+            | [
+                  false,
+                  (
+                      | 'Movement obstructed'
+                      | 'Out of fuel'
+                      | 'Movement failed'
+                      | 'Too low to move'
+                      | 'Too high to move'
+                      | 'Cannot leave the world'
+                      | 'Cannot leave loaded world'
+                      | 'Cannot pass the world border'
+                  ),
+              ]
+        >('turtle.forward()');
         if (!this.location || !this.direction) return forward;
 
         const [didMove] = forward;
@@ -601,8 +631,38 @@ export class Turtle {
      *
      * This method asynchronously executes the 'turtle.back()' command and updates the turtle's state based on the result.
      */
-    async back(): Promise<[true, undefined] | [false, 'Movement obstructed' | 'Out of fuel' | 'Movement failed' | 'Too low to move' | 'Too high to move' | 'Cannot leave the world' | 'Cannot leave loaded world' | 'Cannot pass the world border']> {
-        const back = await this.#exec<[true, undefined] | [false, 'Movement obstructed' | 'Out of fuel' | 'Movement failed' | 'Too low to move' | 'Too high to move' | 'Cannot leave the world' | 'Cannot leave loaded world' | 'Cannot pass the world border']>('turtle.back()');
+    async back(): Promise<
+        | [true, undefined]
+        | [
+              false,
+              (
+                  | 'Movement obstructed'
+                  | 'Out of fuel'
+                  | 'Movement failed'
+                  | 'Too low to move'
+                  | 'Too high to move'
+                  | 'Cannot leave the world'
+                  | 'Cannot leave loaded world'
+                  | 'Cannot pass the world border'
+              ),
+          ]
+    > {
+        const back = await this.#exec<
+            | [true, undefined]
+            | [
+                  false,
+                  (
+                      | 'Movement obstructed'
+                      | 'Out of fuel'
+                      | 'Movement failed'
+                      | 'Too low to move'
+                      | 'Too high to move'
+                      | 'Cannot leave the world'
+                      | 'Cannot leave loaded world'
+                      | 'Cannot pass the world border'
+                  ),
+              ]
+        >('turtle.back()');
         if (!this.location || !this.direction) return back;
 
         const [didMove] = back;
@@ -640,8 +700,38 @@ export class Turtle {
      *
      * This method asynchronously executes the 'turtle.up()' command and updates the turtle's state based on the result.
      */
-    async up(): Promise<[true, undefined] | [false, 'Movement obstructed' | 'Out of fuel' | 'Movement failed' | 'Too low to move' | 'Too high to move' | 'Cannot leave the world' | 'Cannot leave loaded world' | 'Cannot pass the world border']> {
-        const up = await this.#exec<[true, undefined] | [false, 'Movement obstructed' | 'Out of fuel' | 'Movement failed' | 'Too low to move' | 'Too high to move' | 'Cannot leave the world' | 'Cannot leave loaded world' | 'Cannot pass the world border']>('turtle.up()');
+    async up(): Promise<
+        | [true, undefined]
+        | [
+              false,
+              (
+                  | 'Movement obstructed'
+                  | 'Out of fuel'
+                  | 'Movement failed'
+                  | 'Too low to move'
+                  | 'Too high to move'
+                  | 'Cannot leave the world'
+                  | 'Cannot leave loaded world'
+                  | 'Cannot pass the world border'
+              ),
+          ]
+    > {
+        const up = await this.#exec<
+            | [true, undefined]
+            | [
+                  false,
+                  (
+                      | 'Movement obstructed'
+                      | 'Out of fuel'
+                      | 'Movement failed'
+                      | 'Too low to move'
+                      | 'Too high to move'
+                      | 'Cannot leave the world'
+                      | 'Cannot leave loaded world'
+                      | 'Cannot pass the world border'
+                  ),
+              ]
+        >('turtle.up()');
         if (!this.location) return up;
 
         const [didMove] = up;
@@ -678,8 +768,38 @@ export class Turtle {
      *
      * This method asynchronously executes the 'turtle.down()' command and updates the turtle's state based on the result.
      */
-    async down(): Promise<[true, undefined] | [false, 'Movement obstructed' | 'Out of fuel' | 'Movement failed' | 'Too low to move' | 'Too high to move' | 'Cannot leave the world' | 'Cannot leave loaded world' | 'Cannot pass the world border']> {
-        const down = await this.#exec<[true, undefined] | [false, 'Movement obstructed' | 'Out of fuel' | 'Movement failed' | 'Too low to move' | 'Too high to move' | 'Cannot leave the world' | 'Cannot leave loaded world' | 'Cannot pass the world border']>('turtle.down()');
+    async down(): Promise<
+        | [true, undefined]
+        | [
+              false,
+              (
+                  | 'Movement obstructed'
+                  | 'Out of fuel'
+                  | 'Movement failed'
+                  | 'Too low to move'
+                  | 'Too high to move'
+                  | 'Cannot leave the world'
+                  | 'Cannot leave loaded world'
+                  | 'Cannot pass the world border'
+              ),
+          ]
+    > {
+        const down = await this.#exec<
+            | [true, undefined]
+            | [
+                  false,
+                  (
+                      | 'Movement obstructed'
+                      | 'Out of fuel'
+                      | 'Movement failed'
+                      | 'Too low to move'
+                      | 'Too high to move'
+                      | 'Cannot leave the world'
+                      | 'Cannot leave loaded world'
+                      | 'Cannot pass the world border'
+                  ),
+              ]
+        >('turtle.down()');
         if (!this.location) return down;
 
         const [didMove] = down;
@@ -813,10 +933,24 @@ export class Turtle {
      *
      * This method asynchronously executes the 'turtle.dig()' command and updates the turtle's state based on the result.
      */
-    async dig(): Promise<[true, undefined] | [false, 'Cannot break unbreakable block' | 'Cannot break block with this tool' | 'No tool to dig with' | 'Turtle location is null']> {
+    async dig(): Promise<
+        | [true, undefined]
+        | [
+              false,
+              (
+                  | 'Cannot break unbreakable block'
+                  | 'Cannot break block with this tool'
+                  | 'No tool to dig with'
+                  | 'Turtle location is null'
+              ),
+          ]
+    > {
         if (this.location === null) return [false, 'Turtle location is null'];
 
-        const dig = await this.#exec<[true, undefined] | [false, 'Cannot break unbreakable block' | 'Cannot break block with this tool' | 'No tool to dig with']>('turtle.dig()');
+        const dig = await this.#exec<
+            | [true, undefined]
+            | [false, 'Cannot break unbreakable block' | 'Cannot break block with this tool' | 'No tool to dig with']
+        >('turtle.dig()');
         const [didDig] = dig;
         if (didDig) {
             globalEventEmitter.emit('wdelete', {
@@ -837,10 +971,24 @@ export class Turtle {
      *
      * This method asynchronously executes the 'turtle.digUp()' command and updates the turtle's state based on the result.
      */
-    async digUp(): Promise<[true, undefined] | [false, 'Cannot break unbreakable block' | 'Cannot break block with this tool' | 'No tool to dig with' | 'Turtle location is null']> {
+    async digUp(): Promise<
+        | [true, undefined]
+        | [
+              false,
+              (
+                  | 'Cannot break unbreakable block'
+                  | 'Cannot break block with this tool'
+                  | 'No tool to dig with'
+                  | 'Turtle location is null'
+              ),
+          ]
+    > {
         if (this.location === null) return [false, 'Turtle location is null'];
 
-        const digUp = await this.#exec<[true, undefined] | [false, 'Cannot break unbreakable block' | 'Cannot break block with this tool' | 'No tool to dig with']>('turtle.digUp()');
+        const digUp = await this.#exec<
+            | [true, undefined]
+            | [false, 'Cannot break unbreakable block' | 'Cannot break block with this tool' | 'No tool to dig with']
+        >('turtle.digUp()');
         const [didDig] = digUp;
         if (didDig) {
             globalEventEmitter.emit('wdelete', {
@@ -861,10 +1009,15 @@ export class Turtle {
      *
      * This method asynchronously executes the 'turtle.digDown()' command and updates the turtle's state based on the result.
      */
-    async digDown(): Promise<[true, undefined] | [false, 'Cannot break unbreakable block' | 'Cannot break block with this tool' | 'Turtle location is null']> {
+    async digDown(): Promise<
+        | [true, undefined]
+        | [false, 'Cannot break unbreakable block' | 'Cannot break block with this tool' | 'Turtle location is null']
+    > {
         if (this.location === null) return [false, 'Turtle location is null'];
 
-        const digDown = await this.#exec<[true, undefined] | [false, 'Cannot break unbreakable block' | 'Cannot break block with this tool']>('turtle.digDown()');
+        const digDown = await this.#exec<
+            [true, undefined] | [false, 'Cannot break unbreakable block' | 'Cannot break block with this tool']
+        >('turtle.digDown()');
         const [didDig] = digDown;
         if (didDig) {
             globalEventEmitter.emit('wdelete', {
@@ -896,7 +1049,9 @@ export class Turtle {
 
         const {x, y, z} = this.location;
         const [xChange, zChange] = getLocalCoordinatesForDirection(this.direction);
-        const [didInspect, block] = await this.#exec<[true, Block] | [false, 'No block to inspect']>('turtle.inspect()');
+        const [didInspect, block] = await this.#exec<[true, Block] | [false, 'No block to inspect']>(
+            'turtle.inspect()'
+        );
         if (!didInspect) {
             const dbBlock = getBlock(this.serverId, x + xChange, y, z + zChange);
             if (!dbBlock) return;
@@ -954,7 +1109,9 @@ export class Turtle {
         if (this.direction === null) throw new Error('Turtle direction is null');
 
         const {x, y, z} = this.location;
-        const [didInspect, block] = await this.#exec<[true, Block] | [false, 'No block to inspect']>('turtle.inspectUp()');
+        const [didInspect, block] = await this.#exec<[true, Block] | [false, 'No block to inspect']>(
+            'turtle.inspectUp()'
+        );
         if (!didInspect) {
             const dbBlock = getBlock(this.serverId, x, y + 1, z);
             if (!dbBlock) return;
@@ -1012,7 +1169,9 @@ export class Turtle {
         if (this.direction === null) throw new Error('Turtle direction is null');
 
         const {x, y, z} = this.location;
-        const [didInspect, block] = await this.#exec<[true, Block] | [false, 'No block to inspect']>('turtle.inspectDown()');
+        const [didInspect, block] = await this.#exec<[true, Block] | [false, 'No block to inspect']>(
+            'turtle.inspectDown()'
+        );
         if (!didInspect) {
             const dbBlock = getBlock(this.serverId, x, y - 1, z);
             if (!dbBlock) return;
@@ -1056,15 +1215,39 @@ export class Turtle {
 
     /**
      * Place a block or item into the world in front of the turtle.
-     * 
+     *
      * "Placing" an item allows it to interact with blocks and entities in front of the turtle. For instance, buckets can pick up and place down fluids,
      * and wheat can be used to breed cows. However, you cannot use place to perform arbitrary block interactions, such as clicking buttons or
      * flipping levers.
-     * 
+     *
      * @param {string | undefined} text - When placing a sign, set its contents to this text.
      */
-    async place(text?: string): Promise<[true, undefined] | [false, 'No items to place' | 'Cannot place block here' | 'Cannot place item here' | 'Cannot place in protected area']> {
-        const place = await this.#exec<[true, undefined] | [false, 'No items to place' | 'Cannot place block here' | 'Cannot place item here' | 'Cannot place in protected area']>(text ? `turtle.place("${text}")` : 'turtle.place()');
+    async place(
+        text?: string
+    ): Promise<
+        | [true, undefined]
+        | [
+              false,
+              (
+                  | 'No items to place'
+                  | 'Cannot place block here'
+                  | 'Cannot place item here'
+                  | 'Cannot place in protected area'
+              ),
+          ]
+    > {
+        const place = await this.#exec<
+            | [true, undefined]
+            | [
+                  false,
+                  (
+                      | 'No items to place'
+                      | 'Cannot place block here'
+                      | 'Cannot place item here'
+                      | 'Cannot place in protected area'
+                  ),
+              ]
+        >(text ? `turtle.place("${text}")` : 'turtle.place()');
         const [didPlace] = place;
         if (didPlace) {
             await this.inspect();
@@ -1075,15 +1258,39 @@ export class Turtle {
 
     /**
      * Place a block or item into the world above the turtle.
-     * 
+     *
      * "Placing" an item allows it to interact with blocks and entities in front of the turtle. For instance, buckets can pick up and place down fluids,
      * and wheat can be used to breed cows. However, you cannot use place to perform arbitrary block interactions, such as clicking buttons or
      * flipping levers.
-     * 
+     *
      * @param {string | undefined} text - When placing a sign, set its contents to this text.
      */
-    async placeUp(text?: string): Promise<[true, undefined] | [false, 'No items to place' | 'Cannot place block here' | 'Cannot place item here' | 'Cannot place in protected area']> {
-        const placeUp = await this.#exec<[true, undefined] | [false, 'No items to place' | 'Cannot place block here' | 'Cannot place item here' | 'Cannot place in protected area']>(text ? `turtle.placeUp("${text}")` : 'turtle.placeUp()');
+    async placeUp(
+        text?: string
+    ): Promise<
+        | [true, undefined]
+        | [
+              false,
+              (
+                  | 'No items to place'
+                  | 'Cannot place block here'
+                  | 'Cannot place item here'
+                  | 'Cannot place in protected area'
+              ),
+          ]
+    > {
+        const placeUp = await this.#exec<
+            | [true, undefined]
+            | [
+                  false,
+                  (
+                      | 'No items to place'
+                      | 'Cannot place block here'
+                      | 'Cannot place item here'
+                      | 'Cannot place in protected area'
+                  ),
+              ]
+        >(text ? `turtle.placeUp("${text}")` : 'turtle.placeUp()');
         const [didPlace] = placeUp;
         if (didPlace) {
             await this.inspectUp();
@@ -1094,15 +1301,39 @@ export class Turtle {
 
     /**
      * Place a block or item into the world below the turtle.
-     * 
+     *
      * "Placing" an item allows it to interact with blocks and entities in front of the turtle. For instance, buckets can pick up and place down fluids,
      * and wheat can be used to breed cows. However, you cannot use place to perform arbitrary block interactions, such as clicking buttons or
      * flipping levers.
-     * 
+     *
      * @param {string | undefined} text - When placing a sign, set its contents to this text.
      */
-    async placeDown(text?: string): Promise<[true, undefined] | [false, 'No items to place' | 'Cannot place block here' | 'Cannot place item here' | 'Cannot place in protected area']> {
-        const placeDown = await this.#exec<[true, undefined] | [false, 'No items to place' | 'Cannot place block here' | 'Cannot place item here' | 'Cannot place in protected area']>(text ? `turtle.placeDown("${text}")` : 'turtle.placeDown()');
+    async placeDown(
+        text?: string
+    ): Promise<
+        | [true, undefined]
+        | [
+              false,
+              (
+                  | 'No items to place'
+                  | 'Cannot place block here'
+                  | 'Cannot place item here'
+                  | 'Cannot place in protected area'
+              ),
+          ]
+    > {
+        const placeDown = await this.#exec<
+            | [true, undefined]
+            | [
+                  false,
+                  (
+                      | 'No items to place'
+                      | 'Cannot place block here'
+                      | 'Cannot place item here'
+                      | 'Cannot place in protected area'
+                  ),
+              ]
+        >(text ? `turtle.placeDown("${text}")` : 'turtle.placeDown()');
         const [didPlace] = placeDown;
         if (didPlace) {
             await this.inspectDown();
@@ -1113,34 +1344,40 @@ export class Turtle {
 
     /**
      * Drop the currently selected stack into the inventory in front of the turtle, or as an item into the world if there is no inventory.
-     * 
+     *
      * @param {number | undefined} count - The number of items to drop. If not given, the entire stack will be dropped.
      */
     async drop(count?: number): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop']> {
-        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(count ? `turtle.drop(${count})` : 'turtle.drop()');
+        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(
+            count ? `turtle.drop(${count})` : 'turtle.drop()'
+        );
     }
 
     /**
      * Drop the currently selected stack into the inventory above the turtle, or as an item into the world if there is no inventory.
-     * 
+     *
      * @param {number | undefined} count - The number of items to drop. If not given, the entire stack will be dropped.
      */
     async dropUp(count?: number): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop']> {
-        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(count ? `turtle.dropUp(${count})` : 'turtle.dropUp()');
+        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(
+            count ? `turtle.dropUp(${count})` : 'turtle.dropUp()'
+        );
     }
 
     /**
      * Drop the currently selected stack into the inventory below the turtle, or as an item into the world if there is no inventory.
-     * 
+     *
      * @param {number | undefined} count - The number of items to drop. If not given, the entire stack will be dropped.
      */
     async dropDown(count?: number): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop']> {
-        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(count ? `turtle.dropDown(${count})` : 'turtle.dropDown()');
+        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(
+            count ? `turtle.dropDown(${count})` : 'turtle.dropDown()'
+        );
     }
 
     /**
      * Change the currently selected slot.
-     * 
+     *
      * The selected slot determines what slot actions like drop or getItemCount act on.
      * @param {number} slot - The slot to select (defaults to 1).
      */
@@ -1156,44 +1393,60 @@ export class Turtle {
     /**
      * Suck an item from the inventory in front of the turtle, or from an item floating in the world.
      * This will pull items into the first acceptable slot, starting at the currently selected one.
-     * @param {number | undefiend} count - The number of items to suck. If not given, up to a stack of items will be picked up. 
+     * @param {number | undefiend} count - The number of items to suck. If not given, up to a stack of items will be picked up.
      */
-    async suck(count?: number): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']> {
-        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']>(`turtle.suck(${count ?? ''})`);
+    async suck(
+        count?: number
+    ): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']> {
+        return await this.#exec<
+            [true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']
+        >(`turtle.suck(${count ?? ''})`);
     }
 
     /**
      * Suck an item from the inventory above the turtle, or from an item floating in the world.
      * This will pull items into the first acceptable slot, starting at the currently selected one.
-     * @param {number | undefiend} count - The number of items to suck. If not given, up to a stack of items will be picked up. 
+     * @param {number | undefiend} count - The number of items to suck. If not given, up to a stack of items will be picked up.
      */
-    async suckUp(count?: number): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']> {
-        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']>(`turtle.suckUp(${count ?? ''})`);
+    async suckUp(
+        count?: number
+    ): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']> {
+        return await this.#exec<
+            [true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']
+        >(`turtle.suckUp(${count ?? ''})`);
     }
 
     /**
      * Suck an item from the inventory below the turtle, or from an item floating in the world.
      * This will pull items into the first acceptable slot, starting at the currently selected one.
-     * 
-     * @param {number | undefiend} count - The number of items to suck. If not given, up to a stack of items will be picked up. 
+     *
+     * @param {number | undefiend} count - The number of items to suck. If not given, up to a stack of items will be picked up.
      */
-    async suckDown(count?: number): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']> {
-        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']>(`turtle.suckDown(${count ?? ''})`);
+    async suckDown(
+        count?: number
+    ): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']> {
+        return await this.#exec<
+            [true, undefined] | [false, 'No space for items' | 'No items to drop' | 'No items to take']
+        >(`turtle.suckDown(${count ?? ''})`);
     }
 
     /**
      * Refuel this turtle.
-     * 
+     *
      * While most actions a turtle can perform (such as digging or placing blocks) are free, moving consumes fuel from the turtle's internal
      * buffer. If a turtle has no fuel, it will not move.
-     * 
+     *
      * refuel refuels the turtle, consuming fuel items (such as coal or lava buckets) from the currently selected slot and converting them into
      * energy. This finishes once the turtle is fully refuelled or all items have been consumed.
-     * 
+     *
      * @param {number | undefined} count - The maximum number of items to consume. One can pass 0 to check if an item is combustable or not.
      */
-    async refuel(count?: number): Promise<[true, undefined] | [false, 'No items to combust' | 'Items not combustible']> {
-        const refuel = await this.#exec<[true, undefined] | [false, 'No items to combust' | 'Items not combustible']>(count ? `turtle.refuel(${count})` : 'turtle.refuel()');
+    async refuel(
+        count?: number
+    ): Promise<[true, undefined] | [false, 'No items to combust' | 'Items not combustible']> {
+        const refuel = await this.#exec<[true, undefined] | [false, 'No items to combust' | 'Items not combustible']>(
+            count ? `turtle.refuel(${count})` : 'turtle.refuel()'
+        );
         const [didRefuel] = refuel;
         if (didRefuel) {
             const [updatedFuelLevel] = await this.getFuelLevel();
@@ -1229,13 +1482,15 @@ export class Turtle {
         // CC:Tweaked documentation is wrong for turtle.transferTo,
         // it returns [true] only if ALL items successfully transfer and returns [false] otherwise
         return count
-            ? await this.#exec<[true, undefined] | [false, 'No space for items']>(`turtle.transferTo(${slot}, ${count})`)
+            ? await this.#exec<[true, undefined] | [false, 'No space for items']>(
+                  `turtle.transferTo(${slot}, ${count})`
+              )
             : await this.#exec<[true, undefined] | [false, 'No space for items']>(`turtle.transferTo(${slot})`);
     }
 
     /**
      * Equip (or unequip) an item on the left side of this turtle.
-     * 
+     *
      * This finds the item in the currently selected slot and attempts to equip it to the left side of the turtle. The previous upgrade is removed and
      * placed into the turtle's inventory. If there is no item in the slot, the previous upgrade is removed, but no new one is equipped.
      */
@@ -1245,7 +1500,7 @@ export class Turtle {
 
     /**
      * Equip (or unequip) an item on the right side of this turtle.
-     * 
+     *
      * This finds the item in the currently selected slot and attempts to equip it to the right side of the turtle. The previous upgrade is removed
      * and placed into the turtle's inventory. If there is no item in the slot, the previous upgrade is removed, but no new one is equipped.
      */
@@ -1265,7 +1520,7 @@ export class Turtle {
 
     /**
      * Get the maximum amount of fuel this turtle can hold.
-     * 
+     *
      * By default, normal turtles have a limit of 20,000 and advanced turtles of 100,000.
      */
     async getFuelLimit(): Promise<[number]> {
@@ -1305,15 +1560,17 @@ export class Turtle {
     async usePeripheralWithSide<R>(side: string, method: string, ...args: (string | number | null)[]): Promise<R> {
         if (args.length > 0) {
             return await this.#exec<R>(
-                `peripheral.call("${side}", "${method}", ${args.map((arg) => {
-                    if (arg === null) return 'nil';
-                    
-                    if (typeof arg === 'string') {
-                        return `"${arg}"`;
-                    }
+                `peripheral.call("${side}", "${method}", ${args
+                    .map((arg) => {
+                        if (arg === null) return 'nil';
 
-                    return arg;
-                }).join(', ')})`
+                        if (typeof arg === 'string') {
+                            return `"${arg}"`;
+                        }
+
+                        return arg;
+                    })
+                    .join(', ')})`
             );
         } else {
             return await this.#exec<R>(`peripheral.call("${side}", "${method}")`);
@@ -1391,26 +1648,32 @@ export class Turtle {
      * Attack the entity in front of the turtle.
      */
     async attack(): Promise<[true, undefined] | [false, 'Nothing to attack here' | 'No tool to attack with']> {
-        return await this.#exec<[true, undefined] | [false, 'Nothing to attack here' | 'No tool to attack with']>(`turtle.attack()`);
+        return await this.#exec<[true, undefined] | [false, 'Nothing to attack here' | 'No tool to attack with']>(
+            `turtle.attack()`
+        );
     }
 
     /**
      * Attack the entity above the turtle.
      */
     async attackUp(): Promise<[true, undefined] | [false, 'Nothing to attack here' | 'No tool to attack with']> {
-        return await this.#exec<[true, undefined] | [false, 'Nothing to attack here' | 'No tool to attack with']>(`turtle.attackUp()`);
+        return await this.#exec<[true, undefined] | [false, 'Nothing to attack here' | 'No tool to attack with']>(
+            `turtle.attackUp()`
+        );
     }
 
     /**
      * Attack the entity below the turtle.
      */
     async attackDown(): Promise<[true, undefined] | [false, 'Nothing to attack here' | 'No tool to attack with']> {
-        return await this.#exec<[true, undefined] | [false, 'Nothing to attack here' | 'No tool to attack with']>(`turtle.attackDown()`);
+        return await this.#exec<[true, undefined] | [false, 'Nothing to attack here' | 'No tool to attack with']>(
+            `turtle.attackDown()`
+        );
     }
 
     /**
      * Get the number of items in the given slot.
-     * 
+     *
      * @param {number} slot - The slot we wish to check. Defaults to the selected slot.
      */
     async getItemCount(slot = this.selectedSlot) {
@@ -1419,9 +1682,9 @@ export class Turtle {
 
     /**
      * Get the remaining number of items which may be stored in this stack.
-     * 
+     *
      * For instance, if a slot contains 13 blocks of dirt, it has room for another 51.
-     * 
+     *
      * @param {number} slot - The slot we wish to check. Defaults to the selected slot.
      */
     async getItemSpace(slot = this.selectedSlot) {
