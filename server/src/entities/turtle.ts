@@ -302,7 +302,13 @@ export class Turtle {
                     this.inventory = message as Inventory;
                     break;
                 case 'PERIPHERAL_ATTACHED':
-                    this.peripherals = message as Peripherals;
+                    const peripherals = message as Peripherals;
+                    Object.keys(peripherals)
+                        .filter((side) => peripherals[side].includes('inventory'))
+                        .forEach((side) => {
+                            this.connectToInventory(side);
+                        });
+                    this.peripherals = peripherals;
                     break;
                 case 'PERIPHERAL_DETACHED':
                     this.peripherals = (({[message as string]: _, ...peripherals}) => peripherals)(this.peripherals);
@@ -522,11 +528,6 @@ export class Turtle {
 
     public set peripherals(peripherals: Peripherals) {
         this.#peripherals = peripherals;
-        Object.keys(this.peripherals)
-            .filter((side) => this.peripherals[side].includes('inventory'))
-            .forEach((side) => {
-                this.connectToInventory(side);
-            });
 
         globalEventEmitter.emit('tupdate', {
             id: this.id,
