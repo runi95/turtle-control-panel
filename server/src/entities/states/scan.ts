@@ -15,8 +15,7 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
     public data = {
         id: TURTLE_STATES.SCANNING
     };
-
-    public error: string | null = null;
+    public warning: string | null = null;
 
     constructor(turtle: Turtle) {
         super(turtle);
