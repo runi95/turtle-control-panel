@@ -78,7 +78,7 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
     const renderTiles = (externalInventory: ExternalInventory) => {
         const tiles = [];
         for (let i = 0; i < externalInventory.size; i++) {
-            const itemDetail = externalInventory.content[i];
+            const itemDetail = externalInventory.content === null ? null : externalInventory.content[i];
             const isEmpty = itemDetail == null;
             tiles.push(
                 <Item
