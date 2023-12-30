@@ -12,7 +12,7 @@ export type StateData<T> = {
 export abstract class TurtleBaseState<T extends StateData<T>> {
     public abstract readonly name: string;
     public abstract data: T;
-    public abstract error: string | null;
+    public abstract warning: string | null;
 
     protected readonly turtle: Turtle;
 

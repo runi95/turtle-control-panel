@@ -17,7 +17,7 @@ export interface FarmingStateData {
 export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
     public readonly name = 'farming';
     public data: FarmingStateData;
-    public error: string | null = null;
+    public warning: string | null = null;
 
     private readonly area: Location[];
     private readonly algorithm: DStarLite;

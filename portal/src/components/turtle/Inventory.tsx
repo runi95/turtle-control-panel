@@ -142,6 +142,11 @@ function Inventory(props: InventoryProps) {
                                     {' '}
                                     (<span className='text-danger'>{turtle.error}</span>)
                                 </span>
+                            ) : turtle.state?.warning ? (
+                                <span>
+                                    {' '}
+                                    (<span className='text-warning'>{turtle.state.warning as string}</span>)
+                                </span>
                             ) : null}
                         </h5>
                         <div style={{marginLeft: 25}}>
