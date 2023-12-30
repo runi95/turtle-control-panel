@@ -132,6 +132,11 @@ server.register(fastifyCorsPlugin).register(fastifyWebsocketPlugin).then(() => {
                             case 'connect-to-inventory':
                                 turtle.connectToInventory(obj.data.side);
                                 break;
+                            case 'inventory-push-items':
+                                turtle.usePeripheralWithSide(obj.data.side, 'pushItems', obj.data.side, obj.data.fromSlot, null, obj.data.toSlot).then(() => {
+                                    turtle.connectToInventory(obj.data.side);
+                                });
+                                break;
                             default:
                                 logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);
                                 break;

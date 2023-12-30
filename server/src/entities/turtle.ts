@@ -1225,10 +1225,18 @@ export class Turtle {
         return await this.#exec<[boolean]>(`peripheral.isPresent("${side}")`);
     }
 
-    async usePeripheralWithSide<R>(side: string, method: string, ...args: string[]): Promise<R> {
+    async usePeripheralWithSide<R>(side: string, method: string, ...args: (string | number | null)[]): Promise<R> {
         if (args.length > 0) {
             return await this.#exec<R>(
-                `peripheral.call("${side}", "${method}", ${args.map((arg) => `"${arg}"`).join(', ')})`
+                `peripheral.call("${side}", "${method}", ${args.map((arg) => {
+                    if (arg === null) return 'nil';
+                    
+                    if (typeof arg === 'string') {
+                        return `"${arg}"`;
+                    }
+
+                    return arg;
+                }).join(', ')})`
             );
         } else {
             return await this.#exec<R>(`peripheral.call("${side}", "${method}")`);

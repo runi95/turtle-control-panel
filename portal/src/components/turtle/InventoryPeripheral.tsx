@@ -85,10 +85,19 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
                     key={i}
                     displayName={isEmpty ? 'Empty' : itemDetail.displayName ?? itemDetail.name}
                     isSelected={false}
-                    index={i}
+                    index={i + 1}
                     item={isEmpty ? null : {name: itemDetail.name, count: itemDetail.count}}
                     onDrop={(fromSlot: number, toSlot: number) => {
-                        // Intentionally left empty
+                        props.action({
+                            type: 'ACTION',
+                            action: 'inventory-push-items',
+                            data: {
+                                id: turtle.id,
+                                side,
+                                fromSlot,
+                                toSlot,
+                            },
+                        });
                     }}
                     onClick={undefined}
                 />
