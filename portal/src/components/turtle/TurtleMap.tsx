@@ -8,6 +8,7 @@ import SpriteTable from '../../SpriteTable';
 import {useBlocks} from '../../api/UseBlocks';
 import {useAreas} from '../../api/UseAreas';
 import {useChunk} from '../../api/UseChunk';
+import ItemSprite from './ItemSprite';
 
 const circleSizeMul = 0.35;
 const spriteSize = 8;
@@ -543,11 +544,14 @@ const TurtleMap = (props: TurtleMapProps) => {
                         <div style={{marginTop: 10}}>
                             <hr />
                             <div>Chunk analysis:</div>
-                            {Object.keys(chunk.analysis).map((key, i) => (
-                                <div key={i}>
-                                    {key}: {chunk.analysis[key]}
-                                </div>
-                            ))}
+                            <div style={{display: 'flex', flexDirection: 'column', gap: 5, marginTop: 5}}>
+                                {Object.keys(chunk.analysis).map((key, i) => (
+                                    <div key={i} style={{display: 'flex', gap: 5, alignItems: 'center'}}>
+                                        <ItemSprite name={key} />
+                                        <div>× {chunk.analysis[key]}</div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </Col>
                 </Row>

@@ -41,7 +41,7 @@ function Item(props: ItemProps) {
                     <EmptyItemImage data-inventory-slot={index} />
                 ) : (
                     <div>
-                        <ItemSprite index={index} name={item.name} />
+                        <ItemSprite data-inventory-slot={index} name={item.name} />
                         <ItemCount data-inventory-slot={index}>{item.count}</ItemCount>
                     </div>
                 )}

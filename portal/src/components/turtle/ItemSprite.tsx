@@ -3,18 +3,16 @@ import SpriteTable from '../../SpriteTable';
 
 export interface ItemSpriteProps {
     name: string;
-    index: number;
 }
 
 function ItemSprite(props: ItemSpriteProps) {
-    const {name, index} = props;
+    const {name} = props;
     const sprite = SpriteTable[name] ?? SpriteTable['???'];
     const spriteY = 32 * Math.floor((sprite.index - 1) / 32);
     const spriteX = 32 * (sprite.index - spriteY - 1);
 
     return (
         <ItemImage
-            data-inventory-slot={index}
             style={{
                 backgroundImage: 'url(/sprites.png)',
                 backgroundPosition: `-${spriteX}px -${spriteY}px`,
