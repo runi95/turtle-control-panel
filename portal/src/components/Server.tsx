@@ -62,7 +62,11 @@ function Server(props: ServerProps) {
                                         <FuelInfo {...turtle} />
                                     </td>
                                     <td onClick={() => navigate(`/servers/${server.id}/turtles/${turtle.id}`)}>
-                                        <span className='text-danger'>{turtle.state?.error}</span>
+                                        {turtle.error ? (
+                                            <span className='text-danger'>{turtle.error}</span>
+                                        ) : turtle.state?.warning ? (
+                                            <span className='text-warning'>{turtle.state.warning as string}</span>
+                                        ) : null}
                                     </td>
                                     {!turtle.isOnline ? (
                                         <td
