@@ -221,6 +221,11 @@ const TurtleMap = (props: TurtleMapProps) => {
                 ctx.fillStyle = 'yellow';
                 ctx.arc(centerX, centerY, circleSizeMul * spriteSize, 0, 2 * Math.PI, false);
                 ctx.fill();
+                ctx.beginPath();
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 0.8;
+                ctx.arc(centerX, centerY, circleSizeMul * spriteSize, 0, 2 * Math.PI, false);
+                ctx.stroke();
             };
             draw(context, canvasSize, turtles, blocks, areas, turtle);
 
