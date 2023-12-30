@@ -506,6 +506,14 @@ export class Turtle {
         return this.#location;
     }
 
+    public get chunk(): [number, number] | null {
+        const location = this.location;
+        if (location === null) return null;
+        
+        const {x, y, z} = location;
+        return [Math.floor(x / 16), Math.floor(z / 16)];
+    }
+
     public set location(location) {
         this.#location = location;
         globalEventEmitter.emit('tupdate', {
