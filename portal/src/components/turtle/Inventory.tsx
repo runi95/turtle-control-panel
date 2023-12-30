@@ -137,10 +137,10 @@ function Inventory(props: InventoryProps) {
                     <div style={{display: 'flex'}}>
                         <h5>
                             Activity: <ins style={{textTransform: 'capitalize'}}>{turtle?.state?.name || 'idle'}</ins>
-                            {turtle?.state?.error ? (
+                            {turtle.error ? (
                                 <span>
                                     {' '}
-                                    (<span className='text-danger'>{turtle.state.error}</span>)
+                                    (<span className='text-danger'>{turtle.error}</span>)
                                 </span>
                             ) : null}
                         </h5>

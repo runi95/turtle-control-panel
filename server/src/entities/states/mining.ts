@@ -82,7 +82,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                 return; // Yield
             }
 
-            const didMoveToNode = await this.moveToNode(this.solution);
+            const [didMoveToNode, failedMoveMessage] = await this.moveToNode(this.solution);
             if (didMoveToNode) {
                 this.solution = this.solution.parent;
                 if (this.checkIfTurtleIsInOrAdjacentToArea()) {
@@ -108,7 +108,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             return; // Yield
         }
 
-        const didMoveToNode = await this.moveToNode(this.solution);
+        const [didMoveToNode, failedMoveMessage] = await this.moveToNode(this.solution);
         if (didMoveToNode) {
             this.solution = this.solution.parent;
             if (

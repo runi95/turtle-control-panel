@@ -22,66 +22,100 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
 
     public abstract act(): Promise<void>;
 
-    protected async moveToNode(s: Node): Promise<boolean> {
+    protected async moveToNode(s: Node): Promise<[true, undefined] | [false, string]> {
         const {x, y, z} = this.turtle.location as Location;
         if (s.point.y - y > 0) {
-            const [didMoveUp] = await this.turtle.up();
-            if (didMoveUp) {
-                return true;
+            const [didMoveUp, upMessage] = await this.turtle.up();
+            if (didMoveUp) return [true, undefined];
+
+            if (upMessage === 'Out of fuel') {
+                await this.turtle.getFuelLevel();
+                return [false, upMessage];
             }
 
-            if (s.isMineable) {
-                await this.turtle.digUp();
-                await this.turtle.suckUp();
-                await this.turtle.up();
-                return true;
-            } else {
-                return false;
+            // We don't know what the other potential errors are!
+            if (upMessage !== 'Movement obstructed') return [false, upMessage as string];
+
+            if (!s.isMineable) {
+                await this.turtle.inspectUp();
+                return [false, 'Block is not mineable'];
             }
+
+            const [didDigUp, didDigUpMessage] = await this.turtle.digUp();
+            if (!didDigUp) {
+                await this.turtle.inspectUp();
+                return [false, didDigUpMessage as string];
+            }
+            
+            await this.turtle.suckUp();
+            const [didMoveUpAfterDig, moveDownAfterDigMessage] = await this.turtle.up();
+            if (didMoveUpAfterDig) return [true, undefined];
+
+            await this.turtle.inspectUp();
+            return [false, moveDownAfterDigMessage as string];
         } else if (s.point.y - y < 0) {
-            const [didMoveDown] = await this.turtle.down();
-            if (didMoveDown) {
-                return true;
+            const [didMoveDown, downMessage] = await this.turtle.down();
+            if (didMoveDown) return [true, undefined];
+
+            if (downMessage === 'Out of fuel') {
+                await this.turtle.getFuelLevel();
+                return [false, downMessage];
             }
 
-            if (s.isMineable) {
-                await this.turtle.digDown();
-                await this.turtle.suckDown();
-                const [didMoveDown] = await this.turtle.down();
-                if (!didMoveDown) {
-                    return false;
-                }
-                return true;
-            } else {
-                return false;
+            // We don't know what the other potential errors are!
+            if (downMessage !== 'Movement obstructed') return [false, downMessage as string];
+
+            if (!s.isMineable) {
+                await this.turtle.inspectDown();
+                return [false, 'Block is not mineable'];
             }
+
+            const [didDigDown, digDownMessage] = await this.turtle.digDown();
+            if (!didDigDown) {
+                await this.turtle.inspectDown();
+                return [false, digDownMessage as string];
+            }
+
+            await this.turtle.suckDown();
+            const [didMoveDownAfterDig, moveDownAfterDigMessage] = await this.turtle.down();
+            if (didMoveDownAfterDig) return [true, undefined];
+
+            await this.turtle.inspectDown();
+            return [false, moveDownAfterDigMessage as string];
         } else {
             const heading = {x: s.point.x - x, y: s.point.y - y, z: s.point.z - z};
             const direction = heading.x + Math.abs(heading.x) * 2 + (heading.z + Math.abs(heading.z) * 3);
             await this.turtle.turnToDirection(direction);
 
-            const [didMoveForward] = await this.turtle.forward();
-            if (didMoveForward) return true;
+            const [didMoveForward, forwardMessage] = await this.turtle.forward();
+            if (didMoveForward) return [true, undefined];
 
-            if (s.isMineable) {
-                const [didDig, digMessage] = await this.turtle.dig();
-                if (!didDig) {
-                    this.error = digMessage as string;
-                    return false;
-                }
-
-                await this.turtle.suck();
-
-                const [didMoveForward, moveForwardMessage] = await this.turtle.forward();
-                if (!didMoveForward) {
-                    this.error = moveForwardMessage as string;
-                    return false;
-                }
-
-                return true;
-            } else {
-                return false;
+            if (forwardMessage === 'Out of fuel') {
+                await this.turtle.getFuelLevel();
+                return [false, forwardMessage];
             }
+
+            // We don't know what the other potential errors are!
+            if (forwardMessage !== 'Movement obstructed') return [false, forwardMessage as string]
+
+            if (!s.isMineable) {
+                await this.turtle.inspect();
+                return [false, 'Block is not mineable'];
+            }
+
+            const [didDig, digMessage] = await this.turtle.dig();
+            if (!didDig) {
+                await this.turtle.inspect();
+                return [false, digMessage as string];
+            }
+
+            await this.turtle.suck();
+
+            const [didMoveForwardAfterDig, forwardMessageAfterDig] = await this.turtle.forward();
+            if (didMoveForwardAfterDig) return [true, undefined];
+            
+            await this.turtle.inspect();
+            return [false, forwardMessageAfterDig as string];
         }
     }
 

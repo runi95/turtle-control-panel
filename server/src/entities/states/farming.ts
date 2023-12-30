@@ -71,7 +71,7 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
                 return; // Yield
             }
 
-            const didMoveToNode = await this.moveToNode(this.solution);
+            const [didMoveToNode, failedMoveMessage] = await this.moveToNode(this.solution);
             if (didMoveToNode) {
                 this.solution = this.solution.parent;
                 const {x, y, z} = this.turtle.location;
@@ -143,7 +143,7 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
             return; // Yield
         }
 
-        const didMoveToNode = await this.moveToNode(this.solution);
+        const [didMoveToNode, failedMoveMessage] = await this.moveToNode(this.solution);
         if (didMoveToNode) {
             this.solution = this.solution.parent;
             if (

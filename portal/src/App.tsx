@@ -81,6 +81,7 @@ export interface Turtle {
     location: Location;
     direction: Direction;
     peripherals: Peripherals;
+    error: string | null;
 }
 
 export interface Turtles {

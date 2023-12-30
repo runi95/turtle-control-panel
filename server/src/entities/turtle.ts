@@ -190,6 +190,7 @@ wss.on('connection', (ws, req) => {
                     state,
                     location,
                     direction,
+                    error: null,
                 },
             });
             upsertTurtle(
@@ -231,6 +232,7 @@ export class Turtle {
     #location: Location | null;
     #direction: Direction | null;
     #peripherals: Peripherals;
+    #error: string | null = null;
 
     // Private properties
     private readonly ws;
@@ -443,11 +445,13 @@ export class Turtle {
     public set state(state: TurtleBaseState<StateDataTypes> | null) {
         const previousStateWasNull = this.state === null;
         this.#state = state;
+        this.#error = null;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
             serverId: this.serverId,
             data: {
                 state: this.state ?? null,
+                error: null,
             },
         });
         updateTurtleState(this.serverId, this.id, this.state?.data ?? null);
@@ -478,10 +482,19 @@ export class Turtle {
         }
     }
 
-    public set error(message: string) {
-        if (this.state) {
-            this.state.error = message;
-        }
+    public get error() {
+        return this.#error;
+    }
+
+    public set error(error: string | null) {
+        this.#error = error;
+        globalEventEmitter.emit('tupdate', {
+            id: this.id,
+            serverId: this.serverId,
+            data: {
+                error: this.error,
+            },
+        });
     }
 
     public get location() {

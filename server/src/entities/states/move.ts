@@ -50,7 +50,7 @@ export class TurtleMoveState extends TurtleBaseState<MovingStateData> {
             return; // Yield
         }
 
-        const didMoveToNode = await this.moveToNode(this.solution);
+        const [didMoveToNode, failedMoveMessage] = await this.moveToNode(this.solution);
         if (didMoveToNode) {
             this.solution = this.solution.parent;
             return; // Yield
