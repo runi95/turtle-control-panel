@@ -7,55 +7,8 @@ import Dashboard from './components/Dashboard';
 import Turtle from './components/turtle/Turtle';
 import useWebSocket, {ReadyState} from 'react-use-websocket';
 import {wssServerUrl} from './api';
-
-export enum Direction {
-    West = 1,
-    North = 2,
-    East = 3,
-    South = 4,
-}
-
-export interface Inventory {
-    [key: number]: ItemDetail | undefined;
-}
-
-export interface Peripherals {
-    [key: string]: string[];
-}
-
-export interface BaseState {
-    id: number;
-    error?: string;
-    name: string;
-    [key: string]: unknown;
-}
-
-export interface Location {
-    x: number;
-    y: number;
-    z: number;
-}
-
-export interface Enchantment {
-    level: number;
-    name: string;
-    displayName: string;
-}
-
-export interface ItemDetail {
-    enchantments?: Enchantment[];
-    durability: number;
-    maxDamage: number;
-    damage: number;
-    nbt: string;
-    name: string;
-    tags: {
-        [key: string]: string;
-    };
-    count: number;
-    maxCount: string;
-    displayName: string;
-}
+import {BaseState, Location, Turtle as APITurtle} from './api/UseTurtle';
+import {useQueryClient} from '@tanstack/react-query';
 
 export interface BlockState {
     [key: string]: string;
@@ -65,25 +18,19 @@ export interface BlockTags {
     [key: string]: string;
 }
 
-export interface Turtle {
+export interface DashboardTurtle {
     serverId: number;
     id: number;
     name: string;
     isOnline: boolean;
     fuelLevel: number;
     fuelLimit: number;
-    selectedSlot: number;
-    inventory: Inventory;
-    stepsSinceLastRefuel: number;
     state?: BaseState;
-    location: Location;
-    direction: Direction;
-    peripherals: Peripherals | null;
     error: string | null;
 }
 
-export interface Turtles {
-    [key: string]: Turtle;
+export interface DashboardTurtles {
+    [key: string]: DashboardTurtle;
 }
 
 export interface Block {
@@ -114,7 +61,7 @@ export interface Server {
     id: number;
     name?: string;
     remoteAddress: string;
-    turtles: Turtles;
+    turtles: DashboardTurtles;
 }
 
 export interface Servers {
@@ -135,7 +82,7 @@ export interface Dashboard {
     id: number;
     name?: string;
     remoteAddress: string;
-    turtles: Turtle[];
+    turtles: DashboardTurtle[];
 }
 
 export interface OnlineStatuses {
@@ -147,6 +94,7 @@ export interface OnlineStatuses {
 function App() {
     const navigate = useNavigate();
     const location = useLocation();
+    const queryClient = useQueryClient();
 
     // Public API that will echo messages sent to it back to the client
     const [servers, setServers] = useState<Servers>({});
@@ -180,7 +128,7 @@ function App() {
                                             }),
                                             acc
                                         ),
-                                        {} as {[key: string]: Turtle}
+                                        {} as {[key: string]: DashboardTurtle}
                                     ),
                                 }),
                                 acc
@@ -190,6 +138,13 @@ function App() {
                     );
                     break;
                 case 'TCONNECT':
+                    queryClient.setQueryData(
+                        ['turtles', obj.message.serverId.toString(), obj.message.id.toString()],
+                        (oldData: APITurtle) => ({
+                            ...oldData,
+                            isOnline: true,
+                        })
+                    );
                     setServers((servers) => ({
                         ...servers,
                         [obj.message.serverId]: {
@@ -202,6 +157,9 @@ function App() {
                     }));
                     break;
                 case 'TDISCONNECT':
+                    queryClient.invalidateQueries({
+                        queryKey: ['turtles', obj.message.serverId.toString(), obj.message.id.toString()],
+                    });
                     setServers((servers) => ({
                         ...servers,
                         [obj.message.serverId]: {
@@ -217,6 +175,13 @@ function App() {
                     }));
                     break;
                 case 'TUPDATE':
+                    queryClient.setQueryData(
+                        ['turtles', obj.message.serverId.toString(), obj.message.id.toString()],
+                        (oldData: APITurtle) => ({
+                            ...oldData,
+                            ...obj.message.data,
+                        })
+                    );
                     setServers((servers) => ({
                         ...servers,
                         [obj.message.serverId]: {
@@ -232,6 +197,9 @@ function App() {
                     }));
                     break;
                 case 'TDELETE':
+                    queryClient.invalidateQueries({
+                        queryKey: ['turtles', obj.message.serverId.toString(), obj.message.id.toString()],
+                    });
                     setServers((servers) => ({
                         ...servers,
                         [obj.message.serverId]: {
@@ -240,7 +208,7 @@ function App() {
                                 if (curr === obj.message.id.toString()) return acc;
                                 acc[curr] = servers[obj.message.serverId].turtles[curr];
                                 return acc;
-                            }, {} as Turtles),
+                            }, {} as DashboardTurtles),
                         },
                     }));
                     break;
@@ -362,7 +330,6 @@ function App() {
                             )}
                         </Navbar>
                         <Turtle
-                            servers={servers}
                             action={(msg: ActionMessage) => {
                                 handleSendMessage(JSON.stringify(msg));
                             }}

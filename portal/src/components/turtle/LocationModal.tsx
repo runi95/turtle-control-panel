@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {Modal, Form, Button, InputGroup} from 'react-bootstrap';
-import {Action, Turtle} from '../../App';
+import {Action} from '../../App';
+import {Turtle} from '../../api/UseTurtle';
 
 export interface LocationModalProps {
     turtle: Turtle;

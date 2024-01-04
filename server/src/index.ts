@@ -11,6 +11,7 @@ import {
     getBlocks,
     getChunk,
     getDashboard,
+    getTurtle,
     renameServer,
     upsertChunk,
 } from './db';
@@ -58,8 +59,70 @@ server
         server.get('/servers/:id/chunks', (req, res) => {
             const {params, query} = req;
             const {id} = params as {id: string};
-            const {x, z} = query as {x: string; z: string;}
+            const {x, z} = query as {x: string; z: string};
             res.send(getChunk(Number(id), Number(x), Number(z)));
+        });
+
+        server.get('/servers/:serverId/turtles/:id', (req, res) => {
+            const {params} = req;
+            const {serverId, id} = params as {serverId: string; id: string};
+            const turtle = getOnlineTurtleById(Number(id));
+            if (turtle !== undefined) {
+                const {
+                    name,
+                    fuelLevel,
+                    fuelLimit,
+                    selectedSlot,
+                    inventory,
+                    stepsSinceLastRefuel,
+                    state,
+                    location,
+                    direction,
+                    peripherals,
+                    error,
+                } = turtle;
+                res.send({
+                    serverId,
+                    id,
+                    name,
+                    isOnline: true,
+                    fuelLevel,
+                    fuelLimit,
+                    selectedSlot,
+                    inventory,
+                    stepsSinceLastRefuel,
+                    state: state?.data ?? null,
+                    location,
+                    direction,
+                    peripherals,
+                    error,
+                });
+                return;
+            }
+
+            const dbTurtle = getTurtle(Number(serverId), Number(id));
+            if (dbTurtle === null) {
+                res.callNotFound();
+                return;
+            }
+
+            const {name, fuelLevel, fuelLimit, selectedSlot, inventory, stepsSinceLastRefuel, state, location, direction} = dbTurtle;
+            res.send({
+                serverId,
+                id,
+                name,
+                isOnline: false,
+                fuelLevel,
+                fuelLimit,
+                selectedSlot,
+                inventory,
+                stepsSinceLastRefuel,
+                state,
+                location,
+                direction,
+                peripherals: null,
+                error: null,
+            });
         });
 
         server.get('/', {websocket: true}, (connection, _req) => {
@@ -83,7 +146,7 @@ server
                             );
                             break;
                         case 'ACTION':
-                            const turtle = getOnlineTurtleById(obj.data.id);
+                            const turtle = getOnlineTurtleById(Number(obj.data.id));
                             if (turtle === undefined) {
                                 logger.error(`Attempted to [${obj.action}] on invalid turtle [${obj.data.id}]`);
                                 return;

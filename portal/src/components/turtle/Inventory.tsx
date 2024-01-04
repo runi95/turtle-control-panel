@@ -4,15 +4,15 @@ import FarmModal from './FarmModal';
 import MineModal from './MineModal';
 import {useState} from 'react';
 import './Inventory.css';
-import {Action, Turtle, Turtles} from '../../App';
+import {Action} from '../../App';
 import TurtleMap from './TurtleMap';
 import Peripheral from './Peripheral';
 import Item from './Item';
 import InventoryPeripheral from './InventoryPeripheral';
+import {Turtle, useTurtle} from '../../api/UseTurtle';
+import {useParams} from 'react-router-dom';
 
 export interface InventoryProps {
-    turtles: Turtles;
-    turtle: Turtle;
     action: Action;
 }
 
@@ -20,11 +20,13 @@ const canvasSize = 208;
 const canvasRadius = 0.5 * canvasSize;
 
 function Inventory(props: InventoryProps) {
-    const {turtles, turtle, action} = props;
+    const {action} = props;
+    const {serverId, id} = useParams() as {serverId: string; id: string};
     const [state, setState] = useState<{isModalShown: boolean; modalState: string | undefined}>({
         isModalShown: false,
         modalState: undefined,
     });
+    const {data: turtle} = useTurtle(serverId, id);
 
     const renderModal = (turtle: Turtle) => {
         switch (state.modalState) {
@@ -212,7 +214,6 @@ function Inventory(props: InventoryProps) {
                             <InventoryPeripheral
                                 key={i}
                                 side={side}
-                                turtle={turtle}
                                 action={action}
                                 size={null}
                                 content={null}
@@ -225,7 +226,6 @@ function Inventory(props: InventoryProps) {
             <TurtleMap
                 style={{border: '1px solid #fff', borderRadius: canvasRadius}}
                 canvasSize={canvasSize}
-                turtles={turtles}
                 action={action}
             />
         </Row>

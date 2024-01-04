@@ -84,13 +84,7 @@ const preparedDashboard = db
                 'name', \`t\`.\`name\`,
                 'fuelLevel', \`t\`.\`fuel_level\`,
                 'fuelLimit', \`t\`.\`fuel_limit\`,
-                'selectedSlot', \`t\`.\`selected_slot\`,
-                'inventory', json(\`t\`.\`inventory\`),
-                'stepsSinceLastRefuel', \`t\`.\`steps_since_last_refuel\`,
                 'state', json(\`t\`.\`state\`),
-                'location', json(\`t\`.\`location\`),
-                'direction', \`t\`.\`direction\`,
-                'peripherals', json(null),
                 'error', json(null)
             )), json_array())
         ) FROM \`servers\` AS \`s\`

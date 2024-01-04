@@ -1,6 +1,8 @@
 import styled from 'styled-components';
-import {Action, ItemDetail, Turtle} from '../../App';
+import {Action} from '../../App';
 import Item from './Item';
+import {ItemDetail, useTurtle} from '../../api/UseTurtle';
+import {useParams} from 'react-router-dom';
 
 export interface InventoryPeripheralContent {
     [key: number]: ItemDetail | null;
@@ -11,14 +13,15 @@ export interface InventoryPeripheralProps {
     size: number | null;
     content: InventoryPeripheralContent | null;
     connected: boolean;
-    turtle: Turtle;
     action: Action;
 }
 
 function InventoryPeripheral(props: InventoryPeripheralProps) {
-    const {side, turtle, action, size, content} = props;
+    const {side, action, size, content} = props;
+    const {serverId, id} = useParams() as {serverId: string; id: string};
+    const {data: turtle} = useTurtle(serverId, id);
 
-    const renderTiles = (size: number | null, content: InventoryPeripheralContent | null) => {
+    const renderTiles = (turtleId: number, size: number | null, content: InventoryPeripheralContent | null) => {
         if (size === null) return null;
 
         const tiles = [];
@@ -37,7 +40,7 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
                             type: 'ACTION',
                             action: 'inventory-push-items',
                             data: {
-                                id: turtle.id,
+                                id: turtleId,
                                 side,
                                 fromSlot,
                                 toSlot,
@@ -51,6 +54,8 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
 
         return tiles;
     };
+
+    if (turtle === undefined) return null;
 
     return (
         <div className='inventory-container'>
@@ -76,7 +81,7 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
                         Inventory side (<span className='text-primary'>{side}</span>)
                     </div>
                 </div>
-                {renderTiles(size, content)}
+                {renderTiles(turtle.id, size, content)}
             </InventoryGrid>
         </div>
     );

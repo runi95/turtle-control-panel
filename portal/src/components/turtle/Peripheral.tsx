@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import {Button} from 'react-bootstrap';
-import {Action, Turtle} from '../../App';
+import {Action} from '../../App';
+import {Turtle} from '../../api/UseTurtle';
 
 export interface PeripheralProps {
     types: string[];

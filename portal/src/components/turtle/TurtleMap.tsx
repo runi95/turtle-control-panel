@@ -3,12 +3,13 @@ import {Row, Col, Button, Modal, Form, InputGroup} from 'react-bootstrap';
 import styled from 'styled-components';
 import './TurtleMap.css';
 import {useParams} from 'react-router-dom';
-import {Action, Areas, Blocks, Location, Turtle, Turtles} from '../../App';
+import {Action, Areas, Blocks} from '../../App';
 import SpriteTable from '../../SpriteTable';
 import {useBlocks} from '../../api/UseBlocks';
 import {useAreas} from '../../api/UseAreas';
 import {useChunk} from '../../api/UseChunk';
 import ItemSprite from './ItemSprite';
+import {Location, Turtle, useTurtle} from '../../api/UseTurtle';
 
 const circleSizeMul = 0.35;
 const spriteSize = 8;
@@ -18,13 +19,12 @@ const colors = ['#ff0000', '#ff6a00', '#ffd800', '#4cff00', '#00ffff', '#0094ff'
 interface TurtleMapProps {
     style?: React.CSSProperties;
     canvasSize: number;
-    turtles: Turtles;
     action: Action;
 }
 
 const TurtleMap = (props: TurtleMapProps) => {
     const {serverId, id} = useParams() as {serverId: string; id: string};
-    const {canvasSize, turtles, action, ...rest} = props;
+    const {canvasSize, action, ...rest} = props;
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [mousePosition, setMousePosition] = useState<[number, number] | undefined>(undefined);
     const [isCreatingArea, setIsCreatingArea] = useState(false);
@@ -42,25 +42,27 @@ const TurtleMap = (props: TurtleMapProps) => {
     const [selectedColor, setSelectedColor] = useState(colors[0]);
     const [yLevel, setYLevel] = useState<number | undefined>(undefined);
     const [upperYLevel, setUpperYLevel] = useState<number | undefined>(undefined);
-    const turtle = turtles?.[id];
     const {data: areas} = useAreas(serverId);
+    const {data: turtle} = useTurtle(serverId, id);
     const {data: blocks} = useBlocks(
         serverId,
         {
-            fromX: turtle.location?.x - 15,
-            toX: turtle.location?.x + 15,
-            fromY: turtle.location?.y - 10,
-            toY: turtle.location?.y + 10,
-            fromZ: turtle.location?.z - 15,
-            toZ: turtle.location?.z + 15,
+            fromX: turtle !== undefined ? turtle.location?.x - 15 : 0,
+            toX: turtle !== undefined ? turtle.location?.x + 15 : 0,
+            fromY: turtle !== undefined ? turtle.location?.y - 10 : 0,
+            toY: turtle !== undefined ? turtle.location?.y + 10 : 0,
+            fromZ: turtle !== undefined ? turtle.location?.z - 15 : 0,
+            toZ: turtle !== undefined ? turtle.location?.z + 15 : 0,
         },
-        turtle.location !== null && turtle.direction !== null
+        turtle !== undefined && turtle.location !== null && turtle.direction !== null
     );
-    const chunkX = Math.floor(turtle.location?.x / 16);
-    const chunkZ = Math.floor(turtle.location?.z / 16);
+    const chunkX = turtle !== undefined ? Math.floor(turtle.location?.x / 16) : 0;
+    const chunkZ = turtle !== undefined ? Math.floor(turtle.location?.z / 16) : 0;
     const {data: chunk} = useChunk(serverId, chunkX, chunkZ);
 
     useEffect(() => {
+        if (turtle === undefined) return;
+
         const canvas = canvasRef.current;
         if (!canvas) return;
         const context = canvas.getContext('2d');
@@ -70,7 +72,6 @@ const TurtleMap = (props: TurtleMapProps) => {
             const draw = (
                 ctx: CanvasRenderingContext2D | null,
                 canvasSize: number,
-                turtles: Turtles,
                 blocks: Blocks | undefined,
                 areas: Areas | undefined,
                 turtle: Turtle
@@ -199,27 +200,27 @@ const TurtleMap = (props: TurtleMapProps) => {
                 ctx.globalAlpha = 1;
 
                 // Draw other turtles
-                const keys = Object.keys(turtles);
-                for (const key of keys) {
-                    if (key !== turtle.id.toString()) {
-                        const otherTurtle = turtles[key];
-                        if (otherTurtle?.location?.y === turtle?.location?.y) {
-                            ctx.beginPath();
-                            ctx.fillStyle = otherTurtle.isOnline ? 'white' : '#696969';
-                            const posX = (otherTurtle.location.x - turtle.location.x) * spriteSize + centerX;
-                            const posY = (otherTurtle.location.z - turtle.location.z) * spriteSize + centerY;
-                            ctx.arc(posX, posY, circleSizeMul * spriteSize, 0, 2 * Math.PI, false);
-                            ctx.fill();
+                // const keys = Object.keys(turtles);
+                // for (const key of keys) {
+                //     if (key !== turtle.id.toString()) {
+                //         const otherTurtle = turtles[key];
+                //         if (otherTurtle?.location?.y === turtle?.location?.y) {
+                //             ctx.beginPath();
+                //             ctx.fillStyle = otherTurtle.isOnline ? 'white' : '#696969';
+                //             const posX = (otherTurtle.location.x - turtle.location.x) * spriteSize + centerX;
+                //             const posY = (otherTurtle.location.z - turtle.location.z) * spriteSize + centerY;
+                //             ctx.arc(posX, posY, circleSizeMul * spriteSize, 0, 2 * Math.PI, false);
+                //             ctx.fill();
 
-                            ctx.textAlign = 'center';
-                            ctx.strokeStyle = 'black';
-                            ctx.font = '11px Tahoma';
-                            ctx.lineWidth = 4;
-                            ctx.strokeText(otherTurtle.name, posX, posY - spriteRadius);
-                            ctx.fillText(otherTurtle.name, posX, posY - spriteRadius);
-                        }
-                    }
-                }
+                //             ctx.textAlign = 'center';
+                //             ctx.strokeStyle = 'black';
+                //             ctx.font = '11px Tahoma';
+                //             ctx.lineWidth = 4;
+                //             ctx.strokeText(otherTurtle.name, posX, posY - spriteRadius);
+                //             ctx.fillText(otherTurtle.name, posX, posY - spriteRadius);
+                //         }
+                //     }
+                // }
 
                 // Draw current turtle
                 ctx.beginPath();
@@ -232,7 +233,7 @@ const TurtleMap = (props: TurtleMapProps) => {
                 ctx.arc(centerX, centerY, circleSizeMul * spriteSize, 0, 2 * Math.PI, false);
                 ctx.stroke();
             };
-            draw(context, canvasSize, turtles, blocks, areas, turtle);
+            draw(context, canvasSize, blocks, areas, turtle);
 
             animationFrameId = window.requestAnimationFrame(render);
         };
@@ -242,6 +243,8 @@ const TurtleMap = (props: TurtleMapProps) => {
             window.cancelAnimationFrame(animationFrameId);
         };
     });
+
+    if (turtle === undefined) return null;
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

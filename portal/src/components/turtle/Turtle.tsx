@@ -5,17 +5,19 @@ import Inventory from './Inventory';
 import {useParams} from 'react-router-dom';
 import {useCallback, useEffect, useState} from 'react';
 import LocationModal from './LocationModal';
-import {Action, Servers} from '../../App';
+import {Action} from '../../App';
+import {useTurtle} from '../../api/UseTurtle';
 
 export interface TurtleProps {
-    servers: Servers;
     action: Action;
 }
 
 function Turtle(props: TurtleProps) {
+    const {action} = props;
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const [editNameState, setEditNameState] = useState(false);
     const [isModalShown, setIsModalShown] = useState(false);
+    const {data: turtle} = useTurtle(serverId, id);
 
     const escFunc = useCallback((e: KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -31,9 +33,8 @@ function Turtle(props: TurtleProps) {
     const directionToString = (direction: number) => {
         return ['W', 'N', 'E', 'S'][direction - 1];
     };
-    const {servers, action} = props;
-    const turtles = servers?.[serverId]?.turtles;
-    const turtle = turtles?.[id];
+
+    if (turtle === undefined) return null;
 
     return (
         <Container fluid>
@@ -124,7 +125,7 @@ function Turtle(props: TurtleProps) {
                 </Col>
             </Row>
             <hr />
-            <Inventory turtles={turtles} turtle={turtle} action={action}></Inventory>
+            <Inventory action={action}></Inventory>
         </Container>
     );
 }

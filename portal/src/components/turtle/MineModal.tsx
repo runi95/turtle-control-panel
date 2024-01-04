@@ -1,8 +1,9 @@
 import {useState} from 'react';
 import {Modal, Form, Button, InputGroup} from 'react-bootstrap';
-import {Action, Turtle} from '../../App';
+import {Action} from '../../App';
 import {useAreas} from '../../api/UseAreas';
 import {useParams} from 'react-router-dom';
+import {Turtle} from '../../api/UseTurtle';
 
 export interface MineModalProps {
     turtle: Turtle;
