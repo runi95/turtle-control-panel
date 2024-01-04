@@ -50,7 +50,7 @@ local function handshake(uuid)
     local peripheralNames = peripheral.getNames()
 
     for k, v in pairs(peripheralNames) do
-        peripherals[v] = {peripheral.getType(v)}
+        peripherals[v] = {types = {peripheral.getType(v)}}
     end
     local fuelLevel = turtle.getFuelLevel()
     local fuelLimit = turtle.getFuelLimit()
@@ -196,7 +196,7 @@ local function peripheralAttached()
         local names = peripheral.getNames()
 
         for k, v in pairs(names) do
-            peripherals[v] = {peripheral.getType(v)}
+            peripherals[v] = {types = {peripheral.getType(v)}}
         end
 
         if ws then

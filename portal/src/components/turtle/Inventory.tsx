@@ -8,7 +8,7 @@ import {Action} from '../../App';
 import TurtleMap from './TurtleMap';
 import Peripheral from './Peripheral';
 import Item from './Item';
-import InventoryPeripheral from './InventoryPeripheral';
+import InventoryPeripheral, {InventoryPeripheralContent} from './InventoryPeripheral';
 import {Turtle, useTurtle} from '../../api/UseTurtle';
 import {useParams} from 'react-router-dom';
 
@@ -57,7 +57,7 @@ function Inventory(props: InventoryProps) {
 
     const {inventory, selectedSlot, peripherals} = turtle;
     const inventorySides =
-        peripherals !== null ? Object.entries(peripherals).filter(([_, types]) => types.includes('inventory')) : [];
+        peripherals !== null ? Object.entries(peripherals).filter(([_, {types}]) => types.includes('inventory')) : [];
 
     return (
         <Row data-bs-theme='light'>
@@ -203,23 +203,31 @@ function Inventory(props: InventoryProps) {
                     <div style={{display: 'flex', gap: 5}}>
                         {peripherals !== null
                             ? Object.values(peripherals).map((peripheral, i) => (
-                                  <Peripheral key={i} action={action} turtle={turtle} types={peripheral} />
+                                  <Peripheral key={i} action={action} turtle={turtle} types={peripheral.types} />
                               ))
                             : null}
                     </div>
                 </Row>
                 <Row>
                     <div style={{marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10}}>
-                        {inventorySides.map(([side], i) => (
-                            <InventoryPeripheral
-                                key={i}
-                                side={side}
-                                action={action}
-                                size={null}
-                                content={null}
-                                connected={false}
-                            />
-                        ))}
+                        {inventorySides.map((inventoryPeripheral, i) => {
+                            const [side, {data}] = inventoryPeripheral;
+                            if (!data) return null;
+                            const {size, content} = data as {
+                                size: number;
+                                content: InventoryPeripheralContent;
+                            };
+                            return (
+                                <InventoryPeripheral
+                                    key={i}
+                                    side={side}
+                                    action={action}
+                                    size={size ?? null}
+                                    content={content ?? null}
+                                    connected={false}
+                                />
+                            );
+                        })}
                     </div>
                 </Row>
             </Col>

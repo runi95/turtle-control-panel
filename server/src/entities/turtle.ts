@@ -36,7 +36,10 @@ import {TurtleScanState} from './states/scan';
 import {EventEmitter} from 'events';
 
 export interface Peripherals {
-    [key: string]: string[];
+    [key: string]: {
+        data?: unknown;
+        types: string[];
+    }
 }
 
 interface MessageConstructorObject {
@@ -307,8 +310,19 @@ export class Turtle {
                     break;
                 case 'PERIPHERAL_ATTACHED':
                     const peripherals = message as Peripherals;
+                    const existingPeripherals = this.peripherals;
+                    
+                    // Check if anything changed 
+                    if (Object.entries(peripherals).every(([side, {types}]) => {
+                        const existingTypes = existingPeripherals[side]?.types;
+                        if (!existingTypes) return false;
+                        return types.every((type, i) => existingTypes[i] === type);
+                    })) break;
+
                     Object.keys(peripherals)
-                        .filter((side) => peripherals[side].includes('inventory'))
+                        .filter((side) => {
+                            return peripherals[side].types.includes('inventory');
+                        })
                         .forEach((side) => {
                             this.connectToInventory(side);
                         });
@@ -1735,11 +1749,18 @@ export class Turtle {
             ),
         ]);
 
-        globalEventEmitter.emit('iupdate', {
-            serverId: this.serverId,
-            size,
-            content,
-        });
+        const newPeripherals = {
+            ...this.peripherals,
+            [side]: {
+                ...this.peripherals[side],
+                data: {
+                    size,
+                    content
+                }
+            }
+        };
+
+        this.peripherals = newPeripherals;
     }
 
     #exec<R>(f: string): Promise<R> {
