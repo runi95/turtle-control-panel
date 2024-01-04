@@ -53,11 +53,9 @@ function Inventory(props: InventoryProps) {
         return null;
     }
 
-    const {inventory, selectedSlot} = turtle;
-
-    const inventorySides = turtle.peripherals
-        ? Object.keys(turtle.peripherals).filter((side) => turtle.peripherals[side].includes('inventory'))
-        : [];
+    const {inventory, selectedSlot, peripherals} = turtle;
+    const inventorySides =
+        peripherals !== null ? Object.entries(peripherals).filter(([_, types]) => types.includes('inventory')) : [];
 
     return (
         <Row data-bs-theme='light'>
@@ -201,20 +199,23 @@ function Inventory(props: InventoryProps) {
                 <h6>Peripherals</h6>
                 <Row style={{marginTop: 5}}>
                     <div style={{display: 'flex', gap: 5}}>
-                        {Object.values(turtle.peripherals).map((peripheral, i) => (
-                            <Peripheral key={i} action={action} turtle={turtle} types={peripheral} />
-                        ))}
+                        {peripherals !== null
+                            ? Object.values(peripherals).map((peripheral, i) => (
+                                  <Peripheral key={i} action={action} turtle={turtle} types={peripheral} />
+                              ))
+                            : null}
                     </div>
                 </Row>
                 <Row>
                     <div style={{marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10}}>
-                        {inventorySides.map((side, i) => (
+                        {inventorySides.map(([side], i) => (
                             <InventoryPeripheral
                                 key={i}
                                 side={side}
                                 turtle={turtle}
                                 action={action}
                                 size={null}
+                                content={null}
                                 connected={false}
                             />
                         ))}

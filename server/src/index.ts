@@ -10,9 +10,7 @@ import {
     getAreas,
     getBlocks,
     getChunk,
-    getChunks,
     getDashboard,
-    getExternalInventories,
     renameServer,
     upsertChunk,
 } from './db';
@@ -25,7 +23,6 @@ import {TurtleMiningState} from './entities/states/mining';
 import {TurtleScanState} from './entities/states/scan';
 import Database from 'better-sqlite3';
 import {Area} from './db/area.type';
-import {ExternalInventory} from './db/inventory.type';
 
 logger.info('Starting server...');
 
@@ -56,12 +53,6 @@ server
             const {params} = req;
             const {id} = params as {id: string};
             res.send(getAreas(Number(id)));
-        });
-
-        server.get('/servers/:id/external-inventories', (req, res) => {
-            const {params} = req;
-            const {id} = params as {id: string};
-            res.send(getExternalInventories(Number(id)));
         });
 
         server.get('/servers/:id/chunks', (req, res) => {
@@ -278,9 +269,6 @@ server
             const aupdate = (obj: {serverId: number; data: Partial<Area>}) =>
                 connection.socket.send(JSON.stringify({type: 'AUPDATE', message: obj}));
             globalEventEmitter.on('aupdate', aupdate);
-            const iupdate = (obj: ExternalInventory) =>
-                connection.socket.send(JSON.stringify({type: 'IUPDATE', message: obj}));
-            globalEventEmitter.on('iupdate', iupdate);
 
             connection.socket.on('close', () => {
                 globalEventEmitter.off('tconnect', tconnect);
@@ -291,7 +279,6 @@ server
                 globalEventEmitter.off('wdelete', wdelete);
                 globalEventEmitter.off('supdate', supdate);
                 globalEventEmitter.off('aupdate', aupdate);
-                globalEventEmitter.off('iupdate', iupdate);
             });
         });
 

@@ -1,11 +1,10 @@
 import Database from 'better-sqlite3';
 import {Server} from './server.type';
 import {Block, BlockState, BlockTags} from './block.type';
-import {Direction, Inventory, Location, Peripherals, Turtle} from './turtle.type';
+import {Direction, Inventory, Location, Turtle} from './turtle.type';
 import {Area} from './area.type';
 import {StateData} from '../entities/states/base';
 import {StateDataTypes} from '../entities/states/helpers';
-import {ExternalInventory} from './inventory.type';
 import {Chunk, ChunkAnalysis} from './chunk.type';
 
 const db = new Database('db/server.db');
@@ -32,7 +31,6 @@ db.exec(
     state JSON,
     location JSON,
     direction INT,
-    peripherals JSON,
     CONSTRAINT pk_turtles PRIMARY KEY (\`server_id\`, \`id\`),
     FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
 );`
@@ -59,19 +57,6 @@ db.exec(
     state JSON,
     tags JSON,
     CONSTRAINT pk_blocks PRIMARY KEY (\`server_id\`, \`x\`, \`y\`, \`z\`),
-    FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
-);`
-);
-
-db.exec(
-    `CREATE TABLE IF NOT EXISTS \`inventories\` (
-    server_id INT NOT NULL,
-    x INT NOT NULL,
-    y INT NOT NULL,
-    z INT NOT NULL,
-    content JSON,
-    size INT,
-    CONSTRAINT pk_inventories PRIMARY KEY (\`server_id\`, \`x\`, \`y\`, \`z\`),
     FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
 );`
 );
@@ -105,7 +90,8 @@ const preparedDashboard = db
                 'state', json(\`t\`.\`state\`),
                 'location', json(\`t\`.\`location\`),
                 'direction', \`t\`.\`direction\`,
-                'peripherals', json(\`t\`.\`peripherals\`)
+                'peripherals', json(null),
+                'error', json(null)
             )), json_array())
         ) FROM \`servers\` AS \`s\`
         LEFT JOIN \`turtles\` AS \`t\` ON \`t\`.\`server_id\` = \`s\`.\`id\`
@@ -142,11 +128,10 @@ const selectTurtle = db.prepare(`SELECT json_object(
     'stepsSinceLastRefuel', \`t\`.\`steps_since_last_refuel\`,
     'state', json(\`t\`.\`state\`),
     'location', json(\`t\`.\`location\`),
-    'direction', \`t\`.\`direction\`,
-    'peripherals', json(\`t\`.\`peripherals\`)
+    'direction', \`t\`.\`direction\`
 ) FROM \`turtles\` AS \`t\` WHERE \`server_id\` = ? AND \`id\` = ?`).pluck();
 const insertTurtle = db.prepare(
-    'INSERT INTO `turtles` VALUES (:server_id, :id, :name, :fuel_level, :fuel_limit, :selected_slot, :inventory, :steps_since_last_refuel, :state, :location, :direction, :peripherals) ON CONFLICT DO UPDATE SET name = :name, fuel_level = :fuel_level, fuel_limit = :fuel_limit, selected_slot = :selected_slot, inventory = :inventory, steps_since_last_refuel = :steps_since_last_refuel, state = :state, location = :location, direction = :direction, peripherals = :peripherals'
+    'INSERT INTO `turtles` VALUES (:server_id, :id, :name, :fuel_level, :fuel_limit, :selected_slot, :inventory, :steps_since_last_refuel, :state, :location, :direction) ON CONFLICT DO UPDATE SET name = :name, fuel_level = :fuel_level, fuel_limit = :fuel_limit, selected_slot = :selected_slot, inventory = :inventory, steps_since_last_refuel = :steps_since_last_refuel, state = :state, location = :location, direction = :direction'
 );
 const selectBlocks = db.prepare(`SELECT json_object(
     'serverId', \`b\`.\`server_id\`,
@@ -200,28 +185,6 @@ const setTurtleMovement = db.prepare(
 const setTurtleFuel = db.prepare(
     'UPDATE `turtles` SET `fuel_level` = ? WHERE `server_id` = ? AND `id` = ?'
 );
-const setTurtlePeripherals = db.prepare(
-    'UPDATE `turtles` SET `peripherals` = ? WHERE `server_id` = ? AND `id` = ?'
-);
-const insertInventory = db.prepare(
-    'INSERT INTO `inventories` VALUES (:server_id, :x, :y, :z, :content, :size) ON CONFLICT DO UPDATE SET content = :content, size = :size'
-);
-const selectInventories = db.prepare(`SELECT json_group_array(json_object(
-    'serverId', \`i\`.\`server_id\`,
-    'x', \`i\`.\`x\`,
-    'y', \`i\`.\`y\`,
-    'z', \`i\`.\`z\`,
-    'content', json(\`i\`.\`content\`),
-    'size', \`i\`.\`size\`
-)) FROM \`inventories\` AS \`i\` WHERE \`server_id\` = ?`).pluck();
-const selectInventory = db.prepare(`SELECT json_object(
-    'serverId', \`i\`.\`server_id\`,
-    'x', \`i\`.\`x\`,
-    'y', \`i\`.\`y\`,
-    'z', \`i\`.\`z\`,
-    'content', json(\`i\`.\`content\`),
-    'size', \`i\`.\`size\`
-) FROM \`inventories\` AS \`i\` WHERE \`server_id\` = ? AND \`x\` = ? AND \`y\` = ? AND \`z\` = ?`).pluck();
 const insertChunk = db.prepare(
     'INSERT INTO `chunks` VALUES (:server_id, :x, :z, :analysis) ON CONFLICT DO UPDATE SET analysis = :analysis'
 );
@@ -266,8 +229,7 @@ export const upsertTurtle = (
     stepsSinceLastRefuel: number,
     state: StateData<StateDataTypes> | null,
     location: Location | null,
-    direction: Direction | null,
-    peripherals: Peripherals,
+    direction: Direction | null
 ) =>
     insertTurtle.run({
         server_id: serverId,
@@ -280,8 +242,7 @@ export const upsertTurtle = (
         steps_since_last_refuel: stepsSinceLastRefuel,
         state: JSON.stringify(state),
         location: JSON.stringify(location),
-        direction,
-        peripherals: JSON.stringify(peripherals),
+        direction
     });
 export interface GetBlocksOptions {
     fromX: number;
@@ -366,30 +327,6 @@ export const updateTurtleMovement = (
 ) => setTurtleMovement.run(fuelLevel, stepsSinceLastRefuel, JSON.stringify(location), serverId, id);
 export const updateTurtleFuel = (serverId: number, id: number, fuelLevel: number) =>
     setTurtleFuel.run(fuelLevel, serverId, id);
-export const updateTurtlePeripherals = (serverId: number, id: number, peripherals: Peripherals) =>
-    setTurtlePeripherals.run(JSON.stringify(peripherals), serverId, id);
-export const upsertExternalInventory = (
-    serverId: number,
-    x: number,
-    y: number,
-    z: number,
-    size: number,
-    content: Inventory | null,
-) =>
-    insertInventory.run({
-        server_id: serverId,
-        x,
-        y,
-        z,
-        size,
-        content: JSON.stringify(content),
-    });
-export const getExternalInventory = (serverId: number, x: number, y: number, z: number) => {
-    const inventory = selectInventory.get(serverId, x, y, z);
-    if (!inventory) return null;
-    return JSON.parse(inventory as string) as ExternalInventory;
-};
-export const getExternalInventories = (serverId: number) => JSON.parse(selectInventories.get(serverId) as string) as ExternalInventory[];
 export const upsertChunk = (
     serverId: number,
     x: number,

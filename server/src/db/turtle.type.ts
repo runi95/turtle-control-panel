@@ -33,10 +33,6 @@ export interface Inventory {
     [key: number]: ItemDetail | undefined;
 }
 
-export interface Peripherals {
-    [key: string]: string[];
-}
-
 export interface Location {
     x: number;
     y: number;
@@ -54,5 +50,4 @@ export interface Turtle {
     state: StateData<StateDataTypes> | null;
     location: Location;
     direction: Direction;
-    peripherals: Peripherals;
 }

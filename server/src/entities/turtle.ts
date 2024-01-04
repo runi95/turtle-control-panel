@@ -23,11 +23,9 @@ import {
     upsertBlock,
     upsertServer,
     getServerByRemoteAddress,
-    updateTurtlePeripherals,
-    upsertExternalInventory,
 } from '../db';
 import {Block} from '../db/block.type';
-import {Direction, Inventory, ItemDetail, Location, Peripherals} from '../db/turtle.type';
+import {Direction, Inventory, ItemDetail, Location} from '../db/turtle.type';
 import {StateData, TurtleBaseState} from './states/base';
 import {StateDataTypes, TURTLE_STATES} from './states/helpers';
 import {FarmingStateData, TurtleFarmingState} from './states/farming';
@@ -36,6 +34,10 @@ import {MiningStateData, TurtleMiningState} from './states/mining';
 import {TurtleRefuelingState} from './states/refueling';
 import {TurtleScanState} from './states/scan';
 import {EventEmitter} from 'events';
+
+export interface Peripherals {
+    [key: string]: string[];
+}
 
 interface MessageConstructorObject {
     [key: number]: string;
@@ -190,6 +192,7 @@ wss.on('connection', (ws, req) => {
                     state,
                     location,
                     direction,
+                    peripherals,
                     error: null,
                 },
             });
@@ -204,8 +207,7 @@ wss.on('connection', (ws, req) => {
                 stepsSinceLastRefuel,
                 state,
                 location,
-                direction,
-                peripherals
+                direction
             );
         };
 
@@ -562,7 +564,6 @@ export class Turtle {
                 peripherals: this.peripherals,
             },
         });
-        updateTurtlePeripherals(this.serverId, this.id, this.peripherals);
     }
 
     /**
@@ -1726,9 +1727,6 @@ export class Turtle {
     }
 
     async connectToInventory(side: string): Promise<void> {
-        const direction = this.direction;
-        if (direction === null) return;
-
         // Ensures they're queued together
         const [[size], [content]] = await Promise.all([
             this.usePeripheralWithSide<[number]>(side, 'size'),
@@ -1737,84 +1735,8 @@ export class Turtle {
             ),
         ]);
 
-        const location = this.location;
-        if (location === null) return;
-
-        let {x, y, z} = location;
-        if (side === 'top') {
-            y++;
-        } else if (side === 'bottom') {
-            y--;
-        } else if (side === 'front') {
-            switch (direction) {
-                case Direction.West:
-                    x--;
-                    break;
-                case Direction.North:
-                    z--;
-                    break;
-                case Direction.East:
-                    x++;
-                    break;
-                case Direction.South:
-                    z++;
-                    break;
-            }
-        } else if (side === 'back') {
-            switch (direction) {
-                case Direction.West:
-                    x++;
-                    break;
-                case Direction.North:
-                    z++;
-                    break;
-                case Direction.East:
-                    x--;
-                    break;
-                case Direction.South:
-                    z--;
-                    break;
-            }
-        } else if (side === 'left') {
-            switch (direction) {
-                case Direction.West:
-                    z++;
-                    break;
-                case Direction.North:
-                    x--;
-                    break;
-                case Direction.East:
-                    z--;
-                    break;
-                case Direction.South:
-                    x++;
-                    break;
-            }
-        } else if (side === 'right') {
-            switch (direction) {
-                case Direction.West:
-                    z--;
-                    break;
-                case Direction.North:
-                    x++;
-                    break;
-                case Direction.East:
-                    z++;
-                    break;
-                case Direction.South:
-                    x--;
-                    break;
-            }
-        } else {
-            return;
-        }
-
-        upsertExternalInventory(this.serverId, x, y, z, size, content);
         globalEventEmitter.emit('iupdate', {
             serverId: this.serverId,
-            x,
-            y,
-            z,
             size,
             content,
         });

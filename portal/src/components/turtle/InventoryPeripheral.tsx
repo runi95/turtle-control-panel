@@ -1,84 +1,29 @@
 import styled from 'styled-components';
-import {Action, Direction, Turtle} from '../../App';
-import {ExternalInventory, useInventories} from '../../api/UseInventories';
-import {useParams} from 'react-router-dom';
+import {Action, ItemDetail, Turtle} from '../../App';
 import Item from './Item';
+
+export interface InventoryPeripheralContent {
+    [key: number]: ItemDetail | null;
+}
 
 export interface InventoryPeripheralProps {
     side: string;
     size: number | null;
+    content: InventoryPeripheralContent | null;
     connected: boolean;
     turtle: Turtle;
     action: Action;
 }
 
 function InventoryPeripheral(props: InventoryPeripheralProps) {
-    const {serverId} = useParams() as {serverId: string};
-    const {side, turtle, action} = props;
-    const {data: externalInventories} = useInventories(serverId);
+    const {side, turtle, action, size, content} = props;
 
-    const {location, direction} = turtle;
-    const {x, y, z} = location;
-    const path = (() => {
-        if (side === 'top') {
-            return `${x},${y + 1},${z}`;
-        } else if (side === 'bottom') {
-            return `${x},${y - 1},${z}`;
-        } else if (side === 'front') {
-            switch (direction) {
-                case Direction.West:
-                    return `${x - 1},${y},${z}`;
-                case Direction.North:
-                    return `${x},${y},${z - 1}`;
-                case Direction.East:
-                    return `${x + 1},${y},${z}`;
-                case Direction.South:
-                    return `${x},${y},${z + 1}`;
-            }
-        } else if (side === 'back') {
-            switch (direction) {
-                case Direction.West:
-                    return `${x + 1},${y},${z}`;
-                case Direction.North:
-                    return `${x},${y},${z + 1}`;
-                case Direction.East:
-                    return `${x - 1},${y},${z}`;
-                case Direction.South:
-                    return `${x},${y},${z - 1}`;
-            }
-        } else if (side === 'left') {
-            switch (direction) {
-                case Direction.West:
-                    return `${x},${y},${z + 1}`;
-                case Direction.North:
-                    return `${x - 1},${y},${z}`;
-                case Direction.East:
-                    return `${x},${y},${z - 1}`;
-                case Direction.South:
-                    return `${x + 1},${y},${z}`;
-            }
-        } else if (side === 'right') {
-            switch (direction) {
-                case Direction.West:
-                    return `${x},${y},${z - 1}`;
-                case Direction.North:
-                    return `${x + 1},${y},${z}`;
-                case Direction.East:
-                    return `${x},${y},${z + 1}`;
-                case Direction.South:
-                    return `${x - 1},${y},${z}`;
-            }
-        } else {
-            return `${x},${y},${z}`;
-        }
-    })();
+    const renderTiles = (size: number | null, content: InventoryPeripheralContent | null) => {
+        if (size === null) return null;
 
-    const externalInventory = externalInventories?.[path];
-
-    const renderTiles = (externalInventory: ExternalInventory) => {
         const tiles = [];
-        for (let i = 0; i < externalInventory.size; i++) {
-            const itemDetail = externalInventory.content === null ? null : externalInventory.content[i];
+        for (let i = 0; i < size; i++) {
+            const itemDetail = content === null ? null : content[i];
             const isEmpty = itemDetail == null;
             tiles.push(
                 <Item
@@ -131,7 +76,7 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
                         Inventory side (<span className='text-primary'>{side}</span>)
                     </div>
                 </div>
-                {externalInventory !== undefined ? renderTiles(externalInventory) : null}
+                {renderTiles(size, content)}
             </InventoryGrid>
         </div>
     );
