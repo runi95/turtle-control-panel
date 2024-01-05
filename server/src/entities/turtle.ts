@@ -1798,7 +1798,7 @@ export class Turtle {
 
             for i, side in pairs(peripheralHubSides) do
                 peripherals[side] = {data = {}}
-                functions[fIndex] = (function() peripherals[side]["data"]["localName"] = peripheral.call(side, "getNameLocal") end)
+                functions[fIndex] = (function() sleep(0.08) peripherals[side]["data"]["localName"] = peripheral.call(side, "getNameLocal") end)
                 fIndex = fIndex + 1
                 functions[fIndex] = (function() peripherals[side]["data"]["remoteNames"] = peripheral.call(side, "getNamesRemote") end)
                 fIndex = fIndex + 1
