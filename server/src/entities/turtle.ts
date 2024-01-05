@@ -1747,7 +1747,7 @@ export class Turtle {
 
     async updateAllAttachedPeripherals(peripherals: Peripherals): Promise<void> {
         let hasAnyPeripheralsToCheck = false;
-        const {inventorySides, modemSides} = Object.keys(peripherals).reduce((acc, side) => {
+        const {inventorySides, modemSides, peripheralHubSides} = Object.keys(peripherals).reduce((acc, side) => {
             for (const type of peripherals[side].types) {
                 switch (type) {
                     case 'inventory':
@@ -1757,7 +1757,11 @@ export class Turtle {
                     case 'modem':
                         hasAnyPeripheralsToCheck = true;
                         acc.modemSides.push(side);
-                        return acc;
+                        break;
+                    case 'peripheral_hub':
+                        hasAnyPeripheralsToCheck = true;
+                        acc.peripheralHubSides.push(side);
+                        break;
                     default:
                         break;
                 }
@@ -1766,14 +1770,15 @@ export class Turtle {
             return acc;
         }, {
             inventorySides: [] as string[],
-            modemSides: [] as string[]
+            modemSides: [] as string[],
+            peripheralHubSides: [] as string[]
         });
         
         // There are no peripherals to check
         if (!hasAnyPeripheralsToCheck) return;
 
         // Ensures they're queued together
-        const [updatedPeripherals] = await this.#exec<[{[key: string]: {data?: unknown}}]>(`(function(inventorySides, modemSides)
+        const [updatedPeripherals] = await this.#exec<[{[key: string]: {data?: unknown}}]>(`(function(inventorySides, modemSides, peripheralHubSides)
             local peripherals = {}
             local functions = {}
             local fIndex = 1
@@ -1791,16 +1796,24 @@ export class Turtle {
                 fIndex = fIndex + 1
             end
 
+            for i, side in pairs(peripheralHubSides) do
+                peripherals[side] = {data = {}}
+                functions[fIndex] = (function() peripherals[side]["data"]["localName"] = peripheral.call(side, "getNameLocal") end)
+                fIndex = fIndex + 1
+                functions[fIndex] = (function() peripherals[side]["data"]["remoteNames"] = peripheral.call(side, "getNamesRemote") end)
+                fIndex = fIndex + 1
+            end
+
             parallel.waitForAll(table.unpack(functions))
             return peripherals
-        end)({${inventorySides.map((side) => `"${side}"`).join(',')}}, {${modemSides.map((side) => `"${side}"`).join(',')}})`);
+        end)({${inventorySides.map((side) => `"${side}"`).join(',')}}, {${modemSides.map((side) => `"${side}"`).join(',')}}, {${peripheralHubSides.map((side) => `"${side}"`).join(',')}})`);
 
         const newPeripherals = {
             ...this.peripherals,
         };
         const sides = Object.keys(updatedPeripherals);
         for (const side of sides) {
-            newPeripherals[side].data = updatedPeripherals[side].data
+            newPeripherals[side].data = updatedPeripherals[side].data;
         }
 
         this.peripherals = newPeripherals;
