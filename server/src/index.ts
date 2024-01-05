@@ -237,17 +237,72 @@ server
                                     await turtle.connectToInventory(obj.data.side);
                                     break;
                                 case 'inventory-push-items':
-                                    const [transferredItems] = await turtle.usePeripheralWithSide<[number]>(
-                                        obj.data.side,
+                                    let fromSide = obj.data.fromSide;
+                                    let toSide = obj.data.toSide;
+
+                                    if (fromSide === '' && toSide === '') {
+                                        await turtle.inventoryTransfer(obj.data.fromSlot, obj.data.toSlot);
+                                        break;
+                                    }
+
+                                    let fromTurtle = false;
+                                    if (fromSide === '') {
+                                        fromTurtle = true;
+                                        const hub = Object.entries(turtle.peripherals).find(([_side, {types, data}]) => {
+                                            if ((data as any)?.remoteNames === undefined) return false;
+                                            if ((data as any)?.localName === undefined) return false;
+                                            if (types.includes('peripheral_hub')) {
+                                                return (data as {remoteNames: string[]}).remoteNames.includes(toSide);
+                                            }
+                                        });
+                                        if (hub === undefined) {
+                                            throw new Error(`Cannot inventory-push-items from <turtle> to [${toSide}]`);
+                                        }
+
+                                        const [_hubSide, {data}] = hub;
+                                        fromSide = (data as {localName: string}).localName;
+                                    }
+                                    
+                                    if (toSide === '') {
+                                        const hub = Object.entries(turtle.peripherals).find(([_side, {types, data}]) => {
+                                            if ((data as any)?.remoteNames === undefined) return false;
+                                            if ((data as any)?.localName === undefined) return false;
+                                            if (types.includes('peripheral_hub')) {
+                                                return (data as {remoteNames: string[]}).remoteNames.includes(fromSide);
+                                            }
+                                        });
+                                        if (hub === undefined) {
+                                            throw new Error(`Cannot inventory-push-items from [${fromSide}] to <turtle>`);
+                                        }
+
+                                        const [_hubSide, {data}] = hub;
+                                        toSide = (data as {localName: string}).localName;
+                                    }
+
+                                    const [transferredItems] = fromTurtle ? await turtle.usePeripheralWithSide<[number]>(
+                                        toSide,
+                                        'pullItems',
+                                        fromSide,
+                                        obj.data.fromSlot,
+                                        null,
+                                        obj.data.toSlot
+                                    ) : await turtle.usePeripheralWithSide<[number]>(
+                                        fromSide,
                                         'pushItems',
-                                        obj.data.side,
+                                        toSide,
                                         obj.data.fromSlot,
                                         null,
                                         obj.data.toSlot
                                     );
 
                                     if (transferredItems > 0) {
-                                        await turtle.connectToInventory(obj.data.side);
+                                        if (obj.data.fromSide !== '') {
+                                            await turtle.connectToInventory(obj.data.fromSide);
+                                        }
+
+                                        if (obj.data.fromSide !== obj.data.toSide && obj.data.toSide !== '') {
+                                            await turtle.connectToInventory(obj.data.toSide);
+                                        }
                                     }
                                     break;
                                 default:

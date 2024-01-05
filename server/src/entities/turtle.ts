@@ -1747,38 +1747,43 @@ export class Turtle {
 
     async updateAllAttachedPeripherals(peripherals: Peripherals): Promise<void> {
         let hasAnyPeripheralsToCheck = false;
-        const {inventorySides, modemSides, peripheralHubSides} = Object.keys(peripherals).reduce((acc, side) => {
-            for (const type of peripherals[side].types) {
-                switch (type) {
-                    case 'inventory':
-                        acc.inventorySides.push(side);
-                        hasAnyPeripheralsToCheck = true;
-                        return acc;
-                    case 'modem':
-                        hasAnyPeripheralsToCheck = true;
-                        acc.modemSides.push(side);
-                        break;
-                    case 'peripheral_hub':
-                        hasAnyPeripheralsToCheck = true;
-                        acc.peripheralHubSides.push(side);
-                        break;
-                    default:
-                        break;
+        const {inventorySides, modemSides, peripheralHubSides} = Object.keys(peripherals).reduce(
+            (acc, side) => {
+                for (const type of peripherals[side].types) {
+                    switch (type) {
+                        case 'inventory':
+                            acc.inventorySides.push(side);
+                            hasAnyPeripheralsToCheck = true;
+                            return acc;
+                        case 'modem':
+                            hasAnyPeripheralsToCheck = true;
+                            acc.modemSides.push(side);
+                            break;
+                        case 'peripheral_hub':
+                            hasAnyPeripheralsToCheck = true;
+                            acc.peripheralHubSides.push(side);
+                            break;
+                        default:
+                            break;
+                    }
                 }
-            }
 
-            return acc;
-        }, {
-            inventorySides: [] as string[],
-            modemSides: [] as string[],
-            peripheralHubSides: [] as string[]
-        });
-        
+                return acc;
+            },
+            {
+                inventorySides: [] as string[],
+                modemSides: [] as string[],
+                peripheralHubSides: [] as string[],
+            }
+        );
+
         // There are no peripherals to check
         if (!hasAnyPeripheralsToCheck) return;
 
         // Ensures they're queued together
-        const [updatedPeripherals] = await this.#exec<[{[key: string]: {data?: unknown}}]>(`(function(inventorySides, modemSides, peripheralHubSides)
+        const [updatedPeripherals] = await this.#exec<
+            [{[key: string]: {data?: unknown}}]
+        >(`(function(inventorySides, modemSides, peripheralHubSides)
             local peripherals = {}
             local functions = {}
             local fIndex = 1
@@ -1806,7 +1811,9 @@ export class Turtle {
 
             parallel.waitForAll(table.unpack(functions))
             return peripherals
-        end)({${inventorySides.map((side) => `"${side}"`).join(',')}}, {${modemSides.map((side) => `"${side}"`).join(',')}}, {${peripheralHubSides.map((side) => `"${side}"`).join(',')}})`);
+        end)({${inventorySides.map((side) => `"${side}"`).join(',')}}, {${modemSides
+            .map((side) => `"${side}"`)
+            .join(',')}}, {${peripheralHubSides.map((side) => `"${side}"`).join(',')}})`);
 
         const newPeripherals = {
             ...this.peripherals,
@@ -1849,21 +1856,25 @@ export class Turtle {
     #execRaw<R>(f: string): Promise<R> {
         const uuid = uuid4();
         this.lastPromise = new Promise<R>((resolve, reject) =>
-            this.lastPromise.catch(() => {}).finally(() => {
-                const listener = (obj: {type: string; message: R}) => {
-                    if (obj.type === 'ERROR') {
-                        this.turtleEventEmitter.off(uuid, listener);
-                        return reject(obj.message);
-                    } else if (obj.type !== 'EVAL') {
-                        return reject(`Unknown response type "${obj.type}" from turtle with message "${obj.message}"`);
-                    }
+            this.lastPromise
+                .catch(() => {})
+                .finally(() => {
+                    const listener = (obj: {type: string; message: R}) => {
+                        if (obj.type === 'ERROR') {
+                            this.turtleEventEmitter.off(uuid, listener);
+                            return reject(obj.message);
+                        } else if (obj.type !== 'EVAL') {
+                            return reject(
+                                `Unknown response type "${obj.type}" from turtle with message "${obj.message}"`
+                            );
+                        }
 
-                    this.turtleEventEmitter.off(uuid, listener);
-                    return resolve(obj.message);
-                };
-                this.turtleEventEmitter.on(uuid, listener);
-                this.ws.send(JSON.stringify({type: 'EVAL', uuid, function: f}));
-            })
+                        this.turtleEventEmitter.off(uuid, listener);
+                        return resolve(obj.message);
+                    };
+                    this.turtleEventEmitter.on(uuid, listener);
+                    this.ws.send(JSON.stringify({type: 'EVAL', uuid, function: f}));
+                })
         );
 
         return this.lastPromise as Promise<R>;

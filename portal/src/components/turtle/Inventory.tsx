@@ -115,18 +115,36 @@ function Inventory(props: InventoryProps) {
                                     displayName={isEmpty ? 'Empty' : itemDetail.displayName}
                                     isSelected={itemIndex === selectedSlot}
                                     index={itemIndex}
+                                    side=''
                                     item={isEmpty ? null : {name: itemDetail.name, count: itemDetail.count}}
-                                    onDrop={(fromSlot: number, toSlot: number) => {
-                                        props.action({
-                                            type: 'ACTION',
-                                            action: 'inventory-transfer',
-                                            data: {
-                                                serverId,
-                                                id: turtle.id,
-                                                fromSlot,
-                                                toSlot,
-                                            },
-                                        });
+                                    onDrop={(fromSide: string, fromSlot: number, toSlot: number) => {
+                                        if (fromSide === '') {
+                                            // This is an internal item transfer within the Turtle
+                                            props.action({
+                                                type: 'ACTION',
+                                                action: 'inventory-transfer',
+                                                data: {
+                                                    serverId,
+                                                    id: turtle.id,
+                                                    fromSlot,
+                                                    toSlot,
+                                                },
+                                            });
+                                        } else {
+                                            // This is an external item transfer from a nearby peripheral
+                                            props.action({
+                                                type: 'ACTION',
+                                                action: 'inventory-push-items',
+                                                data: {
+                                                    serverId,
+                                                    id: turtle.id,
+                                                    fromSide,
+                                                    toSide: '',
+                                                    fromSlot,
+                                                    toSlot,
+                                                },
+                                            });
+                                        }
                                     }}
                                     onClick={() => {
                                         props.action({

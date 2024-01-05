@@ -6,16 +6,17 @@ export interface ItemProps {
     displayName: string;
     isSelected: boolean;
     index: number;
+    side: string;
     item: {
         name: string;
         count: number;
     } | null;
-    onDrop: (fromSlot: number, toSlot: number) => void;
+    onDrop: (fromSide: string, fromSlot: number, toSlot: number) => void;
     onClick?: () => void;
 }
 
 function Item(props: ItemProps) {
-    const {displayName, isSelected, index, item, onDrop, onClick} = props;
+    const {displayName, isSelected, side, index, item, onDrop, onClick} = props;
     const ItemSlotStyle = isSelected ? SelectedItemSlot : ItemSlot;
 
     return (
@@ -25,14 +26,16 @@ function Item(props: ItemProps) {
                 data-inventory-slot={index}
                 onDragStart={(e) => {
                     e.dataTransfer.setData('fromSlot', index.toString());
+                    e.dataTransfer.setData('fromSide', side);
                 }}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                     e.preventDefault();
-                    const toSlot = (e.target as HTMLBaseElement)?.dataset?.inventorySlot;
+                    const fromSide = e.dataTransfer.getData('fromSide');
                     const fromSlot = e.dataTransfer.getData('fromSlot');
+                    const toSlot = (e.target as HTMLBaseElement)?.dataset?.inventorySlot;
                     if (fromSlot && toSlot && fromSlot !== toSlot) {
-                        onDrop(Number(fromSlot), Number(toSlot));
+                        onDrop(fromSide, Number(fromSlot), Number(toSlot));
                     }
                 }}
                 onClick={onClick}
