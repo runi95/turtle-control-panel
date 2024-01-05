@@ -12,11 +12,13 @@ export interface Inventory {
     [key: number]: ItemDetail | undefined;
 }
 
+export interface Peripheral {
+    data: unknown;
+    types: string[];
+}
+
 export interface Peripherals {
-    [key: string]: {
-        data: unknown;
-        types: string[];
-    };
+    [key: string]: Peripheral;
 }
 
 export interface BaseState {

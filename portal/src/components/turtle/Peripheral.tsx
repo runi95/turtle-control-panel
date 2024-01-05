@@ -1,19 +1,20 @@
 import styled from 'styled-components';
 import {Button} from 'react-bootstrap';
 import {Action} from '../../App';
-import {Turtle} from '../../api/UseTurtle';
+import {Peripheral as APIPeripheral, Turtle} from '../../api/UseTurtle';
 
 export interface PeripheralProps {
-    types: string[];
+    peripheral: APIPeripheral;
     turtle: Turtle;
     action: Action;
 }
 
 function Peripheral(props: PeripheralProps) {
-    const {types, turtle, action} = props;
+    const {peripheral, turtle, action} = props;
+    const {types, data} = peripheral;
 
     const {serverId, id} = turtle;
-    if (types.includes('modem')) {
+    if (types.includes('modem') && (data as {isWireless: boolean} | undefined)?.isWireless) {
         return (
             <PeripheralGroup>
                 <div style={{marginBottom: 8}}>

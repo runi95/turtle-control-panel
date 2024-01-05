@@ -216,7 +216,7 @@ function Inventory(props: InventoryProps) {
                     <div style={{display: 'flex', gap: 5}}>
                         {peripherals !== null
                             ? Object.values(peripherals).map((peripheral, i) => (
-                                  <Peripheral key={i} action={action} turtle={turtle} types={peripheral.types} />
+                                  <Peripheral key={i} action={action} turtle={turtle} peripheral={peripheral} />
                               ))
                             : null}
                     </div>
