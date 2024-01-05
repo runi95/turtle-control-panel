@@ -237,7 +237,7 @@ server
                                     await turtle.connectToInventory(obj.data.side);
                                     break;
                                 case 'inventory-push-items':
-                                    await turtle.usePeripheralWithSide(
+                                    const [transferredItems] = await turtle.usePeripheralWithSide<[number]>(
                                         obj.data.side,
                                         'pushItems',
                                         obj.data.side,
@@ -245,7 +245,10 @@ server
                                         null,
                                         obj.data.toSlot
                                     );
-                                    await turtle.connectToInventory(obj.data.side);
+
+                                    if (transferredItems > 0) {
+                                        await turtle.connectToInventory(obj.data.side);
+                                    }
                                     break;
                                 default:
                                     logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);
