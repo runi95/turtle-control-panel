@@ -104,8 +104,8 @@ local function main()
                 os.sleep(math.min(reconnectionAttempts, 30))
             end
         else
+            local obj = textutils.unserializeJSON(message)
             xpcall(function ()
-                local obj = textutils.unserializeJSON(message)
                 if obj.type == "HANDSHAKE" then
                     logLevel = obj.logLevel or 0
                     handshake(obj.uuid)
@@ -131,6 +131,8 @@ local function main()
                 end
             end, function (msg)
                 printError(msg)
+                local response = { type = "ERROR", message = msg }
+                send(textutils.serializeJSON(response), obj.uuid)
             end)
         end
     end

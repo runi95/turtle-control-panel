@@ -81,11 +81,6 @@ wss.on('connection', (ws, req) => {
                       ) + str
             );
             messageConstructorMap.delete(messageUuid);
-            if (obj.type === 'ERROR') {
-                logger.error(obj.message);
-                return;
-            }
-
             turtleEventEmitter.emit(messageUuid, obj);
             return;
         }
@@ -448,7 +443,12 @@ export class Turtle {
 
     private runActLoop() {
         const cb = async () => {
-            await this.state?.act();
+            try {
+                await this.state?.act();
+            } catch (err) {
+                logger.error(err);
+                this.state = null;
+            }
             if (this.state !== null) {
                 this.runActLoop();
             }
@@ -1849,9 +1849,12 @@ export class Turtle {
     #execRaw<R>(f: string): Promise<R> {
         const uuid = uuid4();
         this.lastPromise = new Promise<R>((resolve, reject) =>
-            this.lastPromise.finally(() => {
+            this.lastPromise.catch(() => {}).finally(() => {
                 const listener = (obj: {type: string; message: R}) => {
-                    if (obj.type !== 'EVAL') {
+                    if (obj.type === 'ERROR') {
+                        this.turtleEventEmitter.off(uuid, listener);
+                        return reject(obj.message);
+                    } else if (obj.type !== 'EVAL') {
                         return reject(`Unknown response type "${obj.type}" from turtle with message "${obj.message}"`);
                     }
 

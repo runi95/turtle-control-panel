@@ -106,7 +106,17 @@ server
                 return;
             }
 
-            const {name, fuelLevel, fuelLimit, selectedSlot, inventory, stepsSinceLastRefuel, state, location, direction} = dbTurtle;
+            const {
+                name,
+                fuelLevel,
+                fuelLimit,
+                selectedSlot,
+                inventory,
+                stepsSinceLastRefuel,
+                state,
+                location,
+                direction,
+            } = dbTurtle;
             res.send({
                 serverId,
                 id,
@@ -126,7 +136,7 @@ server
         });
 
         server.get('/', {websocket: true}, (connection, _req) => {
-            connection.socket.on('message', (msg: string) => {
+            connection.socket.on('message', async (msg: string) => {
                 try {
                     const obj = JSON.parse(msg);
                     switch (obj.type) {
@@ -148,7 +158,9 @@ server
                         case 'ACTION':
                             const turtle = getOnlineTurtleById(Number(obj.data.serverId), Number(obj.data.id));
                             if (turtle === undefined) {
-                                logger.error(`Attempted to [${obj.action}] on invalid server [${obj.data.serverId}] or invalid turtle [${obj.data.id}]`);
+                                logger.error(
+                                    `Attempted to [${obj.action}] on invalid server [${obj.data.serverId}] or invalid turtle [${obj.data.id}]`
+                                );
                                 return;
                             }
 
@@ -179,19 +191,19 @@ server
                                     turtle.state = null;
                                     break;
                                 case 'refresh-inventory':
-                                    turtle.refreshInventoryState();
+                                    await turtle.refreshInventoryState();
                                     break;
                                 case 'craft':
-                                    turtle.craft();
+                                    await turtle.craft();
                                     break;
                                 case 'drop':
-                                    turtle.drop();
+                                    await turtle.drop();
                                     break;
                                 case 'select':
-                                    turtle.select(obj.data.slot);
+                                    await turtle.select(obj.data.slot);
                                     break;
                                 case 'rename':
-                                    turtle.rename(obj.data.newName);
+                                    await turtle.rename(obj.data.newName);
                                     break;
                                 case 'update-location':
                                     turtle.location = obj.data.location;
@@ -201,46 +213,39 @@ server
                                     turtle.state = new TurtleScanState(turtle);
                                     break;
                                 case 'analyze':
-                                    turtle.hasPeripheralWithName('geoScanner').then(([hasPeripheral]) => {
-                                        if (hasPeripheral) {
-                                            turtle
-                                                .usePeripheralWithName<
-                                                    [{[key: string]: number}, undefined] | [null, string]
-                                                >('geoScanner', 'chunkAnalyze')
-                                                .then(([analysis, analysisFailMessage]) => {
-                                                    if (analysis !== null) {
-                                                        const chunk = turtle.chunk;
-                                                        if (chunk !== null) {
-                                                            const [x, z] = chunk;
-                                                            upsertChunk(turtle.serverId, x, z, analysis);
-                                                        }
-                                                    }
-                                                });
+                                    const [hasPeripheral] = await turtle.hasPeripheralWithName('geoScanner');
+                                    if (hasPeripheral) {
+                                        const [analysis, analysisFailMessage] = await turtle.usePeripheralWithName<
+                                            [{[key: string]: number}, undefined] | [null, string]
+                                        >('geoScanner', 'chunkAnalyze');
+                                        if (analysis !== null) {
+                                            const chunk = turtle.chunk;
+                                            if (chunk !== null) {
+                                                const [x, z] = chunk;
+                                                upsertChunk(turtle.serverId, x, z, analysis);
+                                            }
                                         }
-                                    });
+                                    }
                                     break;
                                 case 'inventory-transfer':
-                                    turtle.inventoryTransfer(obj.data.fromSlot, obj.data.toSlot);
+                                    await turtle.inventoryTransfer(obj.data.fromSlot, obj.data.toSlot);
                                     break;
                                 case 'locate':
-                                    turtle.gpsLocate();
+                                    await turtle.gpsLocate();
                                     break;
                                 case 'connect-to-inventory':
-                                    turtle.connectToInventory(obj.data.side);
+                                    await turtle.connectToInventory(obj.data.side);
                                     break;
                                 case 'inventory-push-items':
-                                    turtle
-                                        .usePeripheralWithSide(
-                                            obj.data.side,
-                                            'pushItems',
-                                            obj.data.side,
-                                            obj.data.fromSlot,
-                                            null,
-                                            obj.data.toSlot
-                                        )
-                                        .then(() => {
-                                            turtle.connectToInventory(obj.data.side);
-                                        });
+                                    await turtle.usePeripheralWithSide(
+                                        obj.data.side,
+                                        'pushItems',
+                                        obj.data.side,
+                                        obj.data.fromSlot,
+                                        null,
+                                        obj.data.toSlot
+                                    );
+                                    await turtle.connectToInventory(obj.data.side);
                                     break;
                                 default:
                                     logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);
