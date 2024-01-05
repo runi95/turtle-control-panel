@@ -40,6 +40,7 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
                             type: 'ACTION',
                             action: 'inventory-push-items',
                             data: {
+                                serverId,
                                 id: turtleId,
                                 side,
                                 fromSlot,
@@ -70,7 +71,7 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
                             action({
                                 type: 'ACTION',
                                 action: 'connect-to-inventory',
-                                data: {id: turtle.id, side},
+                                data: {serverId, id: turtle.id, side},
                             })
                         }
                         disabled={!turtle.isOnline || !turtle.location || !turtle.direction}

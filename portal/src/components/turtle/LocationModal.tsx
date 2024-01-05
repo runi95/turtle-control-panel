@@ -28,7 +28,12 @@ function LocationModal(props: LocationModalProps) {
             props.action({
                 type: 'ACTION',
                 action: 'update-location',
-                data: {id: props.turtle.id, location: state.location, direction: Number(state.direction)},
+                data: {
+                    serverId: props.turtle.serverId,
+                    id: props.turtle.id,
+                    location: state.location,
+                    direction: Number(state.direction),
+                },
             });
             props.hideModal();
         } else {

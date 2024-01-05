@@ -486,6 +486,7 @@ const TurtleMap = (props: TurtleMapProps) => {
                                     type: 'ACTION',
                                     action: 'move',
                                     data: {
+                                        serverId,
                                         id: turtle.id,
                                         x: tx,
                                         y: ty,

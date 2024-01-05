@@ -66,7 +66,7 @@ server
         server.get('/servers/:serverId/turtles/:id', (req, res) => {
             const {params} = req;
             const {serverId, id} = params as {serverId: string; id: string};
-            const turtle = getOnlineTurtleById(Number(id));
+            const turtle = getOnlineTurtleById(Number(serverId), Number(id));
             if (turtle !== undefined) {
                 const {
                     name,
@@ -136,7 +136,7 @@ server
                                     type: 'HANDSHAKE',
                                     message: {
                                         dashboard: getDashboard(),
-                                        onlineStatuses: Array.from(getOnlineTurtles()).map((turtle) => ({
+                                        onlineStatuses: getOnlineTurtles().map((turtle) => ({
                                             serverId: turtle.serverId,
                                             id: turtle.id,
                                             isOnline: turtle.isOnline,
@@ -146,9 +146,9 @@ server
                             );
                             break;
                         case 'ACTION':
-                            const turtle = getOnlineTurtleById(Number(obj.data.id));
+                            const turtle = getOnlineTurtleById(Number(obj.data.serverId), Number(obj.data.id));
                             if (turtle === undefined) {
-                                logger.error(`Attempted to [${obj.action}] on invalid turtle [${obj.data.id}]`);
+                                logger.error(`Attempted to [${obj.action}] on invalid server [${obj.data.serverId}] or invalid turtle [${obj.data.id}]`);
                                 return;
                             }
 
@@ -283,7 +283,7 @@ server
                         case 'TURTLE':
                             switch (obj.action) {
                                 case 'delete':
-                                    const turtle = getOnlineTurtleById(obj.data.id);
+                                    const turtle = getOnlineTurtleById(obj.data.serverId, obj.data.id);
                                     if (turtle !== undefined) {
                                         turtle.state = null;
                                     }

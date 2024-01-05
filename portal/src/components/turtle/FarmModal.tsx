@@ -27,7 +27,7 @@ function FarmModal(props: FarmModalProps) {
         let selectedArea = state.selectedArea;
         const form = e.currentTarget;
         if (form.checkValidity() === true) {
-            action({type: 'ACTION', action: 'farm', data: {id: props.turtle.id, areaId: selectedArea}});
+            action({type: 'ACTION', action: 'farm', data: {serverId, id: props.turtle.id, areaId: selectedArea}});
             selectedArea = '';
             hideModal();
         } else {

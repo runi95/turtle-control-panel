@@ -12,7 +12,7 @@ export interface PeripheralProps {
 function Peripheral(props: PeripheralProps) {
     const {types, turtle, action} = props;
 
-    const {id} = turtle;
+    const {serverId, id} = turtle;
     if (types.includes('modem')) {
         return (
             <PeripheralGroup>
@@ -21,7 +21,7 @@ function Peripheral(props: PeripheralProps) {
                 </div>
                 <PeripheralContainer>
                     <Button
-                        onClick={() => action({type: 'ACTION', action: 'locate', data: {id}})}
+                        onClick={() => action({type: 'ACTION', action: 'locate', data: {serverId, id}})}
                         variant={turtle.location === null ? 'outline-success' : 'outline-secondary'}
                         size='sm'
                         disabled={!turtle.isOnline}
@@ -41,7 +41,7 @@ function Peripheral(props: PeripheralProps) {
                 </div>
                 <PeripheralContainer>
                     <Button
-                        onClick={() => action({type: 'ACTION', action: 'scan', data: {id}})}
+                        onClick={() => action({type: 'ACTION', action: 'scan', data: {serverId, id}})}
                         variant='outline-info'
                         size='sm'
                         disabled={!turtle.isOnline}
@@ -49,7 +49,7 @@ function Peripheral(props: PeripheralProps) {
                         Scan
                     </Button>
                     <Button
-                        onClick={() => action({type: 'ACTION', action: 'analyze', data: {id}})}
+                        onClick={() => action({type: 'ACTION', action: 'analyze', data: {serverId, id}})}
                         variant='outline-info'
                         size='sm'
                         disabled={!turtle.isOnline}

@@ -37,7 +37,7 @@ function MineModal(props: MineModalProps) {
             props.action({
                 type: 'ACTION',
                 action: 'mine',
-                data: {id: props.turtle.id, mineTarget: selectedArea},
+                data: {serverId, id: props.turtle.id, mineTarget: selectedArea},
             });
             selectedArea = '';
             selectedYLevel = undefined;

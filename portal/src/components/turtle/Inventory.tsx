@@ -71,7 +71,11 @@ function Inventory(props: InventoryProps) {
                             <button
                                 className='text-muted inventory-button'
                                 onClick={() =>
-                                    props.action({type: 'ACTION', action: 'refresh-inventory', data: {id: turtle.id}})
+                                    props.action({
+                                        type: 'ACTION',
+                                        action: 'refresh-inventory',
+                                        data: {serverId, id: turtle.id},
+                                    })
                                 }
                                 disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
                             >
@@ -81,7 +85,9 @@ function Inventory(props: InventoryProps) {
                         <ButtonSlot style={{gridColumn: 'span 2'}} key='craft-btn'>
                             <button
                                 className='text-muted inventory-button'
-                                onClick={() => props.action({type: 'ACTION', action: 'craft', data: {id: turtle.id}})}
+                                onClick={() =>
+                                    props.action({type: 'ACTION', action: 'craft', data: {serverId, id: turtle.id}})
+                                }
                                 disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
                             >
                                 <b>Craft</b>
@@ -90,7 +96,9 @@ function Inventory(props: InventoryProps) {
                         <ButtonSlot key='drop-btn'>
                             <button
                                 className='text-danger inventory-button'
-                                onClick={() => props.action({type: 'ACTION', action: 'drop', data: {id: turtle.id}})}
+                                onClick={() =>
+                                    props.action({type: 'ACTION', action: 'drop', data: {serverId, id: turtle.id}})
+                                }
                                 disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
                             >
                                 <b>Drop</b>
@@ -113,6 +121,7 @@ function Inventory(props: InventoryProps) {
                                             type: 'ACTION',
                                             action: 'inventory-transfer',
                                             data: {
+                                                serverId,
                                                 id: turtle.id,
                                                 fromSlot,
                                                 toSlot,
@@ -123,7 +132,7 @@ function Inventory(props: InventoryProps) {
                                         props.action({
                                             type: 'ACTION',
                                             action: 'select',
-                                            data: {id: turtle.id, slot: itemIndex},
+                                            data: {serverId, id: turtle.id, slot: itemIndex},
                                         });
                                     }}
                                 />
@@ -151,7 +160,9 @@ function Inventory(props: InventoryProps) {
                         </h5>
                         <div style={{marginLeft: 25}}>
                             <Button
-                                onClick={() => props.action({type: 'ACTION', action: 'stop', data: {id: turtle.id}})}
+                                onClick={() =>
+                                    props.action({type: 'ACTION', action: 'stop', data: {serverId, id: turtle.id}})
+                                }
                                 variant='outline-danger'
                                 size='sm'
                                 disabled={!turtle.isOnline}
@@ -187,7 +198,9 @@ function Inventory(props: InventoryProps) {
                         </div>
                         <div>
                             <Button
-                                onClick={() => props.action({type: 'ACTION', action: 'refuel', data: {id: turtle.id}})}
+                                onClick={() =>
+                                    props.action({type: 'ACTION', action: 'refuel', data: {serverId, id: turtle.id}})
+                                }
                                 variant='outline-info'
                                 size='sm'
                                 disabled={!turtle.isOnline}

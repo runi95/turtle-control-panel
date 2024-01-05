@@ -177,7 +177,15 @@ wss.on('connection', (ws, req) => {
                 ws,
                 turtleEventEmitter
             );
-            connectedTurtlesMap.set(id, turtle);
+
+            const existingTurtlesMap = connectedTurtlesMap.get(serverId);
+            if (existingTurtlesMap) {
+                existingTurtlesMap.set(id, turtle);
+            } else {
+                const newMap = new Map<number, Turtle>();
+                connectedTurtlesMap.set(serverId, newMap);
+                newMap.set(id, turtle);
+            }
 
             globalEventEmitter.emit('tconnect', {
                 id,
@@ -220,7 +228,7 @@ wss.on('connection', (ws, req) => {
 
 logger.info(`Turtle WebSocket listening on port \x1b[36m${turtleWssPort}\x1b[0m`);
 
-const connectedTurtlesMap = new Map<number, Turtle>();
+const connectedTurtlesMap = new Map<number, Map<number, Turtle>>();
 export class Turtle {
     // Database properties
     public readonly serverId: number;
@@ -1788,5 +1796,17 @@ export class Turtle {
     }
 }
 
-export const getOnlineTurtles = () => connectedTurtlesMap.values();
-export const getOnlineTurtleById = (id: number) => connectedTurtlesMap.get(id);
+export const getOnlineTurtles = () => {
+    const servers = connectedTurtlesMap.values();
+    const turtles: Turtle[] = [];
+    for (const server of servers) {
+        turtles.push(...server.values())
+    }
+
+    return turtles;
+};
+export const getOnlineTurtleById = (serverId: number, id: number) => {
+    const server = connectedTurtlesMap.get(serverId);
+    if (server === undefined) return undefined;
+    return server.get(id);
+}

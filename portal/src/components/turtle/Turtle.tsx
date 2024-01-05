@@ -51,6 +51,7 @@ function Turtle(props: TurtleProps) {
                                         type: 'ACTION',
                                         action: 'rename',
                                         data: {
+                                            serverId,
                                             id: turtle.id,
                                             newName: ((e.target as HTMLFormElement)[0] as HTMLInputElement).value,
                                         },
