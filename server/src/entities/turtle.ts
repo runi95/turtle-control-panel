@@ -39,7 +39,7 @@ export interface Peripherals {
     [key: string]: {
         data?: unknown;
         types: string[];
-    }
+    };
 }
 
 interface MessageConstructorObject {
@@ -319,21 +319,22 @@ export class Turtle {
                 case 'PERIPHERAL_ATTACHED':
                     const peripherals = message as Peripherals;
                     const existingPeripherals = this.peripherals;
-                    
-                    // Check if anything changed 
-                    if (Object.entries(peripherals).every(([side, {types}]) => {
-                        const existingTypes = existingPeripherals[side]?.types;
-                        if (!existingTypes) return false;
-                        return types.every((type, i) => existingTypes[i] === type);
-                    })) break;
 
-                    Object.keys(peripherals)
-                        .filter((side) => {
+                    // Check if anything changed
+                    if (
+                        Object.entries(peripherals).every(([side, {types}]) => {
+                            const existingTypes = existingPeripherals[side]?.types;
+                            if (!existingTypes) return false;
+                            return types.every((type, i) => existingTypes[i] === type);
+                        })
+                    )
+                        break;
+
+                    this.connectToAllInventories(
+                        Object.keys(peripherals).filter((side) => {
                             return peripherals[side].types.includes('inventory');
                         })
-                        .forEach((side) => {
-                            this.connectToInventory(side);
-                        });
+                    );
                     this.peripherals = peripherals;
                     break;
                 case 'PERIPHERAL_DETACHED':
@@ -533,7 +534,7 @@ export class Turtle {
     public get chunk(): [number, number] | null {
         const location = this.location;
         if (location === null) return null;
-        
+
         const {x, y, z} = location;
         return [Math.floor(x / 16), Math.floor(z / 16)];
     }
@@ -1748,6 +1749,34 @@ export class Turtle {
         }
     }
 
+    async connectToAllInventories(sides: string[]): Promise<void> {
+        // Ensures they're queued together
+        const [updatedPeripherals] = await this.#exec<[{[key: string]: {data?: unknown}}]>(`(function(sides)
+            local peripherals = {}
+            local functions = {}
+            local fIndex = 1
+            for i, side in pairs(sides) do
+                peripherals[side] = {data = {}}
+                functions[fIndex] = (function() peripherals[side]["data"]["size"] = peripheral.call(side, "size") end)
+                fIndex = fIndex + 1
+                functions[fIndex] = (function() peripherals[side]["data"]["content"] = (function(list) return next(list) == nil and textutils.json_null or list end)(peripheral.call(side, "list")) end)
+                fIndex = fIndex + 1
+            end
+
+            parallel.waitForAll(table.unpack(functions))
+            return peripherals
+        end)({${sides.map((side) => `"${side}"`).join(',')}})`);
+
+        const newPeripherals = {
+            ...this.peripherals,
+        };
+        for (const side of sides) {
+            newPeripherals[side].data = updatedPeripherals[side].data
+        }
+
+        this.peripherals = newPeripherals;
+    }
+
     async connectToInventory(side: string): Promise<void> {
         // Ensures they're queued together
         const [[size], [content]] = await Promise.all([
@@ -1763,9 +1792,9 @@ export class Turtle {
                 ...this.peripherals[side],
                 data: {
                     size,
-                    content
-                }
-            }
+                    content,
+                },
+            },
         };
 
         this.peripherals = newPeripherals;
@@ -1800,7 +1829,7 @@ export const getOnlineTurtles = () => {
     const servers = connectedTurtlesMap.values();
     const turtles: Turtle[] = [];
     for (const server of servers) {
-        turtles.push(...server.values())
+        turtles.push(...server.values());
     }
 
     return turtles;
@@ -1809,4 +1838,4 @@ export const getOnlineTurtleById = (serverId: number, id: number) => {
     const server = connectedTurtlesMap.get(serverId);
     if (server === undefined) return undefined;
     return server.get(id);
-}
+};
