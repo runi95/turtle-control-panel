@@ -142,7 +142,7 @@ function App() {
                         ['turtles', obj.message.serverId.toString(), obj.message.id.toString()],
                         (oldData: APITurtle) => ({
                             ...oldData,
-                            isOnline: true,
+                            ...obj.message.turtle,
                         })
                     );
                     setServers((servers) => ({
