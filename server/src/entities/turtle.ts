@@ -215,6 +215,8 @@ wss.on('connection', (ws, req) => {
                 location,
                 direction
             );
+
+            turtle.updateAllAttachedPeripherals(peripherals);
         };
 
         turtleEventEmitter.on(uuid, handshake);
