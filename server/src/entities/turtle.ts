@@ -1378,9 +1378,15 @@ export class Turtle {
      * @param {number | undefined} count - The number of items to drop. If not given, the entire stack will be dropped.
      */
     async drop(count?: number): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop']> {
-        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(
+        const drop = await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(
             count ? `turtle.drop(${count})` : 'turtle.drop()'
         );
+
+        if (this.peripherals['front']?.types?.includes('inventory')) {
+            await this.connectToInventory('front').catch(() => {});
+        }
+
+        return drop;
     }
 
     /**
@@ -1389,9 +1395,15 @@ export class Turtle {
      * @param {number | undefined} count - The number of items to drop. If not given, the entire stack will be dropped.
      */
     async dropUp(count?: number): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop']> {
-        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(
+        const dropUp = await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(
             count ? `turtle.dropUp(${count})` : 'turtle.dropUp()'
         );
+
+        if (this.peripherals['top']?.types?.includes('inventory')) {
+            await this.connectToInventory('top').catch(() => {});
+        }
+
+        return dropUp;
     }
 
     /**
@@ -1400,9 +1412,15 @@ export class Turtle {
      * @param {number | undefined} count - The number of items to drop. If not given, the entire stack will be dropped.
      */
     async dropDown(count?: number): Promise<[true, undefined] | [false, 'No space for items' | 'No items to drop']> {
-        return await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(
+        const dropDown = await this.#exec<[true, undefined] | [false, 'No space for items' | 'No items to drop']>(
             count ? `turtle.dropDown(${count})` : 'turtle.dropDown()'
         );
+
+        if (this.peripherals['below']?.types?.includes('inventory')) {
+            await this.connectToInventory('below').catch(() => {});
+        }
+
+        return dropDown;
     }
 
     /**
