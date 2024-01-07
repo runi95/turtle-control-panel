@@ -79,6 +79,7 @@ server
                     location,
                     direction,
                     peripherals,
+                    home,
                     error,
                 } = turtle;
                 res.send({
@@ -95,6 +96,7 @@ server
                     location,
                     direction,
                     peripherals,
+                    home,
                     error,
                 });
                 return;
@@ -116,6 +118,7 @@ server
                 state,
                 location,
                 direction,
+                home,
             } = dbTurtle;
             res.send({
                 serverId,
@@ -131,6 +134,7 @@ server
                 location,
                 direction,
                 peripherals: null,
+                home,
                 error: null,
             });
         });
@@ -303,6 +307,13 @@ server
                                         if (obj.data.fromSide !== obj.data.toSide && obj.data.toSide !== '') {
                                             await turtle.connectToInventory(obj.data.toSide);
                                         }
+                                    }
+                                    break;
+                                case 'set-home':
+                                    if (turtle.location !== null) {
+                                        turtle.home = {
+                                            ...turtle.location
+                                        };
                                     }
                                     break;
                                 default:

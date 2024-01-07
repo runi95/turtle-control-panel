@@ -50,4 +50,5 @@ export interface Turtle {
     state: StateData<StateDataTypes> | null;
     location: Location;
     direction: Direction;
+    home: Location | null;
 }

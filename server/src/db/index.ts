@@ -31,6 +31,7 @@ db.exec(
     state JSON,
     location JSON,
     direction INT,
+    home JSON,
     CONSTRAINT pk_turtles PRIMARY KEY (\`server_id\`, \`id\`),
     FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
 );`
@@ -122,10 +123,11 @@ const selectTurtle = db.prepare(`SELECT json_object(
     'stepsSinceLastRefuel', \`t\`.\`steps_since_last_refuel\`,
     'state', json(\`t\`.\`state\`),
     'location', json(\`t\`.\`location\`),
-    'direction', \`t\`.\`direction\`
+    'direction', \`t\`.\`direction\`,
+    'home', json(\`t\`.\`home\`)
 ) FROM \`turtles\` AS \`t\` WHERE \`server_id\` = ? AND \`id\` = ?`).pluck();
 const insertTurtle = db.prepare(
-    'INSERT INTO `turtles` VALUES (:server_id, :id, :name, :fuel_level, :fuel_limit, :selected_slot, :inventory, :steps_since_last_refuel, :state, :location, :direction) ON CONFLICT DO UPDATE SET name = :name, fuel_level = :fuel_level, fuel_limit = :fuel_limit, selected_slot = :selected_slot, inventory = :inventory, steps_since_last_refuel = :steps_since_last_refuel, state = :state, location = :location, direction = :direction'
+    'INSERT INTO `turtles` VALUES (:server_id, :id, :name, :fuel_level, :fuel_limit, :selected_slot, :inventory, :steps_since_last_refuel, :state, :location, :direction, :home) ON CONFLICT DO UPDATE SET name = :name, fuel_level = :fuel_level, fuel_limit = :fuel_limit, selected_slot = :selected_slot, inventory = :inventory, steps_since_last_refuel = :steps_since_last_refuel, state = :state, location = :location, direction = :direction, home = :home'
 );
 const selectBlocks = db.prepare(`SELECT json_object(
     'serverId', \`b\`.\`server_id\`,
@@ -179,6 +181,7 @@ const setTurtleMovement = db.prepare(
 const setTurtleFuel = db.prepare(
     'UPDATE `turtles` SET `fuel_level` = ? WHERE `server_id` = ? AND `id` = ?'
 );
+const setTurtleHome = db.prepare('UPDATE `turtles` SET `home` = ? WHERE `server_id` = ? AND `id` = ?');
 const insertChunk = db.prepare(
     'INSERT INTO `chunks` VALUES (:server_id, :x, :z, :analysis) ON CONFLICT DO UPDATE SET analysis = :analysis'
 );
@@ -223,7 +226,8 @@ export const upsertTurtle = (
     stepsSinceLastRefuel: number,
     state: StateData<StateDataTypes> | null,
     location: Location | null,
-    direction: Direction | null
+    direction: Direction | null,
+    home: Location | null
 ) =>
     insertTurtle.run({
         server_id: serverId,
@@ -236,7 +240,8 @@ export const upsertTurtle = (
         steps_since_last_refuel: stepsSinceLastRefuel,
         state: JSON.stringify(state),
         location: JSON.stringify(location),
-        direction
+        direction,
+        home: JSON.stringify(home)
     });
 export interface GetBlocksOptions {
     fromX: number;
@@ -321,6 +326,8 @@ export const updateTurtleMovement = (
 ) => setTurtleMovement.run(fuelLevel, stepsSinceLastRefuel, JSON.stringify(location), serverId, id);
 export const updateTurtleFuel = (serverId: number, id: number, fuelLevel: number) =>
     setTurtleFuel.run(fuelLevel, serverId, id);
+export const updateTurtleHome = (serverId: number, id: number, home: Location | null) =>
+    setTurtleHome.run(JSON.stringify(home), serverId, id);
 export const upsertChunk = (
     serverId: number,
     x: number,

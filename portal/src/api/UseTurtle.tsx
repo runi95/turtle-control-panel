@@ -69,6 +69,7 @@ export interface Turtle {
     location: Location;
     direction: Direction;
     peripherals: Peripherals | null;
+    home: Location | null;
     error: string | null;
 }
 

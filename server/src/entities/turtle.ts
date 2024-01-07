@@ -23,6 +23,7 @@ import {
     upsertBlock,
     upsertServer,
     getServerByRemoteAddress,
+    updateTurtleHome,
 } from '../db';
 import {Block} from '../db/block.type';
 import {Direction, Inventory, ItemDetail, Location} from '../db/turtle.type';
@@ -146,11 +147,12 @@ wss.on('connection', (ws, req) => {
 
             upsertServer(remoteAddress, null);
             const {id: serverId} = getServerByRemoteAddress(remoteAddress);
-            const {stepsSinceLastRefuel, state, location, direction} = getTurtle(serverId, id) ?? {
+            const {stepsSinceLastRefuel, state, location, direction, home} = getTurtle(serverId, id) ?? {
                 stepsSinceLastRefuel: 0,
                 state: null,
                 location: null,
                 direction: null,
+                home: null
             };
             logger.info(`${name || '<unnamed>'} [${id}] has connected!`);
             turtleEventEmitter.off(uuid, handshake);
@@ -169,6 +171,7 @@ wss.on('connection', (ws, req) => {
                 location,
                 direction,
                 peripherals,
+                home,
                 ws,
                 turtleEventEmitter
             );
@@ -213,7 +216,8 @@ wss.on('connection', (ws, req) => {
                 stepsSinceLastRefuel,
                 state,
                 location,
-                direction
+                direction,
+                home
             );
 
             turtle.updateAllAttachedPeripherals(peripherals);
@@ -242,6 +246,7 @@ export class Turtle {
     #location: Location | null;
     #direction: Direction | null;
     #peripherals: Peripherals;
+    #home: Location | null;
     #error: string | null = null;
 
     // Private properties
@@ -264,6 +269,7 @@ export class Turtle {
         location: Location | null,
         direction: Direction | null,
         peripherals: Peripherals,
+        home: Location | null,
         ws: WebSocket,
         eventEmitter: EventEmitter
     ) {
@@ -279,6 +285,7 @@ export class Turtle {
         this.#location = location;
         this.#direction = direction;
         this.#peripherals = peripherals;
+        this.#home = home;
 
         this.ws = ws;
         this.turtleEventEmitter = eventEmitter;
@@ -585,6 +592,23 @@ export class Turtle {
                 peripherals: this.peripherals,
             },
         });
+    }
+
+    public get home() {
+        return this.#home;
+    }
+
+    public set home(home: Location | null) {
+        this.#home = home;
+
+        globalEventEmitter.emit('tupdate', {
+            id: this.id,
+            serverId: this.serverId,
+            data: {
+                home: this.home,
+            },
+        });
+        updateTurtleHome(this.serverId, this.id, this.home);
     }
 
     /**

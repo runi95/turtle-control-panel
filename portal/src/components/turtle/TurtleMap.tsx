@@ -222,6 +222,17 @@ const TurtleMap = (props: TurtleMapProps) => {
                 //     }
                 // }
 
+                // Draw home
+                const home = turtle.home;
+                if (home !== null) {
+                    ctx.beginPath();
+                    ctx.fillStyle = 'black';
+                    const posX = (home.x - turtle.location.x) * spriteSize + centerX;
+                    const posY = (home.z - turtle.location.z) * spriteSize + centerY;
+                    ctx.arc(posX, posY, circleSizeMul * spriteSize, 0, 2 * Math.PI, false);
+                    ctx.fill();
+                }
+
                 // Draw current turtle
                 ctx.beginPath();
                 ctx.fillStyle = 'yellow';
@@ -537,6 +548,23 @@ const TurtleMap = (props: TurtleMapProps) => {
                                 onClick={() => setIsCreatingArea(true)}
                             >
                                 New Area
+                            </Button>
+                            <Button
+                                variant='outline-secondary'
+                                size='sm'
+                                disabled={!turtle?.location}
+                                onClick={() =>
+                                    action({
+                                        type: 'ACTION',
+                                        action: 'set-home',
+                                        data: {
+                                            serverId,
+                                            id,
+                                        },
+                                    })
+                                }
+                            >
+                                Set Home
                             </Button>
                         </div>
                     )}
