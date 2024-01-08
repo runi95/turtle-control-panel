@@ -1893,6 +1893,10 @@ export class Turtle {
         this.peripherals = newPeripherals;
     }
 
+    async sleep(seconds: number): Promise<void> {
+        return this.#exec(`sleep(${seconds})`);
+    }
+
     #exec<R>(f: string): Promise<R> {
         return this.#execRaw(`return ${f}`);
     }

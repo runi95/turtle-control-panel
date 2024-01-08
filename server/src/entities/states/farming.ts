@@ -25,6 +25,7 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
     private solution: Node | null = null;
     private remainingAreaIndexes: number[] = [];
     private noop: number = 0;
+    private goToHome: Location | null = null;
 
     constructor(turtle: Turtle, data: Omit<FarmingStateData, 'id'>) {
         super(turtle);
@@ -41,6 +42,106 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
         if (this.turtle.location === null) {
             this.turtle.error = 'Unable to farm without knowing turtle location';
             return;
+        }
+
+        if (this.goToHome !== null) {
+            const {x, y, z} = this.turtle.location;
+            const home = this.goToHome;
+            if (home.x === x && home.y === y && home.z === z) {
+                this.solution = null;
+
+                // Ensure we have access to peripherals
+                await this.turtle.sleep(0.1);
+
+                if (!Object.values(this.turtle.peripherals).some(({types}) => {
+                    if (types.includes('inventory')) {
+                        return true;
+                    }
+
+                    return false;
+                })) {
+                    this.turtle.error = 'No inventory at home to refuel from / empty into';
+                    return; // Error
+                }
+
+                for (let slot = 1; slot < 27; slot++) {
+                    const item = this.turtle.inventory[slot];
+                    if (item) {
+                        const inventories = Object.entries(this.turtle.peripherals).filter(([side, {types, data}]) => {
+                            if (types.includes('inventory')) {
+                                return true;
+                            }
+        
+                            return false;
+                        });
+
+                        const bestMatchingInventory = inventories.find(([side, {types, data}]) => {
+                            const content = (data as {content: {name: string}[]}).content;
+                            if (content === undefined) {
+                                return false;
+                            }
+    
+                            return content.some(({name}) => name === item?.name);
+                        }) ?? inventories[0];
+                        const [bestMatchingSide] = bestMatchingInventory;
+                        await this.turtle.select(slot);
+                        switch (bestMatchingSide) {
+                            case 'front':
+                                await this.turtle.drop();
+                                break;
+                            case 'top':
+                                await this.turtle.dropUp();
+                                break;
+                            case 'bottom':
+                                await this.turtle.dropDown();
+                                break;
+                            case 'left':
+                                await this.turtle.turnLeft();
+                                await this.turtle.drop();
+                                break;
+                            case 'right':
+                                await this.turtle.turnRight();
+                                await this.turtle.drop();
+                                break;
+                            case 'back':
+                                await this.turtle.turnLeft();
+                                await this.turtle.turnLeft();
+                                await this.turtle.drop();
+                                break;
+                        }
+                    }
+                }
+
+                this.goToHome = null;
+                return; // Yield
+            }
+
+            if (this.solution !== null) {
+                const [didMoveToNode, failedMoveMessage] = await this.moveToNode(this.solution);
+                if (didMoveToNode) {
+                    this.solution = this.solution.parent;    
+                    return; // Yield
+                } else {
+                    switch (failedMoveMessage) {
+                        case 'Movement obstructed':
+                            this.solution = null;
+                            return; // Yield
+                        case 'Out of fuel':
+                        case 'Movement failed':
+                        case 'Too low to move':
+                        case 'Too high to move':
+                        case 'Cannot leave the world':
+                        case 'Cannot leave loaded world':
+                        case 'Cannot pass the world border':
+                        case 'No tool to dig with':
+                        case 'Cannot break block with this tool':
+                        case 'Turtle location is null':
+                        default:
+                            this.turtle.error = failedMoveMessage;
+                            return; // Error
+                    }
+                }
+            }
         }
 
         if (this.turtle.selectedSlot !== 1) {
@@ -131,13 +232,27 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
             const farmingBlockToFarmingDetails = blockToFarmingDetailsMapObject[block.name];
             if (farmingBlockToFarmingDetails) {
                 if (!this.hasSpaceForItem(farmingBlockToFarmingDetails.harvest)) {
-                    this.turtle.error = 'Inventory is full';
+                    const home = this.turtle.home;
+                    if (home !== null) {
+                        this.goToHome = home;
+                        this.isInFarmingArea = false;
+                        const solution = await this.algorithm.search(new Point(x, y, z), [new Point(home.x, home.y, home.z)]);
+                        if (solution === undefined) {
+                            this.turtle.error = 'Stuck; unable to reach home';
+                            return; // Error
+                        }
+                        this.solution = solution;
+                    } else {
+                        this.turtle.error = 'Inventory is full';
+                    }
                     return; // Error
                 }
 
                 if (block.state.age === farmingBlockToFarmingDetails.maxAge) {
                     await this.farmBlock(farmingBlockToFarmingDetails.seed);
                     this.remainingAreaIndexes.splice(farmlandIndexOfBlock, 1);
+                } else {
+                    await this.turtle.sleep(1);
                 }
 
                 this.noop = 0;
