@@ -139,12 +139,14 @@ local function main()
 end
 
 local function wrappedMain()
-    local ok, errorMessage = pcall(main)
+    while true do
+        local ok, errorMessage = pcall(main)
 
-    pcall(ws and ws.close or function()end)
+        pcall(ws and ws.close or function()end)
 
-    if not ok then
-        printError(errorMessage)
+        if not ok then
+            printError(errorMessage)
+        end
     end
 end
 
