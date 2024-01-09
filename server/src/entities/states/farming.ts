@@ -67,22 +67,49 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
                 for (let slot = 1; slot < 27; slot++) {
                     const item = this.turtle.inventory[slot];
                     if (item) {
-                        const inventories = Object.entries(this.turtle.peripherals).filter(([side, {types, data}]) => {
+                        const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce((acc, [side, {types, data}]) => {
                             if (types.includes('inventory')) {
-                                return true;
+                                acc.inventories.push([side, {types, data}]);
+                            } else if (types.includes('peripheral_hub')) {
+                                acc.hubs.push([side, {types, data}]);
                             }
         
-                            return false;
-                        });
+                            return acc;
+                        }, {inventories: [] as [string, {data?: unknown; types: string[]}][], hubs: [] as [string, {data?: unknown; types: string[]}][]});
 
-                        const bestMatchingInventory = inventories.find(([side, {types, data}]) => {
+                        const bestMatchingInventory = inventories.find(([side, {data}]) => {
                             const content = (data as {content: {name: string}[]}).content;
                             if (content === undefined) {
                                 return false;
                             }
     
-                            return content.some(({name}) => name === item?.name);
-                        }) ?? inventories[0];
+                            const containsItem = content?.some(({name}) => name === item?.name);
+                            if (!containsItem) return false;
+
+                            switch (side) {
+                                case 'front':
+                                case 'top':
+                                case 'bottom':
+                                case 'left':
+                                case 'right':
+                                case 'back':
+                                    return true;
+                                default:
+                                    return hubs.some(([_, {data}]) => {
+                                        if (!(data as {localName: string})?.localName) return false;
+                                        return (data as {remoteNames: string[]})?.remoteNames?.includes(side);
+                                    });
+                            }
+                        }) ?? inventories.find(([side]) => {
+                            if (side === 'front') return true;
+                            if (side === 'top') return true;
+                            if (side === 'bottom') return true;
+                            if (side === 'left') return true;
+                            if (side === 'right') return true;
+                            if (side === 'back') return true;
+                            return false;
+                        });
+                        if (bestMatchingInventory === undefined) continue;
                         const [bestMatchingSide] = bestMatchingInventory;
                         await this.turtle.select(slot);
                         switch (bestMatchingSide) {
@@ -107,6 +134,18 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
                                 await this.turtle.turnLeft();
                                 await this.turtle.turnLeft();
                                 await this.turtle.drop();
+                                break;
+                            default:
+                                const connectedHub = hubs.find(([_, {data}]) => (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide));
+                                if (connectedHub) {
+                                    const [_, {data}] = connectedHub;
+                                    await this.turtle.usePeripheralWithSide<[number]>(
+                                        bestMatchingSide,
+                                        'pullItems',
+                                        (data as {localName: string}).localName,
+                                        slot,
+                                    );
+                                }
                                 break;
                         }
                     }
