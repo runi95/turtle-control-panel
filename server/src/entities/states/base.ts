@@ -168,7 +168,8 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
         while (solution !== null) {
             const [didMoveToNode, failedMoveMessage] = await this.moveToNode(solution);
             if (didMoveToNode) {
-                solution = solution.parent;    
+                solution = solution.parent;
+                yield;
                 continue;
             } else {
                 switch (failedMoveMessage) {
