@@ -35,6 +35,7 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
             return 'No inventory to empty into';
         }
 
+        let hasEmptiedAnySlot = false;
         for (let slot = 1; slot < 27; slot++) {
             const item = this.turtle.inventory[slot];
             if (item) {
@@ -86,49 +87,72 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
 
                 switch (bestMatchingSide) {
                     case 'front':
-                        await this.turtle.drop();
+                        await (async ()=>{
+                            const [didDrop] = await this.turtle.drop();
+                            if (didDrop) hasEmptiedAnySlot = true;
+                        })();
                         yield;
                         break;
                     case 'top':
-                        await this.turtle.dropUp();
+                        await (async ()=>{
+                            const [didDrop] = await this.turtle.dropUp();
+                            if (didDrop) hasEmptiedAnySlot = true;
+                        })();
                         yield;
                         break;
                     case 'bottom':
-                        await this.turtle.dropDown();
+                        await (async ()=>{
+                            const [didDrop] = await this.turtle.dropDown();
+                            if (didDrop) hasEmptiedAnySlot = true;
+                        })();
                         yield;
                         break;
                     case 'left':
-                        await this.turtle.turnLeft();
-                        await this.turtle.drop();
+                        await (async ()=>{
+                            await this.turtle.turnLeft();
+                            const [didDrop] = await this.turtle.drop();
+                            if (didDrop) hasEmptiedAnySlot = true;
+                        })();
                         yield;
                         break;
                     case 'right':
-                        await this.turtle.turnRight();
-                        await this.turtle.drop();
+                        await (async ()=>{
+                            await this.turtle.turnRight();
+                            const [didDrop] = await this.turtle.drop();
+                            if (didDrop) hasEmptiedAnySlot = true;
+                        })();
                         yield;
                         break;
                     case 'back':
-                        await this.turtle.turnLeft();
-                        await this.turtle.turnLeft();
-                        await this.turtle.drop();
+                        await (async ()=>{
+                            await this.turtle.turnLeft();
+                            await this.turtle.turnLeft();
+                            const [didDrop] = await this.turtle.drop();
+                            if (didDrop) hasEmptiedAnySlot = true;
+                        })();
                         yield;
                         break;
                     default:
                         const connectedHub = hubs.find(([_, {data}]) => (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide));
                         if (connectedHub) {
                             const [_, {data}] = connectedHub;
-                            await this.turtle.usePeripheralWithSide<[number]>(
+                            const [pulledItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
                                 bestMatchingSide,
                                 'pullItems',
                                 (data as {localName: string}).localName,
                                 slot,
                             );
+                            if (pulledItemCount > 0) {
+                                hasEmptiedAnySlot = true;
+                            }
                         }
                         yield;
                         break;
                 }
             }
         }
+
+        if (!hasEmptiedAnySlot) return 'No inventory to empty into';
     }
 
     protected async *goToDestinations(destinations: Point[]): AsyncGenerator<string | undefined> {
