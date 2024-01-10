@@ -32,7 +32,7 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
 
             return false;
         })) {
-            return 'No inventory at home to refuel from / empty into';
+            return 'No inventory to empty into';
         }
 
         for (let slot = 1; slot < 27; slot++) {
