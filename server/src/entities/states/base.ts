@@ -91,21 +91,18 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
                             const [didDrop] = await this.turtle.drop();
                             if (didDrop) hasEmptiedAnySlot = true;
                         })();
-                        yield;
                         break;
                     case 'top':
                         await (async ()=>{
                             const [didDrop] = await this.turtle.dropUp();
                             if (didDrop) hasEmptiedAnySlot = true;
                         })();
-                        yield;
                         break;
                     case 'bottom':
                         await (async ()=>{
                             const [didDrop] = await this.turtle.dropDown();
                             if (didDrop) hasEmptiedAnySlot = true;
                         })();
-                        yield;
                         break;
                     case 'left':
                         await (async ()=>{
@@ -113,7 +110,6 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
                             const [didDrop] = await this.turtle.drop();
                             if (didDrop) hasEmptiedAnySlot = true;
                         })();
-                        yield;
                         break;
                     case 'right':
                         await (async ()=>{
@@ -121,7 +117,6 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
                             const [didDrop] = await this.turtle.drop();
                             if (didDrop) hasEmptiedAnySlot = true;
                         })();
-                        yield;
                         break;
                     case 'back':
                         await (async ()=>{
@@ -130,7 +125,6 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
                             const [didDrop] = await this.turtle.drop();
                             if (didDrop) hasEmptiedAnySlot = true;
                         })();
-                        yield;
                         break;
                     default:
                         const connectedHub = hubs.find(([_, {data}]) => (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide));
@@ -146,9 +140,10 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
                                 hasEmptiedAnySlot = true;
                             }
                         }
-                        yield;
                         break;
                 }
+
+                yield;
             }
         }
 
