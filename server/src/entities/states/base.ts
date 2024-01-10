@@ -32,7 +32,8 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
 
             return false;
         })) {
-            return 'No inventory to empty into';
+            yield 'No inventory to empty into';
+            return; // Error
         }
 
         let hasEmptiedAnySlot = false;
@@ -147,17 +148,24 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
             }
         }
 
-        if (!hasEmptiedAnySlot) return 'No inventory to empty into';
+        if (!hasEmptiedAnySlot) {
+            yield 'No inventory to empty into';
+            return; // Error
+        }
     }
 
     protected async *goToDestinations(destinations: Point[]): AsyncGenerator<string | undefined> {
         const {location} = this.turtle;
-        if (location === null) return 'Missing location';
+        if (location === null) {
+            yield 'Missing location';
+            return; // Error
+        }
 
         const algorithm = new DStarLite(this.turtle.serverId);
         let solution = await algorithm.search(new Point(location.x, location.y, location.z), destinations);
         if (solution === undefined) {
-            return 'Stuck; unable to reach destination';
+            yield 'Stuck; unable to reach destination';
+            return; // Error
         }
 
         while (solution !== null) {
@@ -183,7 +191,7 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
                     case 'Cannot break block with this tool':
                     case 'Turtle location is null':
                     default:
-                        this.turtle.error = failedMoveMessage;
+                        yield failedMoveMessage;
                         return; // Error
                 }
             }
