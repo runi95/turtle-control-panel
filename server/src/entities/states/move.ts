@@ -30,52 +30,20 @@ export class TurtleMoveState extends TurtleBaseState<MovingStateData> {
         this.algorithm = new DStarLite(this.turtle.serverId);
     }
 
-    public async act() {
-        if (this.turtle.location === null) {
-            this.turtle.error = 'Unable to move without knowing turtle location';
-            return;
-        }
-
-        const {x, y, z} = this.turtle.location;
-        if (this.data.x === x && this.data.y === y && this.data.z === z) {
-            this.turtle.state = null;
-            return; // Done
-        }
-
-        if (this.solution === null) {
-            const solution = await this.algorithm.search(
-                new Point(x, y, z),
-                [new Point(this.data.x, this.data.y, this.data.z)]
-            );
-            if (solution === undefined) {
-                this.turtle.error = 'Stuck; unable to reach destination';
-                return; // Error
+    public async *act() {
+        while (true) {
+            for await (const err of this.goToDestinations([new Point(this.data.x, this.data.y, this.data.z)])) {
+                switch (err) {
+                    case 'Movement obstructed':
+                        yield;
+                        break;
+                    case undefined:
+                        return;
+                    default:
+                        this.turtle.error = err;
+                        return;
+                }
             }
-
-            this.solution = solution;
-            return; // Yield
         }
-
-        const [didMoveToNode, failedMoveMessage] = await this.moveToNode(this.solution);
-        if (!didMoveToNode) {
-            switch (failedMoveMessage) {
-                case 'Movement obstructed':
-                        this.solution = null;
-                        return; // Yield
-                case 'Out of fuel':
-                case 'Movement failed':
-                case 'Too low to move':
-                case 'Too high to move':
-                case 'Cannot leave the world':
-                case 'Cannot leave loaded world':
-                case 'Cannot pass the world border':
-                default:
-                    this.turtle.error = failedMoveMessage;
-                    return; // Error
-            }
-            return; // Yield
-        }
-
-        this.solution = this.solution.parent;
     }
 }

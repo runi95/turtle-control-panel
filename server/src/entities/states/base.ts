@@ -1,5 +1,7 @@
 import {Location} from '../../db/turtle.type';
+import DStarLite from '../../dlite';
 import {Node} from '../../dlite/Node';
+import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
 import {TURTLE_STATES} from './helpers';
 
@@ -20,7 +22,153 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
         this.turtle = turtle;
     }
 
-    public abstract act(): Promise<void>;
+    public abstract act(): AsyncIterator<string | undefined>;
+
+    protected async *transferIntoNearbyInventories(): AsyncGenerator<string | undefined> {
+        if (!Object.values(this.turtle.peripherals).some(({types}) => {
+            if (types.includes('inventory')) {
+                return true;
+            }
+
+            return false;
+        })) {
+            return 'No inventory at home to refuel from / empty into';
+        }
+
+        for (let slot = 1; slot < 27; slot++) {
+            const item = this.turtle.inventory[slot];
+            if (item) {
+                const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce((acc, [side, {types, data}]) => {
+                    if (types.includes('inventory')) {
+                        acc.inventories.push([side, {types, data}]);
+                    } else if (types.includes('peripheral_hub')) {
+                        acc.hubs.push([side, {types, data}]);
+                    }
+
+                    return acc;
+                }, {inventories: [] as [string, {data?: unknown; types: string[]}][], hubs: [] as [string, {data?: unknown; types: string[]}][]});
+
+                const bestMatchingInventory = inventories.find(([side, {data}]) => {
+                    const content = (data as {content: {name: string}[]}).content;
+                    if (content === undefined) {
+                        return false;
+                    }
+
+                    const containsItem = content?.some(({name}) => name === item?.name);
+                    if (!containsItem) return false;
+
+                    switch (side) {
+                        case 'front':
+                        case 'top':
+                        case 'bottom':
+                        case 'left':
+                        case 'right':
+                        case 'back':
+                            return true;
+                        default:
+                            return hubs.some(([_, {data}]) => {
+                                if (!(data as {localName: string})?.localName) return false;
+                                return (data as {remoteNames: string[]})?.remoteNames?.includes(side);
+                            });
+                    }
+                }) ?? inventories.find(([side]) => {
+                    if (side === 'front') return true;
+                    if (side === 'top') return true;
+                    if (side === 'bottom') return true;
+                    if (side === 'left') return true;
+                    if (side === 'right') return true;
+                    if (side === 'back') return true;
+                    return false;
+                });
+                if (bestMatchingInventory === undefined) continue;
+                const [bestMatchingSide] = bestMatchingInventory;
+                await this.turtle.select(slot);
+
+                switch (bestMatchingSide) {
+                    case 'front':
+                        await this.turtle.drop();
+                        yield;
+                        break;
+                    case 'top':
+                        await this.turtle.dropUp();
+                        yield;
+                        break;
+                    case 'bottom':
+                        await this.turtle.dropDown();
+                        yield;
+                        break;
+                    case 'left':
+                        await this.turtle.turnLeft();
+                        await this.turtle.drop();
+                        yield;
+                        break;
+                    case 'right':
+                        await this.turtle.turnRight();
+                        await this.turtle.drop();
+                        yield;
+                        break;
+                    case 'back':
+                        await this.turtle.turnLeft();
+                        await this.turtle.turnLeft();
+                        await this.turtle.drop();
+                        yield;
+                        break;
+                    default:
+                        const connectedHub = hubs.find(([_, {data}]) => (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide));
+                        if (connectedHub) {
+                            const [_, {data}] = connectedHub;
+                            await this.turtle.usePeripheralWithSide<[number]>(
+                                bestMatchingSide,
+                                'pullItems',
+                                (data as {localName: string}).localName,
+                                slot,
+                            );
+                        }
+                        yield;
+                        break;
+                }
+            }
+        }
+    }
+
+    protected async *goToDestinations(destinations: Point[]): AsyncGenerator<string | undefined> {
+        const {location} = this.turtle;
+        if (location === null) return 'Missing location';
+
+        const algorithm = new DStarLite(this.turtle.serverId);
+        let solution = await algorithm.search(new Point(location.x, location.y, location.z), destinations);
+        if (solution === undefined) {
+            return 'Stuck; unable to reach destination';
+        }
+
+        while (solution !== null) {
+            const [didMoveToNode, failedMoveMessage] = await this.moveToNode(solution);
+            if (didMoveToNode) {
+                solution = solution.parent;    
+                continue;
+            } else {
+                switch (failedMoveMessage) {
+                    case 'Movement obstructed':
+                        solution = null;
+                        yield;
+                        continue;
+                    case 'Out of fuel':
+                    case 'Movement failed':
+                    case 'Too low to move':
+                    case 'Too high to move':
+                    case 'Cannot leave the world':
+                    case 'Cannot leave loaded world':
+                    case 'Cannot pass the world border':
+                    case 'No tool to dig with':
+                    case 'Cannot break block with this tool':
+                    case 'Turtle location is null':
+                    default:
+                        this.turtle.error = failedMoveMessage;
+                        return; // Error
+                }
+            }
+        }
+    }
 
     protected async moveToNode(s: Node): Promise<[true, undefined] | [false, string]> {
         const {x, y, z} = this.turtle.location as Location;

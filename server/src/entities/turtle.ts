@@ -248,6 +248,7 @@ export class Turtle {
     #peripherals: Peripherals;
     #home: Location | null;
     #error: string | null = null;
+    #actIterator: AsyncIterator<string | undefined> | null = null;
 
     // Private properties
     private readonly ws;
@@ -452,14 +453,15 @@ export class Turtle {
 
     private runActLoop() {
         const cb = async () => {
+            if (this.#actIterator === null) return;
             try {
-                await this.state?.act();
+                const it = await this.#actIterator.next();
+                if (!it.done) {
+                    this.runActLoop();
+                }
             } catch (err) {
                 logger.error(err);
                 this.state = null;
-            }
-            if (this.state !== null) {
-                this.runActLoop();
             }
         };
         this.actTimeout = setTimeout(cb, 0);
@@ -486,9 +488,13 @@ export class Turtle {
         });
         updateTurtleState(this.serverId, this.id, this.state?.data ?? null);
 
-        if (state === null && this.actTimeout !== null) {
-            clearTimeout(this.actTimeout);
+        if (state === null) {
+            this.#actIterator = null;
+            if (this.actTimeout !== null) {
+                clearTimeout(this.actTimeout);
+            }
         } else if (previousStateWasNull) {
+            this.#actIterator = state.act();
             this.runActLoop();
         }
     }

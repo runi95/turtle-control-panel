@@ -55,122 +55,80 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
         })
     }
 
-    public async act() {
-        if (this.turtle.location === null) {
-            this.turtle.error = 'Unable to mine without knowing turtle location';
-            return;
-        }
-
-        if (this.turtle.selectedSlot !== 1) {
-            await this.turtle.select(1); // Ensures proper item stacking
-        }
-
-        if (this.remainingAreaIndexes.length === 0) {
-            this.turtle.state = null;
-            return; // Done!
-        }
-
-        if (!this.isInOrAdjacentToMiningArea) {
-            if (this.checkIfTurtleIsInOrAdjacentToArea()) {
-                this.isInOrAdjacentToMiningArea = true;
+    public async *act() {
+        while (true) {
+            if (this.turtle.location === null) {
+                this.turtle.error = 'Unable to mine without knowing turtle location';
                 return;
             }
-
-            if (this.solution === null) {
-                const {x, y, z} = this.turtle.location;
-                const solution = await this.algorithm.search(new Point(x, y, z), this.area);
-                if (solution === undefined) {
-                    this.turtle.error = 'Stuck; unable to reach destination';
-                    return; // Error
-                }
-
-                this.solution = solution; 
-                return; // Yield
+    
+            if (this.turtle.selectedSlot !== 1) {
+                await this.turtle.select(1); // Ensures proper item stacking
+                yield;
             }
-
-            const [didMoveToNode, failedMoveMessage] = await this.moveToNode(this.solution);
-            if (!didMoveToNode) {
-                switch (failedMoveMessage) {
-                    case 'Movement obstructed':
+    
+            if (this.remainingAreaIndexes.length === 0) {
+                this.turtle.state = null;
+                return; // Done!
+            }
+    
+            if (!this.isInOrAdjacentToMiningArea) {
+                if (this.checkIfTurtleIsInOrAdjacentToArea()) {
+                    this.isInOrAdjacentToMiningArea = true;
+                    yield;
+                }
+    
+                for await (const err of this.goToDestinations(this.area)) {
+                    switch (err) {
+                        case 'Movement obstructed':
+                        case undefined:
+                            yield;
+                            break;
+                        default:
+                            this.turtle.error = err;
+                            return; // Error
+                    }
+    
+                    if (this.checkIfTurtleIsInOrAdjacentToArea()) {
+                        this.isInOrAdjacentToMiningArea = true;
                         this.solution = null;
-                        return; // Yield
-                    case 'Out of fuel':
-                    case 'Movement failed':
-                    case 'Too low to move':
-                    case 'Too high to move':
-                    case 'Cannot leave the world':
-                    case 'Cannot leave loaded world':
-                    case 'Cannot pass the world border':
-                    default:
-                        this.turtle.error = failedMoveMessage;
-                        return; // Error
+                        break;
+                    }
                 }
             }
-
-            this.solution = this.solution.parent;
-            if (this.checkIfTurtleIsInOrAdjacentToArea()) {
-                this.isInOrAdjacentToMiningArea = true;
-                this.solution = null;
-            }
-
-            return; // Yield
-        }
-
-        const {x, y, z} = this.turtle.location;
-        if (this.solution === null) {
+    
+            const {x, y, z} = this.turtle.location;
             const areaIndexOfTurtle = this.remainingAreaIndexes.findIndex((i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z);
             if (areaIndexOfTurtle > -1) {
                 this.remainingAreaIndexes.splice(areaIndexOfTurtle, 1);
             }
-
-            const solution = await this.algorithm.search(
-                new Point(x, y, z),
-                this.remainingAreaIndexes.map((i) => this.area[i])
-            );
-            if (solution === undefined) {
-                this.turtle.error = 'Stuck; unable to reach destination';
-                return; // Error
-            }
-
-            this.solution = solution;
-            return; // Yield
-        }
-
-        const [didMoveToNode, failedMoveMessage] = await this.moveToNode(this.solution);
-        if (!didMoveToNode) {
-            switch (failedMoveMessage) {
-                case 'Movement obstructed':
-                    this.solution = null;
-                    return; // Yield
-                case 'Cannot break unbreakable block':
+    
+            for await (const err of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]))) {
+                if (err === 'Cannot break unbreakable block') {
                     const areaIndexOfNode = this.remainingAreaIndexes.findIndex((i) => this.area[i].x === this.solution?.point?.x && this.area[i].y === this.solution?.point?.y && this.area[i].z === this.solution?.point?.z);
                     if (areaIndexOfNode > -1) {
                         this.remainingAreaIndexes.splice(areaIndexOfNode, 1);
                     }
-                    return; // Yield
-                case 'Out of fuel':
-                case 'Movement failed':
-                case 'Too low to move':
-                case 'Too high to move':
-                case 'Cannot leave the world':
-                case 'Cannot leave loaded world':
-                case 'Cannot pass the world border':
-                case 'No tool to dig with':
-                case 'Cannot break block with this tool':
-                case 'Turtle location is null':
-                default:
-                    this.turtle.error = failedMoveMessage;
-                    return; // Error
+    
+                    break;
+                }
+    
+                switch (err) {
+                    case 'Movement obstructed':
+                    case undefined:
+                        yield;
+                        break;
+                    default:
+                        this.turtle.error = err;
+                        return; // Error
+                }
+    
+                if (this.checkIfTurtleIsInOrAdjacentToArea()) {
+                    this.isInOrAdjacentToMiningArea = true;
+                    this.solution = null;
+                    break;
+                }
             }
-        }
-
-        this.solution = this.solution.parent;
-        if (
-            this.remainingAreaIndexes.findIndex(
-                (i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z
-            )
-        ) {
-            this.solution = null;
         }
     }
 

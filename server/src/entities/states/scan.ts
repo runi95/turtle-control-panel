@@ -21,7 +21,7 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
         super(turtle);
     }
 
-    public async act() {
+    public async *act() {
         if (this.turtle.location === null) {
             this.turtle.error = 'Unable to scan without knowing turtle location';
             return;
@@ -33,6 +33,8 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
             return;
         }
 
+        yield;
+
         const [scannedBlocks, scanMessage] = await this.turtle.usePeripheralWithName<
             [(Block & {x: number; y: number; z: number})[], string]
         >('geoScanner', 'scan', '16');
@@ -40,6 +42,8 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
             this.turtle.error = scanMessage;
             return;
         }
+
+        yield;
 
         const {x, y, z} = this.turtle.location;
         const blocks = scannedBlocks
