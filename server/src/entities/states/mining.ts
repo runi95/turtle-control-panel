@@ -58,8 +58,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
     public async *act() {
         while (true) {
             if (this.turtle.location === null) {
-                this.turtle.error = 'Unable to mine without knowing turtle location';
-                return;
+                throw new Error('Unable to mine without knowing turtle location');
             }
     
             if (this.turtle.selectedSlot !== 1) {

@@ -94,8 +94,7 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
             if (farmlandIndexOfBlock > -1) {
                 const block = await this.turtle.inspectDown();
                 if (block === undefined) {
-                    this.turtle.error = 'No turtle location set';
-                    return; // Error
+                    throw new Error('No turtle location set');
                 }
     
                 if (block === null) {
@@ -147,19 +146,15 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
                                 await this.turtle.sleep(1);
                                 yield;
 
-                                for await (const err of this.transferIntoNearbyInventories()) {
-                                    switch (err) {
-                                        case undefined:
-                                            yield;
-                                            break;
-                                        default:
-                                            this.turtle.error = err;
-                                            return;
+                                try {
+                                    for await (const _ of this.transferIntoNearbyInventories()) {
+                                        yield;
                                     }
+                                } catch (err) {
+                                    throw err;
                                 }
                             } else {
-                                this.turtle.error = 'Inventory is full';
-                                return; // Error
+                                throw new Error('Inventory is full');
                             }
                         }
     
