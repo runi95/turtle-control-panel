@@ -6,6 +6,7 @@ import {blockToFarmingDetailsMapObject, farmingSeedNames} from '../../helpers/fa
 import {Turtle} from '../turtle';
 import {TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
+import logger from '../../logger/server';
 
 export interface FarmingStateData {
     readonly id: TURTLE_STATES;
@@ -37,8 +38,7 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
     public async *act() {
         while (true) {
             if (this.turtle.location === null) {
-                this.turtle.error = 'Unable to farm without knowing turtle location';
-                return; // Error
+                throw new Error('Unable to farm without knowing turtle location');
             }
     
             if (this.turtle.selectedSlot !== 1) {
@@ -50,12 +50,10 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
             if (areaLength > 1 && this.noop > areaLength) {
                 const didSelect = await this.selectAnySeedInInventory();
                 if (!didSelect) {
-                    this.turtle.error = 'No seeds in inventory';
+                    throw new Error('No seeds in inventory');
                 } else {
-                    this.turtle.error = 'Nothing to farm in area';
+                    throw new Error('Nothing to farm in area');
                 }
-    
-                return; // Error
             }
     
             // Get to farming area
@@ -64,15 +62,20 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
                 if (this.area.some(({x: areaX, y: areaY, z: areaZ}) => areaX === x && areaY === y && areaZ === z)) {
                     this.isInFarmingArea = true;
                 } else {
-                    for await (const err of this.goToDestinations(this.area)) {
+                    try {
+                        for await (const _ of this.goToDestinations(this.area)) {
+                            yield;
+                        }
+                    } catch (err) {
                         switch (err) {
                             case 'Movement obstructed':
-                            case undefined:
                                 yield;
-                                break;
                             default:
-                                this.turtle.error = err;
-                                return; // Error
+                                if (typeof err === "string") {
+                                    throw new Error(err);
+                                } else {
+                                    throw err;
+                                }
                         }
                     }
                 }
@@ -123,15 +126,20 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
                             const home = this.turtle.home;
                             if (home !== null) {
                                 this.isInFarmingArea = false;
-                                for await (const err of this.goToDestinations([new Point(home.x, home.y, home.z)])) {
+                                try {
+                                    for await (const _ of this.goToDestinations([new Point(home.x, home.y, home.z)])) {
+                                        yield;
+                                    }
+                                } catch (err) {
                                     switch (err) {
                                         case 'Movement obstructed':
-                                        case undefined:
                                             yield;
-                                            break;
                                         default:
-                                            this.turtle.error = err;
-                                            return;
+                                            if (typeof err === "string") {
+                                                throw new Error(err);
+                                            } else {
+                                                throw err;
+                                            }
                                     }
                                 }
 
@@ -168,15 +176,20 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
             }
     
             if (this.solution === null) {
-                for await (const err of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]))) {
+                try {
+                    for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]))) {
+                        yield;
+                    }
+                } catch (err) {
                     switch (err) {
                         case 'Movement obstructed':
-                        case undefined:
                             yield;
-                            break;
                         default:
-                            this.turtle.error = err;
-                            return;
+                            if (typeof err === "string") {
+                                throw new Error(err);
+                            } else {
+                                throw err;
+                            }
                     }
                 }
             }

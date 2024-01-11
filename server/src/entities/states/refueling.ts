@@ -39,6 +39,6 @@ export class TurtleRefuelingState extends TurtleBaseState<RefuelingStateData> {
         }
 
         // Failed to refuel, request help
-        this.turtle.error = 'Out of fuel';
+        throw new Error('Out of fuel');
     }
 }

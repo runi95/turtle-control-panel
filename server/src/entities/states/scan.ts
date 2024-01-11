@@ -23,14 +23,12 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
 
     public async *act() {
         if (this.turtle.location === null) {
-            this.turtle.error = 'Unable to scan without knowing turtle location';
-            return;
+            throw new Error('Unable to scan without knowing turtle location');
         }
 
         const [hasGeoScanner] = await this.turtle.hasPeripheralWithName('geoScanner');
         if (!hasGeoScanner) {
-            this.turtle.error = 'No Geo Scanner to scan with (requires Advanced Peripherals mod)';
-            return;
+            throw new Error('No Geo Scanner to scan with (requires Advanced Peripherals mod)');
         }
 
         yield;
@@ -39,8 +37,7 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
             [(Block & {x: number; y: number; z: number})[], string]
         >('geoScanner', 'scan', '16');
         if (scannedBlocks === null) {
-            this.turtle.error = scanMessage;
-            return;
+            throw new Error(scanMessage);
         }
 
         yield;
@@ -60,7 +57,5 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
             serverId: this.turtle.serverId,
             blocks,
         });
-
-        this.turtle.state = null;
     }
 }

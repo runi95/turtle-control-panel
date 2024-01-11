@@ -32,16 +32,20 @@ export class TurtleMoveState extends TurtleBaseState<MovingStateData> {
 
     public async *act() {
         while (true) {
-            for await (const err of this.goToDestinations([new Point(this.data.x, this.data.y, this.data.z)])) {
+            try {
+                for await (const _ of this.goToDestinations([new Point(this.data.x, this.data.y, this.data.z)])) {
+                    yield;
+                }
+            } catch (err) {
                 switch (err) {
                     case 'Movement obstructed':
                         yield;
-                        break;
-                    case undefined:
-                        return;
                     default:
-                        this.turtle.error = err;
-                        return;
+                        if (typeof err === "string") {
+                            throw new Error(err);
+                        } else {
+                            throw err;
+                        }
                 }
             }
         }

@@ -459,9 +459,15 @@ export class Turtle {
                 if (!it.done) {
                     this.runActLoop();
                 }
-            } catch (err) {
-                logger.error(err);
-                this.state = null;
+            } catch (err: unknown) {
+                if (typeof err === "string") {
+                    this.error = err;
+                } else if (err instanceof Error) {
+                    this.error = err.message;
+                } else {
+                    logger.error(err);
+                    this.state = null;
+                }
             }
         };
         this.actTimeout = setTimeout(cb, 0);

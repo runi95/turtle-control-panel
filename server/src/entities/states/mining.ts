@@ -78,21 +78,26 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                     yield;
                 }
     
-                for await (const err of this.goToDestinations(this.area)) {
+                try {
+                    for await (const _ of this.goToDestinations(this.area)) {
+                        yield;
+
+                        if (this.checkIfTurtleIsInOrAdjacentToArea()) {
+                            this.isInOrAdjacentToMiningArea = true;
+                            this.solution = null;
+                            break;
+                        }
+                    }
+                } catch (err) {
                     switch (err) {
                         case 'Movement obstructed':
-                        case undefined:
                             yield;
-                            break;
                         default:
-                            this.turtle.error = err;
-                            return; // Error
-                    }
-    
-                    if (this.checkIfTurtleIsInOrAdjacentToArea()) {
-                        this.isInOrAdjacentToMiningArea = true;
-                        this.solution = null;
-                        break;
+                            if (typeof err === "string") {
+                                throw new Error(err);
+                            } else {
+                                throw err;
+                            }
                     }
                 }
             }
@@ -103,7 +108,17 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                 this.remainingAreaIndexes.splice(areaIndexOfTurtle, 1);
             }
     
-            for await (const err of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]))) {
+            try {
+                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]))) {
+                    yield;
+
+                    if (this.checkIfTurtleIsInOrAdjacentToArea()) {
+                        this.isInOrAdjacentToMiningArea = true;
+                        this.solution = null;
+                        break;
+                    }
+                }
+            } catch (err) {
                 if (err === 'Cannot break unbreakable block') {
                     const areaIndexOfNode = this.remainingAreaIndexes.findIndex((i) => this.area[i].x === this.solution?.point?.x && this.area[i].y === this.solution?.point?.y && this.area[i].z === this.solution?.point?.z);
                     if (areaIndexOfNode > -1) {
@@ -112,21 +127,16 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
     
                     break;
                 }
-    
+
                 switch (err) {
                     case 'Movement obstructed':
-                    case undefined:
                         yield;
-                        break;
                     default:
-                        this.turtle.error = err;
-                        return; // Error
-                }
-    
-                if (this.checkIfTurtleIsInOrAdjacentToArea()) {
-                    this.isInOrAdjacentToMiningArea = true;
-                    this.solution = null;
-                    break;
+                        if (typeof err === "string") {
+                            throw new Error(err);
+                        } else {
+                            throw err;
+                        }
                 }
             }
         }
