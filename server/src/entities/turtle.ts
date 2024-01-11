@@ -531,10 +531,6 @@ export class Turtle {
     public set error(error: string | null) {
         this.#error = error;
 
-        if (error !== null) {
-            this.state = null;
-        }
-
         globalEventEmitter.emit('tupdate', {
             id: this.id,
             serverId: this.serverId,
