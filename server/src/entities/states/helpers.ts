@@ -1,11 +1,9 @@
-import {Turtle} from '../turtle';
-import {StateData, TurtleBaseState} from './base';
-import {FarmingStateData, TurtleFarmingState} from './farming';
+import {FarmingStateData} from './farming';
 import {GoHomeStateData} from './gohome';
-import {MiningStateData, TurtleMiningState} from './mining';
-import {MovingStateData, TurtleMoveState} from './move';
-import {RefuelingStateData, TurtleRefuelingState} from './refueling';
-import {ScanningStateData, TurtleScanState} from './scan';
+import {MiningStateData} from './mining';
+import {MovingStateData} from './move';
+import {RefuelingStateData} from './refueling';
+import {ScanningStateData} from './scan';
 
 export enum TURTLE_STATES {
     REFUELING = 1,
