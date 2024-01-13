@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import {Col, Row, Button, Modal} from 'react-bootstrap';
-import FarmModal from './FarmModal';
-import MineModal from './MineModal';
+import FarmModal from './farm/FarmModal';
+import MineModal from './mine/MineModal';
 import {useState} from 'react';
 import './Inventory.css';
 import {Action} from '../../App';
