@@ -24,6 +24,7 @@ import {TurtleMiningState} from './entities/states/mining';
 import {TurtleScanState} from './entities/states/scan';
 import Database from 'better-sqlite3';
 import {Area} from './db/area.type';
+import {TurtleGoHomeState} from './entities/states/gohome';
 
 logger.info('Starting server...');
 
@@ -315,6 +316,9 @@ server
                                             ...turtle.location
                                         };
                                     }
+                                    break;
+                                case 'go-home':
+                                    turtle.state = new TurtleGoHomeState(turtle);
                                     break;
                                 default:
                                     logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);

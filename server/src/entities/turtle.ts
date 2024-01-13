@@ -35,6 +35,7 @@ import {MiningStateData, TurtleMiningState} from './states/mining';
 import {TurtleRefuelingState} from './states/refueling';
 import {TurtleScanState} from './states/scan';
 import {EventEmitter} from 'events';
+import {TurtleGoHomeState} from './states/gohome';
 
 export interface Peripherals {
     [key: string]: {
@@ -521,6 +522,8 @@ export class Turtle {
                 return new TurtleMiningState(this, data as MiningStateData);
             case TURTLE_STATES.SCANNING:
                 return new TurtleScanState(this);
+            case TURTLE_STATES.GO_HOME:
+                return new TurtleGoHomeState(this);
             default:
                 return null;
         }

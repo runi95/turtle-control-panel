@@ -194,6 +194,18 @@ function Inventory(props: InventoryProps) {
                                 Refuel
                             </Button>
                         </div>
+                        <div>
+                            <Button
+                                onClick={() =>
+                                    props.action({type: 'ACTION', action: 'go-home', data: {serverId, id: turtle.id}})
+                                }
+                                variant='outline-info'
+                                size='sm'
+                                disabled={!turtle.isOnline}
+                            >
+                                Go To Home
+                            </Button>
+                        </div>
                     </div>
                 </Row>
                 <br />
