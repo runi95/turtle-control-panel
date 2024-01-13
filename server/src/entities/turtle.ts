@@ -457,10 +457,13 @@ export class Turtle {
             if (this.#actIterator === null) return;
             try {
                 const it = await this.#actIterator.next();
-                if (!it.done) {
+                if (it.done) {
+                    this.state = null;
+                } else {
                     this.runActLoop();
-                    this.actTimeout = null;
                 }
+
+                this.actTimeout = null;
             } catch (err: unknown) {
                 this.actTimeout = null;
                 if (typeof err === "string") {
