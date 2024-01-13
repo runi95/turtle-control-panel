@@ -7884,4 +7884,124 @@ export default {
             b: 119,
         },
     },
+    'advancedperipherals:environment_detector': {
+        index: 3649,
+    },
+    'advancedperipherals:chat_box': {
+        index: 3650,
+    },
+    'advancedperipherals:player_detector': {
+        index: 3651,
+    },
+    'advancedperipherals:me_bridge': {
+        index: 3652,
+    },
+    'advancedperipherals:rs_bridge': {
+        index: 3653,
+    },
+    'advancedperipherals:energy_detector': {
+        index: 3654,
+    },
+    'advancedperipherals:peripheral_casing': {
+        index: 3655,
+    },
+    'advancedperipherals:inventory_manager': {
+        index: 3656,
+    },
+    'advancedperipherals:redstone_integrator': {
+        index: 3657,
+    },
+    'advancedperipherals:block_reader': {
+        index: 3664,
+    },
+    'advancedperipherals:geo_scanner': {
+        index: 3665,
+    },
+    'advancedperipherals:colony_integrator': {
+        index: 3666,
+    },
+    'advancedperipherals:nbt_storage': {
+        index: 3667,
+    },
+    'advancedperipherals:chunk_controller': {
+        index: 3668,
+    },
+    'advancedperipherals:computer_tool': {
+        index: 3669,
+    },
+    'advancedperipherals:memory_card': {
+        index: 3670,
+    },
+    'advancedperipherals:end_automata_core': {
+        index: 3658,
+    },
+    'advancedperipherals:husbandry_automata_core': {
+        index: 3659,
+    },
+    'advancedperipherals:weak_automata_core': {
+        index: 3660,
+    },
+    'advancedperipherals:overpowered_weak_automata_core': {
+        index: 3661,
+    },
+    'advancedperipherals:overpowered_end_automata_core': {
+        index: 3662,
+    },
+    'advancedperipherals:overpowered_husbandry_automata_core': {
+        index: 3663,
+    },
+    'computercraft:pocket_computer_normal': {
+        index: 3715,
+    },
+    'computercraft:pocket_computer_advanced': {
+        index: 3716,
+    },
+    'computercraft:computer_normal': {
+        index: 3713,
+    },
+    'computercraft:computer_advanced': {
+        index: 3714,
+    },
+    'computercraft:wireless_modem_normal': {
+        index: 3717,
+    },
+    'computercraft:wireless_modem_advanced': {
+        index: 3718,
+    },
+    'computercraft:cable': {
+        index: 3719,
+    },
+    'computercraft:wired_modem': {
+        index: 3720,
+    },
+    'computercraft:wired_modem_full': {
+        index: 3721,
+    },
+    'computercraft:monitor_normal': {
+        index: 3722,
+    },
+    'computercraft:monitor_advanced': {
+        index: 3723,
+    },
+    'computercraft:speaker': {
+        index: 3724,
+    },
+    'computercraft:printer': {
+        index: 3725,
+    },
+    'computercraft:printed_page': {
+        index: 3726,
+    },
+    'computercraft:printed_pages': {
+        index: 3727,
+    },
+    'computercraft:printed_book': {
+        index: 3728,
+    },
+    'computercraft:disk_drive': {
+        index: 3729,
+    },
+    'computercraft:disk': {
+        index: 3730,
+    },
 } as Record<string, Sprite>;
