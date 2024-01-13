@@ -140,25 +140,4 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             }
         }
     }
-
-    // public static async mineInDirection(turtle: Turtle, mineTarget: 'Up' | 'Down' | 'North' | 'East' | 'South' | 'West') {
-    //     switch (mineTarget) {
-    //         case 'Up':
-    //             await turtle.digUp();
-    //             await turtle.suckUp();
-    //             break;
-    //         case 'Down':
-    //             await turtle.digDown();
-    //             await turtle.suckDown();
-    //             break;
-    //         case 'North':
-    //         case 'East':
-    //         case 'South':
-    //         case 'West':
-    //             await turtle.turnToDirection({North: 2, East: 3, South: 4, West: 1}[mineTarget]);
-    //             await turtle.dig();
-    //             await turtle.suck();
-    //             break;
-    //     }
-    // }
 }
