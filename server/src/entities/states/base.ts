@@ -1,5 +1,5 @@
 import {Location} from '../../db/turtle.type';
-import DStarLite from '../../dlite';
+import DStarLite, {IsBlockMineableFunc} from '../../dlite';
 import {Node} from '../../dlite/Node';
 import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
@@ -152,13 +152,15 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
         }
     }
 
-    protected async *goToDestinations(destinations: Point[]): AsyncGenerator<void> {
+    protected async *goToDestinations(destinations: Point[], isBlockMineableFunc?: IsBlockMineableFunc): AsyncGenerator<void> {
         const {location} = this.turtle;
         if (location === null) {
             throw new Error('Missing location');
         }
 
-        const algorithm = new DStarLite(this.turtle.serverId);
+        const algorithm = new DStarLite(this.turtle.serverId, {
+            isBlockMineableFunc
+        });
         let solution = await algorithm.search(new Point(location.x, location.y, location.z), destinations);
         if (solution === undefined) {
             throw new Error('Stuck; unable to reach destination');

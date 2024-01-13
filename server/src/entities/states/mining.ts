@@ -1,8 +1,6 @@
 import {getArea} from '../../db';
 import {Location} from '../../db/turtle.type';
-import DStarLite from '../../dlite';
 import {Node} from '../../dlite/Node';
-import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
 import {TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
@@ -20,7 +18,6 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
 
     private readonly area: Location[];
     private readonly mineableBlockMap = new Map<string, boolean>();
-    private readonly algorithm: DStarLite;
     private isInOrAdjacentToMiningArea: boolean = false;
     private solution: Node | null = null;
     private remainingAreaIndexes: number[] = [];
@@ -38,10 +35,6 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
         for (const loc of this.area) {
             this.mineableBlockMap.set(`${loc.x},${loc.y},${loc.z}`, true);
         }
-
-        this.algorithm = new DStarLite(this.turtle.serverId, {
-            isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`)
-        });
     }
 
     private checkIfTurtleIsInOrAdjacentToArea(): boolean {
@@ -108,7 +101,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             }
     
             try {
-                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]))) {
+                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]), (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`))) {
                     yield;
 
                     if (this.checkIfTurtleIsInOrAdjacentToArea()) {
