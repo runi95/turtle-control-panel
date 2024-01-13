@@ -60,7 +60,6 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             }
     
             if (this.remainingAreaIndexes.length === 0) {
-                this.turtle.state = null;
                 return; // Done!
             }
     
