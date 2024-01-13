@@ -31,6 +31,7 @@ export class TurtleGoHomeState extends TurtleBaseState<GoHomeStateData> {
                 for await (const _ of this.goToDestinations([new Point(home.x, home.y, home.z)])) {
                     yield;
                 }
+                return;
             } catch (err) {
                 switch (err) {
                     case 'Movement obstructed':

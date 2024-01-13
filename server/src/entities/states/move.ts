@@ -36,6 +36,7 @@ export class TurtleMoveState extends TurtleBaseState<MovingStateData> {
                 for await (const _ of this.goToDestinations([new Point(this.data.x, this.data.y, this.data.z)])) {
                     yield;
                 }
+                return;
             } catch (err) {
                 switch (err) {
                     case 'Movement obstructed':
