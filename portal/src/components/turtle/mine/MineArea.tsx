@@ -1,22 +1,28 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {Form, InputGroup} from 'react-bootstrap';
 import {useAreas} from '../../../api/UseAreas';
 import {useParams} from 'react-router-dom';
 
-function MineArea() {
+interface MineAreaProps {
+    formData: {
+        [key: string]: unknown;
+    };
+    setFormData: (formData: {mineTarget: string}) => void;
+}
+
+function MineArea(props: MineAreaProps) {
     const {serverId} = useParams() as {serverId: string};
-    const [state, setState] = useState<{
-        isFormValidated: boolean;
-        selectedArea: string;
-        selectedYLevel: number | undefined;
-        selectedDirection: string;
-    }>({
-        isFormValidated: false,
-        selectedArea: '',
-        selectedYLevel: undefined,
-        selectedDirection: '',
-    });
+    const {formData, setFormData} = props;
+    const [mineTarget, setMineTarget] = useState('');
     const {data: areas} = useAreas(serverId);
+    useEffect(() => {
+        const formMineTarget = formData?.mineTarget as string | undefined;
+        if (formMineTarget) {
+            setMineTarget(formMineTarget);
+        } else {
+            setMineTarget('');
+        }
+    }, [formData]);
 
     if (areas === undefined) return null;
 
@@ -25,8 +31,8 @@ function MineArea() {
             <Form.Label>Mine area</Form.Label>
             <InputGroup>
                 <Form.Control
-                    value={state.selectedArea}
-                    onChange={(e) => setState({...state, selectedArea: e.target.value})}
+                    value={mineTarget}
+                    onChange={(e) => setFormData({mineTarget: e.target.value})}
                     as='select'
                     required
                 >

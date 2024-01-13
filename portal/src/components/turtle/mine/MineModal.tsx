@@ -14,59 +14,47 @@ export interface MineModalProps {
 
 function MineModal(props: MineModalProps) {
     const {serverId} = useParams() as {serverId: string};
-    const [state, setState] = useState<{
-        isFormValidated: boolean;
-        selectedArea: string;
-        selectedYLevel: number | undefined;
-        selectedDirection: string;
-    }>({
-        isFormValidated: false,
-        selectedArea: '',
-        selectedYLevel: undefined,
-        selectedDirection: '',
-    });
+    const {turtle, action, hideModal} = props;
+    const [isFormValidated, setIsFormValidated] = useState(false);
+    const [formData, setFormData] = useState({} as {[key: string]: unknown});
     const {data: areas} = useAreas(serverId);
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        let selectedArea = state.selectedArea;
-        let selectedYLevel = state.selectedYLevel;
-        let selectedDirection = state.selectedDirection;
         const form = e.currentTarget;
         if (form.checkValidity() === true) {
-            props.action({
+            action({
                 type: 'ACTION',
                 action: 'mine',
-                data: {serverId, id: props.turtle.id, mineTarget: selectedArea},
+                data: {...formData, serverId, id: turtle.id},
             });
-            selectedArea = '';
-            selectedYLevel = undefined;
-            selectedDirection = '';
-            props.hideModal();
+            hideModal();
         } else {
             e.stopPropagation();
         }
 
-        setState({...state, isFormValidated: true, selectedArea, selectedYLevel, selectedDirection});
+        setIsFormValidated(true);
     };
 
     if (areas === undefined) return null;
 
     return (
-        <Form noValidate validated={state.isFormValidated} onSubmit={handleFormSubmit}>
-            <Modal.Header closeButton>
-                <Modal.Title>Mine</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <MineArea />
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant='success' type='submit'>
-                    Start
-                </Button>
-            </Modal.Footer>
-        </Form>
+        <Modal show={true} onHide={() => hideModal()}>
+            <Form noValidate validated={isFormValidated} onSubmit={handleFormSubmit}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Mine</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <MineArea formData={formData} setFormData={setFormData} />
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant='success' type='submit'>
+                        Start
+                    </Button>
+                </Modal.Footer>
+            </Form>
+        </Modal>
     );
 }
 

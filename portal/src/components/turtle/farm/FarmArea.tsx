@@ -1,16 +1,28 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {Form, InputGroup} from 'react-bootstrap';
 import {useAreas} from '../../../api/UseAreas';
 import {useParams} from 'react-router-dom';
 
-function FarmArea() {
-    const {serverId} = useParams() as {serverId: string};
-    const [state, setState] = useState({
-        isFormValidated: false,
-        selectedArea: '',
-    });
+interface FarmAreaProps {
+    formData: {
+        [key: string]: unknown;
+    };
+    setFormData: (formData: {areaId: string}) => void;
+}
 
+function FarmArea(props: FarmAreaProps) {
+    const {serverId} = useParams() as {serverId: string};
+    const {formData, setFormData} = props;
+    const [areaId, setAreaId] = useState('');
     const {data: areas} = useAreas(serverId);
+    useEffect(() => {
+        const formAreaId = formData?.areaId as string | undefined;
+        if (formAreaId) {
+            setAreaId(formAreaId);
+        } else {
+            setAreaId('');
+        }
+    }, [formData]);
 
     if (areas === undefined) return null;
 
@@ -19,8 +31,8 @@ function FarmArea() {
             <Form.Label>Farming area</Form.Label>
             <InputGroup>
                 <Form.Control
-                    value={state.selectedArea}
-                    onChange={(e) => setState({...state, selectedArea: e.target.value})}
+                    value={areaId}
+                    onChange={(e) => setFormData({areaId: e.target.value})}
                     as='select'
                     required
                 >

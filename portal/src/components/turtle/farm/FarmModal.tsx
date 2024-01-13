@@ -15,45 +15,43 @@ export interface FarmModalProps {
 function FarmModal(props: FarmModalProps) {
     const {serverId} = useParams() as {serverId: string};
     const {action, hideModal} = props;
-    const [state, setState] = useState({
-        isFormValidated: false,
-        selectedArea: '',
-    });
+    const [isFormValidated, setIsFormValidated] = useState(false);
+    const [formData, setFormData] = useState({} as {[key: string]: unknown});
 
     const {data: areas} = useAreas(serverId);
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        let selectedArea = state.selectedArea;
         const form = e.currentTarget;
         if (form.checkValidity() === true) {
-            action({type: 'ACTION', action: 'farm', data: {serverId, id: props.turtle.id, areaId: selectedArea}});
-            selectedArea = '';
+            action({type: 'ACTION', action: 'farm', data: {...formData, serverId, id: props.turtle.id}});
             hideModal();
         } else {
             e.stopPropagation();
         }
 
-        setState({...state, isFormValidated: true, selectedArea});
+        setIsFormValidated(true);
     };
 
     if (areas === undefined) return null;
 
     return (
-        <Form noValidate validated={state.isFormValidated} onSubmit={handleFormSubmit}>
-            <Modal.Header closeButton>
-                <Modal.Title>Farm</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <FarmArea />
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant='success' type='submit'>
-                    Start
-                </Button>
-            </Modal.Footer>
-        </Form>
+        <Modal show={true} onHide={() => hideModal()}>
+            <Form noValidate validated={isFormValidated} onSubmit={handleFormSubmit}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Farm</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <FarmArea formData={formData} setFormData={setFormData} />
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant='success' type='submit'>
+                        Start
+                    </Button>
+                </Modal.Footer>
+            </Form>
+        </Modal>
     );
 }
 

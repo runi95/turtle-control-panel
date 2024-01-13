@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import {Col, Row, Button, Modal} from 'react-bootstrap';
+import {Col, Row, Button} from 'react-bootstrap';
 import FarmModal from './farm/FarmModal';
 import MineModal from './mine/MineModal';
 import {useState} from 'react';
@@ -22,32 +22,17 @@ const canvasRadius = 0.5 * canvasSize;
 function Inventory(props: InventoryProps) {
     const {action} = props;
     const {serverId, id} = useParams() as {serverId: string; id: string};
-    const [state, setState] = useState<{isModalShown: boolean; modalState: string | undefined}>({
-        isModalShown: false,
-        modalState: undefined,
-    });
+    const [modalState, setModalState] = useState<'farm' | 'mine' | null>(null);
     const {data: turtle} = useTurtle(serverId, id);
 
     const renderModal = (turtle: Turtle) => {
-        switch (state.modalState) {
+        switch (modalState) {
             case 'farm':
-                return (
-                    <FarmModal
-                        turtle={turtle}
-                        action={action}
-                        hideModal={() => setState({...state, isModalShown: false})}
-                    />
-                );
+                return <FarmModal turtle={turtle} action={action} hideModal={() => setModalState(null)} />;
             case 'mine':
-                return (
-                    <MineModal
-                        turtle={turtle}
-                        action={action}
-                        hideModal={() => setState({...state, isModalShown: false})}
-                    />
-                );
+                return <MineModal turtle={turtle} action={action} hideModal={() => setModalState(null)} />;
             default:
-                return undefined;
+                return null;
         }
     };
 
@@ -62,9 +47,7 @@ function Inventory(props: InventoryProps) {
     return (
         <Row data-bs-theme='light'>
             <Col key='inventory-grid' md='auto'>
-                <Modal show={state.isModalShown} onHide={() => setState({...state, isModalShown: false})}>
-                    {renderModal(turtle)}
-                </Modal>
+                {renderModal(turtle)}
                 <div className='inventory-container'>
                     <InventoryGrid>
                         <ButtonSlot style={{gridColumn: 'span 3'}} key='craft-btn'>
@@ -181,7 +164,7 @@ function Inventory(props: InventoryProps) {
                     <div style={{display: 'flex', gap: 5}}>
                         <div>
                             <Button
-                                onClick={() => setState({...state, isModalShown: true, modalState: 'mine'})}
+                                onClick={() => setModalState('mine')}
                                 variant='outline-info'
                                 size='sm'
                                 disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
@@ -191,7 +174,7 @@ function Inventory(props: InventoryProps) {
                         </div>
                         <div>
                             <Button
-                                onClick={() => setState({...state, isModalShown: true, modalState: 'farm'})}
+                                onClick={() => setModalState('farm')}
                                 variant='outline-info'
                                 size='sm'
                                 disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
