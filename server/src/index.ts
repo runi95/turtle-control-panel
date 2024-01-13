@@ -176,7 +176,6 @@ server
                                 case 'mine':
                                     turtle.state = new TurtleMiningState(turtle, {
                                         areaId: Number(obj.data.mineTarget),
-                                        currentAreaFarmIndex: 0,
                                     });
                                     break;
                                 case 'move':

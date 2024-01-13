@@ -8,7 +8,6 @@ import {TURTLE_STATES} from './helpers';
 export interface MiningStateData {
     readonly id: TURTLE_STATES;
     areaId: number;
-    currentAreaFarmIndex: number;
 }
 
 export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
