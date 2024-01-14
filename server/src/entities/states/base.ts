@@ -3,15 +3,8 @@ import DStarLite, {IsBlockMineableFunc} from '../../dlite';
 import {Node} from '../../dlite/Node';
 import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
-import {TURTLE_STATES} from './helpers';
 
-export type StateData<T> = {
-    [Property in keyof T]: string | number | StateData<T>;
-} & {
-    readonly id: TURTLE_STATES;
-}
-
-export abstract class TurtleBaseState<T extends StateData<T>> {
+export abstract class TurtleBaseState<T> {
     public abstract readonly name: string;
     public abstract data: T;
     public abstract warning: string | null;

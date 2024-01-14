@@ -1,4 +1,3 @@
-import {StateData} from '../entities/states/base';
 import {StateDataTypes} from '../entities/states/helpers';
 
 export enum Direction {
@@ -47,7 +46,7 @@ export interface Turtle {
     selectedSlot: number;
     inventory: Inventory;
     stepsSinceLastRefuel: number;
-    state: StateData<StateDataTypes> | null;
+    state: StateDataTypes | null;
     location: Location;
     direction: Direction;
     home: Location | null;

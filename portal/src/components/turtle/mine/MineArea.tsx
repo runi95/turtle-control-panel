@@ -28,7 +28,6 @@ function MineArea(props: MineAreaProps) {
 
     return (
         <Form.Group className='mb-2'>
-            <Form.Label>Mine area</Form.Label>
             <InputGroup>
                 <Form.Control
                     value={mineTarget}
@@ -37,7 +36,7 @@ function MineArea(props: MineAreaProps) {
                     required
                 >
                     <option value='' key='empty'>
-                        -- select an area to mine --
+                        -- select existing area --
                     </option>
                     {Object.keys(areas).map((key) => (
                         <option key={key} value={areas[key].id}>
