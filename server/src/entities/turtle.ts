@@ -73,7 +73,7 @@ wss.on('connection', (ws, req) => {
         const messageUuid = msg.toString('utf-8', 9, 9 + uuidLength);
         const isFinalMessage = msg[msg.length - 1] === 0x04;
         const str = msg.toString('utf-8', 10 + uuidLength, isFinalMessage ? msg.length - 1 : undefined);
-        if (isFinalMessage && messageIndex === 1) {
+        if (isFinalMessage) {
             const obj = JSON.parse(
                 messageIndex === 1
                     ? str
