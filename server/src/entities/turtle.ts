@@ -27,7 +27,7 @@ import {
 } from '../db';
 import {Block} from '../db/block.type';
 import {Direction, Inventory, ItemDetail, Location} from '../db/turtle.type';
-import {StateData, TurtleBaseState} from './states/base';
+import {TurtleBaseState} from './states/base';
 import {StateDataTypes, TURTLE_STATES} from './states/helpers';
 import {FarmingStateData, TurtleFarmingState} from './states/farming';
 import {MovingStateData, TurtleMoveState} from './states/move';
@@ -267,7 +267,7 @@ export class Turtle {
         selectedSlot: number,
         inventory: Inventory,
         stepsSinceLastRefuel: number,
-        state: StateData<StateDataTypes> | null,
+        state: StateDataTypes | null,
         location: Location | null,
         direction: Direction | null,
         peripherals: Peripherals,
@@ -511,7 +511,7 @@ export class Turtle {
         }
     }
 
-    private getRecoveredState(data: StateData<StateDataTypes> | null): TurtleBaseState<StateDataTypes> | null {
+    private getRecoveredState(data: StateDataTypes | null): TurtleBaseState<StateDataTypes> | null {
         if (data === null) return null;
 
         switch (data.id) {
