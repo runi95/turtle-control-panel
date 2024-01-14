@@ -45,7 +45,6 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
     }
 
     public async *act() {
-        console.log('Starting mining...');
         while (true) {
             if (this.turtle.location === null) {
                 throw new Error('Unable to mine without knowing turtle location');
@@ -62,14 +61,11 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
     
             if (!this.isInOrAdjacentToMiningArea) {
                 if (this.checkIfTurtleIsInOrAdjacentToArea()) {
-                    console.log('Turtle is in or adjacent to area!');
                     this.isInOrAdjacentToMiningArea = true;
                     yield;
                 }
     
                 try {
-                    console.log('To to');
-                    console.log(this.data.area);
                     for await (const _ of this.goToDestinations(this.data.area)) {
                         yield;
 
@@ -96,8 +92,6 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             const {x, y, z} = this.turtle.location;
             const areaIndexOfTurtle = this.remainingAreaIndexes.findIndex((i) => this.data.area[i].x === x && this.data.area[i].y === y && this.data.area[i].z === z);
             if (areaIndexOfTurtle > -1) {
-                console.log(`Mined index: ${areaIndexOfTurtle}`);
-                console.log(`${x}, ${y}, ${z} => ${this.data.area[areaIndexOfTurtle].x}, ${this.data.area[areaIndexOfTurtle].y}, ${this.data.area[areaIndexOfTurtle].z}`);
                 this.remainingAreaIndexes.splice(areaIndexOfTurtle, 1);
             }
     
