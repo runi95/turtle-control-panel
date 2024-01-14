@@ -38,15 +38,15 @@ export class TurtleMoveState extends TurtleBaseState<MovingStateData> {
                 }
                 return;
             } catch (err) {
-                switch (err) {
-                    case 'Movement obstructed':
-                        yield;
-                    default:
-                        if (typeof err === "string") {
-                            throw new Error(err);
-                        } else {
-                            throw err;
-                        }
+                if ((err as Error).message === 'Movement obstructed') {
+                    yield;
+                    continue;
+                }
+
+                if (typeof err === "string") {
+                    throw new Error(err);
+                } else {
+                    throw err;
                 }
             }
         }

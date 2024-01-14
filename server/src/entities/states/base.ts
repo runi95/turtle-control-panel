@@ -173,24 +173,7 @@ export abstract class TurtleBaseState<T extends StateData<T>> {
                 yield;
                 continue;
             } else {
-                switch (failedMoveMessage) {
-                    case 'Movement obstructed':
-                        solution = null;
-                        yield;
-                        continue;
-                    case 'Out of fuel':
-                    case 'Movement failed':
-                    case 'Too low to move':
-                    case 'Too high to move':
-                    case 'Cannot leave the world':
-                    case 'Cannot leave loaded world':
-                    case 'Cannot pass the world border':
-                    case 'No tool to dig with':
-                    case 'Cannot break block with this tool':
-                    case 'Turtle location is null':
-                    default:
-                        throw new Error(failedMoveMessage);
-                }
+                throw new Error(failedMoveMessage);
             }
         }
     }

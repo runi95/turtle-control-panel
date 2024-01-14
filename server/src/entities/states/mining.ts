@@ -79,15 +79,15 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                         }
                     }
                 } catch (err) {
-                    switch (err) {
-                        case 'Movement obstructed':
-                            yield;
-                        default:
-                            if (typeof err === "string") {
-                                throw new Error(err);
-                            } else {
-                                throw err;
-                            }
+                    if ((err as Error).message === 'Movement obstructed') {
+                        yield;
+                        continue;
+                    }
+    
+                    if (typeof err === "string") {
+                        throw new Error(err);
+                    } else {
+                        throw err;
                     }
                 }
             }
@@ -109,7 +109,10 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                     }
                 }
             } catch (err) {
-                if (err === 'Cannot break unbreakable block') {
+                if ((err as Error).message === 'Movement obstructed') {
+                    yield;
+                    continue;
+                } else if (err === 'Cannot break unbreakable block') {
                     const areaIndexOfNode = this.remainingAreaIndexes.findIndex((i) => this.area[i].x === this.solution?.point?.x && this.area[i].y === this.solution?.point?.y && this.area[i].z === this.solution?.point?.z);
                     if (areaIndexOfNode > -1) {
                         this.remainingAreaIndexes.splice(areaIndexOfNode, 1);
@@ -118,15 +121,10 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                     break;
                 }
 
-                switch (err) {
-                    case 'Movement obstructed':
-                        yield;
-                    default:
-                        if (typeof err === "string") {
-                            throw new Error(err);
-                        } else {
-                            throw err;
-                        }
+                if (typeof err === "string") {
+                    throw new Error(err);
+                } else {
+                    throw err;
                 }
             }
         }
