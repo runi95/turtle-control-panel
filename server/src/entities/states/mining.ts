@@ -1,4 +1,4 @@
-import {Location} from '../../db/turtle.type';
+import {Direction, Location} from '../../db/turtle.type';
 import {Node} from '../../dlite/Node';
 import {Turtle} from '../turtle';
 import {TurtleBaseState} from './base';
@@ -6,7 +6,9 @@ import {TURTLE_STATES} from './helpers';
 
 export interface MiningStateData {
     readonly id: TURTLE_STATES;
-    area: Location[];
+    readonly area: Omit<Location, 'y'>[];
+    readonly fromYLevel: number;
+    readonly toYLevel: number;
 }
 
 export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
@@ -16,7 +18,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
 
     private readonly mineableBlockMap = new Map<string, boolean>();
     private isInOrAdjacentToMiningArea: boolean = false;
-    private solution: Node | null = null;
+    private area: Location[];
     private remainingAreaIndexes: number[] = [];
 
     constructor(turtle: Turtle, data: Omit<MiningStateData, 'id'>) {
@@ -26,16 +28,31 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             ...data,
             id: TURTLE_STATES.MINING
         };
-        this.remainingAreaIndexes = Array.from(Array(this.data.area.length).keys());
 
+        const area: Location[] = [];
+        const {fromYLevel, toYLevel} = this.data;
+        const from = Math.min(fromYLevel, toYLevel);
+        const to = Math.max(fromYLevel, toYLevel);
         for (const loc of this.data.area) {
+            for (let i = from; i <= to; i++) {
+                area.push({
+                    x: loc.x,
+                    y: i,
+                    z: loc.z,
+                });
+            }
+        }
+        this.area = area;
+        this.remainingAreaIndexes = Array.from(Array(this.area.length).keys());
+
+        for (const loc of this.area) {
             this.mineableBlockMap.set(`${loc.x},${loc.y},${loc.z}`, true);
         }
     }
 
     private checkIfTurtleIsInOrAdjacentToArea(): boolean {
         const {x, y, z} = this.turtle.location as Location;
-        return this.data.area.some(({x: areaX, y: areaY, z: areaZ}) => {
+        return this.area.some(({x: areaX, y: areaY, z: areaZ}) => {
             if (areaX === x && areaY === y && areaZ === z) return true;
             if ((areaX === x + 1 || areaX === x - 1) && areaY === y && areaZ === z) return true;
             if (areaX === x && (areaY === y + 1 || areaY === y - 1) && areaZ === z) return true;
@@ -66,12 +83,11 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                 }
     
                 try {
-                    for await (const _ of this.goToDestinations(this.data.area)) {
+                    for await (const _ of this.goToDestinations(this.area)) {
                         yield;
 
                         if (this.checkIfTurtleIsInOrAdjacentToArea()) {
                             this.isInOrAdjacentToMiningArea = true;
-                            this.solution = null;
                             break;
                         }
                     }
@@ -90,18 +106,17 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             }
     
             const {x, y, z} = this.turtle.location;
-            const areaIndexOfTurtle = this.remainingAreaIndexes.findIndex((i) => this.data.area[i].x === x && this.data.area[i].y === y && this.data.area[i].z === z);
+            const areaIndexOfTurtle = this.remainingAreaIndexes.findIndex((i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z);
             if (areaIndexOfTurtle > -1) {
                 this.remainingAreaIndexes.splice(areaIndexOfTurtle, 1);
             }
     
             try {
-                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.data.area[i]), (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`))) {
+                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]), (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`))) {
                     yield;
 
                     if (this.checkIfTurtleIsInOrAdjacentToArea()) {
                         this.isInOrAdjacentToMiningArea = true;
-                        this.solution = null;
                         break;
                     }
                 }
@@ -110,11 +125,34 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                     yield;
                     continue;
                 } else if (err === 'Cannot break unbreakable block') {
-                    const areaIndexOfNode = this.remainingAreaIndexes.findIndex((i) => this.data.area[i].x === this.solution?.point?.x && this.data.area[i].y === this.solution?.point?.y && this.data.area[i].z === this.solution?.point?.z);
+                    const {x, y, z} = this.turtle.location;
+                    let dx = 0;
+                    let dz = 0;
+                    switch (this.turtle.direction) {
+                        case Direction.West:
+                            dx--
+                            break;
+                        case Direction.North:
+                            dz--;
+                            break;
+                        case Direction.East:
+                            dx++;
+                            break;
+                        case Direction.South:
+                            dz++;
+                            break;
+                    }
+
+                    const areaIndexOfNode = this.remainingAreaIndexes.findIndex(
+                        (i) =>
+                            this.area[i].x === (x + dx) &&
+                            this.area[i].y === y &&
+                            this.area[i].z === (z + dz)
+                    );
                     if (areaIndexOfNode > -1) {
                         this.remainingAreaIndexes.splice(areaIndexOfNode, 1);
                     }
-    
+
                     break;
                 }
 

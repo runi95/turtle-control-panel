@@ -25,6 +25,7 @@ import {TurtleScanState} from './entities/states/scan';
 import Database from 'better-sqlite3';
 import {Area} from './db/area.type';
 import {TurtleGoHomeState} from './entities/states/gohome';
+import {TurtleExtractionState} from './entities/states/extraction';
 
 logger.info('Starting server...');
 
@@ -176,8 +177,17 @@ server
                                 case 'mine':
                                     turtle.state = new TurtleMiningState(turtle, {
                                         area: obj.data.area,
+                                        miningType: obj.data.miningType,
+                                        fromYLevel: obj.data.fromYLevel,
+                                        toYLevel: obj.data.toYLevel,
                                     });
                                     break;
+                                case 'extract':
+                                    turtle.state = new TurtleExtractionState(turtle, {
+                                        area: obj.data.area,
+                                        fromYLevel: obj.data.fromYLevel,
+                                        toYLevel: obj.data.toYLevel
+                                    });
                                 case 'move':
                                     turtle.state = new TurtleMoveState(turtle, {
                                         x: obj.data.x,

@@ -2,7 +2,7 @@ import {useState} from 'react';
 import {Modal, Form, Button, Row, Col} from 'react-bootstrap';
 import {Action} from '../../../App';
 import {useParams} from 'react-router-dom';
-import {Location, Turtle} from '../../../api/UseTurtle';
+import {Turtle} from '../../../api/UseTurtle';
 import './MineModal.css';
 import MineAreaMap from './MineAreaMap';
 
@@ -36,17 +36,18 @@ function MineModal(props: MineModalProps) {
 
         const form = e.currentTarget;
         if (form.checkValidity() === true) {
-            let area: Location[] = [];
             const {x, z} = turtle.location;
-            const from = Math.min(fromYLevel, toYLevel);
-            const to = Math.max(fromYLevel, toYLevel);
-            for (let i = from; i <= to; i++) {
-                area = area.concat(
-                    Object.keys(createdArea)
+            action({
+                type: 'ACTION',
+                action: miningType === 3 ? 'extract' : 'mine',
+                data: {
+                    serverId,
+                    id: turtle.id,
+                    area: Object.keys(createdArea)
                         .map((key) => {
                             const tempX = (createdArea[key].x + spriteRadius - 336 * 0.5) / spriteSize + x;
                             const tempZ = (createdArea[key].y + spriteRadius - 336 * 0.5) / spriteSize + z;
-                            return {x: tempX, y: i, z: tempZ};
+                            return {x: tempX, z: tempZ};
                         })
                         .sort((a, b) => {
                             if (a.x < b.x) {
@@ -60,14 +61,10 @@ function MineModal(props: MineModalProps) {
                             }
 
                             return 0;
-                        })
-                );
-            }
-
-            action({
-                type: 'ACTION',
-                action: 'mine',
-                data: {serverId, id: turtle.id, area, fromYLevel, toYLevel, miningType},
+                        }),
+                    fromYLevel,
+                    toYLevel,
+                },
             });
             hideModal();
         } else {
@@ -97,7 +94,13 @@ function MineModal(props: MineModalProps) {
                                 required
                             >
                                 <option value={1}>mine all blocks</option>
+                                <option value={3}>extract all ores</option>
                             </Form.Control>
+                            {miningType === 3 &&
+                            (turtle.peripherals == null ||
+                                !Object.values(turtle.peripherals).some(({types}) => types.includes('geoScanner'))) ? (
+                                <div className='text-danger'>* requires a Geo Scanner</div>
+                            ) : null}
                         </Col>
                     </Row>
                     <Row className='mb-3'>
