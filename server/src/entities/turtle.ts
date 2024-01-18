@@ -487,14 +487,16 @@ export class Turtle {
     }
 
     public set state(state: TurtleBaseState<StateDataTypes> | null) {
-        const previousStateWasNull = this.state === null;
         this.#state = state;
         this.#error = null;
         globalEventEmitter.emit('tupdate', {
             id: this.id,
             serverId: this.serverId,
             data: {
-                state: this.state ?? null,
+                state: this.state === null ? null : {
+                    name: this.state.name,
+                    warning: this.state.warning
+                },
                 error: null,
             },
         });
