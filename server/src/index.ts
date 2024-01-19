@@ -177,7 +177,6 @@ server
                                 case 'mine':
                                     turtle.state = new TurtleMiningState(turtle, {
                                         area: obj.data.area,
-                                        miningType: obj.data.miningType,
                                         fromYLevel: obj.data.fromYLevel,
                                         toYLevel: obj.data.toYLevel,
                                     });
