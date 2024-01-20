@@ -191,6 +191,7 @@ server
                                         isExcludeMode: obj.data.isExcludeMode,
                                         includeOrExcludeList: obj.data.includeOrExcludeList
                                     });
+                                    break;
                                 case 'move':
                                     turtle.state = new TurtleMoveState(turtle, {
                                         x: obj.data.x,
