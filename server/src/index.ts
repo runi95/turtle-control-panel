@@ -179,13 +179,17 @@ server
                                         area: obj.data.area,
                                         fromYLevel: obj.data.fromYLevel,
                                         toYLevel: obj.data.toYLevel,
+                                        isExcludeMode: obj.data.isExcludeMode,
+                                        includeOrExcludeList: obj.data.includeOrExcludeList
                                     });
                                     break;
                                 case 'extract':
                                     turtle.state = new TurtleExtractionState(turtle, {
                                         area: obj.data.area,
                                         fromYLevel: obj.data.fromYLevel,
-                                        toYLevel: obj.data.toYLevel
+                                        toYLevel: obj.data.toYLevel,
+                                        isExcludeMode: obj.data.isExcludeMode,
+                                        includeOrExcludeList: obj.data.includeOrExcludeList
                                     });
                                 case 'move':
                                     turtle.state = new TurtleMoveState(turtle, {

@@ -1,10 +1,11 @@
 import {useState} from 'react';
-import {Modal, Form, Button, Row, Col} from 'react-bootstrap';
+import {Modal, Form, Button, Row, Col, CloseButton} from 'react-bootstrap';
 import {Action} from '../../../App';
 import {useParams} from 'react-router-dom';
 import {Turtle} from '../../../api/UseTurtle';
 import './MineModal.css';
 import MineAreaMap from './MineAreaMap';
+import {BlockNames} from './MinecraftBlockNames';
 
 export interface MineModalProps {
     turtle: Turtle;
@@ -28,8 +29,10 @@ function MineModal(props: MineModalProps) {
     const [isFormValidated, setIsFormValidated] = useState(false);
     const [createdArea, setCreatedArea] = useState({} as CreatedArea);
     const [miningType, setMiningType] = useState<number>(1);
+    const [includeOrExclude, setIncludeOrExclude] = useState<number>(1);
     const [fromYLevel, setFromYLevel] = useState(turtle.location.y);
     const [toYLevel, setToYLevel] = useState(-58);
+    const [includeOrExcludeList, setIncludeOrExcludeList] = useState<string[]>([]);
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -64,6 +67,8 @@ function MineModal(props: MineModalProps) {
                         }),
                     fromYLevel,
                     toYLevel,
+                    isExcludeMode: includeOrExclude === 1,
+                    includeOrExcludeList,
                 },
             });
             hideModal();
@@ -86,7 +91,7 @@ function MineModal(props: MineModalProps) {
                         <Form.Label className='me-0 pe-0' sm={4} column>
                             The turtle should
                         </Form.Label>
-                        <Col className='ms-0 ps-0' sm={8}>
+                        <Col className='ms-0 ps-0' sm={5}>
                             <Form.Control
                                 value={miningType}
                                 onChange={(e) => setMiningType(Number(e.target.value))}
@@ -101,6 +106,60 @@ function MineModal(props: MineModalProps) {
                                 !Object.values(turtle.peripherals).some(({types}) => types.includes('geoScanner'))) ? (
                                 <div className='text-danger'>* requires a Geo Scanner</div>
                             ) : null}
+                        </Col>
+                        <Col className='ms-0 ps-0' sm={3}>
+                            <Form.Control
+                                value={includeOrExclude}
+                                onChange={(e) => setIncludeOrExclude(Number(e.target.value))}
+                                as='select'
+                                required
+                            >
+                                <option value={1}>except for</option>
+                                <option value={2}>with name</option>
+                            </Form.Control>
+                            <Button
+                                variant='link'
+                                size='sm'
+                                onClick={() => {
+                                    setIncludeOrExcludeList((prev) => [...prev, '']);
+                                }}
+                            >
+                                {includeOrExclude === 1 ? 'add exception' : 'add name'}
+                            </Button>
+                        </Col>
+                    </Row>
+                    <Row className='mb-3'>
+                        <Col className='offset-md-3'>
+                            {includeOrExcludeList.map((value, index) => (
+                                <Row className='mb-3' key={index}>
+                                    <Col sm={1}>
+                                        <CloseButton
+                                            className='shadow-none'
+                                            aria-label='Remove'
+                                            onClick={() => {
+                                                setIncludeOrExcludeList((prev) => prev.filter((_, i) => i !== index));
+                                            }}
+                                        />
+                                    </Col>
+                                    <Col sm={11}>
+                                        <Form.Control
+                                            value={value}
+                                            type='text'
+                                            list='blocks'
+                                            onChange={(e) =>
+                                                setIncludeOrExcludeList((prev) =>
+                                                    prev.map((prevVal, i) => (i === index ? e.target.value : prevVal))
+                                                )
+                                            }
+                                        />
+                                    </Col>
+                                </Row>
+                            ))}
+                            <datalist id='blocks'>
+                                {BlockNames.map((name, i) => (
+                                    <option key={i}>{name}</option>
+                                ))}
+                            </datalist>
                         </Col>
                     </Row>
                     <Row className='mb-3'>

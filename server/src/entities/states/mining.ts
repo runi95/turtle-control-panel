@@ -1,5 +1,4 @@
 import {Direction, Location} from '../../db/turtle.type';
-import {Node} from '../../dlite/Node';
 import {Turtle} from '../turtle';
 import {TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
@@ -9,14 +8,18 @@ export interface MiningStateData {
     readonly area: Omit<Location, 'y'>[];
     readonly fromYLevel: number;
     readonly toYLevel: number;
+    readonly isExcludeMode: boolean;
+    readonly includeOrExcludeList: string[];
 }
-
 export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
     public readonly name = 'mining';
     public data: MiningStateData;
     public warning: string | null = null;
 
     private readonly mineableBlockMap = new Map<string, boolean>();
+    private readonly mineableBlockIncludeOrExcludeMap = new Map<string, boolean>();
+    private readonly hasExclusions: boolean;
+    private readonly isInExcludeMode: boolean;
     private isInOrAdjacentToMiningArea: boolean = false;
     private area: Location[];
     private remainingAreaIndexes: number[] = [];
@@ -30,7 +33,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
         };
 
         const area: Location[] = [];
-        const {fromYLevel, toYLevel} = this.data;
+        const {fromYLevel, toYLevel, isExcludeMode, includeOrExcludeList} = this.data;
         const from = Math.min(fromYLevel, toYLevel);
         const to = Math.max(fromYLevel, toYLevel);
         for (const loc of this.data.area) {
@@ -47,6 +50,12 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
 
         for (const loc of this.area) {
             this.mineableBlockMap.set(`${loc.x},${loc.y},${loc.z}`, true);
+        }
+
+        this.isInExcludeMode = isExcludeMode;
+        this.hasExclusions = this.isInExcludeMode && includeOrExcludeList.length > 0;
+        for (const includeOrExclude of includeOrExcludeList) {
+            this.mineableBlockIncludeOrExcludeMap.set(includeOrExclude, true);
         }
     }
 
@@ -112,7 +121,19 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             }
     
             try {
-                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]), (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`))) {
+                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]), (x, y, z, block) => {
+                    const isInArea = !!this.mineableBlockMap.get(`${x},${y},${z}`);
+                    if (!isInArea) return false;
+
+                    if (this.isInExcludeMode) {
+                        if (!this.hasExclusions) return true;
+                        if (block === null) return false;
+                        return !this.mineableBlockIncludeOrExcludeMap.get(block.name);
+                    } else {
+                        if (block === null) return false;
+                        return !!this.mineableBlockIncludeOrExcludeMap.get(block.name);
+                    }
+                })) {
                     yield;
 
                     if (this.checkIfTurtleIsInOrAdjacentToArea()) {

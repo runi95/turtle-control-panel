@@ -12,6 +12,8 @@ export interface ExtractionStateData {
     readonly area: Omit<Location, 'y'>[];
     readonly fromYLevel: number;
     readonly toYLevel: number;
+    readonly isExcludeMode: boolean;
+    readonly includeOrExcludeList: string[];
 }
 
 export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> {
@@ -20,6 +22,9 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
     public warning: string | null = null;
 
     private readonly mineableBlockMap = new Map<string, boolean>();
+    private readonly mineableBlockIncludeOrExcludeMap = new Map<string, boolean>();
+    private readonly hasExclusions: boolean;
+    private readonly isInExcludeMode: boolean;
     private isInOrAdjacentToMiningArea: boolean = false;
     private area: Location[];
     private remainingAreaIndexes: number[] = [];
@@ -35,7 +40,7 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
         };
 
         const area: Location[] = [];
-        const {fromYLevel, toYLevel} = this.data;
+        const {fromYLevel, toYLevel, isExcludeMode, includeOrExcludeList} = this.data;
         const from = Math.min(fromYLevel, toYLevel);
         const to = Math.max(fromYLevel, toYLevel);
         for (const loc of this.data.area) {
@@ -52,6 +57,12 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
 
         for (const loc of this.area) {
             this.mineableBlockMap.set(`${loc.x},${loc.y},${loc.z}`, true);
+        }
+
+        this.isInExcludeMode = isExcludeMode;
+        this.hasExclusions = this.isInExcludeMode && includeOrExcludeList.length > 0;
+        for (const includeOrExclude of includeOrExcludeList) {
+            this.mineableBlockIncludeOrExcludeMap.set(includeOrExclude, true);
         }
 
         const locationsToScan = Array.from(this.data.area.keys());
@@ -310,6 +321,10 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
 
                 this.remainingAreaIndexes = blocks.reduce((acc, curr) => {
                     if (!allAnalysisValues.has(curr.name)) return acc;
+                    if (this.isInExcludeMode) {
+                        if (this.hasExclusions && !!this.mineableBlockIncludeOrExcludeMap.get(curr.name)) return acc;
+                    } else if (!this.mineableBlockIncludeOrExcludeMap.get(curr.name)) return acc;
+
                     const areaIndex = this.area.findIndex(({x, y, z}) => curr.x === x && curr.y === y && curr.z === z);
                     if (areaIndex > -1) {
                         acc.push(areaIndex);
