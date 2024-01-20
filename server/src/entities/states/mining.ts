@@ -1,4 +1,5 @@
 import {Direction, Location} from '../../db/turtle.type';
+import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
 import {DestinationError, TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
@@ -136,9 +137,45 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                 })) {
                     yield;
 
-                    if (this.checkIfTurtleIsInOrAdjacentToArea()) {
-                        this.isInOrAdjacentToMiningArea = true;
-                        break;
+                    // Go home?
+                    const hasAvailableSpaceInInventory = Object.values(this.turtle.inventory).some((value) => value == null);
+                    const fuelPercentage = 100 * this.turtle.fuelLevel / this.turtle.fuelLimit;
+                    if (fuelPercentage < 10 || !hasAvailableSpaceInInventory) {
+                        const home = this.turtle.home;
+                        if (home === null) {
+                            throw new Error('Inventory is full');
+                        }
+
+                        this.isInOrAdjacentToMiningArea = false;
+
+                        try {
+                            for await (const _ of this.goToDestinations([new Point(home.x, home.y, home.z)])) {
+                                yield;
+                            }
+                        } catch (err) {
+                            if (err instanceof DestinationError && err.message === 'Movement obstructed') {
+                                yield;
+                                continue;
+                            } else if (typeof err === 'string') {
+                                throw new Error(err);
+                            } else {
+                                throw err;
+                            }
+                        }
+
+                        // Ensures we have access to peripherals
+                        await this.turtle.sleep(1);
+                        yield;
+
+                        for await (const _ of this.transferIntoNearbyInventories()) {
+                            yield;
+                        }
+
+                        if ((100 * this.turtle.fuelLevel / this.turtle.fuelLimit) < 10) {
+                            for await (const _ of this.refuelFromNearbyInventories()) {
+                                yield;
+                            }
+                        }
                     }
                 }
             } catch (err) {
