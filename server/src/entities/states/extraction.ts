@@ -1,7 +1,6 @@
 import {upsertBlocks} from '../../db';
 import {Block} from '../../db/block.type';
 import {Direction, Location} from '../../db/turtle.type';
-import {Node} from '../../dlite/Node';
 import globalEventEmitter from '../../globalEventEmitter';
 import {Turtle} from '../turtle';
 import {TurtleBaseState} from './base';
