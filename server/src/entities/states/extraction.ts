@@ -36,7 +36,7 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
 
         this.data = {
             ...data,
-            id: TURTLE_STATES.MINING,
+            id: TURTLE_STATES.EXTRACTION,
         };
 
         const area: Location[] = [];

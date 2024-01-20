@@ -36,6 +36,7 @@ import {TurtleRefuelingState} from './states/refueling';
 import {TurtleScanState} from './states/scan';
 import {EventEmitter} from 'events';
 import {TurtleGoHomeState} from './states/gohome';
+import {ExtractionStateData, TurtleExtractionState} from './states/extraction';
 
 export interface Peripherals {
     [key: string]: {
@@ -529,6 +530,8 @@ export class Turtle {
                 return new TurtleScanState(this);
             case TURTLE_STATES.GO_HOME:
                 return new TurtleGoHomeState(this);
+            case TURTLE_STATES.EXTRACTION:
+                return new TurtleExtractionState(this, data as ExtractionStateData);
             default:
                 return null;
         }
