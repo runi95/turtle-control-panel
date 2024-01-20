@@ -81,7 +81,7 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
                         <b>Refresh</b>
                     </button>
                     <div style={{fontWeight: 'bold'}}>
-                        Inventory side (<span className='text-primary'>{side}</span>)
+                        (<span className='text-primary'>{side}</span>)
                     </div>
                 </div>
                 {renderTiles(turtle.id, size, content)}
