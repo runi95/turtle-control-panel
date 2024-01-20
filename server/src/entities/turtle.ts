@@ -501,7 +501,7 @@ export class Turtle {
                 error: null,
             },
         });
-        updateTurtleState(this.serverId, this.id, this.state?.data ?? null);
+        updateTurtleState(this.serverId, this.id, this.state === null ? null : this.state.data);
 
         if (state === null) {
             this.#actIterator = null;
