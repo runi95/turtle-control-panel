@@ -33,6 +33,13 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
 
         yield;
 
+        let [cooldown] = await this.turtle.usePeripheralWithName<[number]>('geoScanner', 'getOperationCooldown', '"scanBlocks"');
+        while (cooldown > 0) {
+            await this.turtle.sleep(Math.min(1, (Math.ceil(cooldown / 100) / 10)));
+            cooldown -= 1000;
+            yield;
+        }
+
         const [scannedBlocks, scanMessage] = await this.turtle.usePeripheralWithName<
             [(Block & {x: number; y: number; z: number})[], string]
         >('geoScanner', 'scan', '16');
