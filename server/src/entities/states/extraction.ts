@@ -296,6 +296,9 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                 });
 
                 yield;
+                const [cooldown] = await this.turtle.usePeripheralWithName<[number]>('geoScanner', 'getOperationCooldown', '"scanBlocks"');
+                await this.turtle.sleep(0.1 + (Math.ceil(cooldown / 100) / 10));
+                yield;
 
                 const [analysis, analysisFailMessage] = await this.turtle.usePeripheralWithName<
                     [{[key: string]: number}, undefined] | [null, string]
