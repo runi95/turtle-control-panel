@@ -1,6 +1,6 @@
 import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
-import {TurtleBaseState} from './base';
+import {DestinationError, TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
 
 export interface GoHomeStateData {
@@ -33,12 +33,10 @@ export class TurtleGoHomeState extends TurtleBaseState<GoHomeStateData> {
                 }
                 return;
             } catch (err) {
-                if ((err as Error).message === 'Movement obstructed') {
+                if (err instanceof DestinationError && err.message === 'Movement obstructed') {
                     yield;
                     continue;
-                }
-
-                if (typeof err === "string") {
+                } else if (typeof err === 'string') {
                     throw new Error(err);
                 } else {
                     throw err;

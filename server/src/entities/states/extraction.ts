@@ -3,7 +3,7 @@ import {Block} from '../../db/block.type';
 import {Direction, Location} from '../../db/turtle.type';
 import globalEventEmitter from '../../globalEventEmitter';
 import {Turtle} from '../turtle';
-import {TurtleBaseState} from './base';
+import {DestinationError, TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
 
 export interface ExtractionStateData {
@@ -153,12 +153,10 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                         }
                     }
                 } catch (err) {
-                    if ((err as Error).message === 'Movement obstructed') {
+                    if (err instanceof DestinationError && err.message === 'Movement obstructed') {
                         yield;
                         continue;
-                    }
-
-                    if (typeof err === 'string') {
+                    } else if (typeof err === 'string') {
                         throw new Error(err);
                     } else {
                         throw err;
@@ -189,42 +187,21 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                         }
                     }
                 } catch (err) {
-                    if ((err as Error).message === 'Movement obstructed') {
-                        yield;
-                        continue;
-                    } else if (err === 'Cannot break unbreakable block') {
-                        const {x, y, z} = this.turtle.location;
-                        let dx = 0;
-                        let dz = 0;
-                        switch (this.turtle.direction) {
-                            case Direction.West:
-                                dx--
-                                break;
-                            case Direction.North:
-                                dz--;
-                                break;
-                            case Direction.East:
-                                dx++;
-                                break;
-                            case Direction.South:
-                                dz++;
-                                break;
-                        }
-
+                    if (err instanceof DestinationError && (err.message === 'Movement obstructed' || err.message === 'Cannot break unbreakable block')) {
+                        const {x, y, z} = err.node.point;
                         const areaIndexOfNode = this.remainingAreaIndexes.findIndex(
                             (i) =>
-                                this.area[i].x === (x + dx) &&
+                                this.area[i].x === x &&
                                 this.area[i].y === y &&
-                                this.area[i].z === (z + dz)
+                                this.area[i].z === z
                         );
                         if (areaIndexOfNode > -1) {
                             this.remainingAreaIndexes.splice(areaIndexOfNode, 1);
                         }
-
-                        break;
-                    }
-
-                    if (typeof err === 'string') {
+                        
+                        yield;
+                        continue;
+                    } else if (typeof err === 'string') {
                         throw new Error(err);
                     } else {
                         throw err;
@@ -260,12 +237,21 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                         }
                     }
                 } catch (err) {
-                    if ((err as Error).message === 'Movement obstructed') {
+                    if (err instanceof DestinationError && (err.message === 'Movement obstructed' || err.message === 'Cannot break unbreakable block')) {
+                        const {x, y, z} = err.node.point;
+                        const matchingScanIndex = this.scanIndexes.findIndex(
+                            (scanIndex) =>
+                                this.area[scanIndex].x === x &&
+                                this.area[scanIndex].y === y &&
+                                this.area[scanIndex].z === z
+                        );
+                        if (matchingScanIndex > -1) {
+                            this.scanIndexes.splice(matchingScanIndex, 1);
+                        }
+                        
                         yield;
                         continue;
-                    }
-
-                    if (typeof err === 'string') {
+                    } else if (typeof err === 'string') {
                         throw new Error(err);
                     } else {
                         throw err;
