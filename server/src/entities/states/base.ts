@@ -4,6 +4,15 @@ import {Node} from '../../dlite/Node';
 import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
 
+export class DestinationError extends Error {
+    public readonly node: Node;
+
+    constructor(node: Node, message?: string) {
+        super(message);
+        this.node = node;
+    }
+}
+
 export abstract class TurtleBaseState<T> {
     public abstract readonly name: string;
     public abstract data: T;
@@ -166,7 +175,7 @@ export abstract class TurtleBaseState<T> {
                 yield;
                 continue;
             } else {
-                throw new Error(failedMoveMessage);
+                throw new DestinationError(solution, failedMoveMessage);
             }
         }
     }

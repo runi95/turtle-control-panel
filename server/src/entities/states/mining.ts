@@ -1,6 +1,6 @@
 import {Direction, Location} from '../../db/turtle.type';
 import {Turtle} from '../turtle';
-import {TurtleBaseState} from './base';
+import {DestinationError, TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
 
 export interface MiningStateData {
@@ -85,6 +85,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                 return; // Done!
             }
     
+            // Get to the mining area!
             if (!this.isInOrAdjacentToMiningArea) {
                 if (this.checkIfTurtleIsInOrAdjacentToArea()) {
                     this.isInOrAdjacentToMiningArea = true;
@@ -121,6 +122,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             }
     
             try {
+                // Mine!
                 for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]), (x, y, z, block) => {
                     const isInArea = !!this.mineableBlockMap.get(`${x},${y},${z}`);
                     if (!isInArea) return false;
@@ -142,10 +144,16 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                     }
                 }
             } catch (err) {
-                if ((err as Error).message === 'Movement obstructed') {
+                if (err instanceof DestinationError && err.message === 'Movement obstructed') {
+                    const {x, y, z} = err.node.point;
+                    const obstructedAreaIndex = this.remainingAreaIndexes.findIndex((i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z);
+                    if (obstructedAreaIndex > -1) {
+                        this.remainingAreaIndexes.splice(areaIndexOfTurtle, 1);
+                    }
+
                     yield;
                     continue;
-                } else if (err === 'Cannot break unbreakable block') {
+                } else if (err instanceof Error && err.message === 'Cannot break unbreakable block') {
                     const {x, y, z} = this.turtle.location;
                     let dx = 0;
                     let dz = 0;
@@ -175,9 +183,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                     }
 
                     break;
-                }
-
-                if (typeof err === "string") {
+                } else if (typeof err === "string") {
                     throw new Error(err);
                 } else {
                     throw err;
