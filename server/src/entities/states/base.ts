@@ -168,6 +168,11 @@ export abstract class TurtleBaseState<T> {
             throw new Error('Stuck; unable to reach destination');
         }
 
+        if (solution === null) {
+            yield;
+            return;
+        }
+
         while (solution !== null) {
             const [didMoveToNode, failedMoveMessage] = await this.moveToNode(solution);
             if (didMoveToNode) {
