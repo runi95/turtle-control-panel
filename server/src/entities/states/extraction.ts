@@ -141,7 +141,7 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
             if (!this.isInOrAdjacentToMiningArea) {
                 if (this.checkIfTurtleIsInOrAdjacentToArea()) {
                     this.isInOrAdjacentToMiningArea = true;
-                    yield;
+                    continue;
                 }
 
                 try {
