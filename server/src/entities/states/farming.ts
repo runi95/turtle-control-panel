@@ -121,7 +121,10 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
                 } else {
                     const farmingBlockToFarmingDetails = blockToFarmingDetailsMapObject[block.name];
                     if (farmingBlockToFarmingDetails) {
-                        if (!this.hasSpaceForItem(farmingBlockToFarmingDetails.harvest)) {
+
+                        // Go home?
+                        const fuelPercentage = 100 * this.turtle.fuelLevel / this.turtle.fuelLimit;
+                        if (fuelPercentage < 10 || !this.hasSpaceForItem(farmingBlockToFarmingDetails.harvest)) {
                             const home = this.turtle.home;
                             if (home !== null) {
                                 this.isInFarmingArea = false;
@@ -142,17 +145,20 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
                                     }
                                 }
 
-                                // Ensure we have access to peripherals
+                                // Ensures we have access to peripherals
                                 await this.turtle.sleep(1);
                                 yield;
 
-                                try {
-                                    for await (const _ of this.transferIntoNearbyInventories()) {
+                                for await (const _ of this.transferIntoNearbyInventories()) {
+                                    yield;
+                                }
+
+                                if ((100 * this.turtle.fuelLevel / this.turtle.fuelLimit) < 10) {
+                                    for await (const _ of this.refuelFromNearbyInventories()) {
                                         yield;
                                     }
-                                } catch (err) {
-                                    throw err;
                                 }
+                                
                             } else {
                                 throw new Error('Inventory is full');
                             }

@@ -2,6 +2,7 @@ import {Location} from '../../db/turtle.type';
 import DStarLite, {IsBlockMineableFunc} from '../../dlite';
 import {Node} from '../../dlite/Node';
 import {Point} from '../../dlite/Point';
+import {PriorityQueue} from '../../dlite/PriorityQueue';
 import {Turtle} from '../turtle';
 
 export class DestinationError extends Error {
@@ -11,6 +12,12 @@ export class DestinationError extends Error {
         super(message);
         this.node = node;
     }
+}
+
+interface ComparableItem {
+    side: string;
+    index: number;
+    priority: number;
 }
 
 export abstract class TurtleBaseState<T> {
@@ -26,14 +33,152 @@ export abstract class TurtleBaseState<T> {
 
     public abstract act(): AsyncIterator<string | undefined>;
 
-    protected async *transferIntoNearbyInventories(): AsyncGenerator<string | undefined> {
-        if (!Object.values(this.turtle.peripherals).some(({types}) => {
-            if (types.includes('inventory')) {
-                return true;
+    protected async *refuelFromNearbyInventories(): AsyncGenerator<void> {
+        const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
+            (acc, [side, {types, data}]) => {
+                if (types.includes('inventory')) {
+                    acc.inventories.push([side, {types, data}]);
+                } else if (types.includes('peripheral_hub')) {
+                    acc.hubs.push([side, {types, data}]);
+                }
+
+                return acc;
+            },
+            {
+                inventories: [] as [string, {data?: unknown; types: string[]}][],
+                hubs: [] as [string, {data?: unknown; types: string[]}][],
+            }
+        );
+        if (inventories.length < 1) {
+            throw new Error('No inventory to refuel from');
+        }
+
+        const compareFuel = (a: ComparableItem, b: ComparableItem) => {
+            if (a.priority > b.priority) {
+                return 1;
             }
 
-            return false;
-        })) {
+            if (a.priority < b.priority) {
+                return -1;
+            }
+
+            return 0;
+        };
+        const itemPriorityQueue = new PriorityQueue<ComparableItem>(compareFuel);
+        for (const [side, peripheral] of inventories) {
+            const isValidInventory = (() => {
+                switch (side) {
+                    case 'front':
+                    case 'top':
+                    case 'bottom':
+                    case 'left':
+                    case 'right':
+                    case 'back':
+                        return false;
+                    default:
+                        return hubs.some(([_, {data}]) => {
+                            if (!(data as {localName: string})?.localName) return false;
+                            return (data as {remoteNames: string[]})?.remoteNames?.includes(side);
+                        });
+                }
+            })();
+            if (!isValidInventory) continue;
+
+            const {data} = peripheral;
+            const {content} = (data as {content: {name: string; tags?: {[key: string]: boolean}}[] | null});
+            if (content === null) continue;
+
+            for (let i = 0; i < content.length; i++) {
+                const item = content[i];
+                const priority = (() => {
+                    if (item?.tags?.['minecraft:logs'] === true) {
+                        return 4;
+                    } else {
+                        switch (item.name) {
+                            case 'minecraft:lava_bucket':
+                                return 3;
+                            case 'minecraft:blaze_rod':
+                                return 1;
+                            case 'minecraft:coal':
+                                return 6;
+                            case 'minecraft:charcoal':
+                                return 7;
+                            case 'minecraft:stick':
+                                return 2;
+                            case 'minecraft:coal_block':
+                                return 5;
+                        }
+                    }
+
+                    return null;
+                })();
+                if (priority !== null) {
+                    itemPriorityQueue.add({
+                        index: i + 1,
+                        side,
+                        priority
+                    });
+                }
+            }
+        }
+
+        let item: ComparableItem | null = null;
+        while ((item = itemPriorityQueue.poll()) !== null && (100 * this.turtle.fuelLevel / this.turtle.fuelLimit) < 90) {
+            switch (item.side) {
+                case 'front':
+                case 'top':
+                case 'bottom':
+                case 'left':
+                case 'right':
+                case 'back':
+                    continue;
+                default:
+                    const connectedHub = hubs.find(
+                        ([_, {data}]) => (data as {remoteNames: string[]})?.remoteNames?.includes((item as ComparableItem).side)
+                    );
+                    if (connectedHub) {
+                        let availableSlot = null;
+                        for (let i = 1; i < 17; i++) {
+                            if (this.turtle.inventory[i] == null) {
+                                availableSlot = i;
+                                break;
+                            }
+                        }
+                        if (availableSlot === null) break;
+
+                        await this.turtle.select(availableSlot);
+                        yield;
+
+                        const [_, {data}] = connectedHub;
+                        const [pulledItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
+                            item.side,
+                            'pushItems',
+                            (data as {localName: string}).localName,
+                            item.index,
+                            null,
+                            availableSlot
+                        );
+                        yield;
+                        if (pulledItemCount > 0) {
+                            await this.turtle.refuel();
+                            yield;
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+
+    protected async *transferIntoNearbyInventories(): AsyncGenerator<void> {
+        if (
+            !Object.values(this.turtle.peripherals).some(({types}) => {
+                if (types.includes('inventory')) {
+                    return true;
+                }
+
+                return false;
+            })
+        ) {
             throw new Error('No inventory to empty into');
         }
 
@@ -41,87 +186,95 @@ export abstract class TurtleBaseState<T> {
         for (let slot = 1; slot < 27; slot++) {
             const item = this.turtle.inventory[slot];
             if (item) {
-                const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce((acc, [side, {types, data}]) => {
-                    if (types.includes('inventory')) {
-                        acc.inventories.push([side, {types, data}]);
-                    } else if (types.includes('peripheral_hub')) {
-                        acc.hubs.push([side, {types, data}]);
+                const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
+                    (acc, [side, {types, data}]) => {
+                        if (types.includes('inventory')) {
+                            acc.inventories.push([side, {types, data}]);
+                        } else if (types.includes('peripheral_hub')) {
+                            acc.hubs.push([side, {types, data}]);
+                        }
+
+                        return acc;
+                    },
+                    {
+                        inventories: [] as [string, {data?: unknown; types: string[]}][],
+                        hubs: [] as [string, {data?: unknown; types: string[]}][],
                     }
+                );
 
-                    return acc;
-                }, {inventories: [] as [string, {data?: unknown; types: string[]}][], hubs: [] as [string, {data?: unknown; types: string[]}][]});
+                const bestMatchingInventory =
+                    inventories.find(([side, {data}]) => {
+                        const content = (data as {content: {name: string}[]}).content;
+                        if (content === undefined) {
+                            return false;
+                        }
 
-                const bestMatchingInventory = inventories.find(([side, {data}]) => {
-                    const content = (data as {content: {name: string}[]}).content;
-                    if (content === undefined) {
+                        const containsItem = content?.some(({name}) => name === item?.name);
+                        if (!containsItem) return false;
+
+                        switch (side) {
+                            case 'front':
+                            case 'top':
+                            case 'bottom':
+                            case 'left':
+                            case 'right':
+                            case 'back':
+                                return true;
+                            default:
+                                return hubs.some(([_, {data}]) => {
+                                    if (!(data as {localName: string})?.localName) return false;
+                                    return (data as {remoteNames: string[]})?.remoteNames?.includes(side);
+                                });
+                        }
+                    }) ??
+                    inventories.find(([side]) => {
+                        if (side === 'front') return true;
+                        if (side === 'top') return true;
+                        if (side === 'bottom') return true;
+                        if (side === 'left') return true;
+                        if (side === 'right') return true;
+                        if (side === 'back') return true;
                         return false;
-                    }
-
-                    const containsItem = content?.some(({name}) => name === item?.name);
-                    if (!containsItem) return false;
-
-                    switch (side) {
-                        case 'front':
-                        case 'top':
-                        case 'bottom':
-                        case 'left':
-                        case 'right':
-                        case 'back':
-                            return true;
-                        default:
-                            return hubs.some(([_, {data}]) => {
-                                if (!(data as {localName: string})?.localName) return false;
-                                return (data as {remoteNames: string[]})?.remoteNames?.includes(side);
-                            });
-                    }
-                }) ?? inventories.find(([side]) => {
-                    if (side === 'front') return true;
-                    if (side === 'top') return true;
-                    if (side === 'bottom') return true;
-                    if (side === 'left') return true;
-                    if (side === 'right') return true;
-                    if (side === 'back') return true;
-                    return false;
-                });
+                    });
                 if (bestMatchingInventory === undefined) continue;
                 const [bestMatchingSide] = bestMatchingInventory;
                 await this.turtle.select(slot);
 
                 switch (bestMatchingSide) {
                     case 'front':
-                        await (async ()=>{
+                        await (async () => {
                             const [didDrop] = await this.turtle.drop();
                             if (didDrop) hasEmptiedAnySlot = true;
                         })();
                         break;
                     case 'top':
-                        await (async ()=>{
+                        await (async () => {
                             const [didDrop] = await this.turtle.dropUp();
                             if (didDrop) hasEmptiedAnySlot = true;
                         })();
                         break;
                     case 'bottom':
-                        await (async ()=>{
+                        await (async () => {
                             const [didDrop] = await this.turtle.dropDown();
                             if (didDrop) hasEmptiedAnySlot = true;
                         })();
                         break;
                     case 'left':
-                        await (async ()=>{
+                        await (async () => {
                             await this.turtle.turnLeft();
                             const [didDrop] = await this.turtle.drop();
                             if (didDrop) hasEmptiedAnySlot = true;
                         })();
                         break;
                     case 'right':
-                        await (async ()=>{
+                        await (async () => {
                             await this.turtle.turnRight();
                             const [didDrop] = await this.turtle.drop();
                             if (didDrop) hasEmptiedAnySlot = true;
                         })();
                         break;
                     case 'back':
-                        await (async ()=>{
+                        await (async () => {
                             await this.turtle.turnLeft();
                             await this.turtle.turnLeft();
                             const [didDrop] = await this.turtle.drop();
@@ -129,14 +282,16 @@ export abstract class TurtleBaseState<T> {
                         })();
                         break;
                     default:
-                        const connectedHub = hubs.find(([_, {data}]) => (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide));
+                        const connectedHub = hubs.find(
+                            ([_, {data}]) => (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide)
+                        );
                         if (connectedHub) {
                             const [_, {data}] = connectedHub;
                             const [pulledItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
                                 bestMatchingSide,
                                 'pullItems',
                                 (data as {localName: string}).localName,
-                                slot,
+                                slot
                             );
                             if (pulledItemCount > 0) {
                                 hasEmptiedAnySlot = true;
@@ -154,14 +309,17 @@ export abstract class TurtleBaseState<T> {
         }
     }
 
-    protected async *goToDestinations(destinations: Point[], isBlockMineableFunc?: IsBlockMineableFunc): AsyncGenerator<void> {
+    protected async *goToDestinations(
+        destinations: Point[],
+        isBlockMineableFunc?: IsBlockMineableFunc
+    ): AsyncGenerator<void> {
         const {location} = this.turtle;
         if (location === null) {
             throw new Error('Missing location');
         }
 
         const algorithm = new DStarLite(this.turtle.serverId, {
-            isBlockMineableFunc
+            isBlockMineableFunc,
         });
         let solution = await algorithm.search(new Point(location.x, location.y, location.z), destinations);
         if (solution === undefined) {
@@ -209,7 +367,7 @@ export abstract class TurtleBaseState<T> {
                 await this.turtle.inspectUp();
                 return [false, didDigUpMessage as string];
             }
-            
+
             await this.turtle.suckUp();
             const [didMoveUpAfterDig, moveDownAfterDigMessage] = await this.turtle.up();
             if (didMoveUpAfterDig) return [true, undefined];
@@ -259,7 +417,7 @@ export abstract class TurtleBaseState<T> {
             }
 
             // We don't know what the other potential errors are!
-            if (forwardMessage !== 'Movement obstructed') return [false, forwardMessage as string]
+            if (forwardMessage !== 'Movement obstructed') return [false, forwardMessage as string];
 
             if (!s.isMineable) {
                 await this.turtle.inspect();
@@ -276,7 +434,7 @@ export abstract class TurtleBaseState<T> {
 
             const [didMoveForwardAfterDig, forwardMessageAfterDig] = await this.turtle.forward();
             if (didMoveForwardAfterDig) return [true, undefined];
-            
+
             await this.turtle.inspect();
             return [false, forwardMessageAfterDig as string];
         }
