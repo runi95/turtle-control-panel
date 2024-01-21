@@ -15,7 +15,7 @@ import {
     renameServer,
     upsertChunk,
 } from './db';
-import {Turtle} from './db/turtle.type';
+import {ItemDetail, Turtle} from './db/turtle.type';
 import {Block} from './db/block.type';
 import {TurtleFarmingState} from './entities/states/farming';
 import {TurtleRefuelingState} from './entities/states/refueling';
@@ -26,6 +26,7 @@ import Database from 'better-sqlite3';
 import {Area} from './db/area.type';
 import {TurtleGoHomeState} from './entities/states/gohome';
 import {TurtleExtractionState} from './entities/states/extraction';
+import {PriorityQueue} from './dlite/PriorityQueue';
 
 logger.info('Starting server...');
 
@@ -322,6 +323,147 @@ server
                                             await turtle.connectToInventory(obj.data.toSide);
                                         }
                                     }
+                                    break;
+                                case 'sort-inventory':
+                                    const {side} = obj.data;
+                                    const peripheral = turtle.peripherals[side];
+                                    if (!peripheral) break;
+
+                                    const {data} = peripheral;
+                                    const {content} = (data as {content: (ItemDetail | null)[] | null});
+                                    if (content == null) break;
+
+                                    // Stack all items
+                                    const availableItemSpaces = new Map<string, number>();
+                                    let movedAnyItems = false;
+                                    for (let i = 0; i < content.length; i++) {
+                                        const item = content[i];
+                                        if (item == null) continue;
+                                        if (item.count < Number(item.maxCount)) {
+                                            const existingStack = availableItemSpaces.get(item.name);
+                                            if (existingStack === undefined) {
+                                                availableItemSpaces.set(item.name, i);
+                                            } else {
+                                                const [movedItems] = await turtle.usePeripheralWithSide<[number]>(
+                                                    side,
+                                                    'pushItems',
+                                                    side,
+                                                    i,
+                                                    null,
+                                                    existingStack
+                                                );
+
+                                                if (movedItems > 0) {
+                                                    movedAnyItems = true;
+                                                }
+
+                                                if (movedItems < item.count) {
+                                                    availableItemSpaces.set(item.name, i);
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (movedAnyItems) {
+                                        await turtle.updateAllAttachedPeripherals({
+                                            [side]: peripheral
+                                        });
+                                        await turtle.sleep(0.1);
+                                    }
+
+                                    const compareItems = (a: ItemDetail, b: ItemDetail) => {
+                                        if (a.name > b.name) {
+                                            return 1;
+                                        }
+                            
+                                        if (a.name < b.name) {
+                                            return -1;
+                                        }
+                            
+                                        return 0;
+                                    };
+                                    const sortingQueue = new PriorityQueue<ItemDetail>(compareItems);
+                                    const updatedPeripheral = turtle.peripherals[side];
+                                    if (!peripheral) break;
+
+                                    const {data: updatedData} = updatedPeripheral;
+                                    const {content: updatedContent, size} = (updatedData as {content: (ItemDetail | null)[] | null, size: number});
+                                    if (updatedContent == null) break;
+
+                                    for (let i = 0; i < updatedContent.length; i++) {
+                                        const item = updatedContent[i];
+                                        if (item == null) continue;
+
+                                        sortingQueue.add(item);
+                                    }
+
+                                    // Sort items...
+                                    let item: ItemDetail | null = null;
+                                    let currentSortIndex = 1;
+                                    while ((item = sortingQueue.poll()) !== null) {
+                                        const itemIndex = updatedContent.findIndex((contentItem, i) => (i + 2) > currentSortIndex && contentItem !== null && contentItem.name === (item as ItemDetail).name);
+                                        if (!(itemIndex > -1)) continue;
+
+                                        if ((itemIndex + 1) === currentSortIndex) {
+                                            currentSortIndex++;
+                                            continue;
+                                        }
+
+                                        const itemInSlot = updatedContent[currentSortIndex - 1];
+                                        if (itemInSlot != null) {
+                                            if (itemInSlot.name === item.name) {
+                                                currentSortIndex++;
+                                                continue;
+                                            }
+
+                                            let availableSlot = -1;
+                                            for (let i = 0; i < size; i++) {
+                                                if (updatedContent[i] == null) {
+                                                    availableSlot = i + 1;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (!(availableSlot > -1)) {
+                                                break;
+                                            } else if (availableSlot !== currentSortIndex) {
+                                                const [movedItems] = await turtle.usePeripheralWithSide<[number]>(
+                                                    side,
+                                                    'pushItems',
+                                                    side,
+                                                    currentSortIndex,
+                                                    null,
+                                                    availableSlot
+                                                );
+                                                if (!(movedItems > 0)) break;
+                                                updatedContent[availableSlot - 1] = updatedContent[currentSortIndex - 1];
+                                                updatedContent[currentSortIndex - 1] = null;
+                                            }
+                                        }
+
+                                        const [movedItems] = await turtle.usePeripheralWithSide<[number]>(
+                                            side,
+                                            'pushItems',
+                                            side,
+                                            (itemIndex + 1),
+                                            null,
+                                            currentSortIndex
+                                        );
+                                        if (!(movedItems > 0)) break;
+                                        updatedContent[currentSortIndex - 1] = updatedContent[itemIndex];
+                                        updatedContent[itemIndex] = null;
+
+                                        currentSortIndex++;
+                                    }
+
+                                    (turtle.peripherals[side].data as {content: (ItemDetail | null)[]}).content = updatedContent;
+                                    globalEventEmitter.emit('tupdate', {
+                                        id: turtle.id,
+                                        serverId: turtle.serverId,
+                                        data: {
+                                            peripherals: turtle.peripherals
+                                        },
+                                    });
                                     break;
                                 case 'set-home':
                                     if (turtle.location !== null) {

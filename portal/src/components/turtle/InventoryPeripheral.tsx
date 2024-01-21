@@ -65,7 +65,7 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
             <InventoryGrid>
                 <div
                     className='text-muted'
-                    style={{gridColumn: '1/-1', display: 'flex', justifyContent: 'space-between'}}
+                    style={{gridColumn: '1/-1', display: 'flex', justifyContent: 'space-between', gap: 16}}
                 >
                     <button
                         className='text-muted inventory-button'
@@ -80,7 +80,20 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
                     >
                         <b>Refresh</b>
                     </button>
-                    <div style={{fontWeight: 'bold'}}>
+                    <button
+                        className='text-muted inventory-button'
+                        onClick={() =>
+                            action({
+                                type: 'ACTION',
+                                action: 'sort-inventory',
+                                data: {serverId, id: turtle.id, side},
+                            })
+                        }
+                        disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
+                    >
+                        <b>Sort</b>
+                    </button>
+                    <div style={{fontWeight: 'bold', marginLeft: 'auto'}}>
                         (<span className='text-primary'>{side}</span>)
                     </div>
                 </div>
