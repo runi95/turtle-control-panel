@@ -20,7 +20,9 @@ export interface TurtleMapProps {
     blockSize?: number;
     blockDepth?: number;
     drawColor?: string;
-    canDraw: boolean;
+    canDrawCurrentlySelectedBlock?: boolean;
+    onClick?: (x: number, y: number, z: number) => void;
+    canDrawArea?: boolean;
     drawnArea?: DrawnArea;
     setDrawnArea?: (drawnArea: DrawnArea) => void;
     setTranslatedDrawnArea?: (translatedDrawnArea: Omit<Location, 'y'>[]) => void;
@@ -33,15 +35,18 @@ const TurtleMap = ({
     blockSize = 8,
     blockDepth = 10,
     drawColor = '#0094ff',
-    canDraw = false,
+    canDrawArea = true,
     drawnArea,
     setDrawnArea,
     setTranslatedDrawnArea,
+    canDrawCurrentlySelectedBlock = false,
+    onClick,
 }: TurtleMapProps) => {
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [isClearingDrawnArea, setIsClearingDrawnArea] = useState(false);
     const [isMouseDown, setIsMouseDown] = useState(false);
+    const [mousePosition, setMousePosition] = useState<[number, number] | undefined>(undefined);
     const {data: turtle} = useTurtle(serverId, id);
     const blockRadius = 0.5 * blockSize;
     const centerX = 0.5 * width;
@@ -162,8 +167,23 @@ const TurtleMap = ({
                     ctx.stroke();
                 }
 
+                // Draw currently selected block
+                if (canDrawCurrentlySelectedBlock && mousePosition !== undefined) {
+                    ctx.beginPath();
+                    ctx.fillStyle = 'yellow';
+                    ctx.arc(
+                        Math.floor((mousePosition[0] - blockRadius) / blockSize) * blockSize + blockSize,
+                        Math.floor((mousePosition[1] - blockRadius) / blockSize) * blockSize + blockSize,
+                        0.35 * blockSize,
+                        0,
+                        2 * Math.PI,
+                        false
+                    );
+                    ctx.fill();
+                }
+
                 // Draw creatingArea
-                if (!!canDraw && !!setDrawnArea && !!drawnArea) {
+                if (!!canDrawArea && !!setDrawnArea && !!drawnArea) {
                     ctx.globalAlpha = 0.4;
                     ctx.fillStyle = drawColor;
 
@@ -206,7 +226,7 @@ const TurtleMap = ({
             height={height}
             width={width}
             onMouseDown={(e) => {
-                if (!canDraw) return;
+                if (!canDrawArea) return;
                 if (!setDrawnArea) return;
                 if (!drawnArea) return;
 
@@ -234,12 +254,15 @@ const TurtleMap = ({
                 setIsMouseDown(true);
             }}
             onMouseMove={(e) => {
-                if (!canDraw) return;
-                if (!setDrawnArea) return;
-                if (!drawnArea) return;
-
                 const mouseX = e.nativeEvent.offsetX;
                 const mouseY = e.nativeEvent.offsetY;
+                if (canDrawCurrentlySelectedBlock) {
+                    setMousePosition([mouseX, mouseY]);
+                }
+
+                if (!canDrawArea) return;
+                if (!setDrawnArea) return;
+                if (!drawnArea) return;
 
                 if (isMouseDown) {
                     const tileX = Math.floor((mouseX - blockRadius) / blockSize) * blockSize + blockRadius;
@@ -261,11 +284,60 @@ const TurtleMap = ({
                     }
                 }
             }}
-            onMouseUp={() => {
+            onMouseUp={(e) => {
                 if (!blocks) return;
 
                 setIsMouseDown(false);
+                if (!onClick) return;
+
+                const {x, y, z} = turtle.location;
+                const tx =
+                    (Math.floor((e.nativeEvent.offsetX - blockRadius) / blockSize) * blockSize +
+                        blockRadius +
+                        blockRadius -
+                        width * 0.5) /
+                        blockSize +
+                    x;
+                const tz =
+                    (Math.floor((e.nativeEvent.offsetY - blockRadius) / blockSize) * blockSize +
+                        blockRadius +
+                        blockRadius -
+                        height * 0.5) /
+                        blockSize +
+                    z;
+
+                let ty = null;
+                let previousOpenSpace = null;
+
+                // Attempt to go down
+                for (let k = y; k > -60; k--) {
+                    const block = blocks[`${tx},${k},${tz}`];
+                    if (block === undefined) {
+                        previousOpenSpace = k;
+                    } else if (previousOpenSpace !== null) {
+                        ty = previousOpenSpace;
+                        break;
+                    }
+                }
+
+                // Attempt to go up
+                if (ty === null) {
+                    for (let k = y; k < 256; k++) {
+                        const block = blocks[`${tx},${k},${tz}`];
+                        if (block === undefined) {
+                            ty = k;
+                            break;
+                        }
+                    }
+                }
+
+                if (ty === null) {
+                    ty = y;
+                }
+
+                onClick(tx, ty, tz);
             }}
+            onMouseLeave={() => setMousePosition(undefined)}
         />
     );
 };

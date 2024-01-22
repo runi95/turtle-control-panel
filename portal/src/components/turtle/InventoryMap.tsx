@@ -160,7 +160,21 @@ function InventoryMap(props: InventoryMapProps) {
                 height={208}
                 width={208}
                 drawColor={selectedColor}
-                canDraw={isCreatingArea}
+                canDrawArea={isCreatingArea}
+                canDrawCurrentlySelectedBlock={!isCreatingArea}
+                onClick={(x, y, z) => {
+                    action({
+                        type: 'ACTION',
+                        action: 'move',
+                        data: {
+                            serverId,
+                            id: turtle.id,
+                            x,
+                            y,
+                            z,
+                        },
+                    });
+                }}
                 drawnArea={drawnArea}
                 setDrawnArea={setDrawnArea}
                 setTranslatedDrawnArea={setCreatedArea}

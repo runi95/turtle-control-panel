@@ -178,7 +178,6 @@ function MineModal(props: MineModalProps) {
                     <Row className='mb-3'>
                         <Col md='auto'>
                             <TurtleMap
-                                canDraw={true}
                                 drawnArea={drawnArea}
                                 setDrawnArea={setDrawnArea}
                                 setTranslatedDrawnArea={setCreatedArea}
