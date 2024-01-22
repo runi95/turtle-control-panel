@@ -17,7 +17,7 @@ function MineModal(props: MineModalProps) {
     const {serverId} = useParams() as {serverId: string};
     const {turtle, action, hideModal} = props;
     const [isFormValidated, setIsFormValidated] = useState(false);
-    const [translatedDrawnArea, setTranslatedDrawnArea] = useState<Omit<Location, 'y'>[]>([]);
+    const [createdArea, setCreatedArea] = useState<Omit<Location, 'y'>[]>([]);
     const [miningType, setMiningType] = useState<number>(1);
     const [includeOrExclude, setIncludeOrExclude] = useState<number>(1);
     const [fromYLevel, setFromYLevel] = useState(turtle.location.y);
@@ -36,7 +36,7 @@ function MineModal(props: MineModalProps) {
                 data: {
                     serverId,
                     id: turtle.id,
-                    area: Object.values(translatedDrawnArea).sort((a, b) => {
+                    area: Object.values(createdArea).sort((a, b) => {
                         if (a.x < b.x) {
                             return -1;
                         } else if (a.x > b.x) {
@@ -63,7 +63,7 @@ function MineModal(props: MineModalProps) {
         setIsFormValidated(true);
     };
 
-    const createdAreaLength = translatedDrawnArea.length;
+    const createdAreaLength = createdArea.length;
     return (
         <Modal show={true} onHide={() => hideModal()}>
             <Form noValidate validated={isFormValidated} onSubmit={handleFormSubmit}>
@@ -181,7 +181,7 @@ function MineModal(props: MineModalProps) {
                                 canDraw={true}
                                 drawnArea={drawnArea}
                                 setDrawnArea={setDrawnArea}
-                                setTranslatedDrawnArea={setTranslatedDrawnArea}
+                                setTranslatedDrawnArea={setCreatedArea}
                             />
                         </Col>
                     </Row>
