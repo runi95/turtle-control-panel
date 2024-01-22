@@ -2,10 +2,10 @@ import {useState} from 'react';
 import {Modal, Form, Button, Row, Col, CloseButton} from 'react-bootstrap';
 import {Action} from '../../../App';
 import {useParams} from 'react-router-dom';
-import {Turtle} from '../../../api/UseTurtle';
+import {Location, Turtle} from '../../../api/UseTurtle';
 import './MineModal.css';
-import MineAreaMap from './MineAreaMap';
 import {BlockNames} from './MinecraftBlockNames';
+import TurtleMap, {DrawnArea} from '../TurtleMap';
 
 export interface MineModalProps {
     turtle: Turtle;
@@ -13,58 +13,42 @@ export interface MineModalProps {
     hideModal: () => void;
 }
 
-export interface CreatedArea {
-    [key: string]: {
-        x: number;
-        y: number;
-    };
-}
-
-const spriteSize = 8;
-const spriteRadius = 0.5 * spriteSize;
-
 function MineModal(props: MineModalProps) {
     const {serverId} = useParams() as {serverId: string};
     const {turtle, action, hideModal} = props;
     const [isFormValidated, setIsFormValidated] = useState(false);
-    const [createdArea, setCreatedArea] = useState({} as CreatedArea);
+    const [translatedDrawnArea, setTranslatedDrawnArea] = useState<Omit<Location, 'y'>[]>([]);
     const [miningType, setMiningType] = useState<number>(1);
     const [includeOrExclude, setIncludeOrExclude] = useState<number>(1);
     const [fromYLevel, setFromYLevel] = useState(turtle.location.y);
     const [toYLevel, setToYLevel] = useState(-58);
     const [includeOrExcludeList, setIncludeOrExcludeList] = useState<string[]>([]);
+    const [drawnArea, setDrawnArea] = useState<DrawnArea>({});
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         const form = e.currentTarget;
         if (form.checkValidity() === true) {
-            const {x, z} = turtle.location;
             action({
                 type: 'ACTION',
                 action: miningType === 3 ? 'extract' : 'mine',
                 data: {
                     serverId,
                     id: turtle.id,
-                    area: Object.keys(createdArea)
-                        .map((key) => {
-                            const tempX = (createdArea[key].x + spriteRadius - 336 * 0.5) / spriteSize + x;
-                            const tempZ = (createdArea[key].y + spriteRadius - 336 * 0.5) / spriteSize + z;
-                            return {x: tempX, z: tempZ};
-                        })
-                        .sort((a, b) => {
-                            if (a.x < b.x) {
-                                return -1;
-                            } else if (a.x > b.x) {
-                                return 1;
-                            } else if (a.z < b.z) {
-                                return -1;
-                            } else if (a.z > b.z) {
-                                return 1;
-                            }
+                    area: Object.values(translatedDrawnArea).sort((a, b) => {
+                        if (a.x < b.x) {
+                            return -1;
+                        } else if (a.x > b.x) {
+                            return 1;
+                        } else if (a.z < b.z) {
+                            return -1;
+                        } else if (a.z > b.z) {
+                            return 1;
+                        }
 
-                            return 0;
-                        }),
+                        return 0;
+                    }),
                     fromYLevel,
                     toYLevel,
                     isExcludeMode: includeOrExclude === 1,
@@ -79,7 +63,7 @@ function MineModal(props: MineModalProps) {
         setIsFormValidated(true);
     };
 
-    const createdAreaLength = Object.keys(createdArea).length;
+    const createdAreaLength = translatedDrawnArea.length;
     return (
         <Modal show={true} onHide={() => hideModal()}>
             <Form noValidate validated={isFormValidated} onSubmit={handleFormSubmit}>
@@ -192,7 +176,14 @@ function MineModal(props: MineModalProps) {
                         </Form.Label>
                     </Row>
                     <Row className='mb-3'>
-                        <MineAreaMap createdArea={createdArea} setCreatedArea={setCreatedArea} />
+                        <Col md='auto'>
+                            <TurtleMap
+                                canDraw={true}
+                                drawnArea={drawnArea}
+                                setDrawnArea={setDrawnArea}
+                                setTranslatedDrawnArea={setTranslatedDrawnArea}
+                            />
+                        </Col>
                     </Row>
                 </Modal.Body>
                 <Modal.Footer>

@@ -2,27 +2,25 @@ import styled from 'styled-components';
 import {Col, Row, Button} from 'react-bootstrap';
 import FarmModal from './farm/FarmModal';
 import MineModal from './mine/MineModal';
+import BuildModal from './build/BuildModal';
 import {useState} from 'react';
 import './Inventory.css';
 import {Action} from '../../App';
-import TurtleMap from './TurtleMap';
 import Peripheral from './Peripheral';
 import Item from './Item';
 import InventoryPeripheral, {InventoryPeripheralContent} from './InventoryPeripheral';
 import {Turtle, useTurtle} from '../../api/UseTurtle';
 import {useParams} from 'react-router-dom';
+import InventoryMap from './InventoryMap';
 
 export interface InventoryProps {
     action: Action;
 }
 
-const canvasSize = 208;
-const canvasRadius = 0.5 * canvasSize;
-
 function Inventory(props: InventoryProps) {
     const {action} = props;
     const {serverId, id} = useParams() as {serverId: string; id: string};
-    const [modalState, setModalState] = useState<'farm' | 'mine' | null>(null);
+    const [modalState, setModalState] = useState<'farm' | 'mine' | 'build' | null>(null);
     const {data: turtle} = useTurtle(serverId, id);
 
     const renderModal = (turtle: Turtle) => {
@@ -31,6 +29,8 @@ function Inventory(props: InventoryProps) {
                 return <FarmModal turtle={turtle} action={action} hideModal={() => setModalState(null)} />;
             case 'mine':
                 return <MineModal turtle={turtle} action={action} hideModal={() => setModalState(null)} />;
+            case 'build':
+                return <BuildModal turtle={turtle} action={action} hideModal={() => setModalState(null)} />;
             default:
                 return null;
         }
@@ -184,6 +184,16 @@ function Inventory(props: InventoryProps) {
                         </div>
                         <div>
                             <Button
+                                onClick={() => setModalState('build')}
+                                variant='outline-info'
+                                size='sm'
+                                disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
+                            >
+                                Build
+                            </Button>
+                        </div>
+                        <div>
+                            <Button
                                 onClick={() =>
                                     props.action({type: 'ACTION', action: 'refuel', data: {serverId, id: turtle.id}})
                                 }
@@ -242,11 +252,9 @@ function Inventory(props: InventoryProps) {
                     </div>
                 </Row>
             </Col>
-            <TurtleMap
-                style={{border: '1px solid #fff', borderRadius: canvasRadius}}
-                canvasSize={canvasSize}
-                action={action}
-            />
+            <Col key='canvas' style={{marginLeft: 'auto'}} md='auto'>
+                <InventoryMap turtle={turtle} action={action} />
+            </Col>
         </Row>
     );
 }
