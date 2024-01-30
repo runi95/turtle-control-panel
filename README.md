@@ -61,6 +61,18 @@ npm start
 
 Get the contents of [startup.lua](./turtle/startup.lua) onto the turtle. This can be achieved by either uploading the contents onto pastebin and running the `pastebin get <code> startup` on the turtle itself (recommended) or by copying the contents of the file, running `edit startup` on the turtle and pasting the content line by line.
 
+Alternatively if pastebin is down you can run the followin inside your turtle:
+
+```
+> lua
+lua> file = fs.open("startup.lua", "w")
+lua> file.write(http.get("https://raw.githubusercontent.com/runi95/turtle-control-panel/master/turtle/startup.lua").readAll())
+lua> exit()
+> edit startup.lua
+```
+
+NOTE: If you ran the above code, make sure that you edit the first line containing the "connectionURL" variable to the host for the server you're running.
+
 Once the turtle has the correct startup file simply restart the turtle with `reboot` and it should attempt to connect to your running server.
 
 NOTE: Make sure to edit the `connectionURL` variable in startup.lua to your own IP address (or server URL). If you want to run this on a local server on localhost then check out this CC:Tweaked guide on [Allowing access to local IPs](https://tweaked.cc/guide/local_ips.html).
