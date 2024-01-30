@@ -49,6 +49,7 @@ function MineModal(props: BuildModalProps) {
                     }),
                     fromYLevel,
                     toYLevel,
+                    buildingBlock,
                 },
             });
             hideModal();

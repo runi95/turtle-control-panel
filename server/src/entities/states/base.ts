@@ -169,6 +169,173 @@ export abstract class TurtleBaseState<T> {
         }
     }
 
+    protected async *pullItemFromNearbyInventories(itemName: string, count?: number): AsyncGenerator<void> {
+        if (
+            !Object.values(this.turtle.peripherals).some(({types}) => {
+                if (types.includes('inventory')) {
+                    return true;
+                }
+
+                return false;
+            })
+        ) {
+            throw new Error('No inventory to pull items from');
+        }
+
+        let hasPulledItemFromInventories = false;
+        for (let slot = 1; slot < 27; slot++) {
+            if (count != null && count < 1) return;
+
+            const item = this.turtle.inventory[slot];
+            let countInSlot = 0;
+            if (item) {
+                if (item.name !== itemName) continue;
+                if (item.count === Number(item.maxCount)) continue;
+                countInSlot = item.count;
+            }
+
+            const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
+                (acc, [side, {types, data}]) => {
+                    if (types.includes('inventory')) {
+                        acc.inventories.push([side, {types, data}]);
+                    } else if (types.includes('peripheral_hub')) {
+                        acc.hubs.push([side, {types, data}]);
+                    }
+
+                    return acc;
+                },
+                {
+                    inventories: [] as [string, {data?: unknown; types: string[]}][],
+                    hubs: [] as [string, {data?: unknown; types: string[]}][],
+                }
+            );
+
+            const inventoryWithItem = inventories.find(([side, {data}]) => {
+                const content = (data as {content: {name: string}[]}).content;
+                if (content == null) {
+                    return false;
+                }
+
+                const itemInInventoryIndex = content?.findIndex(({name}) => name === itemName);
+                if (!(itemInInventoryIndex > -1)) return false;
+
+                switch (side) {
+                    case 'front':
+                    case 'top':
+                    case 'bottom':
+                    case 'left':
+                    case 'right':
+                    case 'back':
+                        if (itemInInventoryIndex === 0) return true;
+                        if (content?.length < (data as {size: number}).size) return true;
+                        return content?.some((item) => item == null);
+                    default:
+                        return hubs.some(([_, {data}]) => {
+                            if (!(data as {localName: string})?.localName) return false;
+                            return (data as {remoteNames: string[]})?.remoteNames?.includes(side);
+                        });
+                }
+            });
+            if (inventoryWithItem) {
+                const [side, {data}] = inventoryWithItem;
+                const {content, size} = (data as {content: {name: string; count: number; maxCount: string;}[]; size: number;});
+                if (content === undefined) {
+                    continue;
+                }
+
+                const itemInInventoryIndex = content?.findIndex(({name}) => name === itemName);
+                if (!(itemInInventoryIndex > -1)) continue;
+
+                switch (side) {
+                    case 'front':
+                    case 'top':
+                    case 'bottom':
+                    case 'left':
+                    case 'right':
+                    case 'back':
+                        if (itemInInventoryIndex > 0) {
+                            let freeSlot = -1;
+                            for (let i = 0; i < size; i++) {
+                                if (content[i] != null) continue;
+                                freeSlot = i;
+                                break;
+                            }
+
+                            if (freeSlot === -1) continue;
+
+                            const [pushedItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
+                                side,
+                                'pushItems',
+                                side,
+                                1,
+                                null,
+                                freeSlot + 1,
+                            );
+                            if (pushedItemCount !== content[0].count) continue;
+
+                            await this.turtle.usePeripheralWithSide<[number]>(
+                                side,
+                                'pushItems',
+                                side,
+                                itemInInventoryIndex + 1,
+                                null,
+                                1,
+                            );
+                        }
+
+                        if (side === 'left') {
+                            await this.turtle.turnLeft();
+                            yield;
+                        } else if (side === 'back') {
+                            await this.turtle.turnLeft();
+                            yield;
+        
+                            await this.turtle.turnLeft();
+                            yield;
+                        } else if (side === 'right') {
+                            await this.turtle.turnRight();
+                            yield;
+                        }
+                        
+                        if (side === 'top') {
+                            await this.turtle.suckUp();
+                            yield;
+                        } else if (side === 'bottom') {
+                            await this.turtle.suckDown();
+                            yield;
+                        } else {
+                            await this.turtle.suck();
+                            yield;
+                        }
+                        break;
+                    default:
+                        const connectedHub = hubs.find(
+                            ([_, {data}]) => (data as {remoteNames: string[]})?.remoteNames?.includes(side)
+                        );
+                        if (connectedHub) {
+                            const [_, {data}] = connectedHub;
+                            const [pushedItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
+                                side,
+                                'pushItems',
+                                (data as {localName: string}).localName,
+                                itemInInventoryIndex + 1,
+                                count != null ? count : null
+                            );
+                            if (pushedItemCount > 0) {
+                                hasPulledItemFromInventories = true;
+                                if (count != null) count -= pushedItemCount;
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+        if (!hasPulledItemFromInventories) {
+            throw new Error('No nearby inventory has the specified item');
+        }
+    }
+
     protected async *transferIntoNearbyInventories(): AsyncGenerator<void> {
         if (
             !Object.values(this.turtle.peripherals).some(({types}) => {
@@ -180,6 +347,17 @@ export abstract class TurtleBaseState<T> {
             })
         ) {
             throw new Error('No inventory to empty into');
+        }
+
+        // Has any items in inventory?
+        let itemsInInventory = 0;
+        for (let slot = 1; slot < 27; slot++) {
+            if (this.turtle.inventory[slot]) itemsInInventory++;
+        }
+
+        if (itemsInInventory < 1) {
+            yield;
+            return; // Done!
         }
 
         let hasEmptiedAnySlot = false;

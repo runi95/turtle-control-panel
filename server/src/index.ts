@@ -27,6 +27,7 @@ import {Area} from './db/area.type';
 import {TurtleGoHomeState} from './entities/states/gohome';
 import {TurtleExtractionState} from './entities/states/extraction';
 import {PriorityQueue} from './dlite/PriorityQueue';
+import {TurtleBuildingState} from './entities/states/building';
 
 logger.info('Starting server...');
 
@@ -474,6 +475,14 @@ server
                                     break;
                                 case 'go-home':
                                     turtle.state = new TurtleGoHomeState(turtle);
+                                    break;
+                                case 'build':
+                                    turtle.state = new TurtleBuildingState(turtle, {
+                                        area: obj.data.area,
+                                        fromYLevel: obj.data.fromYLevel,
+                                        toYLevel: obj.data.toYLevel,
+                                        buildingBlockName: obj.data.buildingBlock
+                                    });
                                     break;
                                 default:
                                     logger.error(`Invalid action [${obj.action}] attempted on turtle [${obj.data.id}]`);

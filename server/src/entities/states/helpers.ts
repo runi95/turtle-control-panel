@@ -14,6 +14,7 @@ export enum TURTLE_STATES {
     SCANNING = 5,
     GO_HOME = 6,
     EXTRACTION = 7,
+    BUILDING = 8,
 };
 
 export type StateDataTypes = FarmingStateData | MovingStateData | MiningStateData | RefuelingStateData | ScanningStateData | GoHomeStateData | ExtractionStateData;
