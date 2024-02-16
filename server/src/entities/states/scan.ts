@@ -56,6 +56,8 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
         const existingBlocks = new Map<string, boolean>();
         for (const scannedBlock of scannedBlocks) {
             if (scannedBlock.x === 0 && scannedBlock.y === 0 && scannedBlock.z === 0) continue;
+            if (scannedBlock.name === 'computercraft:turtle_advanced') continue;
+            if (scannedBlock.name === 'computercraft:turtle_normal') continue;
             blocks.push({
                 ...scannedBlock,
                 x: scannedBlock.x + x,
