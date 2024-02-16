@@ -3,7 +3,6 @@ import {Server} from './server.type';
 import {Block, BlockState, BlockTags} from './block.type';
 import {Direction, Inventory, Location, Turtle} from './turtle.type';
 import {Area} from './area.type';
-import {StateData} from '../entities/states/base';
 import {StateDataTypes} from '../entities/states/helpers';
 import {Chunk, ChunkAnalysis} from './chunk.type';
 
@@ -224,7 +223,7 @@ export const upsertTurtle = (
     selectedSlot: number,
     inventory: Inventory,
     stepsSinceLastRefuel: number,
-    state: StateData<StateDataTypes> | null,
+    state: StateDataTypes | null,
     location: Location | null,
     direction: Direction | null,
     home: Location | null
@@ -306,7 +305,7 @@ export const updateTurtleInventory = (serverId: number, id: number, inventory: I
     setTurtleInventory.run(JSON.stringify(inventory), serverId, id);
 export const updateTurtleStepsSinceLastRefuel = (serverId: number, id: number, stepsSinceLastRefuel: number) =>
     setTurtleStepsSinceLastRefuel.run(stepsSinceLastRefuel, serverId, id);
-export const updateTurtleState = (serverId: number, id: number, stateData: StateData<StateDataTypes> | null) => {
+export const updateTurtleState = (serverId: number, id: number, stateData: StateDataTypes | null) => {
     if (stateData !== null) {
         setTurtleState.run(JSON.stringify(stateData), serverId, id);
     } else {
