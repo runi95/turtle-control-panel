@@ -1,4 +1,4 @@
-import {upsertBlocks} from '../../db';
+import {deleteBlocks, upsertBlocks} from '../../db';
 import {Block} from '../../db/block.type';
 import globalEventEmitter from '../../globalEventEmitter';
 import {Turtle} from '../turtle';
@@ -8,6 +8,8 @@ import {TURTLE_STATES} from './helpers';
 export interface ScanningStateData {
     readonly id: TURTLE_STATES;
 }
+
+const scanSize = 16;
 
 export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
     public readonly id = TURTLE_STATES.SCANNING;
@@ -42,7 +44,7 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
 
         const [scannedBlocks, scanMessage] = await this.turtle.usePeripheralWithName<
             [(Block & {x: number; y: number; z: number})[], string]
-        >('geoScanner', 'scan', '16');
+        >('geoScanner', 'scan', `${scanSize}`);
         if (scannedBlocks === null) {
             throw new Error(scanMessage);
         }
@@ -50,15 +52,35 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
         yield;
 
         const {x, y, z} = this.turtle.location;
-        const blocks = scannedBlocks
-            .filter((scannedBlock) => scannedBlock.x !== 0 || scannedBlock.y !== 0 || scannedBlock.z !== 0)
-            .map((scannedBlock) => ({
+        const blocks = [];
+        const existingBlocks = new Map<string, boolean>();
+        for (const scannedBlock of scannedBlocks) {
+            if (scannedBlock.x === 0 && scannedBlock.y === 0 && scannedBlock.z === 0) continue;
+            blocks.push({
                 ...scannedBlock,
                 x: scannedBlock.x + x,
                 y: scannedBlock.y + y,
                 z: scannedBlock.z + z,
-            }));
+            });
+            existingBlocks.set(`${scannedBlock.x},${scannedBlock.y},${scannedBlock.z}`, true);
+        }
 
+        const deletedBlocks = [];
+        for (let i = -scanSize; i < scanSize; i++) {
+            for (let j = -scanSize; j < scanSize; j++) {
+                for (let k = -scanSize; k < scanSize; k++) {
+                    if (!existingBlocks.get(`${i + x},${j + y},${k + z}`)) {
+                        deletedBlocks.push({
+                            x: i + x,
+                            y: j + y,
+                            z: k + z
+                        });
+                    }
+                }
+            }
+        }
+
+        deleteBlocks(this.turtle.serverId, deletedBlocks);
         upsertBlocks(this.turtle.serverId, blocks);
         globalEventEmitter.emit('wupdate', {
             serverId: this.turtle.serverId,

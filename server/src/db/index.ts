@@ -294,6 +294,9 @@ export const upsertBlocks = (serverId: number, blocks: {
 })();
 export const deleteBlock = (serverId: number, x: number, y: number, z: number) =>
     deleteBlockStatement.run(serverId, x, y, z);
+export const deleteBlocks = (serverId: number, blocks: {x: number; y: number; z: number}[]) => db.transaction(() => {
+    for (const block of blocks) deleteBlock(serverId, block.x, block.y, block.z);
+})();
 export const deleteTurtle = (serverId: number, id: number) =>
     deleteTurtleStatement.run(serverId, id);
 export const updateTurtleName = (serverId: number, id: number, name: string) => setTurtleName.run(name, serverId, id);
