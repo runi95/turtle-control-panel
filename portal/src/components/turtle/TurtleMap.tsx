@@ -68,6 +68,7 @@ const TurtleMap = ({
 
     useEffect(() => {
         if (!turtle) return;
+        if (!turtle.location) return;
         if (!setTranslatedDrawnArea) return;
         if (!drawnArea) return;
 
