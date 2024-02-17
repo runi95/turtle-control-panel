@@ -35,7 +35,7 @@ local function eval(f, uuid)
     local result = {func()}
     local type = "EVAL"
     local response = { type = type, message = result }
-    send(textutils.serializeJSON(response), uuid)
+    send(textutils.serializeJSON(response, {allow_repetitions = true}), uuid)
 end
 
 local function handshake(uuid)
@@ -65,7 +65,7 @@ local function handshake(uuid)
     local selectedSlot = turtle.getSelectedSlot()
     local computer = { id = id, label = label, fuel = fuel, inventory = inventory, selectedSlot = selectedSlot, peripherals = peripherals }
     local response = { type = "HANDSHAKE", message = computer }
-    send(textutils.serializeJSON(response), uuid)
+    send(textutils.serializeJSON(response, {allow_repetitions = true}), uuid)
 end
 
 local function main()
@@ -112,7 +112,7 @@ local function main()
                 elseif obj.type == "RENAME" then
                     os.setComputerLabel(obj["message"])
                     local response = { type = "RENAME" }
-                    send(textutils.serializeJSON(response), obj.uuid)
+                    send(textutils.serializeJSON(response, {allow_repetitions = true}), obj.uuid)
                 elseif obj.type == "EVAL" then
                     eval(obj["function"], obj.uuid)
                 elseif obj.type == "DISCONNECT" then
@@ -132,7 +132,7 @@ local function main()
             end, function (msg)
                 printError(msg)
                 local response = { type = "ERROR", message = msg }
-                send(textutils.serializeJSON(response), obj.uuid)
+                send(textutils.serializeJSON(response, {allow_repetitions = true}), obj.uuid)
             end)
         end
     end
@@ -178,7 +178,7 @@ local function inventoryUpdate()
         parallel.waitForAll(table.unpack(f))
 
         if ws then
-            send(textutils.serializeJSON({ type = "INVENTORY_UPDATE", message = inventory }), "update")
+            send(textutils.serializeJSON({ type = "INVENTORY_UPDATE", message = inventory }, {allow_repetitions = true}), "update")
         end
     end
 
@@ -204,7 +204,7 @@ local function peripheralAttached()
         end
 
         if ws then
-            send(textutils.serializeJSON({ type = "PERIPHERAL_ATTACHED", message = peripherals }), "update")
+            send(textutils.serializeJSON({ type = "PERIPHERAL_ATTACHED", message = peripherals }, {allow_repetitions = true}), "update")
         end
     end
 
@@ -220,7 +220,7 @@ local function peripheralDetached()
         local _, side = os.pullEvent("peripheral_detach")
 
         if not peripheral.isPresent(side) and ws then
-            send(textutils.serializeJSON({ type = "PERIPHERAL_DETACHED", message = side }), "update")
+            send(textutils.serializeJSON({ type = "PERIPHERAL_DETACHED", message = side }, {allow_repetitions = true}), "update")
         end
     end
 end
