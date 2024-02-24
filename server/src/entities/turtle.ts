@@ -1132,7 +1132,7 @@ export class Turtle {
         );
         if (!didInspect) {
             const dbBlock = getBlock(this.serverId, x + xChange, y, z + zChange);
-            if (!dbBlock) return;
+            if (!dbBlock) return null;
             globalEventEmitter.emit('wdelete', {
                 serverId: this.serverId,
                 x: this.location.x + xChange,
@@ -1192,7 +1192,7 @@ export class Turtle {
         );
         if (!didInspect) {
             const dbBlock = getBlock(this.serverId, x, y + 1, z);
-            if (!dbBlock) return;
+            if (!dbBlock) return null;
             globalEventEmitter.emit('wdelete', {
                 serverId: this.serverId,
                 x: this.location.x,
@@ -1252,7 +1252,7 @@ export class Turtle {
         );
         if (!didInspect) {
             const dbBlock = getBlock(this.serverId, x, y - 1, z);
-            if (!dbBlock) return;
+            if (!dbBlock) return null;
             globalEventEmitter.emit('wdelete', {
                 serverId: this.serverId,
                 x: this.location.x,
