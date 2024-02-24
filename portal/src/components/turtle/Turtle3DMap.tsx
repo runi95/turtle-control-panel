@@ -1,16 +1,19 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable react/no-unknown-property */
+import './Turtle3DMap.css';
 import {Canvas, useFrame, useLoader} from '@react-three/fiber';
 import {Color, InstancedMesh, Matrix4, Quaternion, TextureLoader, Vector3} from 'three';
 import type * as threelib from 'three-stdlib';
-import {useEffect, useRef} from 'react';
+import {forwardRef, useEffect, useImperativeHandle, useRef, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {Direction, useTurtle} from '../../api/UseTurtle';
 import {useBlocks} from '../../api/UseBlocks';
 import SpriteTable from '../../SpriteTable';
-import {Edges} from '@react-three/drei';
+import {Edges, OrbitControls} from '@react-three/drei';
 import {EffectComposer, N8AO} from '@react-three/postprocessing';
 import {Action} from '../../App';
+import CameraIcon from '../../icons/CameraIcon';
+import CarIcon from '../../icons/CarIcon';
 
 const tempColor = new Color();
 const tempMatrix = new Matrix4();
@@ -23,48 +26,128 @@ const matrixSize = matrixScalePow * height;
 const matrixScaleDiv = matrixScale * 0.5;
 const heightDiv = height * 0.5;
 
+enum MapModes {
+    TURTLE_MOVE_MODE,
+    CAMERA_MODE,
+}
+
 interface Turtle3DMapProps {
     action: Action;
 }
 
 function Turtle3DMap(props: Turtle3DMapProps) {
     const {action} = props;
+    const worldMeshRef = useRef<{setMode: (mapMode: MapModes) => void}>(null!);
+    const [mapMode, setMapMode] = useState<MapModes>(MapModes.CAMERA_MODE);
+
+    useEffect(() => {
+        if (!worldMeshRef.current) return;
+
+        worldMeshRef.current.setMode(mapMode);
+    }, [mapMode]);
 
     return (
-        <Canvas
-            gl={{
-                antialias: false,
-                depth: true,
-            }}
-            camera={{
-                fov: 25,
-                near: 1,
-                far: 750,
-                position: [0, 30, 60],
-            }}
-            className='canvas'
-        >
-            <ambientLight args={[0xeeeeee, 1.5]} />
-            <directionalLight args={[0xffffff, 2]} castShadow position={[1, 1, 0.5]} />
-            <WorldMesh action={action} />
-            <mesh>
-                <boxGeometry args={[1, 1, 1]} />
-                <meshLambertMaterial color='#D3CD5F' />
-                <Edges />
-            </mesh>
-            <EffectComposer disableNormalPass>
-                <N8AO aoRadius={0.75} intensity={2.5} distanceFalloff={1} quality='high' halfRes />
-            </EffectComposer>
-        </Canvas>
+        <>
+            <Canvas
+                gl={{
+                    antialias: false,
+                    depth: true,
+                }}
+                camera={{
+                    fov: 25,
+                    near: 1,
+                    far: 750,
+                    position: [0, 30, 60],
+                }}
+                className='canvas'
+            >
+                <ambientLight args={[0xeeeeee, 1.5]} />
+                <directionalLight args={[0xffffff, 2]} castShadow position={[1, 1, 0.5]} />
+                <WorldMesh action={action} ref={worldMeshRef} />
+                <mesh>
+                    <boxGeometry args={[1, 1, 1]} />
+                    <meshLambertMaterial color='#D3CD5F' />
+                    <Edges />
+                </mesh>
+                <EffectComposer disableNormalPass>
+                    <N8AO aoRadius={0.75} intensity={2.5} distanceFalloff={1} quality='high' halfRes />
+                </EffectComposer>
+            </Canvas>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    position: 'fixed',
+                    gap: 8,
+                    right: 10,
+                    top: 80,
+                    opacity: 0.8,
+                }}
+            >
+                <div
+                    className={
+                        mapMode === MapModes.CAMERA_MODE ? 'camera-button-container active' : 'camera-button-container'
+                    }
+                    onClick={() => {
+                        setMapMode(MapModes.CAMERA_MODE);
+                    }}
+                >
+                    <CameraIcon width={40} height={40} />
+                </div>
+                <div
+                    className={
+                        mapMode === MapModes.TURTLE_MOVE_MODE
+                            ? 'camera-button-container active'
+                            : 'camera-button-container'
+                    }
+                    onClick={() => {
+                        setMapMode(MapModes.TURTLE_MOVE_MODE);
+                    }}
+                >
+                    <CarIcon width={40} height={40} />
+                </div>
+            </div>
+        </>
     );
 }
 
-function WorldMesh({action}: {action: Action}) {
+const WorldMesh = forwardRef(function WorldMesh({action}: {action: Action}, ref) {
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const previousInstanceId = useRef<number | null>(null);
     const sphereMeshRef = useRef<InstancedMesh>(null!);
     const instancedMeshRef = useRef<InstancedMesh>(null!);
+    const orbitControlsRef = useRef<threelib.OrbitControls>(null!);
+    const mapModeRef = useRef<MapModes>(MapModes.CAMERA_MODE);
     const outlineMap = useLoader(TextureLoader, '/outline.png');
+
+    useImperativeHandle(
+        ref,
+        () => {
+            return {
+                setMode(mapMode: MapModes) {
+                    mapModeRef.current = mapMode;
+                    switch (mapMode) {
+                        case MapModes.CAMERA_MODE:
+                            orbitControlsRef.current.enablePan = true;
+                            orbitControlsRef.current.enableRotate = true;
+                            orbitControlsRef.current.enableZoom = true;
+                            sphereMeshRef.current.visible = false;
+                            break;
+                        case MapModes.TURTLE_MOVE_MODE:
+                            orbitControlsRef.current.enablePan = false;
+                            orbitControlsRef.current.enableRotate = false;
+                            orbitControlsRef.current.enableZoom = false;
+                            if (previousInstanceId.current !== null) {
+                                sphereMeshRef.current.visible = true;
+                            }
+                            break;
+                    }
+                },
+            };
+        },
+        []
+    );
 
     const {data: turtle} = useTurtle(serverId, id);
 
@@ -214,7 +297,7 @@ function WorldMesh({action}: {action: Action}) {
 
                     if (!(realInstanceId < matrixSize)) return;
                     if (realInstanceId === previousInstanceId.current) return;
-                    if (previousInstanceId.current === null) {
+                    if (previousInstanceId.current === null && mapModeRef.current === MapModes.TURTLE_MOVE_MODE) {
                         sphereMeshRef.current.visible = true;
                     }
 
@@ -237,6 +320,7 @@ function WorldMesh({action}: {action: Action}) {
                     e.stopPropagation();
                     if (!(e.intersections.length > 0)) return;
                     if (!turtle) return;
+                    if (mapModeRef.current !== MapModes.TURTLE_MOVE_MODE) return;
 
                     const targetIndex = e.intersections.findIndex((intersection) => {
                         const i = intersection.instanceId;
@@ -282,8 +366,9 @@ function WorldMesh({action}: {action: Action}) {
                 </boxGeometry>
                 <meshLambertMaterial attach='material' vertexColors alphaTest={0.1} map={outlineMap} />
             </instancedMesh>
+            <OrbitControls ref={orbitControlsRef} />
         </>
     );
-}
+});
 
 export default Turtle3DMap;

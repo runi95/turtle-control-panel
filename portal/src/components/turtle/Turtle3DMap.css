@@ -1,0 +1,10 @@
+.camera-button-container {
+    cursor: pointer;
+    border: 3px solid #373737;
+    border-radius: 5;
+    background: #8b8b8b;
+}
+
+.camera-button-container.active {
+    border-color: #264d8c;
+}
