@@ -14,6 +14,10 @@ function Dashboard(props: DashboardProps) {
     const [isInEditMode, setEditModeEnabled] = useState(false);
     const {servers, action} = props;
 
+    // Weird hack to fix issues with @react-three/drei
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Btn: any = Button;
+
     return isInEditMode ? (
         <DashboardEditor servers={servers} action={action} closeEditMode={() => setEditModeEnabled(false)} />
     ) : (
@@ -27,9 +31,9 @@ function Dashboard(props: DashboardProps) {
             ))}
             <Row>
                 <Col>
-                    <Button variant='link' size='sm' onClick={() => setEditModeEnabled(true)}>
+                    <Btn variant='link' size='sm' onClick={() => setEditModeEnabled(true)}>
                         Update server names
-                    </Button>
+                    </Btn>
                 </Col>
             </Row>
         </Container>

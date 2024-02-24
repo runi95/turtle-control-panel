@@ -13,6 +13,10 @@ function Peripheral(props: PeripheralProps) {
     const {peripheral, turtle, action} = props;
     const {types, data} = peripheral;
 
+    // Weird hack to fix issues with @react-three/drei
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Btn: any = Button;
+
     const {serverId, id} = turtle;
     if (types.includes('modem') && (data as {isWireless: boolean} | undefined)?.isWireless) {
         return (
@@ -21,14 +25,14 @@ function Peripheral(props: PeripheralProps) {
                     <small>Modem</small>
                 </div>
                 <PeripheralContainer>
-                    <Button
+                    <Btn
                         onClick={() => action({type: 'ACTION', action: 'locate', data: {serverId, id}})}
                         variant={turtle.location === null ? 'outline-success' : 'outline-secondary'}
                         size='sm'
                         disabled={!turtle.isOnline}
                     >
                         Locate
-                    </Button>
+                    </Btn>
                 </PeripheralContainer>
             </PeripheralGroup>
         );
@@ -41,22 +45,22 @@ function Peripheral(props: PeripheralProps) {
                     <small>Geo Scanner</small>
                 </div>
                 <PeripheralContainer>
-                    <Button
+                    <Btn
                         onClick={() => action({type: 'ACTION', action: 'scan', data: {serverId, id}})}
                         variant='outline-info'
                         size='sm'
                         disabled={!turtle.isOnline}
                     >
                         Scan
-                    </Button>
-                    <Button
+                    </Btn>
+                    <Btn
                         onClick={() => action({type: 'ACTION', action: 'analyze', data: {serverId, id}})}
                         variant='outline-info'
                         size='sm'
                         disabled={!turtle.isOnline}
                     >
                         Analyze
-                    </Button>
+                    </Btn>
                 </PeripheralContainer>
             </PeripheralGroup>
         );

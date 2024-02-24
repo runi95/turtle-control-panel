@@ -301,40 +301,11 @@ function App() {
             <Route
                 path='/servers/:serverId/turtles/:id'
                 element={
-                    <div>
-                        <Navbar style={{backgroundColor: '#27293d'}} variant='dark'>
-                            <Navbar.Brand
-                                className='mr-auto'
-                                style={{cursor: 'pointer'}}
-                                onClick={() => navigate('/dashboard')}
-                            >
-                                <img
-                                    alt='Logo'
-                                    src='/logo.svg'
-                                    width='32'
-                                    height='32'
-                                    className='d-inline-block align-top'
-                                />{' '}
-                                Dashboard
-                            </Navbar.Brand>
-                            {readyState !== ReadyState.OPEN && (
-                                <Nav>
-                                    <img
-                                        className='blinking'
-                                        alt='No signal'
-                                        src='/nosignal.svg'
-                                        width='32'
-                                        height='32'
-                                    />
-                                </Nav>
-                            )}
-                        </Navbar>
-                        <Turtle
-                            action={(msg: ActionMessage) => {
-                                handleSendMessage(JSON.stringify(msg));
-                            }}
-                        />
-                    </div>
+                    <Turtle
+                        action={(msg: ActionMessage) => {
+                            handleSendMessage(JSON.stringify(msg));
+                        }}
+                    />
                 }
             />
         </Routes>

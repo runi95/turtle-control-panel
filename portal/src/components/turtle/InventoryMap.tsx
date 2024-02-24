@@ -83,6 +83,10 @@ function InventoryMap(props: InventoryMapProps) {
         }
     };
 
+    // Weird hack to fix issues with @react-three/drei
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Btn: any = Button;
+
     return (
         <>
             <Modal show={isModalShown} onHide={() => setIsModalShown(false)}>
@@ -149,9 +153,9 @@ function InventoryMap(props: InventoryMapProps) {
                         </Form.Group>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant='success' type='submit'>
+                        <Btn variant='success' type='submit'>
                             Save
-                        </Button>
+                        </Btn>
                     </Modal.Footer>
                 </Form>
             </Modal>
@@ -183,7 +187,7 @@ function InventoryMap(props: InventoryMapProps) {
                 <Col>
                     {isCreatingArea ? (
                         <div className='d-grid gap-2'>
-                            <Button
+                            <Btn
                                 variant='outline-success'
                                 size='sm'
                                 disabled={createdArea.length < 1}
@@ -194,8 +198,8 @@ function InventoryMap(props: InventoryMapProps) {
                                 }}
                             >
                                 {createdArea.length < 1 ? '(draw on map)' : 'Create'}
-                            </Button>
-                            <Button
+                            </Btn>
+                            <Btn
                                 variant='outline-danger'
                                 size='sm'
                                 onClick={() => {
@@ -204,19 +208,19 @@ function InventoryMap(props: InventoryMapProps) {
                                 }}
                             >
                                 Cancel
-                            </Button>
+                            </Btn>
                         </div>
                     ) : (
                         <div className='d-grid gap-2'>
-                            <Button
+                            <Btn
                                 variant='outline-success'
                                 size='sm'
                                 disabled={!turtle?.location}
                                 onClick={() => setIsCreatingArea(true)}
                             >
                                 New Area
-                            </Button>
-                            <Button
+                            </Btn>
+                            <Btn
                                 variant='outline-secondary'
                                 size='sm'
                                 disabled={!turtle?.location}
@@ -232,7 +236,7 @@ function InventoryMap(props: InventoryMapProps) {
                                 }
                             >
                                 Set Home
-                            </Button>
+                            </Btn>
                         </div>
                     )}
                 </Col>

@@ -14,7 +14,14 @@ function FuelInfo(props: FuelInfoProps) {
         coloredFuelBoxCount <= 2 ? RedFuelBox : coloredFuelBoxCount <= 4 ? YellowFuelBox : GreenFuelBox;
 
     return (
-        <OverlayTrigger placement='top' overlay={<Tooltip>{Math.round(100 * fuelPercentage)}% Fuel</Tooltip>}>
+        <OverlayTrigger
+            placement='bottom'
+            overlay={
+                <Tooltip style={{position: 'fixed'}} data-bs-theme='light'>
+                    {Math.round(100 * fuelPercentage)}% Fuel
+                </Tooltip>
+            }
+        >
             <FuelInfoContainer>
                 {Array.from(Array(10), (_, i) => i).map((i) =>
                     i < coloredFuelBoxCount ? <ColoredFuelBox key={i} /> : <EmptyFuelBox key={i} />

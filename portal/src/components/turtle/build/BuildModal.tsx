@@ -13,7 +13,7 @@ export interface BuildModalProps {
     hideModal: () => void;
 }
 
-function MineModal(props: BuildModalProps) {
+function BuildModal(props: BuildModalProps) {
     const {serverId} = useParams() as {serverId: string};
     const {turtle, action, hideModal} = props;
     const [isFormValidated, setIsFormValidated] = useState(false);
@@ -59,6 +59,10 @@ function MineModal(props: BuildModalProps) {
 
         setIsFormValidated(true);
     };
+
+    // Weird hack to fix issues with @react-three/drei
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Btn: any = Button;
 
     const createdAreaLength = Object.keys(createdArea).length;
     return (
@@ -127,13 +131,13 @@ function MineModal(props: BuildModalProps) {
                     </Row>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button disabled={createdAreaLength < 1} variant='outline-success' type='submit'>
+                    <Btn disabled={createdAreaLength < 1} variant='outline-success' type='submit'>
                         {createdAreaLength < 1 ? '(draw area on map)' : 'Build'}
-                    </Button>
+                    </Btn>
                 </Modal.Footer>
             </Form>
         </Modal>
     );
 }
 
-export default MineModal;
+export default BuildModal;

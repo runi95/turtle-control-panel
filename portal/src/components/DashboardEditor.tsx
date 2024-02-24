@@ -18,6 +18,10 @@ function DashboardEditor(props: DashboardEditorProps) {
         )
     );
 
+    // Weird hack to fix issues with @react-three/drei
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Btn: any = Button;
+
     return (
         <Container fluid>
             <Row className='mt-3'>
@@ -61,7 +65,7 @@ function DashboardEditor(props: DashboardEditorProps) {
                             </Form.Group>
                         ))}
                         <InputGroup>
-                            <Button
+                            <Btn
                                 variant='outline-secondary'
                                 size='sm'
                                 onClick={() => {
@@ -69,10 +73,10 @@ function DashboardEditor(props: DashboardEditorProps) {
                                 }}
                             >
                                 Cancel
-                            </Button>
-                            <Button variant='outline-success' size='sm' type='submit'>
+                            </Btn>
+                            <Btn variant='outline-success' size='sm' type='submit'>
                                 Update
-                            </Button>
+                            </Btn>
                         </InputGroup>
                     </Form>
                 </Col>

@@ -20,7 +20,14 @@ function Item(props: ItemProps) {
     const ItemSlotStyle = isSelected ? SelectedItemSlot : ItemSlot;
 
     return (
-        <OverlayTrigger placement='top' overlay={<Tooltip data-bs-theme='light'>{displayName}</Tooltip>}>
+        <OverlayTrigger
+            placement='top'
+            overlay={
+                <Tooltip style={{position: 'fixed'}} data-bs-theme='light'>
+                    {displayName}
+                </Tooltip>
+            }
+        >
             <ItemSlotStyle
                 draggable
                 data-inventory-slot={index}
