@@ -29,14 +29,6 @@ interface Turtle3DMapProps {
 
 function Turtle3DMap(props: Turtle3DMapProps) {
     const {action} = props;
-    const orbitControlsRef = useRef<threelib.OrbitControls>(null!);
-
-    useEffect(() => {
-        if (!orbitControlsRef.current) return;
-
-        orbitControlsRef.current.autoRotate;
-        orbitControlsRef.current.update();
-    }, [orbitControlsRef.current]);
 
     return (
         <Canvas
