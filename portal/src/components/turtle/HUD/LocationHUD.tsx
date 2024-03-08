@@ -1,10 +1,10 @@
 import {useParams} from 'react-router-dom';
-import {Action} from '../../App';
-import {useTurtle} from '../../api/UseTurtle';
+import {Action} from '../../../App';
+import {useTurtle} from '../../../api/UseTurtle';
 import styled from 'styled-components';
 import {useState} from 'react';
 import {Modal} from 'react-bootstrap';
-import LocationModal from './LocationModal';
+import LocationModal from '../LocationModal';
 
 export interface Props {
     action: Action;

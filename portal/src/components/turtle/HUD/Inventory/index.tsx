@@ -1,9 +1,9 @@
 import styled from 'styled-components';
 import {Col, Row} from 'react-bootstrap';
 import './Inventory.css';
-import {Action} from '../../App';
+import {Action} from '../../../../App';
 import Item from './Item';
-import {useTurtle} from '../../api/UseTurtle';
+import {useTurtle} from '../../../../api/UseTurtle';
 import {useParams} from 'react-router-dom';
 
 export interface InventoryProps {

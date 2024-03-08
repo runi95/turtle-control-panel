@@ -1,6 +1,6 @@
 import {useParams} from 'react-router-dom';
-import {Action} from '../../App';
-import {useTurtle} from '../../api/UseTurtle';
+import {Action} from '../../../App';
+import {useTurtle} from '../../../api/UseTurtle';
 import {useState} from 'react';
 import {Button, Form, InputGroup} from 'react-bootstrap';
 

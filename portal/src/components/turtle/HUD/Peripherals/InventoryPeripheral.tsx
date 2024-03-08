@@ -1,7 +1,7 @@
 import styled from 'styled-components';
-import {Action} from '../../App';
-import Item from './Item';
-import {ItemDetail, useTurtle} from '../../api/UseTurtle';
+import {Action} from '../../../../App';
+import Item from '../Inventory/Item';
+import {ItemDetail, useTurtle} from '../../../../api/UseTurtle';
 import {useParams} from 'react-router-dom';
 
 export interface InventoryPeripheralContent {

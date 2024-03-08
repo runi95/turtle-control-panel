@@ -1,8 +1,8 @@
 import {useParams} from 'react-router-dom';
 import {Action} from '../../App';
 import {useTurtle} from '../../api/UseTurtle';
-import Turtle3DMap from './Turtle3DMap';
 import HUD from './HUD';
+import Turtle3DMap from './Turtle3DMap';
 
 export interface TurtleProps {
     action: Action;
@@ -17,7 +17,7 @@ function Turtle(props: TurtleProps) {
 
     return (
         <>
-            <Turtle3DMap action={action} />
+            <Turtle3DMap />
             <HUD action={action} />
         </>
     );

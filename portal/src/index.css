@@ -4,8 +4,10 @@
 }
 
 body {
+    --body-bg-color: #1e1e2f;
+
     margin: 0;
-    background-color: #1e1e2f;
+    background-color: var(--body-bg-color);
     /* color: #525f7f; */
     /*
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

@@ -1,17 +1,17 @@
 import styled from 'styled-components';
-import HoeIcon from '../../icons/HoeIcon';
-import PickaxeIcon from '../../icons/PickaxeIcon';
-import HammerIcon from '../../icons/HammerIcon';
-import HomeIcon from '../../icons/HomeIcon';
-import RefuelIcon from '../../icons/RefuelIcon';
-import {Action} from '../../App';
+import HoeIcon from '../../../icons/HoeIcon';
+import PickaxeIcon from '../../../icons/PickaxeIcon';
+import HammerIcon from '../../../icons/HammerIcon';
+import HomeIcon from '../../../icons/HomeIcon';
+import RefuelIcon from '../../../icons/RefuelIcon';
+import {Action} from '../../../App';
 import {useState} from 'react';
 import {useParams} from 'react-router-dom';
-import FarmModal from './farm/FarmModal';
-import MineModal from './mine/MineModal';
-import BuildModal from './build/BuildModal';
-import {Turtle, useTurtle} from '../../api/UseTurtle';
-import StopIcon from '../../icons/StopIcon';
+import FarmModal from '../farm/FarmModal';
+import MineModal from '../mine/MineModal';
+import BuildModal from '../build/BuildModal';
+import {Turtle, useTurtle} from '../../../api/UseTurtle';
+import StopIcon from '../../../icons/StopIcon';
 import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 
 interface Props {

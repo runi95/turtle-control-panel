@@ -1,10 +1,11 @@
 import Inventory from './Inventory';
 import {useNavigate, useParams} from 'react-router-dom';
-import {Action} from '../../App';
-import {useTurtle} from '../../api/UseTurtle';
-import FuelInfo from '../FuelInfo';
+import {Action} from '../../../App';
+import {useTurtle} from '../../../api/UseTurtle';
+import FuelInfo from '../../FuelInfo';
 import ActionHUD from './ActionHUD';
 import LocationHUD from './LocationHUD';
+import Peripherals from './Peripherals';
 
 export interface TurtleProps {
     action: Action;
@@ -31,6 +32,7 @@ function HUD(props: TurtleProps) {
                     top: 10,
                     transform: 'translateX(-50%)',
                     opacity: 0.8,
+                    pointerEvents: 'none',
                 }}
             >
                 <FuelInfo fuelLevel={turtle?.fuelLevel} fuelLimit={turtle?.fuelLimit} />
@@ -73,14 +75,14 @@ function HUD(props: TurtleProps) {
                     left: 0,
                     top: 0,
                     opacity: 0.8,
+                    pointerEvents: 'none',
                 }}
             >
                 <div
                     style={{
-                        marginTop: 5,
-                        marginLeft: 10,
-                        marginBottom: 55,
+                        margin: '5px auto 55px 10px',
                         cursor: 'pointer',
+                        pointerEvents: 'all',
                     }}
                     onClick={() => {
                         navigate('/dashboard');
@@ -88,7 +90,20 @@ function HUD(props: TurtleProps) {
                 >
                     <span style={{fontSize: '1.8em', color: '#c6c6c6'}}>🠈</span>
                 </div>
-                <Inventory action={action} />
+                <div
+                    style={{
+                        pointerEvents: 'all',
+                    }}
+                >
+                    <Inventory action={action} />
+                </div>
+                <div
+                    style={{
+                        pointerEvents: 'all',
+                    }}
+                >
+                    <Peripherals action={action} turtle={turtle} />
+                </div>
             </div>
             <div
                 style={{
@@ -97,6 +112,7 @@ function HUD(props: TurtleProps) {
                     bottom: 10,
                     transform: 'translateX(-50%)',
                     opacity: 0.8,
+                    pointerEvents: 'all',
                 }}
             >
                 <ActionHUD action={action} />

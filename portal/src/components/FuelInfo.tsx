@@ -38,6 +38,7 @@ const FuelInfoContainer = styled.div`
     margin-top: auto;
     width: 200px;
     height: 16px;
+    pointer-events: all;
 `;
 
 const FuelBox = styled.div`

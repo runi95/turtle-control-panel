@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import SpriteTable from '../../SpriteTable';
+import SpriteTable from '../../../../SpriteTable';
 
 export interface ItemSpriteProps {
     name: string;
