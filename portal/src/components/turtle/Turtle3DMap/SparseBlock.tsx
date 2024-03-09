@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unknown-property */
 import {
     BufferAttribute,
     BufferGeometry,
@@ -204,7 +205,6 @@ function SparseBlock(props: Props) {
         [dimensions, offset, geometries, atlasMap]
     );
 
-    // eslint-disable-next-line react/no-unknown-property
     return <mesh receiveShadow args={[opaqueGeometry, materialOpaque]} />;
 }
 

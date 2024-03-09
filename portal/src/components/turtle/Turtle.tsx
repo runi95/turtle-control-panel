@@ -17,7 +17,7 @@ function Turtle(props: TurtleProps) {
 
     return (
         <>
-            <Turtle3DMap />
+            <Turtle3DMap action={action} />
             <HUD action={action} />
         </>
     );

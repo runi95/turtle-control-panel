@@ -5,16 +5,20 @@ import {useAtlas, useAtlasMap} from './TextureAtlas';
 import SparseBlock from './SparseBlock';
 import {Blocks} from '../../../App';
 import {Turtle} from '../../../api/UseTurtle';
+import {ThreeEvent} from '@react-three/fiber';
 
 interface Props {
     turtle: Turtle;
     chunkSize: number;
     visibleChunkRadius: number;
     blocks: Blocks;
+    onClick?: (event: ThreeEvent<MouseEvent>) => void;
+    onPointerMove?: (event: ThreeEvent<PointerEvent>) => void;
+    onPointerLeave?: (event: ThreeEvent<PointerEvent>) => void;
 }
 
 function World(props: Props) {
-    const {turtle, chunkSize, visibleChunkRadius, blocks} = props;
+    const {turtle, chunkSize, visibleChunkRadius, blocks, onClick, onPointerMove, onPointerLeave} = props;
     const cellDimensions = useMemo(() => new Vector3(chunkSize, chunkSize, chunkSize), [chunkSize]);
     const visibleDimensions = [visibleChunkRadius, visibleChunkRadius];
     const shaderMaterial = useMemo(
@@ -128,18 +132,22 @@ function World(props: Props) {
     }, []);
 
     if (atlasMap == null) return null;
-    return offsets.map((offset, i) => (
-        <SparseBlock
-            key={i}
-            location={turtle.location}
-            dimensions={cellDimensions}
-            offset={offset}
-            geometries={geometries}
-            atlasMap={atlasMap}
-            materialOpaque={shaderMaterial}
-            blocks={blocks}
-        />
-    ));
+    return (
+        <group onPointerMove={onPointerMove} onPointerLeave={onPointerLeave} onClick={onClick}>
+            {offsets.map((offset, i) => (
+                <SparseBlock
+                    key={i}
+                    location={turtle.location}
+                    dimensions={cellDimensions}
+                    offset={offset}
+                    geometries={geometries}
+                    atlasMap={atlasMap}
+                    materialOpaque={shaderMaterial}
+                    blocks={blocks}
+                />
+            ))}
+        </group>
+    );
 }
 
 export default World;
