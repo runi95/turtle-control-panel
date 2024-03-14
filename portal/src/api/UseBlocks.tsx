@@ -26,5 +26,7 @@ export const useBlocks = (serverId: string, query: QueryParams, isEnabled: boole
                     )
                 ),
         enabled: isEnabled,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
     });
 };
