@@ -38,6 +38,17 @@ server
     .register(fastifyCorsPlugin)
     .register(fastifyWebsocketPlugin)
     .then(() => {
+        server.get('/servers', (_req, res) => {
+            res.send({
+                dashboard: getDashboard(),
+                onlineStatuses: getOnlineTurtles().map((turtle) => ({
+                    serverId: turtle.serverId,
+                    id: turtle.id,
+                    isOnline: turtle.isOnline,
+                })),
+            });
+        });
+
         server.get('/servers/:id/blocks', (req, res) => {
             const {params, query} = req;
             const {id} = params as {id: string};

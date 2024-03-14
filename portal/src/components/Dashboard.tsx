@@ -1,22 +1,25 @@
 import './Dashboard.css';
-import {Action, Servers} from '../App';
+import {Action} from '../App';
 import Server from './Server';
 import {Button, Col, Container, Row} from 'react-bootstrap';
 import {useState} from 'react';
 import DashboardEditor from './DashboardEditor';
+import {useServers} from '../api/UseServers';
 
 export interface DashboardProps {
-    servers: Servers;
     action: Action;
 }
 
 function Dashboard(props: DashboardProps) {
     const [isInEditMode, setEditModeEnabled] = useState(false);
-    const {servers, action} = props;
+    const {action} = props;
+    const {data: servers} = useServers();
 
     // Weird hack to fix issues with @react-three/drei
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Btn: any = Button;
+
+    if (servers == null) return null;
 
     return isInEditMode ? (
         <DashboardEditor servers={servers} action={action} closeEditMode={() => setEditModeEnabled(false)} />

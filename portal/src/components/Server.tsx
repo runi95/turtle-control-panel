@@ -2,8 +2,8 @@ import styled from 'styled-components';
 import {Accordion, Table} from 'react-bootstrap';
 import {useNavigate} from 'react-router-dom';
 import {CSSProperties} from 'react';
-import {Server as APIServer, Action} from '../App';
 import FuelInfo from './FuelInfo';
+import {Server as APIServer} from '../api/UseServers';
 
 export interface ServerProps {
     server: APIServer;

@@ -1,7 +1,8 @@
 import './Dashboard.css';
-import {Action, Servers} from '../App';
+import {Action} from '../App';
 import {Button, Col, Container, Form, InputGroup, Row} from 'react-bootstrap';
 import {useState} from 'react';
+import {Servers} from '../api/UseServers';
 
 export interface DashboardEditorProps {
     servers: Servers;

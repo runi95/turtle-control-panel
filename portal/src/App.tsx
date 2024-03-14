@@ -9,6 +9,7 @@ import useWebSocket, {ReadyState} from 'react-use-websocket';
 import {wssServerUrl} from './api';
 import {BaseState, Location, Turtle as APITurtle} from './api/UseTurtle';
 import {useQueryClient} from '@tanstack/react-query';
+import {Servers} from './api/UseServers';
 
 export interface BlockState {
     [key: string]: string;
@@ -16,21 +17,6 @@ export interface BlockState {
 
 export interface BlockTags {
     [key: string]: string;
-}
-
-export interface DashboardTurtle {
-    serverId: number;
-    id: number;
-    name: string;
-    isOnline: boolean;
-    fuelLevel: number;
-    fuelLimit: number;
-    state?: BaseState;
-    error: string | null;
-}
-
-export interface DashboardTurtles {
-    [key: string]: DashboardTurtle;
 }
 
 export interface Block {
@@ -57,17 +43,6 @@ export interface Areas {
     [key: string]: Area;
 }
 
-export interface Server {
-    id: number;
-    name?: string;
-    remoteAddress: string;
-    turtles: DashboardTurtles;
-}
-
-export interface Servers {
-    [key: string]: Server;
-}
-
 export interface ActionMessage {
     type: 'HANDSHAKE' | 'ACTION' | 'AREA' | 'SERVER' | 'TURTLE';
     action: string;
@@ -77,19 +52,6 @@ export interface ActionMessage {
 }
 
 export type Action = (msg: ActionMessage) => void;
-
-export interface Dashboard {
-    id: number;
-    name?: string;
-    remoteAddress: string;
-    turtles: DashboardTurtle[];
-}
-
-export interface OnlineStatuses {
-    serverId: number;
-    id: number;
-    isOnline: boolean;
-}
 
 function App() {
     const navigate = useNavigate();
