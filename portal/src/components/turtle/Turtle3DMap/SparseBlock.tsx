@@ -11,7 +11,9 @@ import {
 import {useMemo} from 'react';
 import {Blocks} from '../../../App';
 import {AtlasMap} from './TextureAtlas';
-import {Location} from '../../../api/UseTurtle';
+import {useBlocks} from '../../../api/UseBlocks';
+import {useParams} from 'react-router-dom';
+import {WorldChunk} from './World';
 
 const createGeometry = (data: CellMesh) => {
     const geo = new BufferGeometry();
@@ -41,25 +43,23 @@ interface Cell {
     ao: [null, null, null, null, null, null];
 }
 
-const CreateTerrain = (location: Location, dimensions: Vector3, offset: Vector3, blocks: Blocks) => {
+const CreateTerrain = (dimensions: Vector3, fromX: number, fromY: number, fromZ: number, blocks: Blocks) => {
     const cells = new Map<string, Cell>();
     const xn = -1;
+    const yn = -1;
     const zn = -1;
     const xp = dimensions.x + 1;
-    const zp = dimensions.x + 1;
+    const yp = dimensions.y + 1;
+    const zp = dimensions.z + 1;
 
     for (let x = xn; x < xp; x++) {
         for (let z = zn; z < zp; z++) {
-            for (let y = 0; y < 16; y++) {
-                const xPos = x - offset.x;
-                const zPos = z - offset.z;
-                const yPos = y - 8 - offset.y;
-                const key = `${xPos},${yPos},${zPos}`;
-
-                const block = blocks[`${location.x + xPos},${location.y + yPos},${location.z + zPos}`];
+            for (let y = yn; y < yp; y++) {
+                const key = `${fromX + x},${fromY + y},${fromZ + z}`;
+                const block = blocks[key];
                 if (block) {
                     cells.set(key, {
-                        position: [xPos, yPos, zPos],
+                        position: [x, y, z],
                         type: block.name,
                         visible: true,
                         facesHidden: [false, false, false, false, false],
@@ -177,35 +177,56 @@ const BuildMeshDataFromVoxels = (
 };
 
 const Rebuild = (
-    location: Location,
     dimensions: Vector3,
-    offset: Vector3,
+    fromX: number,
+    fromY: number,
+    fromZ: number,
     geometries: PlaneGeometry[],
     atlasMap: AtlasMap,
     blocks: Blocks
 ) => {
-    const terrainVoxels = CreateTerrain(location, dimensions, offset, blocks);
+    console.log('Rebuild...');
+    const terrainVoxels = CreateTerrain(dimensions, fromX, fromY, fromZ, blocks);
     return BuildMeshDataFromVoxels(terrainVoxels, geometries, atlasMap);
 };
 
 interface Props {
-    location: Location;
     dimensions: Vector3;
-    offset: Vector3;
+    chunk: WorldChunk;
     geometries: PlaneGeometry[];
     atlasMap: AtlasMap;
     materialOpaque: ShaderMaterial;
-    blocks: Blocks;
 }
 
 function SparseBlock(props: Props) {
-    const {location, dimensions, offset, geometries, atlasMap, materialOpaque, blocks} = props;
-    const opaqueGeometry = useMemo(
-        () => createGeometry(Rebuild(location, dimensions, offset, geometries, atlasMap, blocks)),
-        [dimensions, offset, geometries, atlasMap]
+    const {dimensions, chunk, geometries, atlasMap, materialOpaque} = props;
+    const {x: chunkX, y: chunkY, z: chunkZ, offsetX, offsetY, offsetZ} = chunk;
+    const {serverId} = useParams() as {serverId: string};
+    const fromX = chunkX * dimensions.x;
+    const toX = fromX + dimensions.x;
+    const fromY = chunkY * dimensions.y;
+    const toY = fromY + dimensions.y;
+    const fromZ = chunkZ * dimensions.z;
+    const toZ = fromZ + dimensions.z;
+    const {data: blocks} = useBlocks(
+        serverId,
+        {
+            fromX,
+            toX,
+            fromY,
+            toY,
+            fromZ,
+            toZ,
+        },
+        true
     );
 
-    return <mesh receiveShadow args={[opaqueGeometry, materialOpaque]} />;
+    const opaqueGeometry = useMemo(() => {
+        if (!blocks) return undefined;
+        return createGeometry(Rebuild(dimensions, fromX, fromY, fromZ, geometries, atlasMap, blocks));
+    }, [dimensions, fromX, fromY, fromZ, geometries, atlasMap, blocks]);
+
+    return <mesh receiveShadow args={[opaqueGeometry, materialOpaque]} position={[offsetX, offsetY, offsetZ]} />;
 }
 
 export default SparseBlock;

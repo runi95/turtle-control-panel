@@ -1,26 +1,58 @@
-import {useEffect, useMemo} from 'react';
-import {FrontSide, PlaneGeometry, ShaderMaterial, Vector3} from 'three';
+/* eslint-disable react/no-unknown-property */
+import {useEffect, useMemo, useRef} from 'react';
+import {
+    Color,
+    InstancedMesh,
+    Matrix4,
+    TextureLoader,
+    FrontSide,
+    PlaneGeometry,
+    ShaderMaterial,
+    Vector3,
+    Group,
+} from 'three';
 import {fragmentShader, vertexShader} from './CustomShader';
 import {useAtlas, useAtlasMap} from './TextureAtlas';
 import SparseBlock from './SparseBlock';
-import {Blocks} from '../../../App';
-import {Turtle} from '../../../api/UseTurtle';
-import {ThreeEvent} from '@react-three/fiber';
+import {useTurtle} from '../../../api/UseTurtle';
+import {useLoader} from '@react-three/fiber';
+import {Edges} from '@react-three/drei';
+import {useParams} from 'react-router-dom';
+import {useWebSocket} from '../../../api/UseWebSocket';
+
+const mathematicalModulo = (a: number, b: number) => {
+    const quotient = Math.floor(a / b);
+    return a - quotient * b;
+};
+
+export interface WorldChunk {
+    x: number;
+    y: number;
+    z: number;
+    offsetX: number;
+    offsetY: number;
+    offsetZ: number;
+}
 
 interface Props {
-    turtle: Turtle;
     chunkSize: number;
     visibleChunkRadius: number;
-    blocks: Blocks;
-    onClick?: (event: ThreeEvent<MouseEvent>) => void;
-    onPointerMove?: (event: ThreeEvent<PointerEvent>) => void;
-    onPointerLeave?: (event: ThreeEvent<PointerEvent>) => void;
 }
 
 function World(props: Props) {
-    const {turtle, chunkSize, visibleChunkRadius, blocks, onClick, onPointerMove, onPointerLeave} = props;
+    const {chunkSize, visibleChunkRadius} = props;
+    const {serverId, id} = useParams() as {serverId: string; id: string};
+    const {data: turtle} = useTurtle(serverId, id);
+    const {action} = useWebSocket();
+    const groupRef = useRef<Group>(null!);
+    const moveTurtleMeshRef = useRef<InstancedMesh>(null!);
+    const outlineMap = useLoader(TextureLoader, '/outline.png');
+    const moveTurtleColorArray = useRef<Float32Array>(Float32Array.from([...new Color('#D6D160').toArray(), 0.5]));
+    const previousFaceIndex = useRef<number | null>(null);
+    const tempMatrix = useMemo(() => new Matrix4(), []);
     const cellDimensions = useMemo(() => new Vector3(chunkSize, chunkSize, chunkSize), [chunkSize]);
     const visibleDimensions = [visibleChunkRadius, visibleChunkRadius];
+
     const shaderMaterial = useMemo(
         () =>
             new ShaderMaterial({
@@ -53,49 +85,34 @@ function World(props: Props) {
         shaderMaterial.uniforms.diffuseMap.value = atlas;
     }, [atlas]);
 
-    const offsets = useMemo(() => {
-        const BlockIndex = (xp: number, zp: number) => {
-            const x = Math.floor(xp / cellDimensions.x);
-            const z = Math.floor(zp / cellDimensions.z);
-            return [x, z];
-        };
+    const location = turtle?.location ?? null;
+    const chunks = useMemo(() => {
+        if (location == null) return [];
 
-        // TODO: BlockIndex args should not be hardcoded! (should maybe be turtle location instead?)
-        const cellIndex = BlockIndex(0, 0);
+        const {x, y, z} = location;
+        const chunkX = Math.floor(x / cellDimensions.x);
+        const chunkY = Math.floor(y / cellDimensions.y);
+        const chunkZ = Math.floor(z / cellDimensions.z);
+        const chunks: WorldChunk[] = [];
 
         const xs = visibleDimensions[0];
         const zs = visibleDimensions[1];
-        const cells = new Map<string, [number, number]>();
 
         for (let x = -xs; x <= xs; x++) {
             for (let z = -zs; z <= zs; z++) {
-                const xi = x + cellIndex[0];
-                const zi = z + cellIndex[1];
-                cells.set(`${xi},0,${zi}`, [xi, zi]);
+                chunks.push({
+                    x: chunkX + x,
+                    y: chunkY,
+                    z: chunkZ + z,
+                    offsetX: x * cellDimensions.x,
+                    offsetY: 0,
+                    offsetZ: z * cellDimensions.z,
+                });
             }
         }
 
-        const sortedDifference: [number, string, [number, number]][] = [];
-        for (const [key, cell] of cells) {
-            const [xi, zi] = cell;
-            const d = ((cellIndex[0] - xi) ** 2 + (cellIndex[1] - zi) ** 2) ** 0.5;
-            sortedDifference.push([d, key, cell]);
-        }
-
-        sortedDifference.sort((a, b) => {
-            return a[0] - b[0];
-        });
-
-        const offsets = [];
-        for (let i = 0; i < sortedDifference.length; ++i) {
-            const [xi, zi] = sortedDifference[i][2];
-            const offset = new Vector3(xi * cellDimensions.x, 0, zi * cellDimensions.z);
-
-            offsets.push(offset);
-        }
-
-        return offsets;
-    }, [cellDimensions, visibleDimensions]);
+        return chunks;
+    }, [location, cellDimensions, visibleDimensions]);
 
     const geometries = useMemo(() => {
         const pxGeometry = new PlaneGeometry(1, 1);
@@ -132,21 +149,90 @@ function World(props: Props) {
     }, []);
 
     if (atlasMap == null) return null;
+    if (turtle == null) return null;
+
     return (
-        <group onPointerMove={onPointerMove} onPointerLeave={onPointerLeave} onClick={onClick}>
-            {offsets.map((offset, i) => (
-                <SparseBlock
-                    key={i}
-                    location={turtle.location}
-                    dimensions={cellDimensions}
-                    offset={offset}
-                    geometries={geometries}
-                    atlasMap={atlasMap}
-                    materialOpaque={shaderMaterial}
-                    blocks={blocks}
-                />
-            ))}
-        </group>
+        <>
+            <mesh>
+                <boxGeometry args={[1, 1, 1]} />
+                <meshBasicMaterial color='#D6D160' />
+                <Edges />
+            </mesh>
+            <instancedMesh ref={moveTurtleMeshRef} args={[undefined, undefined, 1]} receiveShadow>
+                <boxGeometry>
+                    <instancedBufferAttribute attach='attributes-color' args={[moveTurtleColorArray.current, 4]} />
+                </boxGeometry>
+                <meshLambertMaterial attach='material' vertexColors transparent alphaTest={0.1} map={outlineMap} />
+            </instancedMesh>
+            <group
+                ref={groupRef}
+                position={[
+                    -mathematicalModulo(turtle.location.x, cellDimensions.x),
+                    -mathematicalModulo(turtle.location.y, cellDimensions.y),
+                    -mathematicalModulo(turtle.location.z, cellDimensions.z),
+                ]}
+                onPointerMove={(e) => {
+                    e.stopPropagation();
+                    if (!(e.intersections.length > 0)) return;
+
+                    const intersection = e.intersections[0];
+                    if (intersection.faceIndex === previousFaceIndex.current) return;
+                    if (previousFaceIndex.current === null) {
+                        moveTurtleMeshRef.current.visible = true;
+                    }
+
+                    previousFaceIndex.current = intersection.faceIndex ?? null;
+
+                    const {x, y, z} = intersection.point;
+                    const vx = Math.ceil(x - 0.5);
+                    const vy = Math.ceil(y - 0.5) + 1;
+                    const vz = Math.ceil(z - 0.5);
+                    tempMatrix.setPosition(new Vector3(vx, vy, vz));
+                    moveTurtleMeshRef.current.setMatrixAt(0, tempMatrix);
+                    moveTurtleMeshRef.current.instanceMatrix.needsUpdate = true;
+                }}
+                onPointerLeave={(e) => {
+                    e.stopPropagation();
+                    previousFaceIndex.current = null;
+                    moveTurtleMeshRef.current.visible = false;
+                }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (!(e.intersections.length > 0)) return;
+                    if (!turtle) return;
+
+                    const intersection = e.intersections[0];
+                    const {x, y, z} = intersection.point;
+                    const vx = Math.ceil(x - 0.5);
+                    const vy = Math.ceil(y - 0.5) + 1;
+                    const vz = Math.ceil(z - 0.5);
+                    const {x: tx, y: ty, z: tz} = turtle.location;
+
+                    action({
+                        type: 'ACTION',
+                        action: 'move',
+                        data: {
+                            serverId: turtle.serverId,
+                            id: turtle.id,
+                            x: vx + tx,
+                            y: vy + ty,
+                            z: vz + tz,
+                        },
+                    });
+                }}
+            >
+                {chunks.map((chunk) => (
+                    <SparseBlock
+                        key={`${chunk.x},${chunk.y},${chunk.z}`}
+                        dimensions={cellDimensions}
+                        chunk={chunk}
+                        geometries={geometries}
+                        atlasMap={atlasMap}
+                        materialOpaque={shaderMaterial}
+                    />
+                ))}
+            </group>
+        </>
     );
 }
 

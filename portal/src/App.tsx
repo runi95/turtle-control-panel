@@ -4,8 +4,10 @@ import {Navbar, Nav} from 'react-bootstrap';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import Turtle from './components/turtle/Turtle';
-import {Location} from './api/UseTurtle';
-import {ConnectionStatus, useWebSocketConnectionStatus} from './api/UseWebSocket';
+import {Location, Turtle as APITurtle} from './api/UseTurtle';
+import {ConnectionStatus, useWebSocket, useWebSocketConnectionStatus} from './api/UseWebSocket';
+import {useEffect} from 'react';
+import {useQueryClient} from '@tanstack/react-query';
 
 export interface BlockState {
     [key: string]: string;
@@ -51,7 +53,32 @@ export type Action = (msg: ActionMessage) => void;
 
 function App() {
     const navigate = useNavigate();
+    const {socket} = useWebSocket();
     const connectionStatus = useWebSocketConnectionStatus();
+    const queryClient = useQueryClient();
+
+    useEffect(() => {
+        if (socket == null) return;
+
+        function onMessage(msg: string) {
+            const obj = JSON.parse(msg);
+            if (obj.type === 'TUPDATE') {
+                queryClient.setQueryData(
+                    ['turtles', obj.message.serverId.toString(), obj.message.id.toString()],
+                    (oldData: APITurtle) => ({
+                        ...oldData,
+                        ...obj.message.data,
+                    })
+                );
+            }
+        }
+
+        socket.on('message', onMessage);
+
+        return () => {
+            socket.off('message', onMessage);
+        };
+    }, [socket]);
 
     return (
         <Routes>
