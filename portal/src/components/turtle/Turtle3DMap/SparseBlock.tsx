@@ -216,6 +216,7 @@ function SparseBlock(props: Props) {
             toY,
             fromZ,
             toZ,
+            simple: true,
         },
         true
     );

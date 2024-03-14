@@ -9,6 +9,7 @@ export interface QueryParams {
     toY: number;
     fromZ: number;
     toZ: number;
+    simple?: boolean;
 }
 
 export const useBlocks = (serverId: string, query: QueryParams, isEnabled: boolean) => {
@@ -16,7 +17,7 @@ export const useBlocks = (serverId: string, query: QueryParams, isEnabled: boole
         queryKey: ['blocks', serverId, {query}],
         queryFn: () =>
             fetch(
-                `${httpServerUrl}/servers/${serverId}/blocks?fromX=${query.fromX}&toX=${query.toX}&fromY=${query.fromY}&toY=${query.toY}&fromZ=${query.fromZ}&toZ=${query.toZ}`
+                `${httpServerUrl}/servers/${serverId}/blocks?fromX=${query.fromX}&toX=${query.toX}&fromY=${query.fromY}&toY=${query.toY}&fromZ=${query.fromZ}&toZ=${query.toZ}${query.simple ? '&simple' : ''}`
             )
                 .then((res) => res.json())
                 .then((data: Block[]) =>

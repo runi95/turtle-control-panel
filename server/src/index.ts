@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import fastifyCorsPlugin from '@fastify/cors';
 import {getOnlineTurtleById, getOnlineTurtles} from './entities/turtle';
 import logger from './logger/server';
-import {getAreas, getBlocks, getChunk, getDashboard, getTurtle} from './db';
+import {getAreas, getBlocks, getBlocksSimple, getChunk, getDashboard, getTurtle} from './db';
 import {createWebSocketServer} from './webSocket';
 
 logger.info('Starting server...');
@@ -32,9 +32,9 @@ fastify
         fastify.get('/servers/:id/blocks', (req, res) => {
             const {params, query} = req;
             const {id} = params as {id: string};
-            const {fromX, toX, fromY, toY, fromZ, toZ} = query as Record<string, string | undefined>;
+            const {fromX, toX, fromY, toY, fromZ, toZ, simple} = query as Record<string, string | undefined>;
             res.send(
-                getBlocks(Number(id), {
+                (simple != null ? getBlocksSimple : getBlocks )(Number(id), {
                     fromX: Number(fromX),
                     toX: Number(toX),
                     fromY: Number(fromY),

@@ -146,6 +146,21 @@ const selectBlocks = db.prepare(`SELECT json_object(
     ) \`lb\`
     ON \`lb\`.\`server_id\` = \`b\`.\`server_id\` AND \`lb\`.\`x\` = \`b\`.\`x\` AND \`lb\`.\`max\` = \`b\`.\`y\` AND \`lb\`.\`z\` = \`b\`.\`z\`
 WHERE \`b\`.\`server_id\` = :server_id AND \`b\`.\`x\` >= :from_x AND \`b\`.\`x\` <= :to_x AND \`b\`.\`y\` >= :from_y AND \`b\`.\`y\` <= :to_y AND \`b\`.\`z\` >= :from_z AND \`b\`.\`z\` <= :to_z`).pluck();
+const selectBlocksSimple = db.prepare(`SELECT json_object(
+    'x', \`b\`.\`x\`,
+    'y', \`b\`.\`y\`,
+    'z', \`b\`.\`z\`,
+    'name', \`b\`.\`name\`
+) FROM \`blocks\` AS \`b\`
+    LEFT JOIN
+    (
+        SELECT \`server_id\`, \`x\`, MAX(\`y\`) max, \`z\`
+        FROM \`blocks\`
+        WHERE \`server_id\` = :server_id AND \`x\` >= :from_x AND \`x\` <= :to_x AND \`y\` >= :from_y AND \`y\` <= :to_y AND \`z\` >= :from_z AND \`z\` <= :to_z
+        GROUP BY \`x\`, \`z\`
+    ) \`lb\`
+    ON \`lb\`.\`server_id\` = \`b\`.\`server_id\` AND \`lb\`.\`x\` = \`b\`.\`x\` AND \`lb\`.\`max\` = \`b\`.\`y\` AND \`lb\`.\`z\` = \`b\`.\`z\`
+WHERE \`b\`.\`server_id\` = :server_id AND \`b\`.\`x\` >= :from_x AND \`b\`.\`x\` <= :to_x AND \`b\`.\`y\` >= :from_y AND \`b\`.\`y\` <= :to_y AND \`b\`.\`z\` >= :from_z AND \`b\`.\`z\` <= :to_z`).pluck();
 const selectBlock = db.prepare(`SELECT json_object(
     'serverId', \`b\`.\`server_id\`,
     'x', \`b\`.\`x\`,
@@ -259,6 +274,15 @@ export const getBlocks = (serverId: number, options: GetBlocksOptions) => select
     from_z: options.fromZ,
     to_z: options.toZ
 }).map((block) => JSON.parse(block as string)) as Block[];
+export const getBlocksSimple = (serverId: number, options: GetBlocksOptions) => selectBlocksSimple.all({
+    server_id: serverId,
+    from_x: options.fromX,
+    to_x: options.toX,
+    from_y: options.fromY,
+    to_y: options.toY,
+    from_z: options.fromZ,
+    to_z: options.toZ
+}).map((block) => JSON.parse(block as string)) as Omit<Block, 'state' | 'tags'>[];
 export const getBlock = (serverId: number, x: number, y: number, z: number) => {
     const block = selectBlock.get(serverId, x, y, z);
     if (!block) return null;
