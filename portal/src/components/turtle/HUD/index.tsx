@@ -6,7 +6,12 @@ import ActionHUD from './ActionHUD';
 import LocationHUD from './LocationHUD';
 import Peripherals from './Peripherals';
 
-function HUD() {
+interface Props {
+    setWorldMoveState: (moveState: boolean) => void;
+}
+
+function HUD(props: Props) {
+    const {setWorldMoveState} = props;
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const navigate = useNavigate();
     const {data: turtle} = useTurtle(serverId, id);
@@ -109,7 +114,7 @@ function HUD() {
                     pointerEvents: 'all',
                 }}
             >
-                <ActionHUD />
+                <ActionHUD setWorldMoveState={setWorldMoveState} />
             </div>
         </>
     );

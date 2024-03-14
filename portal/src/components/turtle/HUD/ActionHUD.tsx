@@ -4,7 +4,7 @@ import PickaxeIcon from '../../../icons/PickaxeIcon';
 import HammerIcon from '../../../icons/HammerIcon';
 import HomeIcon from '../../../icons/HomeIcon';
 import RefuelIcon from '../../../icons/RefuelIcon';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import FarmModal from '../farm/FarmModal';
 import MineModal from '../mine/MineModal';
@@ -13,11 +13,22 @@ import {Turtle, useTurtle} from '../../../api/UseTurtle';
 import StopIcon from '../../../icons/StopIcon';
 import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 import {useWebSocket} from '../../../api/UseWebSocket';
+import BootsIcon from '../../../icons/BootsIcon';
 
-function ActionHUD() {
+interface Props {
+    setWorldMoveState: (moveState: boolean) => void;
+}
+
+function ActionHUD(props: Props) {
+    const {setWorldMoveState} = props;
+    const [isInMoveState, setMoveState] = useState(false);
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const {action} = useWebSocket();
     const [modalState, setModalState] = useState<'farm' | 'mine' | 'build' | null>(null);
+
+    useEffect(() => {
+        setWorldMoveState(isInMoveState);
+    }, [isInMoveState]);
 
     const {data: turtle} = useTurtle(serverId, id);
     if (turtle === undefined) {
@@ -120,6 +131,24 @@ function ActionHUD() {
                     >
                         <HomeIcon color='#202020' />
                     </ActionButtonContainer>
+                </OverlayTrigger>
+                <OverlayTrigger
+                    placement='top'
+                    overlay={
+                        <Tooltip style={{position: 'fixed'}} data-bs-theme='light'>
+                            Move
+                        </Tooltip>
+                    }
+                >
+                    {isInMoveState ? (
+                        <ActionButtonContainer onClick={() => setMoveState(false)}>
+                            <StopIcon color='#202020' />
+                        </ActionButtonContainer>
+                    ) : (
+                        <ActionButtonContainer onClick={() => setMoveState(true)}>
+                            <BootsIcon color='#202020' />
+                        </ActionButtonContainer>
+                    )}
                 </OverlayTrigger>
             </div>
         </>

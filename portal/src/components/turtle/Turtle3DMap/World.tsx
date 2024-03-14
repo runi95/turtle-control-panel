@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unknown-property */
-import {useEffect, useMemo, useRef} from 'react';
+import {forwardRef, useEffect, useImperativeHandle, useMemo, useRef} from 'react';
 import {
     Color,
     InstancedMesh,
@@ -39,12 +39,17 @@ interface Props {
     visibleChunkRadius: number;
 }
 
-function World(props: Props) {
+export type WorldHandle = {
+    setMoveState: (moveState: boolean) => void;
+};
+
+const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
     const {chunkSize, visibleChunkRadius} = props;
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const {data: turtle} = useTurtle(serverId, id);
     const {action} = useWebSocket();
     const groupRef = useRef<Group>(null!);
+    const canMoveTurtleRef = useRef(false);
     const moveTurtleMeshRef = useRef<InstancedMesh>(null!);
     const outlineMap = useLoader(TextureLoader, '/outline.png');
     const moveTurtleColorArray = useRef<Float32Array>(Float32Array.from([...new Color('#D6D160').toArray(), 0.5]));
@@ -52,6 +57,22 @@ function World(props: Props) {
     const tempMatrix = useMemo(() => new Matrix4(), []);
     const cellDimensions = useMemo(() => new Vector3(chunkSize, chunkSize, chunkSize), [chunkSize]);
     const visibleDimensions = [visibleChunkRadius, visibleChunkRadius];
+
+    useImperativeHandle(
+        ref,
+        () => {
+            return {
+                setMoveState(moveState: boolean) {
+                    canMoveTurtleRef.current = moveState;
+                    if (!moveState) {
+                        previousFaceIndex.current = null;
+                        moveTurtleMeshRef.current.visible = false;
+                    }
+                },
+            };
+        },
+        []
+    );
 
     const shaderMaterial = useMemo(
         () =>
@@ -176,6 +197,7 @@ function World(props: Props) {
                 ]}
                 onPointerMove={(e) => {
                     e.stopPropagation();
+                    if (!canMoveTurtleRef.current) return;
                     if (!(e.intersections.length > 0)) return;
 
                     const intersection = e.intersections[0];
@@ -201,6 +223,7 @@ function World(props: Props) {
                 }}
                 onClick={(e) => {
                     e.stopPropagation();
+                    if (!canMoveTurtleRef.current) return;
                     if (!(e.intersections.length > 0)) return;
                     if (!turtle) return;
 
@@ -237,6 +260,6 @@ function World(props: Props) {
             </group>
         </>
     );
-}
+});
 
 export default World;

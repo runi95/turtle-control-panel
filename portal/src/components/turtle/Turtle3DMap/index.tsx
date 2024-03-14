@@ -1,8 +1,15 @@
 import {Canvas} from '@react-three/fiber';
-import World from './World';
+import World, {WorldHandle} from './World';
 import {OrbitControls} from '@react-three/drei';
+import {Ref} from 'react';
 
-function Turtle3DMap() {
+interface Props {
+    worldRef: Ref<WorldHandle>;
+}
+
+function Turtle3DMap(props: Props) {
+    const {worldRef} = props;
+
     return (
         <Canvas
             gl={{
@@ -18,7 +25,7 @@ function Turtle3DMap() {
             }}
             className='canvas'
         >
-            <World chunkSize={16} visibleChunkRadius={1} />
+            <World ref={worldRef} chunkSize={16} visibleChunkRadius={1} />
             <OrbitControls />
         </Canvas>
     );
