@@ -30,7 +30,7 @@ function HUD() {
                 }}
             >
                 <FuelInfo fuelLevel={turtle?.fuelLevel} fuelLimit={turtle?.fuelLimit} />
-                <div style={{pointerEvents: 'none'}}>
+                <div style={{pointerEvents: 'none', textAlign: 'center'}}>
                     <h5>
                         <ins style={{textTransform: 'capitalize'}}>{turtle?.state?.name || 'idle'}</ins>
                     </h5>
