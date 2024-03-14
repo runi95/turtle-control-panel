@@ -96,18 +96,21 @@ function World(props: Props) {
         const chunks: WorldChunk[] = [];
 
         const xs = visibleDimensions[0];
+        const ys = 1;
         const zs = visibleDimensions[1];
 
         for (let x = -xs; x <= xs; x++) {
             for (let z = -zs; z <= zs; z++) {
-                chunks.push({
-                    x: chunkX + x,
-                    y: chunkY,
-                    z: chunkZ + z,
-                    offsetX: x * cellDimensions.x,
-                    offsetY: 0,
-                    offsetZ: z * cellDimensions.z,
-                });
+                for (let y = -ys; y <= ys; y++) {
+                    chunks.push({
+                        x: chunkX + x,
+                        y: chunkY + y,
+                        z: chunkZ + z,
+                        offsetX: x * cellDimensions.x,
+                        offsetY: y * cellDimensions.y,
+                        offsetZ: z * cellDimensions.z,
+                    });
+                }
             }
         }
 
