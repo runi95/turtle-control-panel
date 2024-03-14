@@ -1,17 +1,17 @@
 import './Dashboard.css';
-import {Action} from '../App';
 import {Button, Col, Container, Form, InputGroup, Row} from 'react-bootstrap';
 import {useState} from 'react';
 import {Servers} from '../api/UseServers';
+import {useWebSocket} from '../api/UseWebSocket';
 
 export interface DashboardEditorProps {
     servers: Servers;
-    action: Action;
     closeEditMode: () => void;
 }
 
 function DashboardEditor(props: DashboardEditorProps) {
-    const {servers, action, closeEditMode} = props;
+    const {servers, closeEditMode} = props;
+    const {action} = useWebSocket();
     const [formData, setFormData] = useState(
         Object.values(servers).reduce(
             (acc, curr) => ((acc[curr.id.toString()] = curr.name), acc),

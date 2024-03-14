@@ -1,17 +1,14 @@
 import styled from 'styled-components';
 import {Col, Row} from 'react-bootstrap';
 import './Inventory.css';
-import {Action} from '../../../../App';
 import Item from './Item';
 import {useTurtle} from '../../../../api/UseTurtle';
 import {useParams} from 'react-router-dom';
+import {useWebSocket} from '../../../../api/UseWebSocket';
 
-export interface InventoryProps {
-    action: Action;
-}
-
-function Inventory(props: InventoryProps) {
+function Inventory() {
     const {serverId, id} = useParams() as {serverId: string; id: string};
+    const {action} = useWebSocket();
     const {data: turtle} = useTurtle(serverId, id);
 
     if (turtle === undefined) {
@@ -29,7 +26,7 @@ function Inventory(props: InventoryProps) {
                             <button
                                 className='text-muted inventory-button'
                                 onClick={() =>
-                                    props.action({type: 'ACTION', action: 'craft', data: {serverId, id: turtle.id}})
+                                    action({type: 'ACTION', action: 'craft', data: {serverId, id: turtle.id}})
                                 }
                                 disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
                             >
@@ -40,7 +37,7 @@ function Inventory(props: InventoryProps) {
                             <button
                                 className='text-danger inventory-button'
                                 onClick={() =>
-                                    props.action({type: 'ACTION', action: 'drop', data: {serverId, id: turtle.id}})
+                                    action({type: 'ACTION', action: 'drop', data: {serverId, id: turtle.id}})
                                 }
                                 disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
                             >
@@ -63,7 +60,7 @@ function Inventory(props: InventoryProps) {
                                     onDrop={(fromSide: string, fromSlot: number, toSlot: number) => {
                                         if (fromSide === '') {
                                             // This is an internal item transfer within the Turtle
-                                            props.action({
+                                            action({
                                                 type: 'ACTION',
                                                 action: 'inventory-transfer',
                                                 data: {
@@ -75,7 +72,7 @@ function Inventory(props: InventoryProps) {
                                             });
                                         } else {
                                             // This is an external item transfer from a nearby peripheral
-                                            props.action({
+                                            action({
                                                 type: 'ACTION',
                                                 action: 'inventory-push-items',
                                                 data: {
@@ -90,7 +87,7 @@ function Inventory(props: InventoryProps) {
                                         }
                                     }}
                                     onClick={() => {
-                                        props.action({
+                                        action({
                                             type: 'ACTION',
                                             action: 'select',
                                             data: {serverId, id: turtle.id, slot: itemIndex},

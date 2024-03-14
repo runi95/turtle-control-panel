@@ -4,7 +4,6 @@ import PickaxeIcon from '../../../icons/PickaxeIcon';
 import HammerIcon from '../../../icons/HammerIcon';
 import HomeIcon from '../../../icons/HomeIcon';
 import RefuelIcon from '../../../icons/RefuelIcon';
-import {Action} from '../../../App';
 import {useState} from 'react';
 import {useParams} from 'react-router-dom';
 import FarmModal from '../farm/FarmModal';
@@ -13,13 +12,11 @@ import BuildModal from '../build/BuildModal';
 import {Turtle, useTurtle} from '../../../api/UseTurtle';
 import StopIcon from '../../../icons/StopIcon';
 import {OverlayTrigger, Tooltip} from 'react-bootstrap';
+import {useWebSocket} from '../../../api/UseWebSocket';
 
-interface Props {
-    action: Action;
-}
-
-function ActionHUD({action}: Props) {
+function ActionHUD() {
     const {serverId, id} = useParams() as {serverId: string; id: string};
+    const {action} = useWebSocket();
     const [modalState, setModalState] = useState<'farm' | 'mine' | 'build' | null>(null);
 
     const {data: turtle} = useTurtle(serverId, id);

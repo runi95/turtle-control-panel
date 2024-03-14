@@ -1,16 +1,12 @@
 import {useParams} from 'react-router-dom';
-import {Action} from '../../../App';
 import {useTurtle} from '../../../api/UseTurtle';
 import {useState} from 'react';
 import {Button, Form, InputGroup} from 'react-bootstrap';
+import {useWebSocket} from '../../../api/UseWebSocket';
 
-export interface Props {
-    action: Action;
-}
-
-function TurtleNameHUD(props: Props) {
-    const {action} = props;
+function TurtleNameHUD() {
     const {serverId, id} = useParams() as {serverId: string; id: string};
+    const {action} = useWebSocket();
     const [editNameState, setEditNameState] = useState(false);
 
     const {data: turtle} = useTurtle(serverId, id);

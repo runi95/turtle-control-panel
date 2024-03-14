@@ -1,18 +1,14 @@
 import {useParams} from 'react-router-dom';
-import {Action} from '../../../App';
 import {useTurtle} from '../../../api/UseTurtle';
 import styled from 'styled-components';
 import {useState} from 'react';
 import {Modal} from 'react-bootstrap';
 import LocationModal from '../LocationModal';
+import {useWebSocket} from '../../../api/UseWebSocket';
 
-export interface Props {
-    action: Action;
-}
-
-function LocationHUD(props: Props) {
-    const {action} = props;
+function LocationHUD() {
     const {serverId, id} = useParams() as {serverId: string; id: string};
+    const {action} = useWebSocket();
     const [isModalShown, setIsModalShown] = useState(false);
     const {data: turtle} = useTurtle(serverId, id);
 

@@ -8,19 +8,15 @@ import {useBlocks} from '../../../api/UseBlocks';
 import {useTurtle} from '../../../api/UseTurtle';
 import {Color, InstancedMesh, Matrix4, TextureLoader, Vector3} from 'three';
 import {useRef} from 'react';
-import {Action} from '../../../App';
+import {useWebSocket} from '../../../api/UseWebSocket';
 
 const tempMatrix = new Matrix4();
 
 const matrixScaleDiv = 32;
 const heightDiv = 8;
 
-interface Props {
-    action: Action;
-}
-
-function Turtle3DMap(props: Props) {
-    const {action} = props;
+function Turtle3DMap() {
+    const {action} = useWebSocket();
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const moveTurtleMeshRef = useRef<InstancedMesh>(null!);
     const outlineMap = useLoader(TextureLoader, '/outline.png');

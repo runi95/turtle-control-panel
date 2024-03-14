@@ -1,18 +1,12 @@
 import Inventory from './Inventory';
 import {useNavigate, useParams} from 'react-router-dom';
-import {Action} from '../../../App';
 import {useTurtle} from '../../../api/UseTurtle';
 import FuelInfo from '../../FuelInfo';
 import ActionHUD from './ActionHUD';
 import LocationHUD from './LocationHUD';
 import Peripherals from './Peripherals';
 
-export interface TurtleProps {
-    action: Action;
-}
-
-function HUD(props: TurtleProps) {
-    const {action} = props;
+function HUD() {
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const navigate = useNavigate();
     const {data: turtle} = useTurtle(serverId, id);
@@ -65,7 +59,7 @@ function HUD(props: TurtleProps) {
                     opacity: 0.8,
                 }}
             >
-                <LocationHUD action={action} />
+                <LocationHUD />
             </div>
             <div
                 style={{
@@ -95,14 +89,14 @@ function HUD(props: TurtleProps) {
                         pointerEvents: 'all',
                     }}
                 >
-                    <Inventory action={action} />
+                    <Inventory />
                 </div>
                 <div
                     style={{
                         pointerEvents: 'all',
                     }}
                 >
-                    <Peripherals action={action} turtle={turtle} />
+                    <Peripherals turtle={turtle} />
                 </div>
             </div>
             <div
@@ -115,7 +109,7 @@ function HUD(props: TurtleProps) {
                     pointerEvents: 'all',
                 }}
             >
-                <ActionHUD action={action} />
+                <ActionHUD />
             </div>
         </>
     );

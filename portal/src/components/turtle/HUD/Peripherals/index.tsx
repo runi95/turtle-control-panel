@@ -1,19 +1,19 @@
 import styled from 'styled-components';
-import {Action} from '../../../../App';
 import {Peripheral, Turtle} from '../../../../api/UseTurtle';
 import GeoScanner from './GeoScanner';
 import WirelessModem from './WirelessModem';
 import {Accordion} from 'react-bootstrap';
 import './Peripherals.css';
 import ExternalInventory from './ExternalInventory';
+import {useWebSocket} from '../../../../api/UseWebSocket';
 
 interface Props {
-    action: Action;
     turtle: Turtle;
 }
 
 function Peripherals(props: Props) {
-    const {action, turtle} = props;
+    const {turtle} = props;
+    const {action} = useWebSocket();
 
     const renderPeripheral = (side: string, peripheral: Peripheral, i: number) => {
         const {types, data} = peripheral;
