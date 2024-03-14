@@ -30,6 +30,9 @@ export const useAtlas = () => {
                     atlas.needsUpdate = true;
                     return atlas;
                 }),
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
     });
 };
 
@@ -41,5 +44,8 @@ export const useAtlasMap = () => {
     return useQuery<AtlasMap>({
         queryKey: ['atlas.map'],
         queryFn: () => fetch('/atlas.map.json').then((res) => res.json()),
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
     });
 };
