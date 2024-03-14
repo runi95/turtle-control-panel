@@ -17,7 +17,7 @@ function HUD(props: TurtleProps) {
     const navigate = useNavigate();
     const {data: turtle} = useTurtle(serverId, id);
 
-    if (turtle === undefined) return null;
+    if (turtle == null) return null;
 
     return (
         <>
