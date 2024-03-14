@@ -185,7 +185,6 @@ const Rebuild = (
     atlasMap: AtlasMap,
     blocks: Blocks
 ) => {
-    console.log('Rebuild...');
     const terrainVoxels = CreateTerrain(dimensions, fromX, fromY, fromZ, blocks);
     return BuildMeshDataFromVoxels(terrainVoxels, geometries, atlasMap);
 };
