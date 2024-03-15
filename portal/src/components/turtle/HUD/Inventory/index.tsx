@@ -46,8 +46,8 @@ function Inventory() {
                         </ButtonSlot>
                         {Array.from(Array(16), (_, i) => i).map((i) => {
                             const itemIndex = i + 1;
-                            const itemDetail = inventory[itemIndex];
-                            const isEmpty = itemDetail === null || itemDetail === undefined;
+                            const itemDetail = inventory?.[itemIndex];
+                            const isEmpty = itemDetail == null;
 
                             return (
                                 <Item
