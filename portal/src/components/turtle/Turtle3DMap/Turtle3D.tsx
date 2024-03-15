@@ -52,14 +52,10 @@ const BuildMeshDataFromVoxels = (geometries: PlaneGeometry[], atlasMap: AtlasMap
     const cell = {
         position: [0, 0, 0],
         visible: true,
-        facesHidden: [false, false, false, false, false],
-        ao: [null, null, null, null, null, null],
     };
+    const color = new Color(0xffffff);
+    color.convertSRGBToLinear();
     for (let i = 0; i < 6; ++i) {
-        if (cell.facesHidden[i]) {
-            continue;
-        }
-
         const bi = mesh.positions.length / 3;
         const localPositions = [...geometries[i].attributes.position.array];
         for (let j = 0; j < 3; ++j) {
@@ -78,14 +74,6 @@ const BuildMeshDataFromVoxels = (geometries: PlaneGeometry[], atlasMap: AtlasMap
             } else {
                 mesh.uvSlices.push(blockType[i]);
             }
-
-            const color = new Color(0xffffff);
-            const cellAO = cell.ao[i];
-            if (cellAO != null) {
-                color.multiplyScalar(cellAO[v]);
-            }
-
-            color.convertSRGBToLinear();
 
             mesh.colors.push(color.r, color.g, color.b);
         }
