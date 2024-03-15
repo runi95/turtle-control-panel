@@ -11,7 +11,7 @@ function Inventory() {
     const {action} = useWebSocket();
     const {data: turtle} = useTurtle(serverId, id);
 
-    if (turtle === undefined) {
+    if (turtle == null) {
         return null;
     }
 
