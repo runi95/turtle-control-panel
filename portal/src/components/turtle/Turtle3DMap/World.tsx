@@ -14,11 +14,11 @@ import {
 import {fragmentShader, vertexShader} from './CustomShader';
 import {useAtlas, useAtlasMap} from './TextureAtlas';
 import SparseBlock from './SparseBlock';
-import {useTurtle} from '../../../api/UseTurtle';
+import {Direction, useTurtle} from '../../../api/UseTurtle';
 import {useLoader} from '@react-three/fiber';
-import {Edges} from '@react-three/drei';
 import {useParams} from 'react-router-dom';
 import {useWebSocket} from '../../../api/UseWebSocket';
+import Turtle3D from './Turtle3D';
 
 const mathematicalModulo = (a: number, b: number) => {
     const quotient = Math.floor(a / b);
@@ -175,13 +175,24 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
     if (atlasMap == null) return null;
     if (turtle == null) return null;
 
+    const turtleRotation = (() => {
+        switch (turtle.direction) {
+            case Direction.North:
+                return 1.5 * Math.PI;
+            case Direction.East:
+                return Math.PI;
+            case Direction.South:
+                return Math.PI * 0.5;
+            case Direction.West:
+                return 0;
+        }
+    })();
+
     return (
         <>
-            <mesh>
-                <boxGeometry args={[1, 1, 1]} />
-                <meshBasicMaterial color='#D6D160' />
-                <Edges />
-            </mesh>
+            <group rotation={[0, turtleRotation, 0]}>
+                <Turtle3D geometries={geometries} atlasMap={atlasMap} materialOpaque={shaderMaterial} />
+            </group>
             <instancedMesh ref={moveTurtleMeshRef} args={[undefined, undefined, 1]} visible={false} receiveShadow>
                 <boxGeometry>
                     <instancedBufferAttribute attach='attributes-color' args={[moveTurtleColorArray.current, 4]} />
