@@ -36,8 +36,23 @@ export const useAtlas = () => {
     });
 };
 
+export interface AtlasMapModels {
+    [key: string]: {
+        texture: string;
+        inverted: boolean;
+        face: [number, number, number, number, number, number, number, number, number, number, number, number];
+    }[];
+}
+
+export type AtlasMapTextures = {
+    [key: string]: {model: string} & {
+        [key: string]: number;
+    };
+};
+
 export interface AtlasMap {
-    [key: string]: [number, number, number, number, number, number];
+    models: AtlasMapModels;
+    textures: AtlasMapTextures;
 }
 
 export const useAtlasMap = () => {

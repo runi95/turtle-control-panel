@@ -1,6 +1,6 @@
 const fs = require("fs");
 const { createCanvas, Image } = require("canvas");
-const { Texture } = require("three");
+const { Texture, PlaneGeometry } = require("three");
 const deepAssign = require("assign-deep");
 
 const getImageData = (image) => {
@@ -32,6 +32,234 @@ const loadTexture = (src) =>
     image.src = src;
   });
 
+const elementToTexturedFaces = (element) => {
+  const texturedFaces = [];
+
+  const back = Number(((8 - element.from[0]) / 16).toFixed(2));
+  const front = Number(((element.to[0] - 8) / 16).toFixed(2));
+  const top = Number(((8 - element.from[1]) / 16).toFixed(2));
+  const bottom = Number(((element.to[1] - 8) / 16).toFixed(2));
+  const left = Number(((8 - element.from[2]) / 16).toFixed(2));
+  const right = Number(((element.to[2] - 8) / 16).toFixed(2));
+
+  if (element.faces.south) {
+    const planeGeometry = new PlaneGeometry();
+    planeGeometry.attributes["position"]["array"] = [
+      left, // right?
+      top,
+      front,
+      left, // right?
+      top,
+      -back, // ?
+      left, // right?
+      -bottom,
+      front,
+      left, // right?
+      -bottom,
+      -back, // ?
+    ];
+
+    const { rotation } = element;
+    if (rotation) {
+      const radians = (rotation.angle * Math.PI) / 180;
+      const { axis } = rotation;
+      if (axis === "y") {
+        planeGeometry.rotateY(radians);
+      } else if (axis === "x") {
+        planeGeometry.rotateX(radians);
+      } else if (axis === "z") {
+        planeGeometry.rotateZ(radians);
+      }
+    }
+
+    texturedFaces.push({
+      texture: element.faces.south.texture,
+      face: planeGeometry.attributes["position"]["array"],
+    }); // Back
+  }
+
+  if (element.faces.north) {
+    const planeGeometry = new PlaneGeometry();
+    planeGeometry.attributes["position"]["array"] = [
+      -left, // right?
+      top,
+      -back, // front?
+      -left, // right?
+      top,
+      back, // front?
+      -left, // right?
+      -bottom,
+      -back, // front?
+      -left, // right?
+      -bottom,
+      back, // front?
+    ];
+    const { rotation } = element;
+    if (rotation) {
+      const radians = (rotation.angle * Math.PI) / 180;
+      const { axis } = rotation;
+      if (axis === "y") {
+        planeGeometry.rotateY(radians);
+      } else if (axis === "x") {
+        planeGeometry.rotateX(radians);
+      } else if (axis === "z") {
+        planeGeometry.rotateZ(radians);
+      }
+    }
+
+    texturedFaces.push({
+      texture: element.faces.north.texture,
+      face: planeGeometry.attributes["position"]["array"],
+    }); // Front
+  }
+
+  if (element.faces.up) {
+    const planeGeometry = new PlaneGeometry();
+    planeGeometry.attributes["position"]["array"] = [
+      -back,
+      top,
+      -left,
+      front,
+      top,
+      -left,
+      -back,
+      top,
+      right,
+      front,
+      top,
+      right,
+    ];
+
+    const { rotation } = element;
+    if (rotation) {
+      const radians = (rotation.angle * Math.PI) / 180;
+      const { axis } = rotation;
+      if (axis === "y") {
+        planeGeometry.rotateY(radians);
+      } else if (axis === "x") {
+        planeGeometry.rotateX(radians);
+      } else if (axis === "z") {
+        planeGeometry.rotateZ(radians);
+      }
+    }
+
+    texturedFaces.push({
+      texture: element.faces.up.texture,
+      face: planeGeometry.attributes["position"]["array"],
+    }); // Top
+  }
+
+  if (element.faces.down) {
+    const planeGeometry = new PlaneGeometry();
+    planeGeometry.attributes["position"]["array"] = [
+      -back,
+      -bottom,
+      right,
+      front,
+      -bottom,
+      right,
+      -back,
+      -bottom,
+      -left,
+      front,
+      -bottom,
+      -left,
+    ];
+
+    const { rotation } = element;
+    if (rotation) {
+      const radians = (rotation.angle * Math.PI) / 180;
+      const { axis } = rotation;
+      if (axis === "y") {
+        planeGeometry.rotateY(radians);
+      } else if (axis === "x") {
+        planeGeometry.rotateX(radians);
+      } else if (axis === "z") {
+        planeGeometry.rotateZ(radians);
+      }
+    }
+
+    texturedFaces.push({
+      texture: element.faces.down.texture,
+      face: planeGeometry.attributes["position"]["array"],
+    }); // Bottom
+  }
+
+  if (element.faces.west) {
+    const planeGeometry = new PlaneGeometry();
+    planeGeometry.attributes["position"]["array"] = [
+      -left,
+      top,
+      back,
+      left,
+      top,
+      back,
+      -left,
+      -bottom,
+      back,
+      left,
+      -bottom,
+      back,
+    ];
+
+    const { rotation } = element;
+    if (rotation) {
+      const radians = (rotation.angle * Math.PI) / 180;
+      const { axis } = rotation;
+      if (axis === "y") {
+        planeGeometry.rotateY(radians);
+      } else if (axis === "x") {
+        planeGeometry.rotateX(radians);
+      } else if (axis === "z") {
+        planeGeometry.rotateZ(radians);
+      }
+    }
+
+    texturedFaces.push({
+      texture: element.faces.west.texture,
+      face: planeGeometry.attributes["position"]["array"],
+    }); // Left
+  }
+
+  if (element.faces.east) {
+    const planeGeometry = new PlaneGeometry();
+    planeGeometry.attributes["position"]["array"] = [
+      right,
+      top,
+      -back,
+      -left,
+      top,
+      -back,
+      right,
+      -bottom,
+      -back,
+      -left,
+      -bottom,
+      -back,
+    ];
+
+    const { rotation } = element;
+    if (rotation) {
+      const radians = (rotation.angle * Math.PI) / 180;
+      const { axis } = rotation;
+      if (axis === "y") {
+        planeGeometry.rotateY(radians);
+      } else if (axis === "x") {
+        planeGeometry.rotateX(radians);
+      } else if (axis === "z") {
+        planeGeometry.rotateZ(radians);
+      }
+    }
+
+    texturedFaces.push({
+      texture: element.faces.east.texture,
+      face: planeGeometry.attributes["position"]["array"],
+    }); // Right
+  }
+
+  return texturedFaces;
+};
+
 (async () => {
   const assetsPath = "assets";
   const assets = fs.readdirSync(assetsPath);
@@ -41,7 +269,18 @@ const loadTexture = (src) =>
 
   let textureIndex = 1;
   const atlasMap = {
-    unknown: [0, 0, 0, 0, 0, 0],
+    models: {},
+    textures: {
+      unknown: {
+        model: "cube",
+        south: 0,
+        north: 0,
+        up: 0,
+        down: 0,
+        west: 0,
+        east: 0,
+      },
+    },
   };
   const textures = [await loadTexture("unknown.png")];
 
@@ -57,7 +296,7 @@ const loadTexture = (src) =>
       `assets/${asset}/textures/block/${textureToName(asset, textureName)}.png`
     );
     if (loadedTexture == null) {
-      return 0;
+      return null;
     }
 
     textures.push(loadedTexture);
@@ -116,6 +355,8 @@ const loadTexture = (src) =>
     );
   }
 
+  const textureFacesMap = new Map();
+  const referencedTextureFaces = new Set();
   const models = await Promise.all(
     modelPaths.map(
       ({ path, file, name, asset }) =>
@@ -130,7 +371,18 @@ const loadTexture = (src) =>
                 return;
               }
 
-              resolve({ ...JSON.parse(data), file, name, asset });
+              const parsedData = JSON.parse(data);
+              if (Array.isArray(parsedData.elements)) {
+                textureFacesMap.set(
+                  name,
+                  parsedData.elements.reduce((acc, curr) => {
+                    return acc.concat(elementToTexturedFaces(curr));
+                  }, [])
+                );
+                parsedData.elements = name;
+              }
+
+              resolve({ ...parsedData, file, name, asset });
             });
           }
         })
@@ -164,17 +416,11 @@ const loadTexture = (src) =>
       const extractFullModel = (model) => {
         let parentName = model.parent;
         if (!parentName) {
-          if (model.asset === "minecraft" && model.file === "block.json") {
-            return {
-              ...model,
-              isValidBlock: true,
-            };
-          }
           return model;
         }
 
         const parentSplit = parentName.split(":");
-        let parentAsset = model.asset;
+        let parentAsset = 'minecraft';
         if (parentSplit.length > 1) {
           parentName = parentSplit[parentSplit.length - 1];
           parentAsset = parentSplit[0];
@@ -197,112 +443,52 @@ const loadTexture = (src) =>
       };
 
       const fullModel = extractFullModel(model);
-      if (!fullModel.isValidBlock) {
-        console.log(`Skipping: ${fullModel.file} - not valid block`);
-        continue;
-      }
-
       if (!fullModel.textures) {
         console.log(`Skipping: ${fullModel.file} - missing textures`);
         continue;
       }
 
-      if (!fullModel.elements || !Array.isArray(fullModel.elements)) {
+      if (!fullModel.elements) {
         console.log(`Skipping: ${fullModel.file} - missing elements`);
         continue;
       }
 
-      let down = null;
-      let up = null;
-      let north = null;
-      let east = null;
-      let south = null;
-      let west = null;
-
-      for (const element of fullModel.elements) {
-        const { faces } = element;
-        if (!faces) continue;
-        if (faces.down) {
-          const updatedDown = await getTextureName(
-            fullModel,
-            faces.down.texture
-          );
-          if (updatedDown) {
-            down = updatedDown;
-          }
-        }
-
-        if (faces.up) {
-          const updatedUp = await getTextureName(fullModel, faces.up.texture);
-          if (updatedUp) {
-            up = updatedUp;
-          }
-        }
-
-        if (faces.north) {
-          const updatedNorth = await getTextureName(
-            fullModel,
-            faces.north.texture
-          );
-          if (updatedNorth) {
-            north = updatedNorth;
-          }
-        }
-
-        if (faces.east) {
-          const updatedEast = await getTextureName(
-            fullModel,
-            faces.east.texture
-          );
-          if (updatedEast) {
-            east = updatedEast;
-          }
-        }
-
-        if (faces.south) {
-          const updatedSouth = await getTextureName(
-            fullModel,
-            faces.south.texture
-          );
-          if (updatedSouth) {
-            south = updatedSouth;
-          }
-        }
-
-        if (faces.west) {
-          const updatedWest = await getTextureName(
-            fullModel,
-            faces.west.texture
-          );
-          if (updatedWest) {
-            west = updatedWest;
-          }
-        }
-      }
-
-      if (
-        east == null ||
-        north == null ||
-        up == null ||
-        down == null ||
-        west == null ||
-        south == null
-      ) {
+      const textureFaces = textureFacesMap.get(fullModel.elements);
+      if (textureFaces == null) {
         console.log(
-          `Skipping: ${fullModel.file} - missing at least one texture`
+          `Skipping: ${fullModel.file} - unknown elements "${fullModel.elements}"`
         );
         continue;
       }
 
+      const fullTexturePaths = textureFaces.reduce((acc, curr) => {
+        let { texture } = curr;
+        while (
+          texture &&
+          texture.startsWith("#") &&
+          texture !== fullModel.textures[texture.substring(1)]
+        ) {
+          texture = fullModel.textures[texture.substring(1)];
+        }
+
+        if (texture && texture === fullModel.textures[texture.substring(1)]) {
+          texture = undefined;
+        }
+
+        acc.push({
+          key: curr.texture,
+          texture,
+        });
+        return acc;
+      }, []);
       if (
-        east.startsWith("#") ||
-        north.startsWith("#") ||
-        up.startsWith("#") ||
-        down.startsWith("#") ||
-        west.startsWith("#") ||
-        south.startsWith("#")
+        fullTexturePaths.some(
+          (resolvedTexture) => resolvedTexture.texture == null
+        )
       ) {
-        console.log(`Skipping: ${fullModel.file} - invalid texture resolution`);
+        console.log(
+          `Skipping: ${fullModel.file} - some faces missing textures`
+        );
         continue;
       }
 
@@ -315,21 +501,29 @@ const loadTexture = (src) =>
         return [model.asset, str];
       };
 
-      const [eastAsset, eastName] = getAssetAndName(east);
-      const [northAsset, northName] = getAssetAndName(north);
-      const [upAsset, upName] = getAssetAndName(up);
-      const [downAsset, downName] = getAssetAndName(down);
-      const [westAsset, westName] = getAssetAndName(west);
-      const [southAsset, southName] = getAssetAndName(south);
+      const resolvedTextures = [];
+      for (const fullTexturePath of fullTexturePaths) {
+        const [asset, texture] = getAssetAndName(fullTexturePath.texture);
+        const textureIndex = await getTextureIndex(asset, texture);
+        if (textureIndex != null) {
+          referencedTextureFaces.add(fullModel.elements);
+        }
 
-      atlasMap[key] = [
-        await getTextureIndex(eastAsset, eastName),
-        await getTextureIndex(northAsset, northName),
-        await getTextureIndex(upAsset, upName),
-        await getTextureIndex(downAsset, downName),
-        await getTextureIndex(westAsset, westName),
-        await getTextureIndex(southAsset, southName),
-      ];
+        resolvedTextures.push({
+          key: fullTexturePath.key,
+          texture: textureIndex ?? 0,
+        });
+      }
+
+      atlasMap.textures[key] = resolvedTextures.reduce(
+        (acc, curr) => {
+          acc[curr.key] = curr.texture;
+          return acc;
+        },
+        {
+          model: fullModel.elements,
+        }
+      );
     } catch (err) {
       console.error(`Failed to load textures for model: ${model.name}`);
       throw err;
@@ -343,6 +537,15 @@ const loadTexture = (src) =>
     uint8Array.set(data, i * 4 * 16 * 16);
     return uint8Array;
   }, new Uint8Array(textures.length * 4 * 16 * 16));
+
+  console.log(`Loading ${referencedTextureFaces.size} models...`);
+
+  for (const referencedTextureFace of referencedTextureFaces) {
+    const textureFace = textureFacesMap.get(referencedTextureFace);
+    if (textureFace == null) continue;
+
+    atlasMap.models[referencedTextureFace] = textureFace;
+  }
 
   // const atlasPath = "./atlas";
   const atlasPath = "../portal/public/atlas";

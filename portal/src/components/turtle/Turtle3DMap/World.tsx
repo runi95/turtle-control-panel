@@ -191,7 +191,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
     return (
         <>
             <group rotation={[0, turtleRotation, 0]}>
-                <Turtle3D geometries={geometries} atlasMap={atlasMap} materialOpaque={shaderMaterial} />
+                <Turtle3D />
             </group>
             <instancedMesh ref={moveTurtleMeshRef} args={[undefined, undefined, 1]} visible={false} receiveShadow>
                 <boxGeometry>
