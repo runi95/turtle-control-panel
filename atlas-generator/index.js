@@ -1,62 +1,62 @@
 const fs = require("fs");
-const { createCanvas, Image } = require("canvas");
-const { Texture, PlaneGeometry } = require("three");
+const { createCanvas, loadImage } = require("canvas");
+const { PlaneGeometry } = require("three");
 const deepAssign = require("assign-deep");
 
-const getImageData = (image) => {
-  const canvas = createCanvas(image.width, image.height);
+const getImageData = async (sourceImagePath, dx, dy, dw, dh) => {
+  const image = await loadImage(sourceImagePath);
+  const canvas = createCanvas(16, 16);
   const context = canvas.getContext("2d");
-  context.drawImage(image, 0, 0);
 
-  return context.getImageData(0, 0, image.width, image.height);
+  for (let y = 0; y < 16; y++) {
+    for (let x = 0; x < 16; x++) {
+      context.drawImage(
+        image,
+        Math.round((x * dw) / 16) + dx,
+        Math.round((y * dh) / 16) + dy,
+        1,
+        1,
+        x,
+        y,
+        1,
+        1
+      );
+    }
+  }
+
+  return context.getImageData(0, 0, 16, 16);
 };
 
 const textureToName = (asset, texture) =>
   texture.replace(`${asset}:block/`, "").replace("block/", "");
 
-const loadTexture = (src) =>
-  new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => {
-      if (image.width !== 16 || image.height !== 16) {
-        resolve(null);
-        return;
-      }
-      const texture = new Texture(image);
-      texture.needsUpdate = true;
-      resolve(texture);
-    };
-    image.onerror = (err) => {
-      reject(err);
-    };
-    image.src = src;
-  });
-
 const elementToTexturedFaces = (element) => {
   const texturedFaces = [];
 
-  const back = Number(((8 - element.from[0]) / 16).toFixed(2));
-  const front = Number(((element.to[0] - 8) / 16).toFixed(2));
-  const top = Number(((8 - element.from[1]) / 16).toFixed(2));
-  const bottom = Number(((element.to[1] - 8) / 16).toFixed(2));
-  const left = Number(((8 - element.from[2]) / 16).toFixed(2));
-  const right = Number(((element.to[2] - 8) / 16).toFixed(2));
+  const back = element.from[0] / 16;
+  const front = element.to[0] / 16;
+  const top = element.from[1] / 16;
+  const bottom = element.to[1] / 16;
+  const left = element.from[2] / 16;
+  const right = element.to[2] / 16;
+  const backfront = Number(((back - front) / 2).toFixed(2));
+  const leftright = Number(((left - right) / 2).toFixed(2));
 
   if (element.faces.south) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      left, // right?
+      leftright,
+      bottom,
+      backfront,
+      leftright,
+      bottom,
+      -backfront,
+      leftright,
       top,
-      front,
-      left, // right?
+      backfront,
+      leftright,
       top,
-      -back, // ?
-      left, // right?
-      -bottom,
-      front,
-      left, // right?
-      -bottom,
-      -back, // ?
+      -backfront,
     ];
 
     const { rotation } = element;
@@ -75,24 +75,25 @@ const elementToTexturedFaces = (element) => {
     texturedFaces.push({
       texture: element.faces.south.texture,
       face: planeGeometry.attributes["position"]["array"],
+      uv: element.faces.south.uv,
     }); // Back
   }
 
   if (element.faces.north) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      -left, // right?
+      -leftright,
+      bottom,
+      -backfront,
+      -leftright,
+      bottom,
+      backfront,
+      -leftright,
       top,
-      -back, // front?
-      -left, // right?
+      -backfront,
+      -leftright,
       top,
-      back, // front?
-      -left, // right?
-      -bottom,
-      -back, // front?
-      -left, // right?
-      -bottom,
-      back, // front?
+      backfront,
     ];
     const { rotation } = element;
     if (rotation) {
@@ -110,24 +111,25 @@ const elementToTexturedFaces = (element) => {
     texturedFaces.push({
       texture: element.faces.north.texture,
       face: planeGeometry.attributes["position"]["array"],
+      uv: element.faces.north.uv,
     }); // Front
   }
 
   if (element.faces.up) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      -back,
-      top,
-      -left,
-      front,
-      top,
-      -left,
-      -back,
-      top,
-      right,
-      front,
-      top,
-      right,
+      -leftright,
+      bottom,
+      -backfront,
+      leftright,
+      bottom,
+      -backfront,
+      -leftright,
+      bottom,
+      backfront,
+      leftright,
+      bottom,
+      backfront,
     ];
 
     const { rotation } = element;
@@ -146,24 +148,25 @@ const elementToTexturedFaces = (element) => {
     texturedFaces.push({
       texture: element.faces.up.texture,
       face: planeGeometry.attributes["position"]["array"],
+      uv: element.faces.up.uv,
     }); // Top
   }
 
   if (element.faces.down) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      -back,
-      -bottom,
-      right,
-      front,
-      -bottom,
-      right,
-      -back,
-      -bottom,
-      -left,
-      front,
-      -bottom,
-      -left,
+      -backfront,
+      top,
+      leftright,
+      backfront,
+      top,
+      leftright,
+      -backfront,
+      top,
+      -leftright,
+      backfront,
+      top,
+      -leftright,
     ];
 
     const { rotation } = element;
@@ -182,24 +185,25 @@ const elementToTexturedFaces = (element) => {
     texturedFaces.push({
       texture: element.faces.down.texture,
       face: planeGeometry.attributes["position"]["array"],
+      uv: element.faces.down.uv,
     }); // Bottom
   }
 
   if (element.faces.west) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      -left,
+      -leftright,
+      bottom,
+      backfront,
+      leftright,
+      bottom,
+      backfront,
+      -leftright,
       top,
-      back,
-      left,
+      backfront,
+      leftright,
       top,
-      back,
-      -left,
-      -bottom,
-      back,
-      left,
-      -bottom,
-      back,
+      backfront,
     ];
 
     const { rotation } = element;
@@ -218,24 +222,25 @@ const elementToTexturedFaces = (element) => {
     texturedFaces.push({
       texture: element.faces.west.texture,
       face: planeGeometry.attributes["position"]["array"],
+      uv: element.faces.west.uv,
     }); // Left
   }
 
   if (element.faces.east) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      right,
+      leftright,
+      bottom,
+      -backfront,
+      -leftright,
+      bottom,
+      -backfront,
+      leftright,
       top,
-      -back,
-      -left,
+      -backfront,
+      -leftright,
       top,
-      -back,
-      right,
-      -bottom,
-      -back,
-      -left,
-      -bottom,
-      -back,
+      -backfront,
     ];
 
     const { rotation } = element;
@@ -254,6 +259,7 @@ const elementToTexturedFaces = (element) => {
     texturedFaces.push({
       texture: element.faces.east.texture,
       face: planeGeometry.attributes["position"]["array"],
+      uv: element.faces.east.uv,
     }); // Right
   }
 
@@ -267,7 +273,6 @@ const elementToTexturedFaces = (element) => {
     console.log(`ERROR: Found no assets to load in ${assetsPath}`);
   }
 
-  let textureIndex = 1;
   const atlasMap = {
     models: {},
     textures: {
@@ -282,29 +287,10 @@ const elementToTexturedFaces = (element) => {
       },
     },
   };
-  const textures = [await loadTexture("unknown.png")];
-
-  const textureCache = new Map();
-  const getTextureIndex = async (asset, textureName) => {
-    const key = textureName;
-    const cachedTexture = textureCache.get(key);
-    if (cachedTexture) {
-      return cachedTexture;
-    }
-
-    const loadedTexture = await loadTexture(
-      `assets/${asset}/textures/block/${textureToName(asset, textureName)}.png`
-    );
-    if (loadedTexture == null) {
-      return null;
-    }
-
-    textures.push(loadedTexture);
-    const index = textureIndex;
-    textureCache.set(key, index);
-    textureIndex++;
-    return index;
-  };
+  let nextTextureIndex = 1;
+  let uvCount = 0;
+  const textures = [(await getImageData("unknown.png", 0, 0, 16, 16)).data];
+  const texturesMap = new Map([["unknown.png?dx=0&dy=0&dw=16&dh=16", 0]]);
 
   const getTextureName = (model, texture) => {
     const extractedName = (() => {
@@ -420,7 +406,7 @@ const elementToTexturedFaces = (element) => {
         }
 
         const parentSplit = parentName.split(":");
-        let parentAsset = 'minecraft';
+        let parentAsset = "minecraft";
         if (parentSplit.length > 1) {
           parentName = parentSplit[parentSplit.length - 1];
           parentAsset = parentSplit[0];
@@ -478,6 +464,7 @@ const elementToTexturedFaces = (element) => {
         acc.push({
           key: curr.texture,
           texture,
+          uv: curr.uv,
         });
         return acc;
       }, []);
@@ -504,14 +491,39 @@ const elementToTexturedFaces = (element) => {
       const resolvedTextures = [];
       for (const fullTexturePath of fullTexturePaths) {
         const [asset, texture] = getAssetAndName(fullTexturePath.texture);
-        const textureIndex = await getTextureIndex(asset, texture);
-        if (textureIndex != null) {
-          referencedTextureFaces.add(fullModel.elements);
+        const filePath = `assets/${asset}/textures/block/${textureToName(
+          asset,
+          texture
+        )}.png`;
+        let dx = 0;
+        let dy = 0;
+        let dw = 16;
+        let dh = 16;
+        if (fullTexturePath.uv) {
+          uvCount++;
+          dx = fullTexturePath.uv[0];
+          dy = fullTexturePath.uv[1];
+          dw = fullTexturePath.uv[2] - fullTexturePath.uv[0];
+          dh = fullTexturePath.uv[3] - fullTexturePath.uv[1];
         }
 
+        const mapKey = `${filePath}?dx=${dx}&dy=${dy}&dw=${dw}&dh=${dh}`;
+        let textureIndex = texturesMap.get(mapKey);
+        if (textureIndex == null) {
+          const imageData = await getImageData(filePath, dx, dy, dw, dh);
+          if (imageData != null) {
+            textures.push(imageData.data);
+            textureIndex = nextTextureIndex;
+            texturesMap.set(mapKey, nextTextureIndex++);
+          } else {
+            textureIndex = 0;
+          }
+        }
+
+        referencedTextureFaces.add(fullModel.elements);
         resolvedTextures.push({
           key: fullTexturePath.key,
-          texture: textureIndex ?? 0,
+          texture: textureIndex,
         });
       }
 
@@ -533,8 +545,7 @@ const elementToTexturedFaces = (element) => {
   console.log(`Loading ${textures.length} textures...`);
 
   const atlas = textures.reduce((uint8Array, texture, i) => {
-    const { data } = getImageData(texture.image);
-    uint8Array.set(data, i * 4 * 16 * 16);
+    uint8Array.set(texture, i * 4 * 16 * 16);
     return uint8Array;
   }, new Uint8Array(textures.length * 4 * 16 * 16));
 
@@ -547,15 +558,14 @@ const elementToTexturedFaces = (element) => {
     atlasMap.models[referencedTextureFace] = textureFace;
   }
 
-  // const atlasPath = "./atlas";
   const atlasPath = "../portal/public/atlas";
   fs.writeFileSync(atlasPath, atlas);
 
   console.log(`Atlas successfully created at: ${atlasPath}`);
 
-  // const atlasMapPath = "./atlas.map.json";
   const atlasMapPath = "../portal/public/atlas.map.json";
   fs.writeFileSync(atlasMapPath, JSON.stringify(atlasMap));
 
   console.log(`Atlas map successfully created at: ${atlasMapPath}`);
+  console.log(`uvCount: ${uvCount}`);
 })();

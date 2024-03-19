@@ -1,16 +1,6 @@
 /* eslint-disable react/no-unknown-property */
-import {forwardRef, useEffect, useImperativeHandle, useMemo, useRef} from 'react';
-import {
-    Color,
-    InstancedMesh,
-    Matrix4,
-    TextureLoader,
-    FrontSide,
-    PlaneGeometry,
-    ShaderMaterial,
-    Vector3,
-    Group,
-} from 'three';
+import {forwardRef, useImperativeHandle, useMemo, useRef} from 'react';
+import {Color, InstancedMesh, Matrix4, TextureLoader, FrontSide, PlaneGeometry, Vector3, Group} from 'three';
 import {fragmentShader, vertexShader} from './CustomShader';
 import {useAtlas, useAtlasMap} from './TextureAtlas';
 import SparseBlock from './SparseBlock';
@@ -74,37 +64,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
         []
     );
 
-    const shaderMaterial = useMemo(
-        () =>
-            new ShaderMaterial({
-                name: 'shaderMaterial - materialOpqaque',
-                uniforms: {
-                    diffuseMap: {
-                        value: null,
-                    },
-                    noiseMap: {
-                        value: null,
-                    },
-                    fade: {
-                        value: 1.0,
-                    },
-                    flow: {
-                        value: 0.0,
-                    },
-                },
-                vertexShader,
-                fragmentShader,
-                side: FrontSide,
-            }),
-        []
-    );
-    const {data: atlas} = useAtlas();
     const {data: atlasMap} = useAtlasMap();
-
-    useEffect(() => {
-        if (!atlas) return;
-        shaderMaterial.uniforms.diffuseMap.value = atlas;
-    }, [atlas]);
 
     const location = turtle?.location ?? null;
     const chunks = useMemo(() => {
@@ -265,7 +225,6 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         chunk={chunk}
                         geometries={geometries}
                         atlasMap={atlasMap}
-                        materialOpaque={shaderMaterial}
                     />
                 ))}
             </group>
