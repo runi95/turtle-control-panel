@@ -570,7 +570,10 @@ const elementToTexturedFaces = (element) => {
     const textureFace = textureFacesMap.get(referencedTextureFace);
     if (textureFace == null) continue;
 
-    atlasMap.models[referencedTextureFace] = textureFace;
+    atlasMap.models[referencedTextureFace] = textureFace.map(({texture, face}) => ({
+      texture,
+      face
+    }));
   }
 
   const atlasPath = "../portal/public/atlas";
