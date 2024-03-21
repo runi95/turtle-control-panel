@@ -5,6 +5,11 @@ const deepAssign = require("assign-deep");
 
 const getImageData = async (sourceImagePath, dx, dy, dw, dh) => {
   const image = await loadImage(sourceImagePath);
+  const mul = image.width / 16;
+  dx *= mul;
+  dy *= mul;
+  dw *= mul;
+  dh *= mul;
   const canvas = createCanvas(16, 16);
   const context = canvas.getContext("2d");
 
@@ -447,7 +452,7 @@ const elementToTexturedFaces = (element) => {
         continue;
       }
 
-      const fullTexturePaths = textureFaces.reduce((acc, curr) => {
+      const fullTexturePaths = textureFaces.reduce((acc, curr, i) => {
         let { texture } = curr;
         while (
           texture &&
@@ -464,6 +469,7 @@ const elementToTexturedFaces = (element) => {
         acc.push({
           key: curr.texture,
           texture,
+          index: i,
           uv: curr.uv,
         });
         return acc;
@@ -503,8 +509,8 @@ const elementToTexturedFaces = (element) => {
           uvCount++;
           dx = fullTexturePath.uv[0];
           dy = fullTexturePath.uv[1];
-          dw = fullTexturePath.uv[2] - fullTexturePath.uv[0];
-          dh = fullTexturePath.uv[3] - fullTexturePath.uv[1];
+          dw = (fullTexturePath.uv[2] - fullTexturePath.uv[0]);
+          dh = (fullTexturePath.uv[3] - fullTexturePath.uv[1]);
         }
 
         const mapKey = `${filePath}?dx=${dx}&dy=${dy}&dw=${dw}&dh=${dh}`;
@@ -524,12 +530,21 @@ const elementToTexturedFaces = (element) => {
         resolvedTextures.push({
           key: fullTexturePath.key,
           texture: textureIndex,
+          index: fullTexturePath.index,
         });
       }
 
       atlasMap.textures[key] = resolvedTextures.reduce(
-        (acc, curr) => {
-          acc[curr.key] = curr.texture;
+        (acc, curr, i) => {
+          if (acc[curr.key] != null) {
+            acc[curr.key][curr.index] = curr.texture;
+          } else if (resolvedTextures.some(({key}, keyIndex) => keyIndex !== i && key === curr.key)) {
+            acc[curr.key] = {
+              [curr.index]: curr.texture, 
+            };
+          } else {
+            acc[curr.key] = curr.texture;
+          }
           return acc;
         },
         {

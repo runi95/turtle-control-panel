@@ -193,8 +193,18 @@ const BuildMeshDataFromVoxels = (
                     : [1, 0, 6.12, 1, 0, 6.12, 1, 0, 6.12, 1, 0, 6.12];
             mesh.normals.push(...normalsArr);
 
+            const blockTexture = (() => {
+                const blockTexture = blockTextures[blockFace.texture];
+                if (blockTexture == null) return 0;
+                if (typeof blockTexture === 'number') {
+                    return blockTexture;
+                } else {
+                    return blockTexture[i];
+                }
+            })();
+
             for (let v = 0; v < 4; ++v) {
-                mesh.uvSlices.push(textureOverrides[blockTextures[blockFace.texture]]);
+                mesh.uvSlices.push(textureOverrides[blockTexture]);
                 mesh.colors.push(color.r, color.g, color.b);
             }
 
@@ -321,7 +331,14 @@ function SparseBlock(props: Props) {
             const texture = atlasMap.textures[blockNameOverride(block.name)] ?? unknown;
             const {model: _model, ...textureKeys} = texture;
             Object.keys(textureKeys).forEach((key) => {
-                uniqueTextures.add(texture[key]);
+                const textureIndex = texture[key];
+                if (typeof textureIndex === 'number') {
+                    uniqueTextures.add(textureIndex);
+                } else {
+                    Object.keys(textureIndex).forEach((textureIndexKey) =>
+                        uniqueTextures.add(textureIndex[textureIndexKey])
+                    );
+                }
             });
         }
 

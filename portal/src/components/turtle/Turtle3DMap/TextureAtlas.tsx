@@ -20,7 +20,7 @@ export interface AtlasMapModels {
 
 export type AtlasMapTextures = {
     [key: string]: {model: string} & {
-        [key: string]: number;
+        [key: string]: number | {[key: string]: number};
     };
 };
 
