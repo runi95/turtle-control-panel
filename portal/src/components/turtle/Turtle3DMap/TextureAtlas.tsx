@@ -13,7 +13,6 @@ export const useAtlas = () => {
 export interface AtlasMapModels {
     [key: string]: {
         texture: string;
-        inverted: boolean;
         face: [number, number, number, number, number, number, number, number, number, number, number, number];
     }[];
 }
