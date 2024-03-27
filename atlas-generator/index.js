@@ -44,171 +44,22 @@ const elementToTexturedFaces = (element) => {
   const bottom = element.to[1] / 16;
   const left = element.from[2] / 16;
   const right = element.to[2] / 16;
-  const backfront = Number(((back - front) / 2).toFixed(2));
-  const leftright = Number(((left - right) / 2).toFixed(2));
-
-  if (element.faces.south) {
-    const planeGeometry = new PlaneGeometry();
-    planeGeometry.attributes["position"]["array"] = [
-      leftright,
-      bottom,
-      backfront,
-      leftright,
-      bottom,
-      -backfront,
-      leftright,
-      top,
-      backfront,
-      leftright,
-      top,
-      -backfront,
-    ];
-
-    const { rotation } = element;
-    if (rotation) {
-      const radians = (rotation.angle * Math.PI) / 180;
-      const { axis } = rotation;
-      if (axis === "y") {
-        planeGeometry.rotateY(radians);
-      } else if (axis === "x") {
-        planeGeometry.rotateX(radians);
-      } else if (axis === "z") {
-        planeGeometry.rotateZ(radians);
-      }
-    }
-
-    texturedFaces.push({
-      texture: element.faces.south.texture,
-      face: planeGeometry.attributes["position"]["array"],
-      uv: element.faces.south.uv,
-    }); // Back
-  }
-
-  if (element.faces.north) {
-    const planeGeometry = new PlaneGeometry();
-    planeGeometry.attributes["position"]["array"] = [
-      -leftright,
-      bottom,
-      -backfront,
-      -leftright,
-      bottom,
-      backfront,
-      -leftright,
-      top,
-      -backfront,
-      -leftright,
-      top,
-      backfront,
-    ];
-    const { rotation } = element;
-    if (rotation) {
-      const radians = (rotation.angle * Math.PI) / 180;
-      const { axis } = rotation;
-      if (axis === "y") {
-        planeGeometry.rotateY(radians);
-      } else if (axis === "x") {
-        planeGeometry.rotateX(radians);
-      } else if (axis === "z") {
-        planeGeometry.rotateZ(radians);
-      }
-    }
-
-    texturedFaces.push({
-      texture: element.faces.north.texture,
-      face: planeGeometry.attributes["position"]["array"],
-      uv: element.faces.north.uv,
-    }); // Front
-  }
-
-  if (element.faces.up) {
-    const planeGeometry = new PlaneGeometry();
-    planeGeometry.attributes["position"]["array"] = [
-      -leftright,
-      bottom,
-      -backfront,
-      leftright,
-      bottom,
-      -backfront,
-      -leftright,
-      bottom,
-      backfront,
-      leftright,
-      bottom,
-      backfront,
-    ];
-
-    const { rotation } = element;
-    if (rotation) {
-      const radians = (rotation.angle * Math.PI) / 180;
-      const { axis } = rotation;
-      if (axis === "y") {
-        planeGeometry.rotateY(radians);
-      } else if (axis === "x") {
-        planeGeometry.rotateX(radians);
-      } else if (axis === "z") {
-        planeGeometry.rotateZ(radians);
-      }
-    }
-
-    texturedFaces.push({
-      texture: element.faces.up.texture,
-      face: planeGeometry.attributes["position"]["array"],
-      uv: element.faces.up.uv,
-    }); // Top
-  }
-
-  if (element.faces.down) {
-    const planeGeometry = new PlaneGeometry();
-    planeGeometry.attributes["position"]["array"] = [
-      -backfront,
-      top,
-      leftright,
-      backfront,
-      top,
-      leftright,
-      -backfront,
-      top,
-      -leftright,
-      backfront,
-      top,
-      -leftright,
-    ];
-
-    const { rotation } = element;
-    if (rotation) {
-      const radians = (rotation.angle * Math.PI) / 180;
-      const { axis } = rotation;
-      if (axis === "y") {
-        planeGeometry.rotateY(radians);
-      } else if (axis === "x") {
-        planeGeometry.rotateX(radians);
-      } else if (axis === "z") {
-        planeGeometry.rotateZ(radians);
-      }
-    }
-
-    texturedFaces.push({
-      texture: element.faces.down.texture,
-      face: planeGeometry.attributes["position"]["array"],
-      uv: element.faces.down.uv,
-    }); // Bottom
-  }
 
   if (element.faces.west) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      -leftright,
+      back - 0.5,
       bottom,
-      backfront,
-      leftright,
+      left - 0.5,
+      back - 0.5,
       bottom,
-      backfront,
-      -leftright,
+      right - 0.5,
+      back - 0.5,
       top,
-      backfront,
-      leftright,
+      left - 0.5,
+      back - 0.5,
       top,
-      backfront,
+      right - 0.5,
     ];
 
     const { rotation } = element;
@@ -228,26 +79,25 @@ const elementToTexturedFaces = (element) => {
       texture: element.faces.west.texture,
       face: planeGeometry.attributes["position"]["array"],
       uv: element.faces.west.uv,
-    }); // Left
+    });
   }
 
   if (element.faces.east) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      leftright,
+      front - 0.5,
       bottom,
-      -backfront,
-      -leftright,
+      right - 0.5,
+      front - 0.5,
       bottom,
-      -backfront,
-      leftright,
+      left - 0.5,
+      front - 0.5,
       top,
-      -backfront,
-      -leftright,
+      right - 0.5,
+      front - 0.5,
       top,
-      -backfront,
+      left - 0.5,
     ];
-
     const { rotation } = element;
     if (rotation) {
       const radians = (rotation.angle * Math.PI) / 180;
@@ -265,7 +115,155 @@ const elementToTexturedFaces = (element) => {
       texture: element.faces.east.texture,
       face: planeGeometry.attributes["position"]["array"],
       uv: element.faces.east.uv,
-    }); // Right
+    });
+  }
+
+  if (element.faces.up) {
+    const planeGeometry = new PlaneGeometry();
+    planeGeometry.attributes["position"]["array"] = [
+      front - 0.5,
+      bottom,
+      right - 0.5,
+      back - 0.5,
+      bottom,
+      right - 0.5,
+      front - 0.5,
+      bottom,
+      left - 0.5,
+      back - 0.5,
+      bottom,
+      left - 0.5,
+    ];
+
+    const { rotation } = element;
+    if (rotation) {
+      const radians = (rotation.angle * Math.PI) / 180;
+      const { axis } = rotation;
+      if (axis === "y") {
+        planeGeometry.rotateY(radians);
+      } else if (axis === "x") {
+        planeGeometry.rotateX(radians);
+      } else if (axis === "z") {
+        planeGeometry.rotateZ(radians);
+      }
+    }
+
+    texturedFaces.push({
+      texture: element.faces.up.texture,
+      face: planeGeometry.attributes["position"]["array"],
+      uv: element.faces.up.uv,
+    });
+  }
+
+  if (element.faces.down) {
+    const planeGeometry = new PlaneGeometry();
+    planeGeometry.attributes["position"]["array"] = [
+      back - 0.5,
+      top,
+      right - 0.5,
+      front - 0.5,
+      top,
+      right - 0.5,
+      back - 0.5,
+      top,
+      left - 0.5,
+      front - 0.5,
+      top,
+      left - 0.5,
+    ];
+
+    const { rotation } = element;
+    if (rotation) {
+      const radians = (rotation.angle * Math.PI) / 180;
+      const { axis } = rotation;
+      if (axis === "y") {
+        planeGeometry.rotateY(radians);
+      } else if (axis === "x") {
+        planeGeometry.rotateX(radians);
+      } else if (axis === "z") {
+        planeGeometry.rotateZ(radians);
+      }
+    }
+
+    texturedFaces.push({
+      texture: element.faces.down.texture,
+      face: planeGeometry.attributes["position"]["array"],
+      uv: element.faces.down.uv,
+    });
+  }
+
+  if (element.faces.north) {
+    const planeGeometry = new PlaneGeometry();
+    planeGeometry.attributes["position"]["array"] = [
+      front - 0.5,
+      bottom,
+      left - 0.5,
+      back - 0.5,
+      bottom,
+      left - 0.5,
+      front - 0.5,
+      top,
+      left - 0.5,
+      back - 0.5,
+      top,
+      left - 0.5,
+    ];
+
+    const { rotation } = element;
+    if (rotation) {
+      const radians = (rotation.angle * Math.PI) / 180;
+      const { axis } = rotation;
+      if (axis === "y") {
+        planeGeometry.rotateY(radians);
+      } else if (axis === "x") {
+        planeGeometry.rotateX(radians);
+      } else if (axis === "z") {
+        planeGeometry.rotateZ(radians);
+      }
+    }
+
+    texturedFaces.push({
+      texture: element.faces.north.texture,
+      face: planeGeometry.attributes["position"]["array"],
+      uv: element.faces.north.uv,
+    });
+  }
+
+  if (element.faces.south) {
+    const planeGeometry = new PlaneGeometry();
+    planeGeometry.attributes["position"]["array"] = [
+      back - 0.5,
+      bottom,
+      right - 0.5,
+      front - 0.5,
+      bottom,
+      right - 0.5,
+      back - 0.5,
+      top,
+      right - 0.5,
+      front - 0.5,
+      top,
+      right - 0.5,
+    ];
+
+    const { rotation } = element;
+    if (rotation) {
+      const radians = (rotation.angle * Math.PI) / 180;
+      const { axis } = rotation;
+      if (axis === "y") {
+        planeGeometry.rotateY(radians);
+      } else if (axis === "x") {
+        planeGeometry.rotateX(radians);
+      } else if (axis === "z") {
+        planeGeometry.rotateZ(radians);
+      }
+    }
+
+    texturedFaces.push({
+      texture: element.faces.south.texture,
+      face: planeGeometry.attributes["position"]["array"],
+      uv: element.faces.south.uv,
+    });
   }
 
   return texturedFaces;
