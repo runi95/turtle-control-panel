@@ -13,21 +13,18 @@ const getImageData = async (sourceImagePath, dx, dy, dw, dh) => {
   const canvas = createCanvas(16, 16);
   const context = canvas.getContext("2d");
 
-  for (let y = 0; y < 16; y++) {
-    for (let x = 0; x < 16; x++) {
-      context.drawImage(
-        image,
-        Math.round((x * dw) / 16) + dx,
-        Math.round((y * dh) / 16) + dy,
-        1,
-        1,
-        x,
-        y,
-        1,
-        1
-      );
-    }
-  }
+  context.patternQuality = 'nearest';
+  context.drawImage(
+    image,
+    dx,
+    dy,
+    dw,
+    dh,
+    0,
+    0,
+    16,
+    16
+  );
 
   return context.getImageData(0, 0, 16, 16);
 };
