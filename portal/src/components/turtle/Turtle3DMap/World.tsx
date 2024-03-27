@@ -137,20 +137,20 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
     const turtleRotation = (() => {
         switch (turtle.direction) {
             case Direction.North:
-                return 1.5 * Math.PI;
-            case Direction.East:
-                return Math.PI;
-            case Direction.South:
-                return Math.PI * 0.5;
-            case Direction.West:
                 return 0;
+            case Direction.East:
+                return 1.5 * Math.PI;
+            case Direction.South:
+                return Math.PI;
+            case Direction.West:
+                return Math.PI * 0.5;
         }
     })();
 
     return (
         <>
             <group rotation={[0, turtleRotation, 0]}>
-                <Turtle3D />
+                <Turtle3D atlasMap={atlasMap} />
             </group>
             <instancedMesh ref={moveTurtleMeshRef} args={[undefined, undefined, 1]} visible={false} receiveShadow>
                 <boxGeometry>
