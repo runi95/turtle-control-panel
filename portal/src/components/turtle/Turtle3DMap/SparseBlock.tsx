@@ -161,11 +161,11 @@ const BuildMeshDataFromVoxels = (
 
     const unknown = atlasMap.textures['unknown'];
     for (const [_key, cell] of cells) {
-        const tzt = atlasMap.textures[blockNameOverride(cell.type)];
-        if (tzt == null) {
+        const atlasMapTexture = atlasMap.textures[blockNameOverride(cell.type)];
+        if (atlasMapTexture == null) {
             console.log(`${cell.type} is broken!`);
         }
-        const blockTextures = tzt ?? unknown;
+        const blockTextures = atlasMapTexture ?? unknown;
 
         const blockFaces = atlasMap.models[blockTextures.model];
         if (blockFaces == null) {
