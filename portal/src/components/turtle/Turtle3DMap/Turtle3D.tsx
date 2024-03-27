@@ -12,14 +12,16 @@ import {
 import {useMemo} from 'react';
 import {fragmentShader, vertexShader} from './CustomShader';
 import {AtlasMap, useAtlas} from './TextureAtlas';
+import TurtleNameTag from './TurtleNameTag';
 
 type Props = {
+    name: string;
     atlasMap: AtlasMap;
 };
 
 const turtleTextureName = 'computercraft:turtle_advanced';
 
-function Turtle3D({atlasMap}: Props) {
+function Turtle3D({name, atlasMap}: Props) {
     const {data: atlas} = useAtlas();
     const minimizedAtlas = useMemo(() => {
         if (atlas == null) return null;
@@ -101,33 +103,36 @@ function Turtle3D({atlasMap}: Props) {
 
     if (atlas == null) return null;
     return (
-        <mesh receiveShadow>
-            <bufferGeometry>
-                <float32BufferAttribute attach='attributes-position' args={[positions, 3]} />
-                <float32BufferAttribute attach='attributes-uv' args={[uvs, 2]} />
-                <float32BufferAttribute attach='attributes-uvSlice' args={[uvSlices, 1]} />
-                <bufferAttribute attach='index' args={[indicies, 1]} />
-            </bufferGeometry>
-            <shaderMaterial
-                uniforms={{
-                    diffuseMap: {
-                        value: minimizedAtlas?.atlasTexture,
-                    },
-                    noiseMap: {
-                        value: null,
-                    },
-                    fade: {
-                        value: 1.0,
-                    },
-                    flow: {
-                        value: 0.0,
-                    },
-                }}
-                vertexShader={vertexShader}
-                fragmentShader={fragmentShader}
-                side={FrontSide}
-            />
-        </mesh>
+        <>
+            <TurtleNameTag text={name} position={[0, 1, 0]} />
+            <mesh receiveShadow>
+                <bufferGeometry>
+                    <float32BufferAttribute attach='attributes-position' args={[positions, 3]} />
+                    <float32BufferAttribute attach='attributes-uv' args={[uvs, 2]} />
+                    <float32BufferAttribute attach='attributes-uvSlice' args={[uvSlices, 1]} />
+                    <bufferAttribute attach='index' args={[indicies, 1]} />
+                </bufferGeometry>
+                <shaderMaterial
+                    uniforms={{
+                        diffuseMap: {
+                            value: minimizedAtlas?.atlasTexture,
+                        },
+                        noiseMap: {
+                            value: null,
+                        },
+                        fade: {
+                            value: 1.0,
+                        },
+                        flow: {
+                            value: 0.0,
+                        },
+                    }}
+                    vertexShader={vertexShader}
+                    fragmentShader={fragmentShader}
+                    side={FrontSide}
+                />
+            </mesh>
+        </>
     );
 }
 
