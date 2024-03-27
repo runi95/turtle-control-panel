@@ -1,8 +1,7 @@
 /* eslint-disable react/no-unknown-property */
 import {forwardRef, useImperativeHandle, useMemo, useRef} from 'react';
-import {Color, InstancedMesh, Matrix4, TextureLoader, FrontSide, PlaneGeometry, Vector3, Group} from 'three';
-import {fragmentShader, vertexShader} from './CustomShader';
-import {useAtlas, useAtlasMap} from './TextureAtlas';
+import {Color, InstancedMesh, Matrix4, TextureLoader, PlaneGeometry, Vector3, Group} from 'three';
+import {useAtlasMap} from './TextureAtlas';
 import SparseBlock from './SparseBlock';
 import {Direction, useTurtle} from '../../../api/UseTurtle';
 import {useLoader} from '@react-three/fiber';
