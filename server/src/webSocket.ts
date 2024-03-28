@@ -25,8 +25,8 @@ export const createWebSocketServer = (server: TServerInstance) => {
     const io = new Server(server, {
         cors: {
             origin: '*',
-            methods: ['GET', 'POST']
-          }
+            methods: ['GET', 'POST'],
+        },
     });
     io.on('connection', (socket) => {
         console.log('Connected:', socket.id);
