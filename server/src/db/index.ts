@@ -99,20 +99,30 @@ const insertServer = db.prepare(
     'INSERT INTO `servers` (`remote_address`, `name`) VALUES (:remote_address, :name) ON CONFLICT DO UPDATE SET name = :name'
 );
 const setServerName = db.prepare('UPDATE `servers` SET `name` = ? WHERE `id` = ?');
-const selectArea = db.prepare(`SELECT json_object(
+const selectArea = db
+    .prepare(
+        `SELECT json_object(
     'id', \`a\`.\`id\`,
     'color', \`a\`.\`color\`,
     'name', \`a\`.\`name\`,
     'area', json(\`a\`.\`area\`)
-) FROM \`areas\` AS \`a\` WHERE \`server_id\` = ? AND \`id\` = ?`).pluck();
-const selectAreas = db.prepare(`SELECT json_group_array(json_object(
+) FROM \`areas\` AS \`a\` WHERE \`server_id\` = ? AND \`id\` = ?`
+    )
+    .pluck();
+const selectAreas = db
+    .prepare(
+        `SELECT json_group_array(json_object(
     'id', \`a\`.\`id\`,
     'color', \`a\`.\`color\`,
     'name', \`a\`.\`name\`,
     'area', json(\`a\`.\`area\`))
-) FROM \`areas\` AS \`a\` WHERE \`server_id\` = ?`).pluck();
+) FROM \`areas\` AS \`a\` WHERE \`server_id\` = ?`
+    )
+    .pluck();
 const insertArea = db.prepare('INSERT INTO `areas` (`server_id`, `name`, `color`, `area`) VALUES (?, ?, ?, ?)');
-const selectTurtle = db.prepare(`SELECT json_object(
+const selectTurtle = db
+    .prepare(
+        `SELECT json_object(
     'id', \`t\`.\`id\`,
     'name', \`t\`.\`name\`,
     'fuelLevel', \`t\`.\`fuel_level\`,
@@ -124,11 +134,15 @@ const selectTurtle = db.prepare(`SELECT json_object(
     'location', json(\`t\`.\`location\`),
     'direction', \`t\`.\`direction\`,
     'home', json(\`t\`.\`home\`)
-) FROM \`turtles\` AS \`t\` WHERE \`server_id\` = ? AND \`id\` = ?`).pluck();
+) FROM \`turtles\` AS \`t\` WHERE \`server_id\` = ? AND \`id\` = ?`
+    )
+    .pluck();
 const insertTurtle = db.prepare(
     'INSERT INTO `turtles` VALUES (:server_id, :id, :name, :fuel_level, :fuel_limit, :selected_slot, :inventory, :steps_since_last_refuel, :state, :location, :direction, :home) ON CONFLICT DO UPDATE SET name = :name, fuel_level = :fuel_level, fuel_limit = :fuel_limit, selected_slot = :selected_slot, inventory = :inventory, steps_since_last_refuel = :steps_since_last_refuel, state = :state, location = :location, direction = :direction, home = :home'
 );
-const selectBlocks = db.prepare(`SELECT json_object(
+const selectBlocks = db
+    .prepare(
+        `SELECT json_object(
     'serverId', \`b\`.\`server_id\`,
     'x', \`b\`.\`x\`,
     'y', \`b\`.\`y\`,
@@ -145,8 +159,12 @@ const selectBlocks = db.prepare(`SELECT json_object(
         GROUP BY \`x\`, \`z\`
     ) \`lb\`
     ON \`lb\`.\`server_id\` = \`b\`.\`server_id\` AND \`lb\`.\`x\` = \`b\`.\`x\` AND \`lb\`.\`max\` = \`b\`.\`y\` AND \`lb\`.\`z\` = \`b\`.\`z\`
-WHERE \`b\`.\`server_id\` = :server_id AND \`b\`.\`x\` >= :from_x AND \`b\`.\`x\` <= :to_x AND \`b\`.\`y\` >= :from_y AND \`b\`.\`y\` <= :to_y AND \`b\`.\`z\` >= :from_z AND \`b\`.\`z\` <= :to_z`).pluck();
-const selectBlocksSimple = db.prepare(`SELECT json_object(
+WHERE \`b\`.\`server_id\` = :server_id AND \`b\`.\`x\` >= :from_x AND \`b\`.\`x\` <= :to_x AND \`b\`.\`y\` >= :from_y AND \`b\`.\`y\` <= :to_y AND \`b\`.\`z\` >= :from_z AND \`b\`.\`z\` <= :to_z`
+    )
+    .pluck();
+const selectBlocksSimple = db
+    .prepare(
+        `SELECT json_object(
     'x', \`b\`.\`x\`,
     'y', \`b\`.\`y\`,
     'z', \`b\`.\`z\`,
@@ -160,8 +178,12 @@ const selectBlocksSimple = db.prepare(`SELECT json_object(
         GROUP BY \`x\`, \`z\`
     ) \`lb\`
     ON \`lb\`.\`server_id\` = \`b\`.\`server_id\` AND \`lb\`.\`x\` = \`b\`.\`x\` AND \`lb\`.\`max\` = \`b\`.\`y\` AND \`lb\`.\`z\` = \`b\`.\`z\`
-WHERE \`b\`.\`server_id\` = :server_id AND \`b\`.\`x\` >= :from_x AND \`b\`.\`x\` <= :to_x AND \`b\`.\`y\` >= :from_y AND \`b\`.\`y\` <= :to_y AND \`b\`.\`z\` >= :from_z AND \`b\`.\`z\` <= :to_z`).pluck();
-const selectBlock = db.prepare(`SELECT json_object(
+WHERE \`b\`.\`server_id\` = :server_id AND \`b\`.\`x\` >= :from_x AND \`b\`.\`x\` <= :to_x AND \`b\`.\`y\` >= :from_y AND \`b\`.\`y\` <= :to_y AND \`b\`.\`z\` >= :from_z AND \`b\`.\`z\` <= :to_z`
+    )
+    .pluck();
+const selectBlock = db
+    .prepare(
+        `SELECT json_object(
     'serverId', \`b\`.\`server_id\`,
     'x', \`b\`.\`x\`,
     'y', \`b\`.\`y\`,
@@ -169,16 +191,16 @@ const selectBlock = db.prepare(`SELECT json_object(
     'name', \`b\`.\`name\`,
     'state', json(\`b\`.\`state\`),
     'tags', json(\`b\`.\`tags\`)
-) FROM \`blocks\` AS \`b\` WHERE \`server_id\` = ? AND \`x\` = ? AND \`y\` = ? AND \`z\` = ?`).pluck();
+) FROM \`blocks\` AS \`b\` WHERE \`server_id\` = ? AND \`x\` = ? AND \`y\` = ? AND \`z\` = ?`
+    )
+    .pluck();
 const insertBlock = db.prepare(
     'INSERT INTO `blocks` VALUES (:server_id, :x, :y, :z, :name, :state, :tags) ON CONFLICT DO UPDATE SET `name` = :name, `state` = :state, `tags` = :tags'
 );
 const deleteBlockStatement = db.prepare(
     'DELETE FROM `blocks` WHERE `server_id` = ? AND `x` = ? AND `y` = ? AND `z` = ?'
 );
-const deleteTurtleStatement = db.prepare(
-    'DELETE FROM `turtles` WHERE `server_id` = ? AND `id` = ?'
-);
+const deleteTurtleStatement = db.prepare('DELETE FROM `turtles` WHERE `server_id` = ? AND `id` = ?');
 const setTurtleName = db.prepare('UPDATE `turtles` SET `name` = ? WHERE `server_id` = ? AND `id` = ?');
 const setTurtleFuelLevel = db.prepare('UPDATE `turtles` SET `fuel_level` = ? WHERE `server_id` = ? AND `id` = ?');
 const setTurtleSelectedSlot = db.prepare('UPDATE `turtles` SET `selected_slot` = ? WHERE `server_id` = ? AND `id` = ?');
@@ -192,26 +214,32 @@ const setTurtleDirection = db.prepare('UPDATE `turtles` SET `direction` = ? WHER
 const setTurtleMovement = db.prepare(
     'UPDATE `turtles` SET `fuel_level` = ?, `steps_since_last_refuel` = ?, `location` = ? WHERE `server_id` = ? AND `id` = ?'
 );
-const setTurtleFuel = db.prepare(
-    'UPDATE `turtles` SET `fuel_level` = ? WHERE `server_id` = ? AND `id` = ?'
-);
+const setTurtleFuel = db.prepare('UPDATE `turtles` SET `fuel_level` = ? WHERE `server_id` = ? AND `id` = ?');
 const setTurtleHome = db.prepare('UPDATE `turtles` SET `home` = ? WHERE `server_id` = ? AND `id` = ?');
 const insertChunk = db.prepare(
     'INSERT INTO `chunks` VALUES (:server_id, :x, :z, :analysis) ON CONFLICT DO UPDATE SET analysis = :analysis'
 );
-const selectChunks = db.prepare(`SELECT json_object(
+const selectChunks = db
+    .prepare(
+        `SELECT json_object(
     'serverId', \`c\`.\`server_id\`,
     'x', \`c\`.\`x\`,
     'z', \`c\`.\`z\`,
     'analysis', json(\`c\`.\`analysis\`)
 ) FROM \`chunks\` AS \`c\`
-WHERE \`c\`.\`server_id\` = :server_id AND \`c\`.\`x\` >= :from_x AND \`c\`.\`x\` <= :to_x AND \`c\`.\`z\` >= :from_z AND \`c\`.\`z\` <= :to_z`).pluck();
-const selectChunk = db.prepare(`SELECT json_object(
+WHERE \`c\`.\`server_id\` = :server_id AND \`c\`.\`x\` >= :from_x AND \`c\`.\`x\` <= :to_x AND \`c\`.\`z\` >= :from_z AND \`c\`.\`z\` <= :to_z`
+    )
+    .pluck();
+const selectChunk = db
+    .prepare(
+        `SELECT json_object(
     'serverId', \`c\`.\`server_id\`,
     'x', \`c\`.\`x\`,
     'z', \`c\`.\`z\`,
     'analysis', json(\`c\`.\`analysis\`)
-) FROM \`chunks\` AS \`c\` WHERE \`server_id\` = ? AND \`x\` = ? AND \`z\` = ?`).pluck();
+) FROM \`chunks\` AS \`c\` WHERE \`server_id\` = ? AND \`x\` = ? AND \`z\` = ?`
+    )
+    .pluck();
 
 export const getDashboard = () => preparedDashboard.all().map((server: unknown) => JSON.parse(server as string));
 export const upsertServer = (remoteAddress: string, name: string | null) =>
@@ -220,14 +248,15 @@ export const upsertServer = (remoteAddress: string, name: string | null) =>
         name,
     });
 export const renameServer = (id: number, name: string) => setServerName.run(name, id);
-export const getServerByRemoteAddress = (remoteAddress: string) => selectServerByRemoteAddress.get(remoteAddress) as Server;
+export const getServerByRemoteAddress = (remoteAddress: string) =>
+    selectServerByRemoteAddress.get(remoteAddress) as Server;
 export const getArea = (serverId: number, id: number) => JSON.parse(selectArea.get(serverId, id) as string) as Area;
 export const getAreas = (serverId: number) => JSON.parse(selectAreas.get(serverId) as string) as Area[];
 export const addArea = (serverId: number, name: string, color: string, area: JSON) =>
     insertArea.run(serverId, name, color, JSON.stringify(area));
 export const getTurtle = (serverId: number, id: number) => {
     const turtleString = selectTurtle.get(serverId, id) as string | undefined;
-    return turtleString === undefined ? null : JSON.parse(turtleString) as Turtle;
+    return turtleString === undefined ? null : (JSON.parse(turtleString) as Turtle);
 };
 export const upsertTurtle = (
     serverId: number,
@@ -255,7 +284,7 @@ export const upsertTurtle = (
         state: JSON.stringify(state),
         location: JSON.stringify(location),
         direction,
-        home: JSON.stringify(home)
+        home: JSON.stringify(home),
     });
 export interface GetBlocksOptions {
     fromX: number;
@@ -265,24 +294,30 @@ export interface GetBlocksOptions {
     fromZ: number;
     toZ: number;
 }
-export const getBlocks = (serverId: number, options: GetBlocksOptions) => selectBlocks.all({
-    server_id: serverId,
-    from_x: options.fromX,
-    to_x: options.toX,
-    from_y: options.fromY,
-    to_y: options.toY,
-    from_z: options.fromZ,
-    to_z: options.toZ
-}).map((block) => JSON.parse(block as string)) as Block[];
-export const getBlocksSimple = (serverId: number, options: GetBlocksOptions) => selectBlocksSimple.all({
-    server_id: serverId,
-    from_x: options.fromX,
-    to_x: options.toX,
-    from_y: options.fromY,
-    to_y: options.toY,
-    from_z: options.fromZ,
-    to_z: options.toZ
-}).map((block) => JSON.parse(block as string)) as Omit<Block, 'state' | 'tags'>[];
+export const getBlocks = (serverId: number, options: GetBlocksOptions) =>
+    selectBlocks
+        .all({
+            server_id: serverId,
+            from_x: options.fromX,
+            to_x: options.toX,
+            from_y: options.fromY,
+            to_y: options.toY,
+            from_z: options.fromZ,
+            to_z: options.toZ,
+        })
+        .map((block) => JSON.parse(block as string)) as Block[];
+export const getBlocksSimple = (serverId: number, options: GetBlocksOptions) =>
+    selectBlocksSimple
+        .all({
+            server_id: serverId,
+            from_x: options.fromX,
+            to_x: options.toX,
+            from_y: options.fromY,
+            to_y: options.toY,
+            from_z: options.fromZ,
+            to_z: options.toZ,
+        })
+        .map((block) => JSON.parse(block as string)) as Omit<Block, 'state' | 'tags'>[];
 export const getBlock = (serverId: number, x: number, y: number, z: number) => {
     const block = selectBlock.get(serverId, x, y, z);
     if (!block) return null;
@@ -306,23 +341,28 @@ export const upsertBlock = (
         state: JSON.stringify(state),
         tags: JSON.stringify(tags),
     });
-export const upsertBlocks = (serverId: number, blocks: {
-    x: number;
-    y: number;
-    z: number;
-    name: string;
-    state: BlockState;
-    tags: BlockTags;
-}[]) => db.transaction(() => {
-    for (const block of blocks) upsertBlock(serverId, block.x, block.y, block.z, block.name, block.state, block.tags);
-})();
+export const upsertBlocks = (
+    serverId: number,
+    blocks: {
+        x: number;
+        y: number;
+        z: number;
+        name: string;
+        state: BlockState;
+        tags: BlockTags;
+    }[]
+) =>
+    db.transaction(() => {
+        for (const block of blocks)
+            upsertBlock(serverId, block.x, block.y, block.z, block.name, block.state, block.tags);
+    })();
 export const deleteBlock = (serverId: number, x: number, y: number, z: number) =>
     deleteBlockStatement.run(serverId, x, y, z);
-export const deleteBlocks = (serverId: number, blocks: {x: number; y: number; z: number}[]) => db.transaction(() => {
-    for (const block of blocks) deleteBlock(serverId, block.x, block.y, block.z);
-})();
-export const deleteTurtle = (serverId: number, id: number) =>
-    deleteTurtleStatement.run(serverId, id);
+export const deleteBlocks = (serverId: number, blocks: {x: number; y: number; z: number}[]) =>
+    db.transaction(() => {
+        for (const block of blocks) deleteBlock(serverId, block.x, block.y, block.z);
+    })();
+export const deleteTurtle = (serverId: number, id: number) => deleteTurtleStatement.run(serverId, id);
 export const updateTurtleName = (serverId: number, id: number, name: string) => setTurtleName.run(name, serverId, id);
 export const updateTurtleFuelLevel = (serverId: number, id: number, fuelLevel: number) =>
     setTurtleFuelLevel.run(fuelLevel, serverId, id);
@@ -338,7 +378,7 @@ export const updateTurtleState = (serverId: number, id: number, stateData: State
     } else {
         setTurtleState.run(null, serverId, id);
     }
-}
+};
 export const updateTurtleLocation = (serverId: number, id: number, location: Location | null) =>
     setTurtleLocation.run(JSON.stringify(location), serverId, id);
 export const updateTurtleDirection = (serverId: number, id: number, direction: Direction | null) =>
@@ -354,12 +394,7 @@ export const updateTurtleFuel = (serverId: number, id: number, fuelLevel: number
     setTurtleFuel.run(fuelLevel, serverId, id);
 export const updateTurtleHome = (serverId: number, id: number, home: Location | null) =>
     setTurtleHome.run(JSON.stringify(home), serverId, id);
-export const upsertChunk = (
-    serverId: number,
-    x: number,
-    z: number,
-    analysis: ChunkAnalysis,
-) =>
+export const upsertChunk = (serverId: number, x: number, z: number, analysis: ChunkAnalysis) =>
     insertChunk.run({
         server_id: serverId,
         x,
@@ -377,10 +412,13 @@ export interface GetChunksOptions {
     fromZ: number;
     toZ: number;
 }
-export const getChunks = (serverId: number, options: GetBlocksOptions) => selectChunks.all({
-    server_id: serverId,
-    from_x: options.fromX,
-    to_x: options.toX,
-    from_z: options.fromZ,
-    to_z: options.toZ
-}).map((chunk) => JSON.parse(chunk as string)) as Chunk[];
+export const getChunks = (serverId: number, options: GetBlocksOptions) =>
+    selectChunks
+        .all({
+            server_id: serverId,
+            from_x: options.fromX,
+            to_x: options.toX,
+            from_z: options.fromZ,
+            to_z: options.toZ,
+        })
+        .map((chunk) => JSON.parse(chunk as string)) as Chunk[];
