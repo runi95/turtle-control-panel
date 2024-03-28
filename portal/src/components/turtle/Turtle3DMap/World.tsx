@@ -40,6 +40,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
     const groupRef = useRef<Group>(null!);
     const canMoveTurtleRef = useRef(false);
     const moveTurtleMeshRef = useRef<InstancedMesh>(null!);
+    const moveTurtleMeshVisibleRef = useRef<boolean>(false);
     const outlineMap = useLoader(TextureLoader, '/outline.png');
     const moveTurtleColorArray = useRef<Float32Array>(Float32Array.from([...new Color('#D6D160').toArray(), 0.5]));
     const previousFaceIndex = useRef<number | null>(null);
@@ -56,6 +57,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                     if (!moveState) {
                         previousFaceIndex.current = null;
                         moveTurtleMeshRef.current.visible = false;
+                        moveTurtleMeshVisibleRef.current = false;
                     }
                 },
             };
@@ -152,7 +154,12 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
             <group rotation={[0, turtleRotation, 0]}>
                 <Turtle3D atlasMap={atlasMap} name={turtle.name} />
             </group>
-            <instancedMesh ref={moveTurtleMeshRef} args={[undefined, undefined, 1]} visible={false} receiveShadow>
+            <instancedMesh
+                ref={moveTurtleMeshRef}
+                args={[undefined, undefined, 1]}
+                visible={moveTurtleMeshVisibleRef.current}
+                receiveShadow
+            >
                 <boxGeometry>
                     <instancedBufferAttribute attach='attributes-color' args={[moveTurtleColorArray.current, 4]} />
                 </boxGeometry>
@@ -174,6 +181,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                     if (intersection.faceIndex === previousFaceIndex.current) return;
                     if (previousFaceIndex.current === null) {
                         moveTurtleMeshRef.current.visible = true;
+                        moveTurtleMeshVisibleRef.current = true;
                     }
 
                     previousFaceIndex.current = intersection.faceIndex ?? null;
@@ -190,6 +198,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                     e.stopPropagation();
                     previousFaceIndex.current = null;
                     moveTurtleMeshRef.current.visible = false;
+                    moveTurtleMeshVisibleRef.current = false;
                 }}
                 onClick={(e) => {
                     e.stopPropagation();
