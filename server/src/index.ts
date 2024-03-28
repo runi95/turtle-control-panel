@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import fastifyCorsPlugin from '@fastify/cors';
 import {getOnlineTurtleById, getOnlineTurtles} from './entities/turtle';
 import logger from './logger/server';
-import {getAreas, getBlocks, getBlocksSimple, getChunk, getDashboard, getTurtle} from './db';
+import {getAreas, getBlocks, getBlocksSimple, getChunk, getDashboard, getTurtle, getTurtlesByServerId} from './db';
 import {createWebSocketServer} from './webSocket';
 
 logger.info('Starting server...');
@@ -56,6 +56,16 @@ fastify
             const {id} = params as {id: string};
             const {x, z} = query as {x: string; z: string};
             res.send(getChunk(Number(id), Number(x), Number(z)));
+        });
+
+        fastify.get('/servers/:serverId/turtles', (req, res) => {
+            const {params} = req;
+            const {serverId} = params as {serverId: string};
+            const turtles = getTurtlesByServerId(Number(serverId));
+            res.send(turtles.map((turtle) => ({
+                ...turtle,
+                isOnline: getOnlineTurtleById(Number(serverId), turtle.id) == null
+            })));
         });
 
         fastify.get('/servers/:serverId/turtles/:id', (req, res) => {

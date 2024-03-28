@@ -8,6 +8,7 @@ import {useLoader} from '@react-three/fiber';
 import {useParams} from 'react-router-dom';
 import {useWebSocket} from '../../../api/UseWebSocket';
 import Turtle3D from './Turtle3D';
+import OtherTurtles from './OtherTurtles';
 
 const mathematicalModulo = (a: number, b: number) => {
     const quotient = Math.floor(a / b);
@@ -154,6 +155,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
             <group rotation={[0, turtleRotation, 0]}>
                 <Turtle3D atlasMap={atlasMap} name={turtle.name} />
             </group>
+            <OtherTurtles />
             <instancedMesh
                 ref={moveTurtleMeshRef}
                 args={[undefined, undefined, 1]}

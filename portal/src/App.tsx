@@ -70,6 +70,22 @@ function App() {
                         ...obj.message.data,
                     })
                 );
+                queryClient.setQueryData(['turtles', obj.message.serverId.toString()], (oldData: APITurtle[]) =>
+                    oldData.reduce((acc, curr) => {
+                        if (curr.id === obj.message.id) {
+                            acc.push({
+                                ...curr,
+                                ...obj.message.data,
+                            });
+                        } else {
+                            acc.push({
+                                ...curr,
+                            });
+                        }
+
+                        return acc;
+                    }, [] as APITurtle[])
+                );
             }
         }
 
