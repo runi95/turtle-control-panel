@@ -71,7 +71,7 @@ function App() {
                     })
                 );
                 queryClient.setQueryData(['turtles', obj.message.serverId.toString()], (oldData: APITurtle[]) =>
-                    oldData.reduce((acc, curr) => {
+                    oldData?.reduce((acc, curr) => {
                         if (curr.id === obj.message.id) {
                             acc.push({
                                 ...curr,
