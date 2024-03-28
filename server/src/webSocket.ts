@@ -404,6 +404,9 @@ export const createWebSocketServer = (server: TServerInstance) => {
                             case 'drive-create-file':
                                 await turtle.writeToFile(msg.data.file, msg.data.content);
                                 break;
+                            case 'suck':
+                                await turtle.suck();
+                                break;
                             default:
                                 logger.error(`Invalid action [${msg.action}] attempted on turtle [${msg.data.id}]`);
                                 break;
