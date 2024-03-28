@@ -79,3 +79,10 @@ export const useTurtle = (serverId: string, id: string) => {
         queryFn: () => fetch(`${httpServerUrl}/servers/${serverId}/turtles/${id}`).then((res) => res.json()),
     });
 };
+
+export const useTurtles = (serverId: string) => {
+    return useQuery<Turtle[]>({
+        queryKey: ['turtles', serverId],
+        queryFn: () => fetch(`${httpServerUrl}/servers/${serverId}/turtles`).then((res) => res.json()),
+    });
+};

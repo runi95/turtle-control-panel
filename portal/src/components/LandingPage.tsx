@@ -1,24 +1,41 @@
 import styled from 'styled-components';
 import {Spinner} from 'react-bootstrap';
+import {ConnectionStatus, useWebSocketConnectionStatus} from '../api/UseWebSocket';
+import {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 
-export interface LandingPageProps {
-    shouldFadeOut: boolean;
-    isLoading: boolean;
-    isConnected: boolean;
-    message: string;
-}
+function LandingPage() {
+    const navigate = useNavigate();
+    const connectionStatus = useWebSocketConnectionStatus();
+    const [message, setMessage] = useState('');
 
-function LandingPage(props: LandingPageProps) {
+    useEffect(() => {
+        switch (connectionStatus) {
+            case ConnectionStatus.CONNECTED:
+                setMessage('Connected...');
+                setTimeout(() => {
+                    if (location.pathname === '/') {
+                        navigate('/dashboard');
+                    }
+                }, 2500);
+                break;
+            case ConnectionStatus.CONNECTION_FAILED:
+                setMessage('Failed to connect');
+        }
+    }, [connectionStatus]);
+
     return (
-        <Centered className={props.shouldFadeOut ? 'fade-out' : undefined}>
+        <Centered className={connectionStatus === ConnectionStatus.CONNECTED ? 'fade-out' : undefined}>
             <img height='192' width='192' src='/logo.svg' alt='Logo' />
             <h1>Turtle Control Panel</h1>
-            {props.isLoading ? (
+            {connectionStatus === ConnectionStatus.CONNECTING ? (
                 <Spinner style={{width: '3.5rem', height: '3.5rem'}} animation='border' variant='light' role='status'>
                     <span className='visually-hidden'>Loading...</span>
                 </Spinner>
             ) : (
-                <h5 className={props.isConnected ? 'text-success' : 'text-danger'}>{props.message}</h5>
+                <h5 className={connectionStatus === ConnectionStatus.CONNECTED ? 'text-success' : 'text-danger'}>
+                    {message}
+                </h5>
             )}
         </Centered>
     );

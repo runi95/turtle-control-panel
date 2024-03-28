@@ -36,6 +36,10 @@ function FarmModal(props: FarmModalProps) {
 
     if (areas === undefined) return null;
 
+    // Weird hack to fix issues with @react-three/drei
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Btn: any = Button;
+
     return (
         <Modal show={true} onHide={() => hideModal()}>
             <Form noValidate validated={isFormValidated} onSubmit={handleFormSubmit}>
@@ -46,9 +50,9 @@ function FarmModal(props: FarmModalProps) {
                     <FarmArea formData={formData} setFormData={setFormData} />
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant='success' type='submit'>
+                    <Btn variant='success' type='submit'>
                         Start
-                    </Button>
+                    </Btn>
                 </Modal.Footer>
             </Form>
         </Modal>

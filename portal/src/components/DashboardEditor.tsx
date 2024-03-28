@@ -1,22 +1,27 @@
 import './Dashboard.css';
-import {Action, Servers} from '../App';
 import {Button, Col, Container, Form, InputGroup, Row} from 'react-bootstrap';
 import {useState} from 'react';
+import {Servers} from '../api/UseServers';
+import {useWebSocket} from '../api/UseWebSocket';
 
 export interface DashboardEditorProps {
     servers: Servers;
-    action: Action;
     closeEditMode: () => void;
 }
 
 function DashboardEditor(props: DashboardEditorProps) {
-    const {servers, action, closeEditMode} = props;
+    const {servers, closeEditMode} = props;
+    const {action} = useWebSocket();
     const [formData, setFormData] = useState(
         Object.values(servers).reduce(
             (acc, curr) => ((acc[curr.id.toString()] = curr.name), acc),
             {} as {[key: string]: string | undefined}
         )
     );
+
+    // Weird hack to fix issues with @react-three/drei
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Btn: any = Button;
 
     return (
         <Container fluid>
@@ -61,7 +66,7 @@ function DashboardEditor(props: DashboardEditorProps) {
                             </Form.Group>
                         ))}
                         <InputGroup>
-                            <Button
+                            <Btn
                                 variant='outline-secondary'
                                 size='sm'
                                 onClick={() => {
@@ -69,10 +74,10 @@ function DashboardEditor(props: DashboardEditorProps) {
                                 }}
                             >
                                 Cancel
-                            </Button>
-                            <Button variant='outline-success' size='sm' type='submit'>
+                            </Btn>
+                            <Btn variant='outline-success' size='sm' type='submit'>
                                 Update
-                            </Button>
+                            </Btn>
                         </InputGroup>
                     </Form>
                 </Col>

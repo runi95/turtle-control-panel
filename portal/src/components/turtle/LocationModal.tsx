@@ -46,6 +46,10 @@ function LocationModal(props: LocationModalProps) {
         });
     };
 
+    // Weird hack to fix issues with @react-three/drei
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Btn: any = Button;
+
     return (
         <Form noValidate validated={state.isFormValidated} onSubmit={handleFormSubmit}>
             <Modal.Header closeButton>
@@ -135,9 +139,9 @@ function LocationModal(props: LocationModalProps) {
                 </Form.Group>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant='success' type='submit'>
+                <Btn variant='success' type='submit'>
                     Update
-                </Button>
+                </Btn>
             </Modal.Footer>
         </Form>
     );

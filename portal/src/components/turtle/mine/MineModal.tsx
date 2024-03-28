@@ -63,6 +63,10 @@ function MineModal(props: MineModalProps) {
         setIsFormValidated(true);
     };
 
+    // Weird hack to fix issues with @react-three/drei
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Btn: any = Button;
+
     const createdAreaLength = createdArea.length;
     return (
         <Modal show={true} onHide={() => hideModal()}>
@@ -101,7 +105,7 @@ function MineModal(props: MineModalProps) {
                                 <option value={1}>except for</option>
                                 <option value={2}>with name</option>
                             </Form.Control>
-                            <Button
+                            <Btn
                                 variant='link'
                                 size='sm'
                                 onClick={() => {
@@ -109,7 +113,7 @@ function MineModal(props: MineModalProps) {
                                 }}
                             >
                                 {includeOrExclude === 1 ? 'add exception' : 'add name'}
-                            </Button>
+                            </Btn>
                         </Col>
                     </Row>
                     <Row className='mb-3'>
@@ -186,9 +190,9 @@ function MineModal(props: MineModalProps) {
                     </Row>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button disabled={createdAreaLength < 1} variant='outline-success' type='submit'>
+                    <Btn disabled={createdAreaLength < 1} variant='outline-success' type='submit'>
                         {createdAreaLength < 1 ? '(draw area on map)' : 'Mine'}
-                    </Button>
+                    </Btn>
                 </Modal.Footer>
             </Form>
         </Modal>

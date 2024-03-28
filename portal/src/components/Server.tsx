@@ -2,17 +2,18 @@ import styled from 'styled-components';
 import {Accordion, Table} from 'react-bootstrap';
 import {useNavigate} from 'react-router-dom';
 import {CSSProperties} from 'react';
-import {Server as APIServer, Action} from '../App';
 import FuelInfo from './FuelInfo';
+import {Server as APIServer} from '../api/UseServers';
+import {useWebSocket} from '../api/UseWebSocket';
 
 export interface ServerProps {
     server: APIServer;
-    action: Action;
 }
 
 function Server(props: ServerProps) {
+    const {server} = props;
     const navigate = useNavigate();
-    const {server, action} = props;
+    const {action} = useWebSocket();
 
     return (
         <Accordion defaultActiveKey='0'>
