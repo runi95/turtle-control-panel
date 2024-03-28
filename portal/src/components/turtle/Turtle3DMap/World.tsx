@@ -167,77 +167,79 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                 </boxGeometry>
                 <meshLambertMaterial attach='material' vertexColors transparent alphaTest={0.1} map={outlineMap} />
             </instancedMesh>
-            <group
-                ref={groupRef}
-                position={[
-                    -mathematicalModulo(turtle.location.x, cellDimensions.x),
-                    -mathematicalModulo(turtle.location.y, cellDimensions.y),
-                    -mathematicalModulo(turtle.location.z, cellDimensions.z),
-                ]}
-                onPointerMove={(e) => {
-                    e.stopPropagation();
-                    if (!canMoveTurtleRef.current) return;
-                    if (!(e.intersections.length > 0)) return;
+            {turtle.location == null ? null : (
+                <group
+                    ref={groupRef}
+                    position={[
+                        -mathematicalModulo(turtle.location.x, cellDimensions.x),
+                        -mathematicalModulo(turtle.location.y, cellDimensions.y),
+                        -mathematicalModulo(turtle.location.z, cellDimensions.z),
+                    ]}
+                    onPointerMove={(e) => {
+                        e.stopPropagation();
+                        if (!canMoveTurtleRef.current) return;
+                        if (!(e.intersections.length > 0)) return;
 
-                    const intersection = e.intersections[0];
-                    if (intersection.faceIndex === previousFaceIndex.current) return;
-                    if (previousFaceIndex.current === null) {
-                        moveTurtleMeshRef.current.visible = true;
-                        moveTurtleMeshVisibleRef.current = true;
-                    }
+                        const intersection = e.intersections[0];
+                        if (intersection.faceIndex === previousFaceIndex.current) return;
+                        if (previousFaceIndex.current === null) {
+                            moveTurtleMeshRef.current.visible = true;
+                            moveTurtleMeshVisibleRef.current = true;
+                        }
 
-                    previousFaceIndex.current = intersection.faceIndex ?? null;
+                        previousFaceIndex.current = intersection.faceIndex ?? null;
 
-                    const {x, y, z} = intersection.point;
-                    const vx = Math.ceil(x - 0.5);
-                    const vy = Math.ceil(y - 0.5) + 1;
-                    const vz = Math.ceil(z - 0.5);
-                    tempMatrix.setPosition(new Vector3(vx, vy, vz));
-                    moveTurtleMeshRef.current.setMatrixAt(0, tempMatrix);
-                    moveTurtleMeshRef.current.instanceMatrix.needsUpdate = true;
-                }}
-                onPointerLeave={(e) => {
-                    e.stopPropagation();
-                    previousFaceIndex.current = null;
-                    moveTurtleMeshRef.current.visible = false;
-                    moveTurtleMeshVisibleRef.current = false;
-                }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    if (!canMoveTurtleRef.current) return;
-                    if (!(e.intersections.length > 0)) return;
-                    if (!turtle) return;
+                        const {x, y, z} = intersection.point;
+                        const vx = Math.ceil(x - 0.5);
+                        const vy = Math.ceil(y - 0.5) + 1;
+                        const vz = Math.ceil(z - 0.5);
+                        tempMatrix.setPosition(new Vector3(vx, vy, vz));
+                        moveTurtleMeshRef.current.setMatrixAt(0, tempMatrix);
+                        moveTurtleMeshRef.current.instanceMatrix.needsUpdate = true;
+                    }}
+                    onPointerLeave={(e) => {
+                        e.stopPropagation();
+                        previousFaceIndex.current = null;
+                        moveTurtleMeshRef.current.visible = false;
+                        moveTurtleMeshVisibleRef.current = false;
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (!canMoveTurtleRef.current) return;
+                        if (!(e.intersections.length > 0)) return;
+                        if (!turtle) return;
 
-                    const intersection = e.intersections[0];
-                    const {x, y, z} = intersection.point;
-                    const vx = Math.ceil(x - 0.5);
-                    const vy = Math.ceil(y - 0.5) + 1;
-                    const vz = Math.ceil(z - 0.5);
-                    const {x: tx, y: ty, z: tz} = turtle.location;
+                        const intersection = e.intersections[0];
+                        const {x, y, z} = intersection.point;
+                        const vx = Math.ceil(x - 0.5);
+                        const vy = Math.ceil(y - 0.5) + 1;
+                        const vz = Math.ceil(z - 0.5);
+                        const {x: tx, y: ty, z: tz} = turtle.location;
 
-                    action({
-                        type: 'ACTION',
-                        action: 'move',
-                        data: {
-                            serverId: turtle.serverId,
-                            id: turtle.id,
-                            x: vx + tx,
-                            y: vy + ty,
-                            z: vz + tz,
-                        },
-                    });
-                }}
-            >
-                {chunks.map((chunk) => (
-                    <SparseBlock
-                        key={`${chunk.x},${chunk.y},${chunk.z}`}
-                        dimensions={cellDimensions}
-                        chunk={chunk}
-                        geometries={geometries}
-                        atlasMap={atlasMap}
-                    />
-                ))}
-            </group>
+                        action({
+                            type: 'ACTION',
+                            action: 'move',
+                            data: {
+                                serverId: turtle.serverId,
+                                id: turtle.id,
+                                x: vx + tx,
+                                y: vy + ty,
+                                z: vz + tz,
+                            },
+                        });
+                    }}
+                >
+                    {chunks.map((chunk) => (
+                        <SparseBlock
+                            key={`${chunk.x},${chunk.y},${chunk.z}`}
+                            dimensions={cellDimensions}
+                            chunk={chunk}
+                            geometries={geometries}
+                            atlasMap={atlasMap}
+                        />
+                    ))}
+                </group>
+            )}
         </>
     );
 });
