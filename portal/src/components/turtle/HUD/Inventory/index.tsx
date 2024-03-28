@@ -7,6 +7,7 @@ import {useParams} from 'react-router-dom';
 import {useWebSocket} from '../../../../api/UseWebSocket';
 import {useState} from 'react';
 import TransferModal from './TransferModal';
+import EquipModal from './EquipModal';
 
 type ItemTransfer = {
     fromSide: string;
@@ -22,6 +23,7 @@ function Inventory() {
     const {action} = useWebSocket();
     const {data: turtle} = useTurtle(serverId, id);
     const [itemTransfer, setItemTransfer] = useState<ItemTransfer | null>(null!);
+    const [isEquipModalVisible, setIsEquipModalVisible] = useState<boolean>(false);
 
     if (turtle == null) {
         return null;
@@ -86,19 +88,25 @@ function Inventory() {
                     }
                 }}
             />
+            <EquipModal
+                isVisible={isEquipModalVisible}
+                hideModal={() => setIsEquipModalVisible(false)}
+                handleEquip={(side: 'left' | 'right') => {
+                    action({type: 'ACTION', action: 'equip', data: {serverId, id: turtle.id, side}});
+                    setIsEquipModalVisible(false);
+                }}
+            />
             <Row data-bs-theme='light'>
                 <Col key='inventory-grid' md='auto'>
                     <div className='inventory-container'>
                         <InventoryGrid>
-                            <ButtonSlot style={{gridColumn: 'span 3'}} key='craft-btn'>
+                            <ButtonSlot style={{gridColumn: 'span 3'}} key='equip-right-btn'>
                                 <button
                                     className='text-muted inventory-button'
-                                    onClick={() =>
-                                        action({type: 'ACTION', action: 'craft', data: {serverId, id: turtle.id}})
-                                    }
-                                    disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
+                                    onClick={() => setIsEquipModalVisible(true)}
+                                    disabled={!turtle.isOnline}
                                 >
-                                    <b>Craft</b>
+                                    <b>Equip</b>
                                 </button>
                             </ButtonSlot>
                             <ButtonSlot key='drop-btn'>

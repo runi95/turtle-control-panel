@@ -380,6 +380,16 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                     buildingBlockName: msg.data.buildingBlock,
                                 });
                                 break;
+                            case 'equip':
+                                switch (msg.data.side) {
+                                    case 'left':
+                                        await turtle.equipLeft();
+                                        break;
+                                    case 'right':
+                                        await turtle.equipRight();
+                                        break;
+                                }
+                                break;
                             default:
                                 logger.error(`Invalid action [${msg.action}] attempted on turtle [${msg.data.id}]`);
                                 break;
