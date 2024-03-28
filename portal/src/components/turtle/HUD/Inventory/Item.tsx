@@ -77,8 +77,8 @@ function Item(props: ItemProps) {
                 {item === null ? (
                     <EmptyItemImage data-inventory-slot={index} />
                 ) : (
-                    <div>
-                        <ItemSprite data-inventory-slot={index} name={item.name} />
+                    <div data-inventory-slot={index}>
+                        <ItemSprite name={item.name} slot={index} />
                         <ItemCount data-inventory-slot={index}>{item.count}</ItemCount>
                     </div>
                 )}
