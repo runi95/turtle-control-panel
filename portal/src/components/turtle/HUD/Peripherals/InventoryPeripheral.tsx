@@ -3,6 +3,17 @@ import {Action} from '../../../../App';
 import Item from '../Inventory/Item';
 import {ItemDetail, useTurtle} from '../../../../api/UseTurtle';
 import {useParams} from 'react-router-dom';
+import TransferModal from '../Inventory/TransferModal';
+import {useState} from 'react';
+
+type ItemTransfer = {
+    fromSide: string;
+    fromSlot: number;
+    toSlot: number;
+    itemName: string;
+    maxAmount: number;
+    isFormValidated: boolean;
+};
 
 export interface InventoryPeripheralContent {
     [key: number]: ItemDetail | null;
@@ -20,8 +31,25 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
     const {side, action, size, content} = props;
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const {data: turtle} = useTurtle(serverId, id);
+    const [itemTransfer, setItemTransfer] = useState<ItemTransfer | null>(null!);
 
-    const renderTiles = (turtleId: number, size: number | null, content: InventoryPeripheralContent | null) => {
+    const transfer = (fromSide: string, fromSlot: number, toSlot: number, count?: number) => {
+        props.action({
+            type: 'ACTION',
+            action: 'inventory-push-items',
+            data: {
+                serverId,
+                id,
+                fromSide,
+                toSide: side,
+                fromSlot,
+                toSlot,
+                count,
+            },
+        });
+    };
+
+    const renderTiles = (size: number | null, content: InventoryPeripheralContent | null) => {
         if (size === null) return null;
 
         const tiles = [];
@@ -36,19 +64,29 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
                     index={i + 1}
                     side={side}
                     item={isEmpty ? null : {name: itemDetail.name, count: itemDetail.count}}
-                    onDrop={(fromSide: string, fromSlot: number, toSlot: number) => {
-                        props.action({
-                            type: 'ACTION',
-                            action: 'inventory-push-items',
-                            data: {
-                                serverId,
-                                id: turtleId,
+                    onDrop={(
+                        shiftKey: boolean,
+                        fromSide: string,
+                        fromSlot: number,
+                        toSlot: number,
+                        item?: {
+                            name: string;
+                            amount: number;
+                        }
+                    ) => {
+                        if (item == null) return;
+                        if (shiftKey && item.amount > 1) {
+                            setItemTransfer({
                                 fromSide,
-                                toSide: side,
                                 fromSlot,
                                 toSlot,
-                            },
-                        });
+                                itemName: item.name,
+                                maxAmount: item.amount,
+                                isFormValidated: false,
+                            });
+                        } else {
+                            transfer(fromSide, fromSlot, toSlot);
+                        }
                     }}
                     onClick={undefined}
                 />
@@ -61,45 +99,71 @@ function InventoryPeripheral(props: InventoryPeripheralProps) {
     if (turtle === undefined) return null;
 
     return (
-        <div className='inventory-container'>
-            <InventoryGrid>
-                <div
-                    className='text-muted'
-                    style={{gridColumn: '1/-1', display: 'flex', justifyContent: 'space-between', gap: 16}}
-                >
-                    <button
-                        className='text-muted inventory-button'
-                        onClick={() =>
-                            action({
-                                type: 'ACTION',
-                                action: 'connect-to-inventory',
-                                data: {serverId, id: turtle.id, side},
-                            })
+        <>
+            <TransferModal
+                itemTransfer={itemTransfer}
+                hideModal={() => setItemTransfer(null)}
+                isFormValidated={itemTransfer?.isFormValidated ?? false}
+                handleFormSubmit={(e: React.FormEvent<HTMLFormElement>, amount: number) => {
+                    e.preventDefault();
+                    if (itemTransfer == null) return;
+
+                    const form = e.currentTarget;
+                    if (form.checkValidity() === true) {
+                        if (amount > 0) {
+                            transfer(itemTransfer.fromSide, itemTransfer.fromSlot, itemTransfer.toSlot, amount);
                         }
-                        disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
+
+                        setItemTransfer(null);
+                    } else {
+                        setItemTransfer({
+                            ...itemTransfer,
+                            isFormValidated: true,
+                        });
+                        e.stopPropagation();
+                    }
+                }}
+            />
+            <div className='inventory-container'>
+                <InventoryGrid>
+                    <div
+                        className='text-muted'
+                        style={{gridColumn: '1/-1', display: 'flex', justifyContent: 'space-between', gap: 16}}
                     >
-                        <b>Refresh</b>
-                    </button>
-                    <button
-                        className='text-muted inventory-button'
-                        onClick={() =>
-                            action({
-                                type: 'ACTION',
-                                action: 'sort-inventory',
-                                data: {serverId, id: turtle.id, side},
-                            })
-                        }
-                        disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
-                    >
-                        <b>Sort</b>
-                    </button>
-                    <div style={{fontWeight: 'bold', marginLeft: 'auto'}}>
-                        (<span className='text-primary'>{side}</span>)
+                        <button
+                            className='text-muted inventory-button'
+                            onClick={() =>
+                                action({
+                                    type: 'ACTION',
+                                    action: 'connect-to-inventory',
+                                    data: {serverId, id: turtle.id, side},
+                                })
+                            }
+                            disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
+                        >
+                            <b>Refresh</b>
+                        </button>
+                        <button
+                            className='text-muted inventory-button'
+                            onClick={() =>
+                                action({
+                                    type: 'ACTION',
+                                    action: 'sort-inventory',
+                                    data: {serverId, id: turtle.id, side},
+                                })
+                            }
+                            disabled={!turtle.isOnline || !turtle.location || !turtle.direction}
+                        >
+                            <b>Sort</b>
+                        </button>
+                        <div style={{fontWeight: 'bold', marginLeft: 'auto'}}>
+                            (<span className='text-primary'>{side}</span>)
+                        </div>
                     </div>
-                </div>
-                {renderTiles(turtle.id, size, content)}
-            </InventoryGrid>
-        </div>
+                    {renderTiles(size, content)}
+                </InventoryGrid>
+            </div>
+        </>
     );
 }
 

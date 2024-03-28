@@ -1804,11 +1804,11 @@ export class Turtle {
         this.name = name;
     }
 
-    async inventoryTransfer(fromSlot: number, toSlot: number): Promise<void> {
+    async inventoryTransfer(fromSlot: number, toSlot: number, count?: number): Promise<void> {
         const currentSlot = this.selectedSlot;
         const [didSelect] = await this.select(fromSlot);
         if (didSelect) {
-            await this.transferTo(toSlot);
+            await this.transferTo(toSlot, count);
             await this.select(currentSlot);
         }
     }

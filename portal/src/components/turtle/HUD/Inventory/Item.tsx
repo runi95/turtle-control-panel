@@ -11,7 +11,16 @@ export interface ItemProps {
         name: string;
         count: number;
     } | null;
-    onDrop: (fromSide: string, fromSlot: number, toSlot: number) => void;
+    onDrop: (
+        shiftKey: boolean,
+        fromSide: string,
+        fromSlot: number,
+        toSlot: number,
+        item?: {
+            name: string;
+            amount: number;
+        }
+    ) => void;
     onClick?: () => void;
 }
 
@@ -34,15 +43,33 @@ function Item(props: ItemProps) {
                 onDragStart={(e) => {
                     e.dataTransfer.setData('fromSlot', index.toString());
                     e.dataTransfer.setData('fromSide', side);
+                    if (item != null) {
+                        e.dataTransfer.setData('itemName', item.name);
+                        e.dataTransfer.setData('itemAmount', item.count.toString());
+                    }
                 }}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                     e.preventDefault();
+                    const {shiftKey} = e;
                     const fromSide = e.dataTransfer.getData('fromSide');
                     const fromSlot = e.dataTransfer.getData('fromSlot');
+                    const itemName = e.dataTransfer.getData('itemName');
+                    const itemAmount = e.dataTransfer.getData('itemAmount');
                     const toSlot = (e.target as HTMLBaseElement)?.dataset?.inventorySlot;
                     if (fromSlot && toSlot && fromSlot !== toSlot) {
-                        onDrop(fromSide, Number(fromSlot), Number(toSlot));
+                        onDrop(
+                            shiftKey,
+                            fromSide,
+                            Number(fromSlot),
+                            Number(toSlot),
+                            itemName !== '' && itemAmount !== ''
+                                ? {
+                                      name: itemName,
+                                      amount: Number(itemAmount),
+                                  }
+                                : undefined
+                        );
                     }
                 }}
                 onClick={onClick}

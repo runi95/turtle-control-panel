@@ -133,7 +133,7 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                 }
                                 break;
                             case 'inventory-transfer':
-                                await turtle.inventoryTransfer(msg.data.fromSlot, msg.data.toSlot);
+                                await turtle.inventoryTransfer(msg.data.fromSlot, msg.data.toSlot, msg.data.count);
                                 break;
                             case 'locate':
                                 await turtle.gpsLocate();
@@ -146,7 +146,7 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                 let toSide = msg.data.toSide;
 
                                 if (fromSide === '' && toSide === '') {
-                                    await turtle.inventoryTransfer(msg.data.fromSlot, msg.data.toSlot);
+                                    await turtle.inventoryTransfer(msg.data.fromSlot, msg.data.toSlot, msg.data.count);
                                     break;
                                 }
 
@@ -190,7 +190,7 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                           'pullItems',
                                           fromSide,
                                           msg.data.fromSlot,
-                                          null,
+                                          msg.data.count ?? null,
                                           msg.data.toSlot
                                       )
                                     : await turtle.usePeripheralWithSide<[number]>(
@@ -198,7 +198,7 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                           'pushItems',
                                           toSide,
                                           msg.data.fromSlot,
-                                          null,
+                                          msg.data.count ?? null,
                                           msg.data.toSlot
                                       );
 
