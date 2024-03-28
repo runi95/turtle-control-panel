@@ -7,6 +7,7 @@ import './Peripherals.css';
 import ExternalInventory from './ExternalInventory';
 import {useWebSocket} from '../../../../api/UseWebSocket';
 import CraftingTable from './CraftingTable';
+import TurtlePeripheral from './TurtlePeripheral';
 
 interface Props {
     turtle: Turtle;
@@ -18,7 +19,7 @@ function Peripherals(props: Props) {
 
     const renderPeripheral = (side: string, peripheral: Peripheral, i: number) => {
         const {types, data} = peripheral;
-        const {isModem, isWirelessModem, isGeoScanner, isExternalInventory, isCraftingTable} = types.reduce(
+        const {isModem, isWirelessModem, isGeoScanner, isExternalInventory, isCraftingTable, isTurtle} = types.reduce(
             (acc, curr) => {
                 switch (curr) {
                     case 'modem':
@@ -36,6 +37,9 @@ function Peripherals(props: Props) {
                     case 'workbench':
                         acc.isCraftingTable = true;
                         break;
+                    case 'turtle':
+                        acc.isTurtle = true;
+                        break;
                 }
 
                 return acc;
@@ -46,6 +50,7 @@ function Peripherals(props: Props) {
                 isGeoScanner: false,
                 isExternalInventory: false,
                 isCraftingTable: false,
+                isTurtle: false,
             }
         );
 
@@ -92,6 +97,17 @@ function Peripherals(props: Props) {
                     <Accordion.Header>External Inventory</Accordion.Header>
                     <Accordion.Body>
                         <ExternalInventory side={side} peripheral={peripheral} action={action} />
+                    </Accordion.Body>
+                </Accordion.Item>
+            );
+        }
+
+        if (isTurtle) {
+            return (
+                <Accordion.Item key={i} eventKey={`${i}`}>
+                    <Accordion.Header>Turtle</Accordion.Header>
+                    <Accordion.Body>
+                        <TurtlePeripheral side={side} action={action} turtle={turtle} />
                     </Accordion.Body>
                 </Accordion.Item>
             );

@@ -390,6 +390,17 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                         break;
                                 }
                                 break;
+                            case 'use-peripheral':
+                                if (msg.data.side == null) {
+                                    throw new Error('Cannot call use-peripheral without a <side>');
+                                }
+
+                                if (msg.data.method == null) {
+                                    throw new Error('Cannot call use-peripheral without a <method>');
+                                }
+
+                                await turtle.usePeripheralWithSide(msg.data.side, msg.data.method, ...(msg.data.args ?? []));
+                                break;
                             default:
                                 logger.error(`Invalid action [${msg.action}] attempted on turtle [${msg.data.id}]`);
                                 break;
