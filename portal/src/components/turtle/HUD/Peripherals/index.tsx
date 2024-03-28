@@ -6,6 +6,7 @@ import {Accordion} from 'react-bootstrap';
 import './Peripherals.css';
 import ExternalInventory from './ExternalInventory';
 import {useWebSocket} from '../../../../api/UseWebSocket';
+import CraftingTable from './CraftingTable';
 
 interface Props {
     turtle: Turtle;
@@ -17,7 +18,7 @@ function Peripherals(props: Props) {
 
     const renderPeripheral = (side: string, peripheral: Peripheral, i: number) => {
         const {types, data} = peripheral;
-        const {isModem, isWirelessModem, isGeoScanner, isExternalInventory} = types.reduce(
+        const {isModem, isWirelessModem, isGeoScanner, isExternalInventory, isCraftingTable} = types.reduce(
             (acc, curr) => {
                 switch (curr) {
                     case 'modem':
@@ -32,6 +33,9 @@ function Peripherals(props: Props) {
                     case 'inventory':
                         acc.isExternalInventory = true;
                         break;
+                    case 'workbench':
+                        acc.isCraftingTable = true;
+                        break;
                 }
 
                 return acc;
@@ -41,6 +45,7 @@ function Peripherals(props: Props) {
                 isWirelessModem: false,
                 isGeoScanner: false,
                 isExternalInventory: false,
+                isCraftingTable: false,
             }
         );
 
@@ -65,6 +70,17 @@ function Peripherals(props: Props) {
                     <Accordion.Header>Geo Scanner</Accordion.Header>
                     <Accordion.Body>
                         <GeoScanner action={action} turtle={turtle} />
+                    </Accordion.Body>
+                </Accordion.Item>
+            );
+        }
+
+        if (isCraftingTable) {
+            return (
+                <Accordion.Item key={i} eventKey={`${i}`}>
+                    <Accordion.Header>Crafting Table</Accordion.Header>
+                    <Accordion.Body>
+                        <CraftingTable action={action} turtle={turtle} />
                     </Accordion.Body>
                 </Accordion.Item>
             );
