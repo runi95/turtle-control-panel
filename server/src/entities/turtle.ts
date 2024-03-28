@@ -1962,8 +1962,16 @@ export const getOnlineTurtles = () => {
 
     return turtles;
 };
+
+export const getOnlineTurtlesByServerId = (serverId: number) => {
+    const server = connectedTurtlesMap.get(serverId);
+    if (server == null) return undefined;
+
+    return Array.from(server.values());
+};
+
 export const getOnlineTurtleById = (serverId: number, id: number) => {
     const server = connectedTurtlesMap.get(serverId);
-    if (server === undefined) return undefined;
+    if (server == null) return undefined;
     return server.get(id);
 };
