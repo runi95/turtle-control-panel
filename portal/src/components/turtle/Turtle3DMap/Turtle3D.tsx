@@ -104,7 +104,7 @@ function Turtle3D({name, atlasMap}: Props) {
     if (atlas == null) return null;
     return (
         <>
-            <TurtleNameTag text={name} position={[0, 1, 0]} />
+            <TurtleNameTag text={name} position={[0, 0.5, 0]} />
             <mesh receiveShadow>
                 <bufferGeometry>
                     <float32BufferAttribute attach='attributes-position' args={[positions, 3]} />

@@ -35,28 +35,28 @@ const textureToName = (asset, texture) =>
 const elementToTexturedFaces = (element) => {
   const texturedFaces = [];
 
-  const back = element.from[0] / 16;
-  const front = element.to[0] / 16;
-  const top = element.from[1] / 16;
-  const bottom = element.to[1] / 16;
-  const left = element.from[2] / 16;
-  const right = element.to[2] / 16;
+  const back = element.from[0] / 16 - 0.5;
+  const front = element.to[0] / 16 - 0.5;
+  const top = element.from[1] / 16 - 0.5;
+  const bottom = element.to[1] / 16 - 0.5;
+  const left = element.from[2] / 16 - 0.5;
+  const right = element.to[2] / 16 - 0.5;
 
   if (element.faces.west) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      back - 0.5,
+      back,
       bottom,
-      left - 0.5,
-      back - 0.5,
+      left,
+      back,
       bottom,
-      right - 0.5,
-      back - 0.5,
+      right,
+      back,
       top,
-      left - 0.5,
-      back - 0.5,
+      left,
+      back,
       top,
-      right - 0.5,
+      right,
     ];
 
     const { rotation } = element;
@@ -82,18 +82,18 @@ const elementToTexturedFaces = (element) => {
   if (element.faces.east) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      front - 0.5,
+      front,
       bottom,
-      right - 0.5,
-      front - 0.5,
+      right,
+      front,
       bottom,
-      left - 0.5,
-      front - 0.5,
+      left,
+      front,
       top,
-      right - 0.5,
-      front - 0.5,
+      right,
+      front,
       top,
-      left - 0.5,
+      left,
     ];
     const { rotation } = element;
     if (rotation) {
@@ -118,18 +118,18 @@ const elementToTexturedFaces = (element) => {
   if (element.faces.up) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      front - 0.5,
+      front,
       bottom,
-      right - 0.5,
-      back - 0.5,
+      right,
+      back,
       bottom,
-      right - 0.5,
-      front - 0.5,
+      right,
+      front,
       bottom,
-      left - 0.5,
-      back - 0.5,
+      left,
+      back,
       bottom,
-      left - 0.5,
+      left,
     ];
 
     const { rotation } = element;
@@ -155,18 +155,18 @@ const elementToTexturedFaces = (element) => {
   if (element.faces.down) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      back - 0.5,
+      back,
       top,
-      right - 0.5,
-      front - 0.5,
+      right,
+      front,
       top,
-      right - 0.5,
-      back - 0.5,
+      right,
+      back,
       top,
-      left - 0.5,
-      front - 0.5,
+      left,
+      front,
       top,
-      left - 0.5,
+      left,
     ];
 
     const { rotation } = element;
@@ -192,18 +192,18 @@ const elementToTexturedFaces = (element) => {
   if (element.faces.north) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      front - 0.5,
+      front,
       bottom,
-      left - 0.5,
-      back - 0.5,
+      left,
+      back,
       bottom,
-      left - 0.5,
-      front - 0.5,
+      left,
+      front,
       top,
-      left - 0.5,
-      back - 0.5,
+      left,
+      back,
       top,
-      left - 0.5,
+      left,
     ];
 
     const { rotation } = element;
@@ -229,18 +229,18 @@ const elementToTexturedFaces = (element) => {
   if (element.faces.south) {
     const planeGeometry = new PlaneGeometry();
     planeGeometry.attributes["position"]["array"] = [
-      back - 0.5,
+      back,
       bottom,
-      right - 0.5,
-      front - 0.5,
+      right,
+      front,
       bottom,
-      right - 0.5,
-      back - 0.5,
+      right,
+      back,
       top,
-      right - 0.5,
-      front - 0.5,
+      right,
+      front,
       top,
-      right - 0.5,
+      right,
     ];
 
     const { rotation } = element;
