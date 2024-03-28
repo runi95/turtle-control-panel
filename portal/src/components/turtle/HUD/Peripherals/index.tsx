@@ -86,7 +86,7 @@ function Peripherals(props: Props) {
 
     return (
         <Wrapper>
-            {turtle.peripherals !== null ? (
+            {turtle.peripherals != null ? (
                 <Accordion>
                     {Object.entries(turtle.peripherals).map(([side, peripheral], i) =>
                         renderPeripheral(side, peripheral, i)
