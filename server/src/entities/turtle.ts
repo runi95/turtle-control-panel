@@ -155,7 +155,7 @@ wss.on('connection', (ws, req) => {
                 state: null,
                 location: null,
                 direction: null,
-                home: null
+                home: null,
             };
             logger.info(`${name || '<unnamed>'} [${id}] has connected!`);
             turtleEventEmitter.off(uuid, handshake);
@@ -468,7 +468,7 @@ export class Turtle {
                 this.actTimeout = null;
             } catch (err: unknown) {
                 this.actTimeout = null;
-                if (typeof err === "string") {
+                if (typeof err === 'string') {
                     this.error = err;
                 } else if (err instanceof Error) {
                     this.error = err.message;
@@ -495,10 +495,13 @@ export class Turtle {
             id: this.id,
             serverId: this.serverId,
             data: {
-                state: this.state === null ? null : {
-                    name: this.state.name,
-                    warning: this.state.warning
-                },
+                state:
+                    this.state === null
+                        ? null
+                        : {
+                              name: this.state.name,
+                              warning: this.state.warning,
+                          },
                 error: null,
             },
         });
@@ -1815,7 +1818,7 @@ export class Turtle {
 
     async updateAllAttachedPeripherals(peripherals: Peripherals): Promise<void> {
         let hasAnyPeripheralsToCheck = false;
-        const {inventorySides, modemSides, peripheralHubSides} = Object.keys(peripherals).reduce(
+        const {inventorySides, modemSides, peripheralHubSides, driveSides} = Object.keys(peripherals).reduce(
             (acc, side) => {
                 for (const type of peripherals[side].types) {
                     switch (type) {
@@ -1831,6 +1834,9 @@ export class Turtle {
                             hasAnyPeripheralsToCheck = true;
                             acc.peripheralHubSides.push(side);
                             break;
+                        case 'drive':
+                            hasAnyPeripheralsToCheck = true;
+                            acc.driveSides.push(side);
                         default:
                             break;
                     }
@@ -1842,6 +1848,7 @@ export class Turtle {
                 inventorySides: [] as string[],
                 modemSides: [] as string[],
                 peripheralHubSides: [] as string[],
+                driveSides: [] as string[],
             }
         );
 
@@ -1851,7 +1858,7 @@ export class Turtle {
         // Ensures they're queued together
         const [updatedPeripherals] = await this.#exec<
             [{[key: string]: {data?: unknown}}]
-        >(`(function(inventorySides, modemSides, peripheralHubSides)
+        >(`(function(inventorySides, modemSides, peripheralHubSides, driveSides)
             local peripherals = {}
             local functions = {}
             local fIndex = 1
@@ -1877,11 +1884,28 @@ export class Turtle {
                 fIndex = fIndex + 1
             end
 
+            for i, side in pairs(driveSides) do
+                peripherals[side] = {data = {}}
+                functions[fIndex] = (function()
+                    peripherals[side]["data"]["hasData"] = peripheral.call(side, "hasData")
+                    if peripherals[side]["data"]["hasData"] then
+                        peripherals[side]["data"]["mountPath"] = peripheral.call(side, "getMountPath")
+                        peripherals[side]["data"]["diskLabel"] = peripheral.call(side, "getDiskLabel")
+                        if peripherals[side]["data"]["mountPath"] ~= nil then
+                            peripherals[side]["data"]["files"] = (function(list) return next(list) == nil and textutils.json_null or list end)(fs.list(peripherals[side]["data"]["mountPath"]))
+                        end
+                    end
+                end)
+                fIndex = fIndex + 1
+            end
+
             parallel.waitForAll(table.unpack(functions))
             return peripherals
         end)({${inventorySides.map((side) => `"${side}"`).join(',')}}, {${modemSides
             .map((side) => `"${side}"`)
-            .join(',')}}, {${peripheralHubSides.map((side) => `"${side}"`).join(',')}})`);
+            .join(
+                ','
+            )}}, {${peripheralHubSides.map((side) => `"${side}"`).join(',')}}, {${driveSides.map((side) => `"${side}"`).join(',')}})`);
 
         const newPeripherals = {
             ...this.peripherals,
@@ -1915,6 +1939,14 @@ export class Turtle {
         };
 
         this.peripherals = newPeripherals;
+    }
+
+    async writeToFile(file: string, content: string) {
+        return await this.#exec<boolean>(`(function()
+            local file = fs.open("${file}", "w")
+            file.write([===[${content}]===])
+            file.close()
+        end)()`);
     }
 
     async sleep(seconds: number): Promise<void> {

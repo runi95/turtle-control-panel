@@ -8,6 +8,7 @@ import ExternalInventory from './ExternalInventory';
 import {useWebSocket} from '../../../../api/UseWebSocket';
 import CraftingTable from './CraftingTable';
 import TurtlePeripheral from './TurtlePeripheral';
+import Drive from './Drive';
 
 interface Props {
     turtle: Turtle;
@@ -19,40 +20,48 @@ function Peripherals(props: Props) {
 
     const renderPeripheral = (side: string, peripheral: Peripheral, i: number) => {
         const {types, data} = peripheral;
-        const {isModem, isWirelessModem, isGeoScanner, isExternalInventory, isCraftingTable, isTurtle} = types.reduce(
-            (acc, curr) => {
-                switch (curr) {
-                    case 'modem':
-                        acc.isModem = true;
-                        if ((data as {isWireless: boolean} | undefined)?.isWireless) {
-                            acc.isWirelessModem = true;
-                        }
-                        break;
-                    case 'geoScanner':
-                        acc.isGeoScanner = true;
-                        break;
-                    case 'inventory':
-                        acc.isExternalInventory = true;
-                        break;
-                    case 'workbench':
-                        acc.isCraftingTable = true;
-                        break;
-                    case 'turtle':
-                        acc.isTurtle = true;
-                        break;
-                }
+        const {isModem, isWirelessModem, isGeoScanner, isExternalInventory, isCraftingTable, isTurtle, isDrive} =
+            types.reduce(
+                (acc, curr) => {
+                    if (curr === 'drive') {
+                        console.log(peripheral);
+                    }
+                    switch (curr) {
+                        case 'modem':
+                            acc.isModem = true;
+                            if ((data as {isWireless: boolean} | undefined)?.isWireless) {
+                                acc.isWirelessModem = true;
+                            }
+                            break;
+                        case 'geoScanner':
+                            acc.isGeoScanner = true;
+                            break;
+                        case 'inventory':
+                            acc.isExternalInventory = true;
+                            break;
+                        case 'workbench':
+                            acc.isCraftingTable = true;
+                            break;
+                        case 'turtle':
+                            acc.isTurtle = true;
+                            break;
+                        case 'drive':
+                            acc.isDrive = true;
+                            break;
+                    }
 
-                return acc;
-            },
-            {
-                isModem: false,
-                isWirelessModem: false,
-                isGeoScanner: false,
-                isExternalInventory: false,
-                isCraftingTable: false,
-                isTurtle: false,
-            }
-        );
+                    return acc;
+                },
+                {
+                    isModem: false,
+                    isWirelessModem: false,
+                    isGeoScanner: false,
+                    isExternalInventory: false,
+                    isCraftingTable: false,
+                    isTurtle: false,
+                    isDrive: false,
+                }
+            );
 
         if (isModem) {
             if (isWirelessModem) {
@@ -108,6 +117,17 @@ function Peripherals(props: Props) {
                     <Accordion.Header>Turtle</Accordion.Header>
                     <Accordion.Body>
                         <TurtlePeripheral side={side} action={action} turtle={turtle} />
+                    </Accordion.Body>
+                </Accordion.Item>
+            );
+        }
+
+        if (isDrive) {
+            return (
+                <Accordion.Item key={i} eventKey={`${i}`}>
+                    <Accordion.Header>Drive</Accordion.Header>
+                    <Accordion.Body>
+                        <Drive action={action} peripheral={peripheral} turtle={turtle} />
                     </Accordion.Body>
                 </Accordion.Item>
             );
