@@ -168,6 +168,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                 args={[undefined, undefined, 1]}
                 visible={moveTurtleMeshVisibleRef.current}
                 receiveShadow
+                frustumCulled={false}
             >
                 <boxGeometry>
                     <instancedBufferAttribute attach='attributes-color' args={[moveTurtleColorArray.current, 4]} />
