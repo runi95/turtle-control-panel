@@ -58,9 +58,11 @@ function HUD(props: Props) {
             </div>
             <div
                 style={{
+                    display: 'flex',
+                    flexDirection: 'column',
                     position: 'fixed',
                     right: 10,
-                    top: 10,
+                    bottom: 10,
                     opacity: 0.8,
                 }}
             >
