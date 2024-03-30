@@ -175,7 +175,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                 </boxGeometry>
                 <meshLambertMaterial attach='material' vertexColors transparent alphaTest={0.1} map={outlineMap} />
             </instancedMesh>
-            {turtle.location == null ? null : (
+            {turtle.location != null ? (
                 <group
                     ref={groupRef}
                     position={[
@@ -247,7 +247,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         />
                     ))}
                 </group>
-            )}
+            ) : null}
         </>
     );
 });

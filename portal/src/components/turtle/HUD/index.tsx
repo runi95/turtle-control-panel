@@ -116,6 +116,22 @@ function HUD(props: Props) {
             >
                 <ActionHUD setWorldMoveState={setWorldMoveState} />
             </div>
+            {turtle.location == null ? (
+                <div
+                    style={{
+                        position: 'fixed',
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        opacity: 0.8,
+                        pointerEvents: 'all',
+                    }}
+                >
+                    <div className='text-danger'>
+                        <h1>TURTLE LOCATION IS MISSING</h1>
+                    </div>
+                </div>
+            ) : null}
         </>
     );
 }
