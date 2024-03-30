@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unknown-property */
-import {forwardRef, useImperativeHandle, useMemo, useRef} from 'react';
+import {Suspense, forwardRef, useImperativeHandle, useMemo, useRef} from 'react';
 import {Color, InstancedMesh, Matrix4, TextureLoader, PlaneGeometry, Vector3, Group} from 'three';
 import {useAtlasMap} from './TextureAtlas';
 import SparseBlock from './SparseBlock';
@@ -9,6 +9,7 @@ import {useParams} from 'react-router-dom';
 import {useWebSocket} from '../../../api/UseWebSocket';
 import Turtle3D from './Turtle3D';
 import OtherTurtles from './OtherTurtles';
+import HomeMarker from './HomeMarker';
 
 const mathematicalModulo = (a: number, b: number) => {
     const quotient = Math.floor(a / b);
@@ -150,8 +151,14 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
         }
     })();
 
+    const {home} = turtle;
     return (
         <>
+            {location != null && home != null ? (
+                <Suspense fallback={null}>
+                    <HomeMarker position={[home.x - location.x, home.y - location.y + 0.2, home.z - location.z]} />
+                </Suspense>
+            ) : null}
             <group rotation={[0, turtleRotation, 0]}>
                 <Turtle3D atlasMap={atlasMap} name={turtle.name} />
             </group>
