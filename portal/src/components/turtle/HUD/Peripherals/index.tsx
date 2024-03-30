@@ -23,9 +23,6 @@ function Peripherals(props: Props) {
         const {isModem, isWirelessModem, isGeoScanner, isExternalInventory, isCraftingTable, isTurtle, isDrive} =
             types.reduce(
                 (acc, curr) => {
-                    if (curr === 'drive') {
-                        console.log(peripheral);
-                    }
                     switch (curr) {
                         case 'modem':
                             acc.isModem = true;
