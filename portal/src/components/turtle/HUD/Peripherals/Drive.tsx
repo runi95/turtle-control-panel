@@ -28,7 +28,6 @@ function Drive(props: Props) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Btn: any = Button;
 
-    const {serverId, id} = turtle;
     return (
         <>
             {hasData ? (
