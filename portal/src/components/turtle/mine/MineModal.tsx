@@ -20,7 +20,7 @@ function MineModal(props: MineModalProps) {
     const [createdArea, setCreatedArea] = useState<Omit<Location, 'y'>[]>([]);
     const [miningType, setMiningType] = useState<number>(1);
     const [includeOrExclude, setIncludeOrExclude] = useState<number>(1);
-    const [fromYLevel, setFromYLevel] = useState(turtle.location.y);
+    const [fromYLevel, setFromYLevel] = useState(turtle.location?.y ?? 0);
     const [toYLevel, setToYLevel] = useState(-58);
     const [includeOrExcludeList, setIncludeOrExcludeList] = useState<string[]>([]);
     const [drawnArea, setDrawnArea] = useState<DrawnArea>({});

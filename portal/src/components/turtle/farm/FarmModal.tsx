@@ -34,7 +34,7 @@ function FarmModal(props: FarmModalProps) {
         setIsFormValidated(true);
     };
 
-    if (areas === undefined) return null;
+    if (areas == null) return null;
 
     // Weird hack to fix issues with @react-three/drei
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

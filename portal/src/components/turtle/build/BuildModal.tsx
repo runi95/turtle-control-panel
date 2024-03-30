@@ -18,8 +18,8 @@ function BuildModal(props: BuildModalProps) {
     const {turtle, action, hideModal} = props;
     const [isFormValidated, setIsFormValidated] = useState(false);
     const [buildingBlock, setBuildingBlock] = useState('');
-    const [fromYLevel, setFromYLevel] = useState(turtle.location.y);
-    const [toYLevel, setToYLevel] = useState(turtle.location.y);
+    const [fromYLevel, setFromYLevel] = useState(turtle.location?.y ?? 0);
+    const [toYLevel, setToYLevel] = useState(turtle.location?.y ?? 0);
     const [createdArea, setCreatedArea] = useState<Omit<Location, 'y'>[]>([]);
     const [drawnArea, setDrawnArea] = useState<DrawnArea>({});
 
