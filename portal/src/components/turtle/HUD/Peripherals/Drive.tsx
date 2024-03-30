@@ -14,7 +14,7 @@ export interface Props {
 function Drive(props: Props) {
     const {turtle, peripheral, action} = props;
     const {data} = peripheral;
-    const [isCreateFileModalHidden, setIsCreateFileModalHidden] = useState(false);
+    const [isCreateFileModalHidden, setIsCreateFileModalHidden] = useState(true);
 
     if (data == null) return null;
 
