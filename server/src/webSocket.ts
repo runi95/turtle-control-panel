@@ -114,6 +114,11 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                 turtle.location = msg.data.location;
                                 turtle.direction = msg.data.direction;
                                 break;
+                            case 'update-config':
+                                turtle.location = msg.data.location;
+                                turtle.direction = msg.data.direction;
+                                await turtle.rename(msg.data.newName);
+                                break;
                             case 'scan':
                                 turtle.state = new TurtleScanState(turtle);
                                 break;

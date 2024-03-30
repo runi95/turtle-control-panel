@@ -5,6 +5,9 @@ import FuelInfo from '../../FuelInfo';
 import ActionHUD from './ActionHUD';
 import LocationHUD from './LocationHUD';
 import Peripherals from './Peripherals';
+import {useState} from 'react';
+import ConfigModal from './ConfigModal';
+import {useWebSocket} from '../../../api/UseWebSocket';
 
 interface Props {
     setWorldMoveState: (moveState: boolean) => void;
@@ -13,13 +16,21 @@ interface Props {
 function HUD(props: Props) {
     const {setWorldMoveState} = props;
     const {serverId, id} = useParams() as {serverId: string; id: string};
+    const [isConfigModalVisible, setIsConfigModalVisible] = useState(false);
     const navigate = useNavigate();
     const {data: turtle} = useTurtle(serverId, id);
+    const {action} = useWebSocket();
 
     if (turtle == null) return null;
 
     return (
         <>
+            <ConfigModal
+                action={action}
+                hideModal={() => setIsConfigModalVisible(false)}
+                isVisible={isConfigModalVisible}
+                turtle={turtle}
+            />
             <div
                 style={{
                     display: 'flex',
@@ -54,6 +65,29 @@ function HUD(props: Props) {
                             </span>
                         </h5>
                     ) : null}
+                </div>
+            </div>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'fixed',
+                    right: 10,
+                    top: 0,
+                    opacity: 0.8,
+                }}
+            >
+                <div
+                    style={{
+                        marginTop: 5,
+                        marginRight: 10,
+                        cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                        setIsConfigModalVisible(true);
+                    }}
+                >
+                    <b style={{fontSize: '1.8em', color: '#c6c6c6'}}>⛭</b>
                 </div>
             </div>
             <div
