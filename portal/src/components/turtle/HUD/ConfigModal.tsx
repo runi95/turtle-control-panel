@@ -20,6 +20,11 @@ function ConfigModal({action, turtle, isVisible, hideModal}: Props) {
         },
         direction: turtle?.direction,
         newName: turtle.name,
+        home: {
+            x: turtle?.home?.x ?? turtle?.location?.x,
+            y: turtle?.home?.y ?? turtle?.location?.y,
+            z: turtle?.home?.z ?? turtle?.location?.z,
+        },
     });
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -36,6 +41,7 @@ function ConfigModal({action, turtle, isVisible, hideModal}: Props) {
                     location: state.location,
                     direction: Number(state.direction),
                     newName: state.newName,
+                    home: state.home,
                 },
             });
             hideModal();
@@ -71,13 +77,14 @@ function ConfigModal({action, turtle, isVisible, hideModal}: Props) {
                                 onChange={(e) => setState({...state, newName: e.target.value})}
                             />
                         </InputGroup>
+                        <Form.Control.Feedback type='invalid'>Please enter a valid name</Form.Control.Feedback>
                     </Form.Group>
                     <Form.Group className='mb-2'>
                         <Form.Label>Location (x, y, z)</Form.Label>
                         <InputGroup>
                             <Form.Control
                                 type='number'
-                                placeholder={'X'}
+                                placeholder='X'
                                 value={state.location.x}
                                 required
                                 onChange={(e) =>
@@ -92,7 +99,7 @@ function ConfigModal({action, turtle, isVisible, hideModal}: Props) {
                             />
                             <Form.Control
                                 type='number'
-                                placeholder={'Y'}
+                                placeholder='Y'
                                 value={state.location.y}
                                 required
                                 onChange={(e) =>
@@ -107,7 +114,7 @@ function ConfigModal({action, turtle, isVisible, hideModal}: Props) {
                             />
                             <Form.Control
                                 type='number'
-                                placeholder={'Z'}
+                                placeholder='Z'
                                 value={state.location.z}
                                 required
                                 onChange={(e) =>
@@ -151,6 +158,57 @@ function ConfigModal({action, turtle, isVisible, hideModal}: Props) {
                             <Form.Control.Feedback type='invalid'>
                                 Please select a valid facing direction
                             </Form.Control.Feedback>
+                        </InputGroup>
+                    </Form.Group>
+                    <Form.Group className='mb-2'>
+                        <Form.Label>Home (x, y, z)</Form.Label>
+                        <InputGroup>
+                            <Form.Control
+                                type='number'
+                                placeholder='X'
+                                value={state.home.x}
+                                required
+                                onChange={(e) =>
+                                    setState({
+                                        ...state,
+                                        home: {
+                                            ...state.home,
+                                            x: Number(e.target.value),
+                                        },
+                                    })
+                                }
+                            />
+                            <Form.Control
+                                type='number'
+                                placeholder='Y'
+                                value={state.home.y}
+                                required
+                                onChange={(e) =>
+                                    setState({
+                                        ...state,
+                                        home: {
+                                            ...state.home,
+                                            y: Number(e.target.value),
+                                        },
+                                    })
+                                }
+                            />
+                            <Form.Control
+                                type='number'
+                                placeholder='Z'
+                                value={state.home.z}
+                                required
+                                onChange={(e) =>
+                                    setState({
+                                        ...state,
+                                        home: {
+                                            ...state.home,
+                                            z: Number(e.target.value),
+                                        },
+                                    })
+                                }
+                            />
+                            <Form.Control.Feedback type='invalid'>Please enter valid numbers</Form.Control.Feedback>
                         </InputGroup>
                     </Form.Group>
                 </Modal.Body>
