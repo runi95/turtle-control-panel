@@ -38,6 +38,15 @@ function LocationHUD() {
 const LocationText = styled.small`
     cursor: pointer;
     color: #8b8b8b;
+    text-shadow:
+        1px 0 #323232,
+        -1px 0 #323232,
+        0 1px #323232,
+        0 -1px #323232,
+        1px 1px #323232,
+        -1px -1px #323232,
+        1px -1px #323232,
+        -1px 1px #323232;
 `;
 
 export default LocationHUD;

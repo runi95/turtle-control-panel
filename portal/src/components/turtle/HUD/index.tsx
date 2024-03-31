@@ -102,7 +102,16 @@ function HUD(props: Props) {
                         navigate('/dashboard');
                     }}
                 >
-                    <span style={{fontSize: '1.8em', color: '#c6c6c6'}}>🠈</span>
+                    <span
+                        style={{
+                            fontSize: '1.8em',
+                            color: '#c6c6c6',
+                            textShadow:
+                                '1px 0 black, -1px 0 black, 0 1px black, 0 -1px black, 1px 1px black, -1px -1px black, 1px -1px black, -1px 1px black',
+                        }}
+                    >
+                        🠈
+                    </span>
                 </div>
                 <div
                     style={{
