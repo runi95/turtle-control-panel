@@ -35,7 +35,7 @@ function LocationHUD() {
     );
 }
 
-const LocationText = styled.small`
+const LocationText = styled.span`
     cursor: pointer;
     color: #8b8b8b;
     text-shadow:

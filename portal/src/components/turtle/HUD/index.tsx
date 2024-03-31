@@ -104,7 +104,7 @@ function HUD(props: Props) {
                 >
                     <span
                         style={{
-                            fontSize: '1.8em',
+                            fontSize: '2rem',
                             color: '#c6c6c6',
                             textShadow:
                                 '1px 0 black, -1px 0 black, 0 1px black, 0 -1px black, 1px 1px black, -1px -1px black, 1px -1px black, -1px 1px black',
