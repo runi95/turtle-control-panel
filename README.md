@@ -1,16 +1,16 @@
 # Turtle Control Panel
 
-A control panel that let's you monitor and control your [ComputerCraft](https://www.computercraft.info/) and/or [ComputerCraft: Tweaked](https://tweaked.cc/) turtles through a websocket connection.
+A control panel that lets you monitor and control your [ComputerCraft](https://www.computercraft.info/) and/or [ComputerCraft: Tweaked](https://tweaked.cc/) turtles through a WebSocket connection.
 
 ![Dashboard](/screenshots/Dashboard.png)
 
-The turtles will show up on the dashboard where their online state, activities and fuel consumption can be monitored.
+The turtles show up on the dashboard where their online status, activities and fuel consumption can be easily monitored.
 
 ![Turtle](/screenshots/Turtle.png)
 
-Clicking on one of the turtles brings you to the turtle control panel where you can monitor a single turtle more closely as well as change it's behaviour and activities or watch it move around on the minimap.
+Clicking on a specific turtle brings you to that turtle's control panel where you can monitor it, change its current activity, manipulate its inventory or simply watch it move around in the world.
 
-The map only shows you what the turtle can see (or have seen) and may not be a realistic interpretation of the world as it may have changed since the last time the turtle inspected the block.
+The 3D map only shows you what the turtle can see (or have seen) and may not be a realistic interpretation of the world as it may have changed since the last time the turtle inspected the blocks. It is highly recommended to use this control panel along side with [Advanced Peripherals](https://www.curseforge.com/minecraft/mc-mods/advanced-peripherals) as it allows for much more rapid world discovery by utilizing the `Geo Scanner` peripheral.
 
 ## Setup
 
