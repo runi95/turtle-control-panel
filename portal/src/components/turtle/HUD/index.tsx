@@ -1,18 +1,19 @@
 import Inventory from './Inventory';
 import {useNavigate, useParams} from 'react-router-dom';
-import {useTurtle} from '../../../api/UseTurtle';
+import {Location, useTurtle} from '../../../api/UseTurtle';
 import FuelInfo from '../../FuelInfo';
 import ActionHUD from './ActionHUD';
 import LocationHUD from './LocationHUD';
 import Peripherals from './Peripherals';
 import ConfigHUD from './ConfigHUD';
+import {WorldState} from '../Turtle3DMap/World';
 
 interface Props {
-    setWorldMoveState: (moveState: boolean) => void;
+    setWorldState: (worldState: WorldState | null) => void;
+    getSelectedBlocks: () => Location[];
 }
 
-function HUD(props: Props) {
-    const {setWorldMoveState} = props;
+function HUD({setWorldState, getSelectedBlocks}: Props) {
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const navigate = useNavigate();
     const {data: turtle} = useTurtle(serverId, id);
@@ -138,7 +139,7 @@ function HUD(props: Props) {
                     pointerEvents: 'all',
                 }}
             >
-                <ActionHUD setWorldMoveState={setWorldMoveState} />
+                <ActionHUD setWorldState={setWorldState} getSelectedBlocks={getSelectedBlocks} />
             </div>
             {turtle.location == null ? (
                 <div

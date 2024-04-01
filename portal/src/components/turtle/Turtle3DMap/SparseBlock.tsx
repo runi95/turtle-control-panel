@@ -8,6 +8,7 @@ import {
     Float32BufferAttribute,
     FrontSide,
     LinearMipMapLinearFilter,
+    Mesh,
     NearestFilter,
     PlaneGeometry,
     RGBAFormat,
@@ -16,7 +17,7 @@ import {
     UnsignedByteType,
     Vector3,
 } from 'three';
-import {useEffect, useMemo} from 'react';
+import {forwardRef, useEffect, useImperativeHandle, useMemo, useRef} from 'react';
 import {fragmentShader, vertexShader} from './CustomShader';
 import {Block, Blocks} from '../../../App';
 import {AtlasMap, useAtlas} from './TextureAtlas';
@@ -69,26 +70,6 @@ const blockNameOverride = (blockName: string) => {
     }
 };
 
-const createGeometry = (data: CellMesh) => {
-    const geo = new BufferGeometry();
-
-    geo.setAttribute('position', new Float32BufferAttribute(data.positions, 3));
-    geo.setAttribute('normal', new Float32BufferAttribute(data.normals, 3));
-    geo.setAttribute('uv', new Float32BufferAttribute(data.uvs, 2));
-    geo.setAttribute('uvSlice', new Float32BufferAttribute(data.uvSlices, 1));
-    geo.setAttribute('color', new Float32BufferAttribute(data.colors, 3));
-    geo.setIndex(new BufferAttribute(data.indices, 1));
-
-    geo.attributes.position.needsUpdate = true;
-    geo.attributes.normal.needsUpdate = true;
-    geo.attributes.color.needsUpdate = true;
-
-    geo.computeBoundingBox();
-    geo.computeBoundingSphere();
-
-    return geo;
-};
-
 interface Cell {
     position: [number, number, number];
     type: string;
@@ -130,6 +111,7 @@ interface CellMesh {
     normals: Float32Array;
     colors: Float32Array;
     indices: Uint32Array;
+    cellToIndexMap: Map<string, number[]>;
 }
 
 const BuildMeshDataFromVoxels = (
@@ -159,8 +141,10 @@ const BuildMeshDataFromVoxels = (
     const color = new Color(0xffffff);
     color.convertSRGBToLinear();
 
+    const cellToIndexMap = new Map<string, number[]>();
     const unknown = atlasMap.textures['unknown'];
-    for (const [_key, cell] of cells) {
+    let index = 0;
+    for (const [key, cell] of cells) {
         const atlasMapTexture = atlasMap.textures[blockNameOverride(cell.type)];
         if (atlasMapTexture == null) {
             console.log(`${cell.type} is broken!`);
@@ -173,6 +157,7 @@ const BuildMeshDataFromVoxels = (
             continue;
         }
 
+        const indexes = [];
         for (let i = 0; i < blockFaces.length; i++) {
             const blockFace = blockFaces[i];
             const bi = mesh.positions.length / 3;
@@ -213,7 +198,10 @@ const BuildMeshDataFromVoxels = (
                 localIndices[j] += bi;
             }
             mesh.indices.push(...localIndices);
+            indexes.push(index++);
         }
+
+        cellToIndexMap.set(key, indexes);
     }
 
     const bytesInFloat32 = 4;
@@ -240,6 +228,7 @@ const BuildMeshDataFromVoxels = (
         normals,
         colors,
         indices,
+        cellToIndexMap,
     };
 };
 
@@ -266,10 +255,15 @@ interface Props {
     atlasMap: AtlasMap;
 }
 
-function SparseBlock(props: Props) {
+export type SparseBlockHandle = {
+    setBlockColor: (x: number, y: number, z: number, color: Color) => void;
+};
+
+const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(props, ref) {
     const {dimensions, chunk, geometries, atlasMap} = props;
     const {x: chunkX, y: chunkY, z: chunkZ, offsetX, offsetY, offsetZ} = chunk;
     const {serverId} = useParams() as {serverId: string};
+    const meshRef = useRef<Mesh>(null!);
     const fromX = chunkX * dimensions.x;
     const toX = fromX + dimensions.x - 1;
     const fromY = chunkY * dimensions.y;
@@ -377,15 +371,72 @@ function SparseBlock(props: Props) {
         shaderMaterial.uniforms.diffuseMap.value = minimizedAtlas.atlasTexture;
     }, [minimizedAtlas]);
 
-    const opaqueGeometry = useMemo(() => {
-        if (blocks == null) return undefined;
-        if (minimizedAtlas == null) return undefined;
-        return createGeometry(
-            Rebuild(dimensions, fromX, fromY, fromZ, geometries, atlasMap, minimizedAtlas.atlasTextureMap, blocks)
+    const cellToIndexMap = useRef<Map<string, number[]>>(null!);
+    const geometry = useRef<BufferGeometry>(new BufferGeometry());
+    useEffect(() => {
+        if (blocks == null) return;
+        if (minimizedAtlas == null) return;
+        const build = Rebuild(
+            dimensions,
+            fromX,
+            fromY,
+            fromZ,
+            geometries,
+            atlasMap,
+            minimizedAtlas.atlasTextureMap,
+            blocks
         );
+
+        geometry.current.setAttribute('position', new Float32BufferAttribute(build.positions, 3));
+        geometry.current.setAttribute('normal', new Float32BufferAttribute(build.normals, 3));
+        geometry.current.setAttribute('uv', new Float32BufferAttribute(build.uvs, 2));
+        geometry.current.setAttribute('uvSlice', new Float32BufferAttribute(build.uvSlices, 1));
+        geometry.current.setAttribute('color', new Float32BufferAttribute(build.colors, 3));
+        geometry.current.setIndex(new BufferAttribute(build.indices, 1));
+
+        geometry.current.attributes.position.needsUpdate = true;
+        geometry.current.attributes.normal.needsUpdate = true;
+        geometry.current.attributes.color.needsUpdate = true;
+
+        geometry.current.computeBoundingBox();
+        geometry.current.computeBoundingSphere();
+
+        cellToIndexMap.current = build.cellToIndexMap;
     }, [dimensions, fromX, fromY, fromZ, geometries, atlasMap, minimizedAtlas?.atlasTextureMap, blocks]);
 
-    return <mesh receiveShadow args={[opaqueGeometry, shaderMaterial]} position={[offsetX, offsetY, offsetZ]} />;
-}
+    useImperativeHandle(
+        ref,
+        () => {
+            return {
+                setBlockColor(x: number, y: number, z: number, color: Color) {
+                    if (meshRef.current == null) return;
+
+                    const cell = cellToIndexMap.current?.get(`${x},${y},${z}`);
+                    if (cell == null) return;
+
+                    for (const cellIndex of cell) {
+                        for (let i = 0; i < 4; i++) {
+                            meshRef.current.geometry.attributes.color.array[12 * cellIndex + 3 * i] = color.r;
+                            meshRef.current.geometry.attributes.color.array[12 * cellIndex + 3 * i + 1] = color.g;
+                            meshRef.current.geometry.attributes.color.array[12 * cellIndex + 3 * i + 2] = color.b;
+                        }
+                    }
+
+                    meshRef.current.geometry.attributes.color.needsUpdate = true;
+                },
+            };
+        },
+        []
+    );
+
+    return (
+        <mesh
+            ref={meshRef}
+            args={[geometry.current, shaderMaterial]}
+            receiveShadow
+            position={[offsetX, offsetY, offsetZ]}
+        />
+    );
+});
 
 export default SparseBlock;

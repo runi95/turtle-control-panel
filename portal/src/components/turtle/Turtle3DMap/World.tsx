@@ -2,14 +2,19 @@
 import {Suspense, forwardRef, useImperativeHandle, useMemo, useRef} from 'react';
 import {Color, InstancedMesh, Matrix4, TextureLoader, PlaneGeometry, Vector3, Group} from 'three';
 import {useAtlasMap} from './TextureAtlas';
-import SparseBlock from './SparseBlock';
-import {Direction, useTurtle} from '../../../api/UseTurtle';
+import SparseBlock, {SparseBlockHandle} from './SparseBlock';
+import {Direction, Location, useTurtle} from '../../../api/UseTurtle';
 import {useLoader} from '@react-three/fiber';
 import {useParams} from 'react-router-dom';
 import {useWebSocket} from '../../../api/UseWebSocket';
 import Turtle3D from './Turtle3D';
 import OtherTurtles from './OtherTurtles';
 import HomeMarker from './HomeMarker';
+
+export enum WorldState {
+    MOVE,
+    FARM,
+}
 
 const mathematicalModulo = (a: number, b: number) => {
     const quotient = Math.floor(a / b);
@@ -31,7 +36,8 @@ interface Props {
 }
 
 export type WorldHandle = {
-    setMoveState: (moveState: boolean) => void;
+    setState: (state: WorldState | null) => void;
+    getSelectedBlocks: () => Location[];
 };
 
 const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
@@ -40,13 +46,17 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
     const {data: turtle} = useTurtle(serverId, id);
     const {action} = useWebSocket();
     const groupRef = useRef<Group>(null!);
-    const canMoveTurtleRef = useRef(false);
-    const moveTurtleMeshRef = useRef<InstancedMesh>(null!);
-    const moveTurtleMeshVisibleRef = useRef<boolean>(false);
+    const worldStateRef = useRef<WorldState | null>(null);
+    const indicatorMeshRef = useRef<InstancedMesh>(null!);
+    const indicatorMeshVisibleRef = useRef<boolean>(false);
+    const chunkRefs = useRef<SparseBlockHandle[]>([]);
+    const selectedBlocks = useRef(new Map<string, Location>());
     const outlineMap = useLoader(TextureLoader, '/outline.png');
-    const moveTurtleColorArray = useRef<Float32Array>(Float32Array.from([...new Color('#D6D160').toArray(), 0.5]));
+    const moveTurtleColorArray = useRef<Float32Array>(Float32Array.from([...new Color('#444').toArray(), 0.5]));
     const previousFaceIndex = useRef<number | null>(null);
     const tempMatrix = useMemo(() => new Matrix4(), []);
+    const tempColor = useMemo(() => new Color(), []);
+    const tempVector = useMemo(() => new Vector3(), []);
     const cellDimensions = useMemo(() => new Vector3(chunkSize, chunkSize, chunkSize), [chunkSize]);
     const visibleDimensions = [visibleChunkRadius, visibleChunkRadius];
 
@@ -54,13 +64,47 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
         ref,
         () => {
             return {
-                setMoveState(moveState: boolean) {
-                    canMoveTurtleRef.current = moveState;
-                    if (!moveState) {
-                        previousFaceIndex.current = null;
-                        moveTurtleMeshRef.current.visible = false;
-                        moveTurtleMeshVisibleRef.current = false;
+                setState(state: WorldState | null) {
+                    worldStateRef.current = state;
+                    switch (state) {
+                        case WorldState.MOVE:
+                            tempColor.set('#444').toArray(moveTurtleColorArray.current, 0);
+                            moveTurtleColorArray.current[3] = 0.5;
+                            indicatorMeshRef.current.geometry.attributes.color.needsUpdate = true;
+                            break;
+                        case WorldState.FARM:
+                            tempColor.set('#4287f5').toArray(moveTurtleColorArray.current, 0);
+                            moveTurtleColorArray.current[3] = 0.5;
+                            indicatorMeshRef.current.geometry.attributes.color.needsUpdate = true;
+                            break;
+                        case null:
+                            previousFaceIndex.current = null;
+                            indicatorMeshRef.current.visible = false;
+                            indicatorMeshVisibleRef.current = false;
+                            if (selectedBlocks.current.size > 0) {
+                                tempColor.set(0xffffff);
+                                tempColor.convertSRGBToLinear();
+
+                                const locations = Array.from(selectedBlocks.current.values());
+                                for (const location of locations) {
+                                    const {x, y, z} = location;
+                                    const chunkX = Math.floor(x / cellDimensions.x);
+                                    const chunkY = Math.floor(y / cellDimensions.y);
+                                    const chunkZ = Math.floor(z / cellDimensions.z);
+                                    const chunkIndex = chunks.findIndex(
+                                        (chunk) => chunk.x === chunkX && chunk.y === chunkY && chunk.z === chunkZ
+                                    );
+                                    if (chunkIndex === -1) continue;
+                                    chunkRefs.current[chunkIndex].setBlockColor(x, y, z, tempColor);
+                                }
+                            }
+
+                            selectedBlocks.current.clear();
+                            break;
                     }
+                },
+                getSelectedBlocks() {
+                    return Array.from(selectedBlocks.current.values());
                 },
             };
         },
@@ -164,16 +208,16 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
             </group>
             <OtherTurtles />
             <instancedMesh
-                ref={moveTurtleMeshRef}
+                ref={indicatorMeshRef}
                 args={[undefined, undefined, 1]}
-                visible={moveTurtleMeshVisibleRef.current}
+                visible={indicatorMeshVisibleRef.current}
                 receiveShadow
                 frustumCulled={false}
             >
-                <boxGeometry>
+                <boxGeometry args={[1.05, 1.05, 1.05]}>
                     <instancedBufferAttribute attach='attributes-color' args={[moveTurtleColorArray.current, 4]} />
                 </boxGeometry>
-                <meshLambertMaterial attach='material' vertexColors transparent alphaTest={0.1} map={outlineMap} />
+                <meshBasicMaterial attach='material' vertexColors transparent alphaTest={0.1} map={outlineMap} />
             </instancedMesh>
             {turtle.location != null ? (
                 <group
@@ -185,60 +229,110 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                     ]}
                     onPointerMove={(e) => {
                         e.stopPropagation();
-                        if (!canMoveTurtleRef.current) return;
+                        if (worldStateRef.current == null) return;
                         if (!(e.intersections.length > 0)) return;
 
                         const intersection = e.intersections[0];
                         if (intersection.faceIndex === previousFaceIndex.current) return;
                         if (previousFaceIndex.current === null) {
-                            moveTurtleMeshRef.current.visible = true;
-                            moveTurtleMeshVisibleRef.current = true;
+                            indicatorMeshRef.current.visible = true;
+                            indicatorMeshVisibleRef.current = true;
                         }
 
                         previousFaceIndex.current = intersection.faceIndex ?? null;
 
                         const {x, y, z} = intersection.point;
                         const vx = Math.ceil(x - 0.5);
-                        const vy = Math.ceil(y - 0.5) + 1;
+                        let vy = Math.ceil(y - 0.5);
                         const vz = Math.ceil(z - 0.5);
-                        tempMatrix.setPosition(new Vector3(vx, vy, vz));
-                        moveTurtleMeshRef.current.setMatrixAt(0, tempMatrix);
-                        moveTurtleMeshRef.current.instanceMatrix.needsUpdate = true;
+
+                        switch (worldStateRef.current) {
+                            case WorldState.MOVE:
+                                vy += 1;
+                                break;
+                        }
+
+                        tempMatrix.setPosition(tempVector.set(vx, vy, vz));
+                        indicatorMeshRef.current.setMatrixAt(0, tempMatrix);
+                        indicatorMeshRef.current.instanceMatrix.needsUpdate = true;
                     }}
                     onPointerLeave={(e) => {
                         e.stopPropagation();
                         previousFaceIndex.current = null;
-                        moveTurtleMeshRef.current.visible = false;
-                        moveTurtleMeshVisibleRef.current = false;
+                        indicatorMeshRef.current.visible = false;
+                        indicatorMeshVisibleRef.current = false;
                     }}
                     onClick={(e) => {
                         e.stopPropagation();
-                        if (!canMoveTurtleRef.current) return;
+                        if (worldStateRef.current == null) return;
                         if (!(e.intersections.length > 0)) return;
                         if (!turtle) return;
 
                         const intersection = e.intersections[0];
                         const {x, y, z} = intersection.point;
                         const vx = Math.ceil(x - 0.5);
-                        const vy = Math.ceil(y - 0.5) + 1;
+                        const vy = Math.ceil(y - 0.5);
                         const vz = Math.ceil(z - 0.5);
                         const {x: tx, y: ty, z: tz} = turtle.location;
 
-                        action({
-                            type: 'ACTION',
-                            action: 'move',
-                            data: {
-                                serverId: turtle.serverId,
-                                id: turtle.id,
-                                x: vx + tx,
-                                y: vy + ty,
-                                z: vz + tz,
-                            },
-                        });
+                        switch (worldStateRef.current) {
+                            case WorldState.MOVE:
+                                action({
+                                    type: 'ACTION',
+                                    action: 'move',
+                                    data: {
+                                        serverId: turtle.serverId,
+                                        id: turtle.id,
+                                        x: vx + tx,
+                                        y: vy + ty + 1,
+                                        z: vz + tz,
+                                    },
+                                });
+                                break;
+                            case WorldState.FARM:
+                                (() => {
+                                    const chunkX = Math.floor((vx + tx) / cellDimensions.x);
+                                    const chunkY = Math.floor((vy + ty) / cellDimensions.y);
+                                    const chunkZ = Math.floor((vz + tz) / cellDimensions.z);
+                                    const chunkIndex = chunks.findIndex(
+                                        (chunk) => chunk.x === chunkX && chunk.y === chunkY && chunk.z === chunkZ
+                                    );
+                                    if (chunkIndex === -1) return;
+
+                                    const kx = vx + tx;
+                                    const ky = vy + ty;
+                                    const kz = vz + tz;
+                                    const key = `${kx},${ky},${kz}`;
+                                    const selectedBlock = selectedBlocks.current.get(key);
+                                    if (selectedBlock == null) {
+                                        selectedBlocks.current.set(key, {
+                                            x: kx,
+                                            y: ky,
+                                            z: kz,
+                                        });
+                                        tempColor.set('#4287f5');
+                                        tempColor.convertSRGBToLinear();
+
+                                        chunkRefs.current[chunkIndex].setBlockColor(kx, ky, kz, tempColor);
+                                    } else {
+                                        selectedBlocks.current.delete(key);
+                                        tempColor.set(0xffffff);
+                                        tempColor.convertSRGBToLinear();
+
+                                        chunkRefs.current[chunkIndex].setBlockColor(kx, ky, kz, tempColor);
+                                    }
+                                })();
+                                break;
+                        }
                     }}
                 >
-                    {chunks.map((chunk) => (
+                    {chunks.map((chunk, i) => (
                         <SparseBlock
+                            ref={(element) => {
+                                if (element != null) {
+                                    chunkRefs.current[i] = element;
+                                }
+                            }}
                             key={`${chunk.x},${chunk.y},${chunk.z}`}
                             dimensions={cellDimensions}
                             chunk={chunk}

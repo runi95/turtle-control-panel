@@ -88,7 +88,7 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                 break;
                             case 'farm':
                                 turtle.state = new TurtleFarmingState(turtle, {
-                                    areaId: Number(msg.data.areaId),
+                                    area: msg.data.area,
                                     currentAreaFarmIndex: 0,
                                 });
                                 break;

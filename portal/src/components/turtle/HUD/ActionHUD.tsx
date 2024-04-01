@@ -6,29 +6,30 @@ import HomeIcon from '../../../icons/HomeIcon';
 import RefuelIcon from '../../../icons/RefuelIcon';
 import {useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
-import FarmModal from '../farm/FarmModal';
 import MineModal from '../mine/MineModal';
 import BuildModal from '../build/BuildModal';
-import {Turtle, useTurtle} from '../../../api/UseTurtle';
+import {Location, Turtle, useTurtle} from '../../../api/UseTurtle';
 import StopIcon from '../../../icons/StopIcon';
 import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 import {useWebSocket} from '../../../api/UseWebSocket';
 import BootsIcon from '../../../icons/BootsIcon';
+import {WorldState} from '../Turtle3DMap/World';
+import CheckmarkIcon from '../../../icons/CheckmarkIcon';
 
 interface Props {
-    setWorldMoveState: (moveState: boolean) => void;
+    setWorldState: (worldState: WorldState | null) => void;
+    getSelectedBlocks: () => Location[];
 }
 
-function ActionHUD(props: Props) {
-    const {setWorldMoveState} = props;
-    const [isInMoveState, setMoveState] = useState(false);
+function ActionHUD({setWorldState, getSelectedBlocks}: Props) {
+    const [hudWorldState, setHudWorldState] = useState<WorldState | null>(null);
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const {action} = useWebSocket();
-    const [modalState, setModalState] = useState<'farm' | 'mine' | 'build' | null>(null);
+    const [modalState, setModalState] = useState<'mine' | 'build' | null>(null);
 
     useEffect(() => {
-        setWorldMoveState(isInMoveState);
-    }, [isInMoveState]);
+        setWorldState(hudWorldState);
+    }, [hudWorldState]);
 
     const {data: turtle} = useTurtle(serverId, id);
     if (turtle === undefined) {
@@ -37,8 +38,6 @@ function ActionHUD(props: Props) {
 
     const renderModal = (turtle: Turtle) => {
         switch (modalState) {
-            case 'farm':
-                return <FarmModal turtle={turtle} action={action} hideModal={() => setModalState(null)} />;
             case 'mine':
                 return <MineModal turtle={turtle} action={action} hideModal={() => setModalState(null)} />;
             case 'build':
@@ -48,18 +47,46 @@ function ActionHUD(props: Props) {
         }
     };
 
+    if (hudWorldState === WorldState.FARM) {
+        return (
+            <Container>
+                <OverlayTrigger placement='top' overlay={<FixedTooltip data-bs-theme='light'>Cancel</FixedTooltip>}>
+                    <ActionButtonContainer onClick={() => setHudWorldState(null)}>
+                        <StopIcon color='#202020' />
+                    </ActionButtonContainer>
+                </OverlayTrigger>
+                <OverlayTrigger placement='top' overlay={<FixedTooltip data-bs-theme='light'>Confirm</FixedTooltip>}>
+                    <ActionButtonContainer
+                        onClick={() => {
+                            const locations = getSelectedBlocks();
+                            action({
+                                type: 'ACTION',
+                                action: 'farm',
+                                data: {
+                                    serverId,
+                                    id: Number(id),
+                                    area: locations.map(({x, y, z}) => ({
+                                        x,
+                                        y: y + 1,
+                                        z,
+                                    })),
+                                },
+                            });
+                            setHudWorldState(null);
+                        }}
+                    >
+                        <CheckmarkIcon color='#202020' />
+                    </ActionButtonContainer>
+                </OverlayTrigger>
+            </Container>
+        );
+    }
+
     return (
         <>
             {renderModal(turtle)}
-            <div style={{display: 'flex', gap: 5}}>
-                <OverlayTrigger
-                    placement='top'
-                    overlay={
-                        <Tooltip style={{position: 'fixed'}} data-bs-theme='light'>
-                            Stop
-                        </Tooltip>
-                    }
-                >
+            <Container>
+                <OverlayTrigger placement='top' overlay={<FixedTooltip data-bs-theme='light'>Stop</FixedTooltip>}>
                     <ActionButtonContainer
                         onClick={() => {
                             action({type: 'ACTION', action: 'stop', data: {serverId, id}});
@@ -68,50 +95,22 @@ function ActionHUD(props: Props) {
                         <StopIcon color='#BE0101' />
                     </ActionButtonContainer>
                 </OverlayTrigger>
-                <OverlayTrigger
-                    placement='top'
-                    overlay={
-                        <Tooltip style={{position: 'fixed'}} data-bs-theme='light'>
-                            Mine
-                        </Tooltip>
-                    }
-                >
+                <OverlayTrigger placement='top' overlay={<FixedTooltip data-bs-theme='light'>Mine</FixedTooltip>}>
                     <ActionButtonContainer onClick={() => setModalState('mine')}>
                         <PickaxeIcon color='#202020' />
                     </ActionButtonContainer>
                 </OverlayTrigger>
-                <OverlayTrigger
-                    placement='top'
-                    overlay={
-                        <Tooltip style={{position: 'fixed'}} data-bs-theme='light'>
-                            Farm
-                        </Tooltip>
-                    }
-                >
-                    <ActionButtonContainer onClick={() => setModalState('farm')}>
+                <OverlayTrigger placement='top' overlay={<FixedTooltip data-bs-theme='light'>Farm</FixedTooltip>}>
+                    <ActionButtonContainer onClick={() => setHudWorldState(WorldState.FARM)}>
                         <HoeIcon color='#202020' />
                     </ActionButtonContainer>
                 </OverlayTrigger>
-                <OverlayTrigger
-                    placement='top'
-                    overlay={
-                        <Tooltip style={{position: 'fixed'}} data-bs-theme='light'>
-                            Build
-                        </Tooltip>
-                    }
-                >
+                <OverlayTrigger placement='top' overlay={<FixedTooltip data-bs-theme='light'>Build</FixedTooltip>}>
                     <ActionButtonContainer onClick={() => setModalState('build')}>
                         <HammerIcon color='#202020' />
                     </ActionButtonContainer>
                 </OverlayTrigger>
-                <OverlayTrigger
-                    placement='top'
-                    overlay={
-                        <Tooltip style={{position: 'fixed'}} data-bs-theme='light'>
-                            Refuel
-                        </Tooltip>
-                    }
-                >
+                <OverlayTrigger placement='top' overlay={<FixedTooltip data-bs-theme='light'>Refuel</FixedTooltip>}>
                     <ActionButtonContainer
                         onClick={() => action({type: 'ACTION', action: 'refuel', data: {serverId, id}})}
                     >
@@ -120,11 +119,7 @@ function ActionHUD(props: Props) {
                 </OverlayTrigger>
                 <OverlayTrigger
                     placement='top'
-                    overlay={
-                        <Tooltip style={{position: 'fixed'}} data-bs-theme='light'>
-                            Return home
-                        </Tooltip>
-                    }
+                    overlay={<FixedTooltip data-bs-theme='light'>Return home</FixedTooltip>}
                 >
                     <ActionButtonContainer
                         onClick={() => action({type: 'ACTION', action: 'go-home', data: {serverId, id}})}
@@ -132,28 +127,30 @@ function ActionHUD(props: Props) {
                         <HomeIcon color='#202020' />
                     </ActionButtonContainer>
                 </OverlayTrigger>
-                <OverlayTrigger
-                    placement='top'
-                    overlay={
-                        <Tooltip style={{position: 'fixed'}} data-bs-theme='light'>
-                            Move
-                        </Tooltip>
-                    }
-                >
-                    {isInMoveState ? (
-                        <ActionButtonContainer onClick={() => setMoveState(false)}>
+                <OverlayTrigger placement='top' overlay={<FixedTooltip data-bs-theme='light'>Move</FixedTooltip>}>
+                    {hudWorldState === WorldState.MOVE ? (
+                        <ActionButtonContainer onClick={() => setHudWorldState(null)}>
                             <StopIcon color='#202020' />
                         </ActionButtonContainer>
                     ) : (
-                        <ActionButtonContainer onClick={() => setMoveState(true)}>
+                        <ActionButtonContainer onClick={() => setHudWorldState(WorldState.MOVE)}>
                             <BootsIcon color='#202020' />
                         </ActionButtonContainer>
                     )}
                 </OverlayTrigger>
-            </div>
+            </Container>
         </>
     );
 }
+
+const FixedTooltip = styled(Tooltip)`
+    position: fixed;
+`;
+
+const Container = styled.div`
+    display: flex;
+    gap: 5px;
+`;
 
 const ActionButtonContainer = styled.div`
     cursor: pointer;

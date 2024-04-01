@@ -10,7 +10,7 @@ import logger from '../../logger/server';
 
 export interface FarmingStateData {
     readonly id: TURTLE_STATES;
-    areaId: number;
+    area: Location[];
     currentAreaFarmIndex: number;
 }
 
@@ -32,7 +32,7 @@ export class TurtleFarmingState extends TurtleBaseState<FarmingStateData> {
             ...data,
             id: TURTLE_STATES.FARMING
         };
-        this.area = getArea(this.turtle.serverId, this.data.areaId).area.map(({x, y, z}) => ({x, y: y + 1, z}));
+        this.area = this.data.area;
     }
 
     public async *act() {
