@@ -6,9 +6,7 @@ import {Color, Mesh, MeshBasicMaterial} from 'three';
 
 export default function HomeMarker(props?: GroupProps) {
     const meshRef = useRef<Mesh>(null!);
-    const a = useGLTF('/models/home_marker.gltf');
-    const {nodes} = a;
-    console.log(a);
+    const {nodes} = useGLTF('/models/home_marker.gltf');
 
     useFrame(({clock}) => {
         if (meshRef.current == null) return;
