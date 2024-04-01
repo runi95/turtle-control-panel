@@ -97,12 +97,12 @@ interface Cell {
 
 const CreateTerrain = (dimensions: Vector3, fromX: number, fromY: number, fromZ: number, blocks: Blocks) => {
     const cells = new Map<string, Cell>();
-    const xn = -1;
-    const yn = -1;
-    const zn = -1;
-    const xp = dimensions.x + 1;
-    const yp = dimensions.y + 1;
-    const zp = dimensions.z + 1;
+    const xn = 0;
+    const yn = 0;
+    const zn = 0;
+    const xp = dimensions.x;
+    const yp = dimensions.y;
+    const zp = dimensions.z;
 
     for (let x = xn; x < xp; x++) {
         for (let z = zn; z < zp; z++) {
@@ -271,11 +271,11 @@ function SparseBlock(props: Props) {
     const {x: chunkX, y: chunkY, z: chunkZ, offsetX, offsetY, offsetZ} = chunk;
     const {serverId} = useParams() as {serverId: string};
     const fromX = chunkX * dimensions.x;
-    const toX = fromX + dimensions.x;
+    const toX = fromX + dimensions.x - 1;
     const fromY = chunkY * dimensions.y;
-    const toY = fromY + dimensions.y;
+    const toY = fromY + dimensions.y - 1;
     const fromZ = chunkZ * dimensions.z;
-    const toZ = fromZ + dimensions.z;
+    const toZ = fromZ + dimensions.z - 1;
     const {data: blocks} = useBlocks(
         serverId,
         {
