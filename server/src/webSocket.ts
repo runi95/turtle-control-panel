@@ -64,8 +64,6 @@ export const createWebSocketServer = (server: TServerInstance) => {
                             case 'mine':
                                 turtle.state = new TurtleMiningState(turtle, {
                                     area: msg.data.area,
-                                    fromYLevel: msg.data.fromYLevel,
-                                    toYLevel: msg.data.toYLevel,
                                     isExcludeMode: msg.data.isExcludeMode,
                                     includeOrExcludeList: msg.data.includeOrExcludeList,
                                 });
@@ -73,8 +71,6 @@ export const createWebSocketServer = (server: TServerInstance) => {
                             case 'extract':
                                 turtle.state = new TurtleExtractionState(turtle, {
                                     area: msg.data.area,
-                                    fromYLevel: msg.data.fromYLevel,
-                                    toYLevel: msg.data.toYLevel,
                                     isExcludeMode: msg.data.isExcludeMode,
                                     includeOrExcludeList: msg.data.includeOrExcludeList,
                                 });
@@ -405,7 +401,11 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                     throw new Error('Cannot call use-peripheral without a <method>');
                                 }
 
-                                await turtle.usePeripheralWithSide(msg.data.side, msg.data.method, ...(msg.data.args ?? []));
+                                await turtle.usePeripheralWithSide(
+                                    msg.data.side,
+                                    msg.data.method,
+                                    ...(msg.data.args ?? [])
+                                );
                                 break;
                             case 'drive-create-file':
                                 await turtle.writeToFile(msg.data.file, msg.data.content);

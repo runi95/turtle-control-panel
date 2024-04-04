@@ -5,25 +5,20 @@ import {useParams} from 'react-router-dom';
 import {Location, Turtle} from '../../../api/UseTurtle';
 import './MineModal.css';
 import {BlockNames} from './MinecraftBlockNames';
-import TurtleMap, {DrawnArea} from '../TurtleMap';
 
 export interface MineModalProps {
     turtle: Turtle;
     action: Action;
     hideModal: () => void;
+    createdArea: Location[];
 }
 
-function MineModal(props: MineModalProps) {
+function MineModal({turtle, action, hideModal, createdArea}: MineModalProps) {
     const {serverId} = useParams() as {serverId: string};
-    const {turtle, action, hideModal} = props;
     const [isFormValidated, setIsFormValidated] = useState(false);
-    const [createdArea, setCreatedArea] = useState<Omit<Location, 'y'>[]>([]);
     const [miningType, setMiningType] = useState<number>(1);
     const [includeOrExclude, setIncludeOrExclude] = useState<number>(1);
-    const [fromYLevel, setFromYLevel] = useState(turtle.location?.y ?? 0);
-    const [toYLevel, setToYLevel] = useState(-58);
     const [includeOrExcludeList, setIncludeOrExcludeList] = useState<string[]>([]);
-    const [drawnArea, setDrawnArea] = useState<DrawnArea>({});
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -36,7 +31,7 @@ function MineModal(props: MineModalProps) {
                 data: {
                     serverId,
                     id: turtle.id,
-                    area: Object.values(createdArea).sort((a, b) => {
+                    area: createdArea.sort((a, b) => {
                         if (a.x < b.x) {
                             return -1;
                         } else if (a.x > b.x) {
@@ -49,8 +44,6 @@ function MineModal(props: MineModalProps) {
 
                         return 0;
                     }),
-                    fromYLevel,
-                    toYLevel,
                     isExcludeMode: includeOrExclude === 1,
                     includeOrExcludeList,
                 },
@@ -67,7 +60,6 @@ function MineModal(props: MineModalProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Btn: any = Button;
 
-    const createdAreaLength = createdArea.length;
     return (
         <Modal show={true} onHide={() => hideModal()}>
             <Form noValidate validated={isFormValidated} onSubmit={handleFormSubmit}>
@@ -150,48 +142,15 @@ function MineModal(props: MineModalProps) {
                             </datalist>
                         </Col>
                     </Row>
-                    <Row className='mb-3'>
-                        <Form.Label className='me-0 pe-0' sm={3} column>
-                            from y-level
-                        </Form.Label>
-                        <Col className='ms-0 ps-0' sm={3}>
-                            <Form.Control
-                                value={fromYLevel}
-                                onChange={(e) => setFromYLevel(Number(e.target.value))}
-                                type='number'
-                                required
-                            />
-                        </Col>
-                        <Form.Label className='me-0 pe-0' sm={1} column>
-                            to
-                        </Form.Label>
-                        <Col className='ms-0 ps-0' sm={3}>
-                            <Form.Control
-                                value={toYLevel}
-                                onChange={(e) => setToYLevel(Number(e.target.value))}
-                                type='number'
-                                required
-                            />
-                        </Col>
-                    </Row>
                     <Row>
                         <Form.Label className='me-0 pe-0 text-secondary' sm={12} column>
                             within the marked area on the map
                         </Form.Label>
                     </Row>
-                    <Row className='mb-3'>
-                        <Col md='auto'>
-                            <TurtleMap
-                                drawnArea={drawnArea}
-                                setDrawnArea={setDrawnArea}
-                                setTranslatedDrawnArea={setCreatedArea}
-                            />
-                        </Col>
-                    </Row>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Btn disabled={createdAreaLength < 1} variant='outline-success' type='submit'>
-                        {createdAreaLength < 1 ? '(draw area on map)' : 'Mine'}
+                    <Btn variant='outline-success' type='submit'>
+                        Mine
                     </Btn>
                 </Modal.Footer>
             </Form>

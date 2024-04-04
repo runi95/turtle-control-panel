@@ -1,4 +1,5 @@
-import {Direction, Location} from '../../db/turtle.type';
+import {Block} from '../../db/block.type';
+import {Location} from '../../db/turtle.type';
 import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
 import {DestinationError, TurtleBaseState} from './base';
@@ -6,9 +7,7 @@ import {TURTLE_STATES} from './helpers';
 
 export interface MiningStateData {
     readonly id: TURTLE_STATES;
-    readonly area: Omit<Location, 'y'>[];
-    readonly fromYLevel: number;
-    readonly toYLevel: number;
+    readonly area: Location[];
     readonly isExcludeMode: boolean;
     readonly includeOrExcludeList: string[];
 }
@@ -33,19 +32,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             id: TURTLE_STATES.MINING
         };
 
-        const area: Location[] = [];
-        const {fromYLevel, toYLevel, isExcludeMode, includeOrExcludeList} = this.data;
-        const from = Math.min(fromYLevel, toYLevel);
-        const to = Math.max(fromYLevel, toYLevel);
-        for (const loc of this.data.area) {
-            for (let i = from; i <= to; i++) {
-                area.push({
-                    x: loc.x,
-                    y: i,
-                    z: loc.z,
-                });
-            }
-        }
+        const {isExcludeMode, includeOrExcludeList, area} = this.data;
         this.area = area;
         this.remainingAreaIndexes = Array.from(Array(this.area.length).keys());
 

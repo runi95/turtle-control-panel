@@ -1,6 +1,6 @@
 import {upsertBlocks} from '../../db';
 import {Block} from '../../db/block.type';
-import {Direction, Location} from '../../db/turtle.type';
+import {Location} from '../../db/turtle.type';
 import {Point} from '../../dlite/Point';
 import globalEventEmitter from '../../globalEventEmitter';
 import {Turtle} from '../turtle';
@@ -9,9 +9,7 @@ import {TURTLE_STATES} from './helpers';
 
 export interface ExtractionStateData {
     readonly id: TURTLE_STATES;
-    readonly area: Omit<Location, 'y'>[];
-    readonly fromYLevel: number;
-    readonly toYLevel: number;
+    readonly area: Location[];
     readonly isExcludeMode: boolean;
     readonly includeOrExcludeList: string[];
 }
@@ -39,19 +37,7 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
             id: TURTLE_STATES.EXTRACTION,
         };
 
-        const area: Location[] = [];
-        const {fromYLevel, toYLevel, isExcludeMode, includeOrExcludeList} = this.data;
-        const from = Math.min(fromYLevel, toYLevel);
-        const to = Math.max(fromYLevel, toYLevel);
-        for (const loc of this.data.area) {
-            for (let i = from; i <= to; i++) {
-                area.push({
-                    x: loc.x,
-                    y: i,
-                    z: loc.z,
-                });
-            }
-        }
+        const {isExcludeMode, includeOrExcludeList, area} = this.data;
         this.area = area;
         this.remainingAreaIndexes = [];
 
@@ -95,6 +81,14 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                 locationIndexToCount.set(i, locationsWithinRange);
             }
 
+            const from = this.area.reduce((acc, curr) => {
+                if (acc.y < curr.y) return curr;
+                return acc;
+            }, this.area[0]).y;
+            const to = this.area.reduce((acc, curr) => {
+                if (acc.y > curr.y) return curr;
+                return acc;
+            }, this.area[0]).y;
             const yDiff = to - from;
             if (yDiff < 16) {
                 this.scanIndexes.push(locationsToScan[bestLocationIndex]);
@@ -186,8 +180,10 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                         yield;
 
                         // Go home?
-                        const hasAvailableSpaceInInventory = Object.values(this.turtle.inventory).some((value) => value == null);
-                        const fuelPercentage = 100 * this.turtle.fuelLevel / this.turtle.fuelLimit;
+                        const hasAvailableSpaceInInventory = Object.values(this.turtle.inventory).some(
+                            (value) => value == null
+                        );
+                        const fuelPercentage = (100 * this.turtle.fuelLevel) / this.turtle.fuelLimit;
                         if (fuelPercentage < 10 || !hasAvailableSpaceInInventory) {
                             const home = this.turtle.home;
                             if (home === null) {
@@ -219,7 +215,7 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                                 yield;
                             }
 
-                            if ((100 * this.turtle.fuelLevel / this.turtle.fuelLimit) < 10) {
+                            if ((100 * this.turtle.fuelLevel) / this.turtle.fuelLimit < 10) {
                                 for await (const _ of this.refuelFromNearbyInventories()) {
                                     yield;
                                 }
@@ -227,18 +223,18 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                         }
                     }
                 } catch (err) {
-                    if (err instanceof DestinationError && (err.message === 'Movement obstructed' || err.message === 'Cannot break unbreakable block')) {
+                    if (
+                        err instanceof DestinationError &&
+                        (err.message === 'Movement obstructed' || err.message === 'Cannot break unbreakable block')
+                    ) {
                         const {x, y, z} = err.node.point;
                         const areaIndexOfNode = this.remainingAreaIndexes.findIndex(
-                            (i) =>
-                                this.area[i].x === x &&
-                                this.area[i].y === y &&
-                                this.area[i].z === z
+                            (i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z
                         );
                         if (areaIndexOfNode > -1) {
                             this.remainingAreaIndexes.splice(areaIndexOfNode, 1);
                         }
-                        
+
                         yield;
                         continue;
                     } else if (typeof err === 'string') {
@@ -277,7 +273,10 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                         }
                     }
                 } catch (err) {
-                    if (err instanceof DestinationError && (err.message === 'Movement obstructed' || err.message === 'Cannot break unbreakable block')) {
+                    if (
+                        err instanceof DestinationError &&
+                        (err.message === 'Movement obstructed' || err.message === 'Cannot break unbreakable block')
+                    ) {
                         const {x, y, z} = err.node.point;
                         const matchingScanIndex = this.scanIndexes.findIndex(
                             (scanIndex) =>
@@ -288,7 +287,7 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                         if (matchingScanIndex > -1) {
                             this.scanIndexes.splice(matchingScanIndex, 1);
                         }
-                        
+
                         yield;
                         continue;
                     } else if (typeof err === 'string') {
@@ -321,8 +320,12 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                 });
 
                 yield;
-                const [cooldown] = await this.turtle.usePeripheralWithName<[number]>('geoScanner', 'getOperationCooldown', '"scanBlocks"');
-                await this.turtle.sleep(0.1 + (Math.ceil(cooldown / 100) / 10));
+                const [cooldown] = await this.turtle.usePeripheralWithName<[number]>(
+                    'geoScanner',
+                    'getOperationCooldown',
+                    '"scanBlocks"'
+                );
+                await this.turtle.sleep(0.1 + Math.ceil(cooldown / 100) / 10);
                 yield;
 
                 const [analysis, analysisFailMessage] = await this.turtle.usePeripheralWithName<

@@ -13,7 +13,9 @@ import HomeMarker from './HomeMarker';
 
 export enum WorldState {
     MOVE,
-    FARM,
+    SELECT_SINGLE,
+    SELECT_CHUNK,
+    SELECT_CHUNK_FULL,
 }
 
 const mathematicalModulo = (a: number, b: number) => {
@@ -72,7 +74,9 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                             moveTurtleColorArray.current[3] = 0.5;
                             indicatorMeshRef.current.geometry.attributes.color.needsUpdate = true;
                             break;
-                        case WorldState.FARM:
+                        case WorldState.SELECT_SINGLE:
+                        case WorldState.SELECT_CHUNK:
+                        case WorldState.SELECT_CHUNK_FULL:
                             tempColor.set('#4287f5').toArray(moveTurtleColorArray.current, 0);
                             moveTurtleColorArray.current[3] = 0.5;
                             indicatorMeshRef.current.geometry.attributes.color.needsUpdate = true;
@@ -289,7 +293,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                     },
                                 });
                                 break;
-                            case WorldState.FARM:
+                            case WorldState.SELECT_SINGLE:
                                 (() => {
                                     const chunkX = Math.floor((vx + tx) / cellDimensions.x);
                                     const chunkY = Math.floor((vy + ty) / cellDimensions.y);
@@ -320,6 +324,122 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                         tempColor.convertSRGBToLinear();
 
                                         chunkRefs.current[chunkIndex].setBlockColor(kx, ky, kz, tempColor);
+                                    }
+                                })();
+                                break;
+                            case WorldState.SELECT_CHUNK:
+                                (() => {
+                                    const chunkX = Math.floor((vx + tx) / cellDimensions.x);
+                                    const chunkY = Math.floor((vy + ty) / cellDimensions.y);
+                                    const chunkZ = Math.floor((vz + tz) / cellDimensions.z);
+                                    const chunkIndex = chunks.findIndex(
+                                        (chunk) => chunk.x === chunkX && chunk.y === chunkY && chunk.z === chunkZ
+                                    );
+                                    if (chunkIndex === -1) return;
+
+                                    const kx = vx + tx;
+                                    const ky = vy + ty;
+                                    const kz = vz + tz;
+                                    const key = `${kx},${ky},${kz}`;
+                                    const selectedBlock = selectedBlocks.current.get(key);
+                                    if (selectedBlock == null) {
+                                        const chunk = chunks[chunkIndex];
+                                        for (let x = 0; x < cellDimensions.x; x++) {
+                                            for (let y = 0; y < cellDimensions.y; y++) {
+                                                for (let z = 0; z < cellDimensions.z; z++) {
+                                                    const nx = chunk.x * cellDimensions.x + x;
+                                                    const ny = chunk.y * cellDimensions.y + y;
+                                                    const nz = chunk.z * cellDimensions.z + z;
+                                                    selectedBlocks.current.set(`${nx},${ny},${nz}`, {
+                                                        x: nx,
+                                                        y: ny,
+                                                        z: nz,
+                                                    });
+                                                }
+                                            }
+                                        }
+                                        tempColor.set('#4287f5');
+                                        tempColor.convertSRGBToLinear();
+
+                                        chunkRefs.current[chunkIndex].setChunkColor(tempColor);
+                                    } else {
+                                        const chunk = chunks[chunkIndex];
+                                        for (let x = 0; x < cellDimensions.x; x++) {
+                                            for (let y = 0; y < cellDimensions.y; y++) {
+                                                for (let z = 0; z < cellDimensions.z; z++) {
+                                                    const nx = chunk.x * cellDimensions.x + x;
+                                                    const ny = chunk.y * cellDimensions.y + y;
+                                                    const nz = chunk.z * cellDimensions.z + z;
+                                                    selectedBlocks.current.delete(`${nx},${ny},${nz}`);
+                                                }
+                                            }
+                                        }
+
+                                        tempColor.set(0xffffff);
+                                        tempColor.convertSRGBToLinear();
+
+                                        chunkRefs.current[chunkIndex].setChunkColor(tempColor);
+                                    }
+                                })();
+                                break;
+                            case WorldState.SELECT_CHUNK_FULL:
+                                (() => {
+                                    const chunkX = Math.floor((vx + tx) / cellDimensions.x);
+                                    const chunkZ = Math.floor((vz + tz) / cellDimensions.z);
+                                    const filteredChunks = chunks
+                                        .map((chunk, i) => ({chunk, i}))
+                                        .filter(({chunk}) => chunk.x === chunkX && chunk.z === chunkZ);
+                                    if (filteredChunks == null || filteredChunks.length === 0) return;
+
+                                    const kx = vx + tx;
+                                    const ky = vy + ty;
+                                    const kz = vz + tz;
+                                    const key = `${kx},${ky},${kz}`;
+                                    const selectedBlock = selectedBlocks.current.get(key);
+                                    if (selectedBlock == null) {
+                                        selectedBlocks.current.set(key, {
+                                            x: kx,
+                                            y: ky,
+                                            z: kz,
+                                        });
+                                        tempColor.set('#4287f5');
+                                        tempColor.convertSRGBToLinear();
+
+                                        filteredChunks.forEach(({chunk, i: chunkIndex}) => {
+                                            for (let x = 0; x < cellDimensions.x; x++) {
+                                                for (let y = 0; y < cellDimensions.y; y++) {
+                                                    for (let z = 0; z < cellDimensions.z; z++) {
+                                                        const nx = chunk.x * cellDimensions.x + x;
+                                                        const ny = chunk.y * cellDimensions.y + y;
+                                                        const nz = chunk.z * cellDimensions.z + z;
+                                                        selectedBlocks.current.set(`${nx},${ny},${nz}`, {
+                                                            x: nx,
+                                                            y: ny,
+                                                            z: nz,
+                                                        });
+                                                    }
+                                                }
+                                            }
+                                            chunkRefs.current[chunkIndex].setChunkColor(tempColor);
+                                        });
+                                    } else {
+                                        tempColor.set(0xffffff);
+                                        tempColor.convertSRGBToLinear();
+
+                                        filteredChunks.forEach(({chunk, i: chunkIndex}) => {
+                                            for (let x = 0; x < cellDimensions.x; x++) {
+                                                for (let y = 0; y < cellDimensions.y; y++) {
+                                                    for (let z = 0; z < cellDimensions.z; z++) {
+                                                        const nx = chunk.x * cellDimensions.x + x;
+                                                        const ny = chunk.y * cellDimensions.y + y;
+                                                        const nz = chunk.z * cellDimensions.z + z;
+                                                        selectedBlocks.current.delete(`${nx},${ny},${nz}`);
+                                                    }
+                                                }
+                                            }
+
+                                            chunkRefs.current[chunkIndex].setChunkColor(tempColor);
+                                        });
                                     }
                                 })();
                                 break;

@@ -257,6 +257,7 @@ interface Props {
 
 export type SparseBlockHandle = {
     setBlockColor: (x: number, y: number, z: number, color: Color) => void;
+    setChunkColor: (color: Color) => void;
 };
 
 const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(props, ref) {
@@ -419,6 +420,22 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(pr
                             meshRef.current.geometry.attributes.color.array[12 * cellIndex + 3 * i] = color.r;
                             meshRef.current.geometry.attributes.color.array[12 * cellIndex + 3 * i + 1] = color.g;
                             meshRef.current.geometry.attributes.color.array[12 * cellIndex + 3 * i + 2] = color.b;
+                        }
+                    }
+
+                    meshRef.current.geometry.attributes.color.needsUpdate = true;
+                },
+                setChunkColor(color: Color) {
+                    if (meshRef.current == null) return;
+
+                    for (let i = 0; i < meshRef.current.geometry.attributes.color.array.length; i++) {
+                        const mod = i % 3;
+                        if (mod === 0) {
+                            meshRef.current.geometry.attributes.color.array[i] = color.r;
+                        } else if (mod === 1) {
+                            meshRef.current.geometry.attributes.color.array[i] = color.g;
+                        } else {
+                            meshRef.current.geometry.attributes.color.array[i] = color.b;
                         }
                     }
 
