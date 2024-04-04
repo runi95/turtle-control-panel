@@ -145,7 +145,10 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                 }
 
                 try {
-                    for await (const _ of this.goToDestinations(this.area)) {
+                    for await (const _ of this.goToDestinations(
+                        this.area,
+                        (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`)
+                    )) {
                         yield;
 
                         if (this.checkIfTurtleIsInOrAdjacentToArea()) {

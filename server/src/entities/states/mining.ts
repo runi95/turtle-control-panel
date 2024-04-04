@@ -72,6 +72,20 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
     }
 
     public async *act() {
+        const isMineable = (x: number, y: number, z: number, block: Block | null) => {
+            const isInArea = !!this.mineableBlockMap.get(`${x},${y},${z}`);
+            if (!isInArea) return false;
+
+            if (this.isInExcludeMode) {
+                if (!this.hasExclusions) return true;
+                if (block === null) return false;
+                return !this.mineableBlockIncludeOrExcludeMap.get(block.name);
+            } else {
+                if (block === null) return false;
+                return !!this.mineableBlockIncludeOrExcludeMap.get(block.name);
+            }
+        };
+
         while (true) {
             if (this.turtle.location === null) {
                 throw new Error('Unable to mine without knowing turtle location');
@@ -94,7 +108,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                 }
     
                 try {
-                    for await (const _ of this.goToDestinations(this.area)) {
+                    for await (const _ of this.goToDestinations(this.area, isMineable)) {
                         yield;
 
                         if (this.checkIfTurtleIsInOrAdjacentToArea()) {
@@ -122,19 +136,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
     
             try {
                 // Mine!
-                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]), (x, y, z, block) => {
-                    const isInArea = !!this.mineableBlockMap.get(`${x},${y},${z}`);
-                    if (!isInArea) return false;
-
-                    if (this.isInExcludeMode) {
-                        if (!this.hasExclusions) return true;
-                        if (block === null) return false;
-                        return !this.mineableBlockIncludeOrExcludeMap.get(block.name);
-                    } else {
-                        if (block === null) return false;
-                        return !!this.mineableBlockIncludeOrExcludeMap.get(block.name);
-                    }
-                })) {
+                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]), isMineable)) {
                     yield;
 
                     // Go home?
