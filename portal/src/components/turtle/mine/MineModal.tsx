@@ -32,7 +32,11 @@ function MineModal({turtle, action, hideModal, createdArea}: MineModalProps) {
                     serverId,
                     id: turtle.id,
                     area: createdArea.sort((a, b) => {
-                        if (a.x < b.x) {
+                        if (a.y < b.y) {
+                            return -1;
+                        } else if (a.y > b.y) {
+                            return 1;
+                        } else if (a.x < b.x) {
                             return -1;
                         } else if (a.x > b.x) {
                             return 1;
