@@ -8,7 +8,6 @@ function Turtle() {
 
     function setWorldState(worldState: WorldState | null) {
         if (worldRef.current == null) return;
-
         worldRef.current.setState(worldState);
     }
 
@@ -17,10 +16,25 @@ function Turtle() {
         return worldRef.current.getSelectedBlocks();
     }
 
+    function getBuiltBlocks() {
+        if (worldRef.current == null) return [];
+        return worldRef.current.getBuiltBlocks();
+    }
+
+    function setBuildBlockType(type: string) {
+        if (worldRef.current == null) return;
+        worldRef.current.setBuildBlockType(type);
+    }
+
     return (
         <>
             <Turtle3DMap worldRef={worldRef} />
-            <HUD setWorldState={setWorldState} getSelectedBlocks={getSelectedBlocks} />
+            <HUD
+                setWorldState={setWorldState}
+                getSelectedBlocks={getSelectedBlocks}
+                getBuiltBlocks={getBuiltBlocks}
+                setBuildBlockType={setBuildBlockType}
+            />
         </>
     );
 }

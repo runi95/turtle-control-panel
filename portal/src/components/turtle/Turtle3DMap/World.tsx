@@ -10,9 +10,12 @@ import {useWebSocket} from '../../../api/UseWebSocket';
 import Turtle3D from './Turtle3D';
 import OtherTurtles from './OtherTurtles';
 import HomeMarker from './HomeMarker';
+import BuildBlock, {BuildBlockHandle} from './BuildBlock';
+import {Block} from '../../../App';
 
 export enum WorldState {
     MOVE,
+    BUILD,
     SELECT_SINGLE,
     SELECT_CHUNK,
     SELECT_CHUNK_FULL,
@@ -40,6 +43,8 @@ interface Props {
 export type WorldHandle = {
     setState: (state: WorldState | null) => void;
     getSelectedBlocks: () => Location[];
+    getBuiltBlocks: () => Omit<Block, 'state' | 'tags'>[];
+    setBuildBlockType: (type: string) => void;
 };
 
 const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
@@ -52,6 +57,8 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
     const indicatorMeshRef = useRef<InstancedMesh>(null!);
     const indicatorMeshVisibleRef = useRef<boolean>(false);
     const chunkRefs = useRef<SparseBlockHandle[]>([]);
+    const buildBlockRef = useRef<BuildBlockHandle>(null!);
+    const buildBlockTypeRef = useRef<string>('minecraft:cobblestone');
     const selectedBlocks = useRef(new Map<string, Location>());
     const outlineMap = useLoader(TextureLoader, '/outline.png');
     const moveTurtleColorArray = useRef<Float32Array>(Float32Array.from([...new Color('#444').toArray(), 0.5]));
@@ -82,6 +89,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                             indicatorMeshRef.current.geometry.attributes.color.needsUpdate = true;
                             break;
                         case null:
+                            buildBlockRef.current.reset();
                             previousFaceIndex.current = null;
                             indicatorMeshRef.current.visible = false;
                             indicatorMeshVisibleRef.current = false;
@@ -109,6 +117,12 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                 },
                 getSelectedBlocks() {
                     return Array.from(selectedBlocks.current.values());
+                },
+                getBuiltBlocks() {
+                    return buildBlockRef.current.getBuiltBlocks();
+                },
+                setBuildBlockType(type: string) {
+                    buildBlockTypeRef.current = type;
                 },
             };
         },
@@ -226,11 +240,6 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
             {turtle.location != null ? (
                 <group
                     ref={groupRef}
-                    position={[
-                        -mathematicalModulo(turtle.location.x, cellDimensions.x),
-                        -mathematicalModulo(turtle.location.y, cellDimensions.y),
-                        -mathematicalModulo(turtle.location.z, cellDimensions.z),
-                    ]}
                     onPointerMove={(e) => {
                         e.stopPropagation();
                         if (worldStateRef.current == null) return;
@@ -252,6 +261,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
 
                         switch (worldStateRef.current) {
                             case WorldState.MOVE:
+                            case WorldState.BUILD:
                                 vy += 1;
                                 break;
                         }
@@ -292,6 +302,11 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                         z: vz + tz,
                                     },
                                 });
+                                break;
+                            case WorldState.BUILD:
+                                (() => {
+                                    buildBlockRef.current.addBlock(vx, vy + 1, vz, buildBlockTypeRef.current);
+                                })();
                                 break;
                             case WorldState.SELECT_SINGLE:
                                 (() => {
@@ -446,20 +461,29 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         }
                     }}
                 >
-                    {chunks.map((chunk, i) => (
-                        <SparseBlock
-                            ref={(element) => {
-                                if (element != null) {
-                                    chunkRefs.current[i] = element;
-                                }
-                            }}
-                            key={`${chunk.x},${chunk.y},${chunk.z}`}
-                            dimensions={cellDimensions}
-                            chunk={chunk}
-                            geometries={geometries}
-                            atlasMap={atlasMap}
-                        />
-                    ))}
+                    <BuildBlock ref={buildBlockRef} atlasMap={atlasMap} geometries={geometries} />
+                    <group
+                        position={[
+                            -mathematicalModulo(turtle.location.x, cellDimensions.x),
+                            -mathematicalModulo(turtle.location.y, cellDimensions.y),
+                            -mathematicalModulo(turtle.location.z, cellDimensions.z),
+                        ]}
+                    >
+                        {chunks.map((chunk, i) => (
+                            <SparseBlock
+                                ref={(element) => {
+                                    if (element != null) {
+                                        chunkRefs.current[i] = element;
+                                    }
+                                }}
+                                key={`${chunk.x},${chunk.y},${chunk.z}`}
+                                dimensions={cellDimensions}
+                                chunk={chunk}
+                                geometries={geometries}
+                                atlasMap={atlasMap}
+                            />
+                        ))}
+                    </group>
                 </group>
             ) : null}
         </>

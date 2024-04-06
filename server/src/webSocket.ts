@@ -376,10 +376,7 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                 break;
                             case 'build':
                                 turtle.state = new TurtleBuildingState(turtle, {
-                                    area: msg.data.area,
-                                    fromYLevel: msg.data.fromYLevel,
-                                    toYLevel: msg.data.toYLevel,
-                                    buildingBlockName: msg.data.buildingBlock,
+                                    blocks: msg.data.blocks,
                                 });
                                 break;
                             case 'equip':

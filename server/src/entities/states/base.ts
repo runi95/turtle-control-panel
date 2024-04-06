@@ -185,15 +185,6 @@ export abstract class TurtleBaseState<T> {
         let hasPulledItemFromInventories = false;
         for (let slot = 1; slot < 27; slot++) {
             if (count != null && count < 1) return;
-
-            const item = this.turtle.inventory[slot];
-            let countInSlot = 0;
-            if (item) {
-                if (item.name !== itemName) continue;
-                if (item.count === Number(item.maxCount)) continue;
-                countInSlot = item.count;
-            }
-
             const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
                 (acc, [side, {types, data}]) => {
                     if (types.includes('inventory')) {
@@ -216,7 +207,7 @@ export abstract class TurtleBaseState<T> {
                     return false;
                 }
 
-                const itemInInventoryIndex = content?.findIndex(({name}) => name === itemName);
+                const itemInInventoryIndex = content?.findIndex((contentItem) => contentItem?.name === itemName);
                 if (!(itemInInventoryIndex > -1)) return false;
 
                 switch (side) {
@@ -243,7 +234,7 @@ export abstract class TurtleBaseState<T> {
                     continue;
                 }
 
-                const itemInInventoryIndex = content?.findIndex(({name}) => name === itemName);
+                const itemInInventoryIndex = content?.findIndex((contentItem) => contentItem?.name === itemName);
                 if (!(itemInInventoryIndex > -1)) continue;
 
                 switch (side) {
@@ -387,7 +378,11 @@ export abstract class TurtleBaseState<T> {
                             return false;
                         }
 
-                        const containsItem = content?.some(({name}) => name === item?.name);
+                        const containsItem = content?.some((contentItem) => {
+                            if (contentItem == null) return false;
+                            const {name} = contentItem;
+                            return name === item?.name;
+                        });
                         if (!containsItem) return false;
 
                         switch (side) {

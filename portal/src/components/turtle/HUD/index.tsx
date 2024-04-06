@@ -7,13 +7,16 @@ import LocationHUD from './LocationHUD';
 import Peripherals from './Peripherals';
 import ConfigHUD from './ConfigHUD';
 import {WorldState} from '../Turtle3DMap/World';
+import {Block} from '../../../App';
 
 interface Props {
     setWorldState: (worldState: WorldState | null) => void;
     getSelectedBlocks: () => Location[];
+    getBuiltBlocks: () => Omit<Block, 'state' | 'tags'>[];
+    setBuildBlockType: (type: string) => void;
 }
 
-function HUD({setWorldState, getSelectedBlocks}: Props) {
+function HUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBlockType}: Props) {
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const navigate = useNavigate();
     const {data: turtle} = useTurtle(serverId, id);
@@ -139,7 +142,12 @@ function HUD({setWorldState, getSelectedBlocks}: Props) {
                     pointerEvents: 'all',
                 }}
             >
-                <ActionHUD setWorldState={setWorldState} getSelectedBlocks={getSelectedBlocks} />
+                <ActionHUD
+                    setWorldState={setWorldState}
+                    getSelectedBlocks={getSelectedBlocks}
+                    getBuiltBlocks={getBuiltBlocks}
+                    setBuildBlockType={setBuildBlockType}
+                />
             </div>
             {turtle.location == null ? (
                 <div

@@ -1,4 +1,5 @@
-import {Direction, Location} from '../../db/turtle.type';
+import {Block} from '../../db/block.type';
+import {ItemDetail, Location} from '../../db/turtle.type';
 import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
 import {DestinationError, TurtleBaseState} from './base';
@@ -6,10 +7,7 @@ import {TURTLE_STATES} from './helpers';
 
 export interface BuildStateData {
     readonly id: TURTLE_STATES;
-    readonly area: Omit<Location, 'y'>[];
-    readonly fromYLevel: number;
-    readonly toYLevel: number;
-    readonly buildingBlockName: string;
+    readonly blocks: Omit<Block, 'state' | 'tags'>[];
 }
 export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
     public readonly name = 'building';
@@ -17,45 +15,44 @@ export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
     public warning: string | null = null;
 
     private isInOrAdjacentToBuildingArea: boolean = false;
-    private area: Location[];
+    private blocks: Omit<Block, 'state' | 'tags'>[];
     private remainingAreaIndexes: number[] = [];
-    private currentYLayer: number = 0;
+    private remainingBlocksOfType = new Map<string, number>();
+    private currentYLayer: number;
 
     constructor(turtle: Turtle, data: Omit<BuildStateData, 'id'>) {
         super(turtle);
 
         this.data = {
             ...data,
-            id: TURTLE_STATES.BUILDING
+            id: TURTLE_STATES.BUILDING,
         };
 
-        const area: Location[] = [];
-        const {fromYLevel, toYLevel} = this.data;
-        const from = Math.min(fromYLevel, toYLevel);
-        const to = Math.max(fromYLevel, toYLevel);
-        for (let i = from; i <= to; i++) {
-            for (const loc of this.data.area) {
-                area.push({
-                    x: loc.x,
-                    y: i,
-                    z: loc.z,
-                });
+        this.blocks = data.blocks;
+        this.remainingAreaIndexes = Array.from(Array(this.blocks.length).keys());
+        this.currentYLayer = this.blocks.reduce((acc, curr, i) => {
+            if (curr.y < this.blocks[acc].y) {
+                return i;
             }
-        }
-        this.area = area;
-        this.remainingAreaIndexes = Array.from(Array(this.area.length).keys());
+
+            return acc;
+        }, 0);
+
+        this.blocks.forEach((block) => {
+            this.remainingBlocksOfType.set(block.name, (this.remainingBlocksOfType.get(block.name) ?? 0) + 1);
+        });
     }
 
     private checkIfTurtleIsInOrAdjacentToArea(): boolean {
         const {x, y, z} = this.turtle.location as Location;
-        return this.area.some(({x: areaX, y: areaY, z: areaZ}, i) => {
-            if (i > this.currentYLayer) return false;
+        return this.blocks.some(({x: areaX, y: areaY, z: areaZ}, i) => {
+            if (i < this.currentYLayer) return false;
             if (areaX === x && areaY === y && areaZ === z) return true;
             if ((areaX === x + 1 || areaX === x - 1) && areaY === y && areaZ === z) return true;
             if (areaX === x && (areaY === y + 1 || areaY === y - 1) && areaZ === z) return true;
             if (areaX === x && areaY === y && (areaZ === z + 1 || areaZ === z - 1)) return true;
             return false;
-        })
+        });
     }
 
     public async *act() {
@@ -63,22 +60,31 @@ export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
             if (this.turtle.location === null) {
                 throw new Error('Unable to build without knowing turtle location');
             }
-    
+
             if (this.turtle.selectedSlot !== 1) {
                 await this.turtle.select(1); // Ensures proper item stacking
                 yield;
             }
-    
+
             if (this.remainingAreaIndexes.length === 0) {
                 return; // Done!
             }
 
             // Has building material?
-            if (!Object.values(this.turtle.inventory).some((item) => item != null && item.name === this.data.buildingBlockName)) {
+            if (
+                !Object.values(this.turtle.inventory).some((item: ItemDetail) => {
+                    if (item == null) return false;
+                    const remaining = this.remainingBlocksOfType.get(item.name);
+                    if (remaining == null) return false;
+                    return remaining > 0;
+                })
+            ) {
                 // Return home?
                 const home = this.turtle.home;
                 if (home === null) {
-                    throw new Error(`Missing (${this.remainingAreaIndexes.length}) ${this.data.buildingBlockName}`);
+                    throw new Error(
+                        `Missing (${this.remainingAreaIndexes.length}) [${Array.from(this.remainingBlocksOfType.keys()).join(', ')}]`
+                    );
                 }
 
                 try {
@@ -104,27 +110,41 @@ export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
                     yield;
                 }
 
-                // Take item out of inventories
-                for await (const _ of this.pullItemFromNearbyInventories(this.data.buildingBlockName)) {
-                    yield;
+                // Take items out of inventories
+                for (const [itemName, itemCount] of this.remainingBlocksOfType.entries()) {
+                    for await (const _ of this.pullItemFromNearbyInventories(itemName, itemCount)) {
+                        yield;
+                    }
                 }
 
                 // Ensures inventory has updated
                 await this.turtle.sleep(1);
 
                 // Got no new items
-                if (!Object.values(this.turtle.inventory).some((item) => item != null && item.name === this.data.buildingBlockName)) throw new Error(`Missing (${this.remainingAreaIndexes.length}) ${this.data.buildingBlockName}`);
+                if (
+                    !Object.values(this.turtle.inventory).some(
+                        (item) => {
+                            if (item == null) return false;
+                            const remaining = this.remainingBlocksOfType.get(item.name);
+                            if (remaining == null) return false;
+                            return remaining > 0;
+                        }
+                    )
+                )
+                    throw new Error(`Missing (${this.remainingAreaIndexes.length}) [${Array.from(this.remainingBlocksOfType.keys()).join(', ')}]`);
             }
-    
+
             // Get to the building area!
             if (!this.isInOrAdjacentToBuildingArea) {
                 if (this.checkIfTurtleIsInOrAdjacentToArea()) {
                     this.isInOrAdjacentToBuildingArea = true;
                     yield;
                 }
-    
+
                 try {
-                    for await (const _ of this.goToDestinations(this.area.slice(this.currentYLayer, this.currentYLayer + this.data.area.length))) {
+                    for await (const _ of this.goToDestinations(
+                        this.blocks.slice(this.currentYLayer)
+                    )) {
                         yield;
 
                         if (this.checkIfTurtleIsInOrAdjacentToArea()) {
@@ -143,14 +163,32 @@ export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
                     }
                 }
             }
-    
+
             try {
                 // Build!
-                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.filter((i) => i < this.currentYLayer + this.data.area.length).map((i) => ({...this.area[i], y: this.area[i].y + 1})))) {
+                for await (const _ of this.goToDestinations(
+                    this.remainingAreaIndexes
+                        .filter((i) => i > this.currentYLayer)
+                        .map((i) => ({...this.blocks[i], y: this.blocks[i].y + 1}))
+                )) {
                     yield;
                 }
 
-                const itemSlot = Object.values(this.turtle.inventory).findIndex((item) => item != null && item.name === this.data.buildingBlockName);
+                const {x, y, z} = this.turtle.location;
+                const currentAreaIndexBelow = this.remainingAreaIndexes.findIndex(
+                    (i) => this.blocks[i].x === x && this.blocks[i].y === y - 1 && this.blocks[i].z === z
+                );
+                if (!(currentAreaIndexBelow > -1)) {
+                    yield;
+                    continue;
+                }
+
+                const itemSlot = Object.values(this.turtle.inventory).findIndex(
+                    (item) => {
+                        if (item == null) return false;
+                        return this.blocks[currentAreaIndexBelow].name === item.name;
+                    }
+                );
                 if (!(itemSlot > -1)) continue;
 
                 if (itemSlot + 1 !== this.turtle.selectedSlot) {
@@ -158,25 +196,18 @@ export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
                     yield;
                 }
 
-                const {x, y, z} = this.turtle.location;
-                const currentAreaIndexBelow = this.remainingAreaIndexes.findIndex((i) => this.area[i].x === x && this.area[i].y === y - 1 && this.area[i].z === z);
-                if (!(currentAreaIndexBelow > -1)) {
-                    yield;
-                    continue;
-                }
-
                 await this.turtle.placeDown();
                 this.remainingAreaIndexes.splice(currentAreaIndexBelow, 1);
-                if (!this.remainingAreaIndexes.some((i) => i < this.currentYLayer + this.data.area.length)) {
-                    this.currentYLayer++;
+                if (!this.remainingAreaIndexes.some((i) => i > this.currentYLayer)) {
+                    this.currentYLayer--;
                 }
 
                 yield;
             } catch (err) {
-                if (err instanceof DestinationError && (err.message === 'Movement obstructed')) {
+                if (err instanceof DestinationError && err.message === 'Movement obstructed') {
                     yield;
                     continue;
-                } else if (typeof err === "string") {
+                } else if (typeof err === 'string') {
                     throw new Error(err);
                 } else {
                     throw err;

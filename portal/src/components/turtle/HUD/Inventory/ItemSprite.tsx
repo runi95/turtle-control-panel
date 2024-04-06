@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import SpriteTable from '../../../../SpriteTable';
 
 export interface ItemSpriteProps {
-    slot: number;
+    slot?: number;
     name: string;
 }
 
