@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unknown-property */
 import {Suspense, forwardRef, useImperativeHandle, useMemo, useRef} from 'react';
-import {Color, InstancedMesh, Matrix4, TextureLoader, PlaneGeometry, Vector3, Group} from 'three';
+import {Color, InstancedMesh, Matrix4, TextureLoader, PlaneGeometry, Vector3, Group, Mesh} from 'three';
 import {useAtlasMap} from './TextureAtlas';
 import SparseBlock, {SparseBlockHandle} from './SparseBlock';
 import {Direction, Location, useTurtle} from '../../../api/UseTurtle';
@@ -247,7 +247,8 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         if (!(e.intersections.length > 0)) return;
 
                         const intersection = e.intersections[0];
-                        if (intersection.faceIndex === previousFaceIndex.current) return;
+                        if (intersection.faceIndex == null) return;
+                        // if (intersection.faceIndex === previousFaceIndex.current) return;
                         if (previousFaceIndex.current === null) {
                             indicatorMeshRef.current.visible = true;
                             indicatorMeshVisibleRef.current = true;
@@ -255,19 +256,58 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
 
                         previousFaceIndex.current = intersection.faceIndex ?? null;
 
-                        const {x, y, z} = intersection.point;
-                        const vx = Math.ceil(x - 0.5);
-                        let vy = Math.ceil(y - 0.5);
-                        const vz = Math.ceil(z - 0.5);
+                        const locationIndex = (intersection.object as Mesh).geometry.attributes.locationIndex.array[
+                            intersection.faceIndex
+                        ];
+                        let x = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex];
+                        let y = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex + 1];
+                        let z = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex + 2];
 
                         switch (worldStateRef.current) {
                             case WorldState.MOVE:
                             case WorldState.BUILD:
-                                vy += 1;
+                                (() => {
+                                    if (intersection.face == null) return;
+                                    const absX = Math.abs(intersection.face.normal.x);
+                                    const absY = Math.abs(intersection.face.normal.y);
+                                    const absZ = Math.abs(intersection.face.normal.z);
+
+                                    if (absX > absZ && absX > absZ) {
+                                        if (intersection.face.normal.x > 0) {
+                                            x++;
+                                        } else {
+                                            x--;
+                                        }
+                                    } else if (absZ > absX && absZ > absY) {
+                                        if (intersection.face.normal.z > 0) {
+                                            z++;
+                                        } else {
+                                            z--;
+                                        }
+                                    } else {
+                                        if (intersection.face.normal.y > 0) {
+                                            y++;
+                                        } else {
+                                            y--;
+                                        }
+                                    }
+                                })();
                                 break;
                         }
 
-                        tempMatrix.setPosition(tempVector.set(vx, vy, vz));
+                        if ((intersection.object as Mesh).userData?.isBlocks !== true) {
+                            x +=
+                                (intersection.object as Mesh).position.x -
+                                mathematicalModulo(turtle.location.x, cellDimensions.x);
+                            y +=
+                                (intersection.object as Mesh).position.y -
+                                mathematicalModulo(turtle.location.y, cellDimensions.y);
+                            z +=
+                                (intersection.object as Mesh).position.z -
+                                mathematicalModulo(turtle.location.z, cellDimensions.z);
+                        }
+
+                        tempMatrix.setPosition(tempVector.set(x, y, z));
                         indicatorMeshRef.current.setMatrixAt(0, tempMatrix);
                         indicatorMeshRef.current.instanceMatrix.needsUpdate = true;
                     }}
@@ -284,12 +324,60 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         if (!turtle) return;
 
                         const intersection = e.intersections[0];
-                        const {x, y, z} = intersection.point;
-                        const vx = Math.ceil(x - 0.5);
-                        const vy = Math.ceil(y - 0.5);
-                        const vz = Math.ceil(z - 0.5);
-                        const {x: tx, y: ty, z: tz} = turtle.location;
+                        if (intersection.faceIndex == null) return;
 
+                        const locationIndex = (intersection.object as Mesh).geometry.attributes.locationIndex.array[
+                            intersection.faceIndex
+                        ];
+                        let x = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex];
+                        let y = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex + 1];
+                        let z = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex + 2];
+
+                        switch (worldStateRef.current) {
+                            case WorldState.MOVE:
+                            case WorldState.BUILD:
+                                (() => {
+                                    if (intersection.face == null) return;
+                                    const absX = Math.abs(intersection.face.normal.x);
+                                    const absY = Math.abs(intersection.face.normal.y);
+                                    const absZ = Math.abs(intersection.face.normal.z);
+
+                                    if (absX > absZ && absX > absZ) {
+                                        if (intersection.face.normal.x > 0) {
+                                            x++;
+                                        } else {
+                                            x--;
+                                        }
+                                    } else if (absZ > absX && absZ > absY) {
+                                        if (intersection.face.normal.z > 0) {
+                                            z++;
+                                        } else {
+                                            z--;
+                                        }
+                                    } else {
+                                        if (intersection.face.normal.y > 0) {
+                                            y++;
+                                        } else {
+                                            y--;
+                                        }
+                                    }
+                                })();
+                                break;
+                        }
+
+                        if ((intersection.object as Mesh).userData?.isBlocks !== true) {
+                            x +=
+                                (intersection.object as Mesh).position.x -
+                                mathematicalModulo(turtle.location.x, cellDimensions.x);
+                            y +=
+                                (intersection.object as Mesh).position.y -
+                                mathematicalModulo(turtle.location.y, cellDimensions.y);
+                            z +=
+                                (intersection.object as Mesh).position.z -
+                                mathematicalModulo(turtle.location.z, cellDimensions.z);
+                        }
+
+                        const {x: tx, y: ty, z: tz} = turtle.location;
                         switch (worldStateRef.current) {
                             case WorldState.MOVE:
                                 action({
@@ -298,30 +386,30 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                     data: {
                                         serverId: turtle.serverId,
                                         id: turtle.id,
-                                        x: vx + tx,
-                                        y: vy + ty + 1,
-                                        z: vz + tz,
+                                        x: x + tx,
+                                        y: y + ty,
+                                        z: z + tz,
                                     },
                                 });
                                 break;
                             case WorldState.BUILD:
                                 (() => {
-                                    buildBlockRef.current.addBlock(vx, vy + 1, vz, buildBlockTypeRef.current);
+                                    buildBlockRef.current.addBlock(x, y, z, buildBlockTypeRef.current);
                                 })();
                                 break;
                             case WorldState.SELECT_SINGLE:
                                 (() => {
-                                    const chunkX = Math.floor((vx + tx) / cellDimensions.x);
-                                    const chunkY = Math.floor((vy + ty) / cellDimensions.y);
-                                    const chunkZ = Math.floor((vz + tz) / cellDimensions.z);
+                                    const chunkX = Math.floor((x + tx) / cellDimensions.x);
+                                    const chunkY = Math.floor((y + ty) / cellDimensions.y);
+                                    const chunkZ = Math.floor((z + tz) / cellDimensions.z);
                                     const chunkIndex = chunks.findIndex(
                                         (chunk) => chunk.x === chunkX && chunk.y === chunkY && chunk.z === chunkZ
                                     );
                                     if (chunkIndex === -1) return;
 
-                                    const kx = vx + tx;
-                                    const ky = vy + ty;
-                                    const kz = vz + tz;
+                                    const kx = x + tx;
+                                    const ky = y + ty;
+                                    const kz = z + tz;
                                     const key = `${kx},${ky},${kz}`;
                                     const selectedBlock = selectedBlocks.current.get(key);
                                     if (selectedBlock == null) {
@@ -345,17 +433,17 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                 break;
                             case WorldState.SELECT_CHUNK:
                                 (() => {
-                                    const chunkX = Math.floor((vx + tx) / cellDimensions.x);
-                                    const chunkY = Math.floor((vy + ty) / cellDimensions.y);
-                                    const chunkZ = Math.floor((vz + tz) / cellDimensions.z);
+                                    const chunkX = Math.floor((x + tx) / cellDimensions.x);
+                                    const chunkY = Math.floor((y + ty) / cellDimensions.y);
+                                    const chunkZ = Math.floor((z + tz) / cellDimensions.z);
                                     const chunkIndex = chunks.findIndex(
                                         (chunk) => chunk.x === chunkX && chunk.y === chunkY && chunk.z === chunkZ
                                     );
                                     if (chunkIndex === -1) return;
 
-                                    const kx = vx + tx;
-                                    const ky = vy + ty;
-                                    const kz = vz + tz;
+                                    const kx = x + tx;
+                                    const ky = y + ty;
+                                    const kz = z + tz;
                                     const key = `${kx},${ky},${kz}`;
                                     const selectedBlock = selectedBlocks.current.get(key);
                                     if (selectedBlock == null) {
@@ -400,16 +488,16 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                 break;
                             case WorldState.SELECT_CHUNK_FULL:
                                 (() => {
-                                    const chunkX = Math.floor((vx + tx) / cellDimensions.x);
-                                    const chunkZ = Math.floor((vz + tz) / cellDimensions.z);
+                                    const chunkX = Math.floor((x + tx) / cellDimensions.x);
+                                    const chunkZ = Math.floor((z + tz) / cellDimensions.z);
                                     const filteredChunks = chunks
                                         .map((chunk, i) => ({chunk, i}))
                                         .filter(({chunk}) => chunk.x === chunkX && chunk.z === chunkZ);
                                     if (filteredChunks == null || filteredChunks.length === 0) return;
 
-                                    const kx = vx + tx;
-                                    const ky = vy + ty;
-                                    const kz = vz + tz;
+                                    const kx = x + tx;
+                                    const ky = y + ty;
+                                    const kz = z + tz;
                                     const key = `${kx},${ky},${kz}`;
                                     const selectedBlock = selectedBlocks.current.get(key);
                                     if (selectedBlock == null) {

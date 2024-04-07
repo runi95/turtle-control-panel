@@ -73,6 +73,8 @@ interface CellMesh {
     normals: Float32Array;
     colors: Float32Array;
     indices: Uint32Array;
+    locationIndices: Uint32Array;
+    locations: Float32Array;
 }
 
 const BuildMeshDataFromVoxels = (
@@ -90,6 +92,8 @@ const BuildMeshDataFromVoxels = (
         normals: number[];
         colors: number[];
         indices: number[];
+        locationIndices: number[];
+        locations: number[];
     } = {
         positions: [],
         uvs: [],
@@ -97,6 +101,8 @@ const BuildMeshDataFromVoxels = (
         normals: [],
         colors: [],
         indices: [],
+        locationIndices: [],
+        locations: [],
     };
 
     const color = new Color('#4287f5');
@@ -104,6 +110,7 @@ const BuildMeshDataFromVoxels = (
 
     const unknown = atlasMap.textures['unknown'];
     let index = 0;
+    let locationIndex = 0;
     for (const block of blocks.values()) {
         const atlasMapTexture = atlasMap.textures[blockNameOverride(block.name)];
         if (atlasMapTexture == null) {
@@ -117,20 +124,16 @@ const BuildMeshDataFromVoxels = (
             continue;
         }
 
+        mesh.locations.push(block.x, block.y, block.z);
+
         const indexes = [];
         for (let i = 0; i < blockFaces.length; i++) {
             const blockFace = blockFaces[i];
             const bi = mesh.positions.length / 3;
             const localPositions = [...blockFace.face];
-            for (let v = 0; v < 4; ++v) {
+            for (let v = 0; v < 4; v++) {
                 localPositions[v * 3] += block.x;
-            }
-
-            for (let v = 0; v < 4; ++v) {
                 localPositions[v * 3 + 1] += block.y;
-            }
-
-            for (let v = 0; v < 4; ++v) {
                 localPositions[v * 3 + 2] += block.z;
             }
 
@@ -154,18 +157,24 @@ const BuildMeshDataFromVoxels = (
                 }
             })();
 
-            for (let v = 0; v < 4; ++v) {
+            for (let v = 0; v < 4; v++) {
                 mesh.uvSlices.push(textureOverrides[blockTexture]);
                 mesh.colors.push(color.r, color.g, color.b);
             }
 
+            for (let v = 0; v < 2; v++) {
+                mesh.locationIndices.push(locationIndex);
+            }
+
             const localIndices = [0, 2, 1, 2, 3, 1];
-            for (let j = 0; j < localIndices.length; ++j) {
+            for (let j = 0; j < localIndices.length; j++) {
                 localIndices[j] += bi;
             }
             mesh.indices.push(...localIndices);
             indexes.push(index++);
         }
+
+        locationIndex++;
     }
 
     const bytesInFloat32 = 4;
@@ -177,6 +186,8 @@ const BuildMeshDataFromVoxels = (
     const normals = new Float32Array(new ArrayBuffer(bytesInFloat32 * mesh.normals.length));
     const colors = new Float32Array(new ArrayBuffer(bytesInFloat32 * mesh.colors.length));
     const indices = new Uint32Array(new ArrayBuffer(bytesInInt32 * mesh.indices.length));
+    const locationIndices = new Uint32Array(new ArrayBuffer(bytesInInt32 * mesh.locationIndices.length));
+    const locations = new Float32Array(new ArrayBuffer(bytesInFloat32 * mesh.locations.length));
 
     positions.set(mesh.positions, 0);
     normals.set(mesh.normals, 0);
@@ -184,6 +195,8 @@ const BuildMeshDataFromVoxels = (
     uvSlices.set(mesh.uvSlices, 0);
     colors.set(mesh.colors, 0);
     indices.set(mesh.indices, 0);
+    locationIndices.set(mesh.locationIndices, 0);
+    locations.set(mesh.locations, 0);
 
     return {
         positions,
@@ -192,6 +205,8 @@ const BuildMeshDataFromVoxels = (
         normals,
         colors,
         indices,
+        locationIndices,
+        locations,
     };
 };
 
@@ -322,6 +337,8 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geo
                     geometry.current.setAttribute('uv', new Float32BufferAttribute(build.uvs, 2));
                     geometry.current.setAttribute('uvSlice', new Float32BufferAttribute(build.uvSlices, 1));
                     geometry.current.setAttribute('color', new Float32BufferAttribute(build.colors, 3));
+                    geometry.current.setAttribute('locationIndex', new BufferAttribute(build.locationIndices, 1));
+                    geometry.current.setAttribute('location', new Float32BufferAttribute(build.locations, 3));
                     geometry.current.setIndex(new BufferAttribute(build.indices, 1));
 
                     geometry.current.attributes.position.needsUpdate = true;
@@ -361,7 +378,16 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geo
         [atlas]
     );
 
-    return <mesh ref={meshRef} args={[geometry.current, shaderMaterial]} receiveShadow />;
+    return (
+        <mesh
+            ref={meshRef}
+            args={[geometry.current, shaderMaterial]}
+            receiveShadow
+            userData={{
+                isBlocks: true,
+            }}
+        />
+    );
 });
 
 export default BuildBlock;
