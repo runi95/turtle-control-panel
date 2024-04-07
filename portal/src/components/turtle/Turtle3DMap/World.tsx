@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unknown-property */
-import {Suspense, forwardRef, useImperativeHandle, useMemo, useRef} from 'react';
+import {Suspense, forwardRef, useEffect, useImperativeHandle, useMemo, useRef} from 'react';
 import {Color, InstancedMesh, Matrix4, TextureLoader, PlaneGeometry, Vector3, Group, Mesh} from 'three';
 import {useAtlasMap} from './TextureAtlas';
 import SparseBlock, {SparseBlockHandle} from './SparseBlock';
@@ -63,6 +63,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
     const outlineMap = useLoader(TextureLoader, '/outline.png');
     const moveTurtleColorArray = useRef<Float32Array>(Float32Array.from([...new Color('#444').toArray(), 0.5]));
     const previousFaceIndex = useRef<number | null>(null);
+    const turtleRotationRef = useRef<Direction | null>(null);
     const tempMatrix = useMemo(() => new Matrix4(), []);
     const tempColor = useMemo(() => new Color(), []);
     const tempVector = useMemo(() => new Vector3(), []);
@@ -198,6 +199,10 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
         return [pxGeometry, nxGeometry, pyGeometry, nyGeometry, pzGeometry, nzGeometry];
     }, []);
 
+    useEffect(() => {
+        turtleRotationRef.current = turtle?.direction ?? null;
+    }, [turtle?.direction]);
+
     if (atlasMap == null) return null;
     if (turtle == null) return null;
 
@@ -222,9 +227,6 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                     <HomeMarker position={[home.x - location.x, home.y - location.y + 0.2, home.z - location.z]} />
                 </Suspense>
             ) : null}
-            <group rotation={[0, turtleRotation, 0]}>
-                <Turtle3D atlasMap={atlasMap} name={turtle.name} />
-            </group>
             <OtherTurtles />
             <instancedMesh
                 ref={indicatorMeshRef}
@@ -272,30 +274,107 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                     const absY = Math.abs(intersection.face.normal.y);
                                     const absZ = Math.abs(intersection.face.normal.z);
 
-                                    if (absX > absZ && absX > absZ) {
-                                        if (intersection.face.normal.x > 0) {
-                                            x++;
+                                    if ((intersection.object as Mesh).userData?.isTurtle === true) {
+                                        if (absX > absZ && absX > absZ) {
+                                            if (intersection.face.normal.x > 0) {
+                                                switch (turtleRotationRef.current) {
+                                                    case Direction.East:
+                                                        z++;
+                                                        break;
+                                                    case Direction.South:
+                                                        x--;
+                                                        break;
+                                                    case Direction.West:
+                                                        z--;
+                                                        break;
+                                                    default:
+                                                        x++;
+                                                        break;
+                                                }
+                                            } else {
+                                                switch (turtleRotationRef.current) {
+                                                    case Direction.East:
+                                                        z--;
+                                                        break;
+                                                    case Direction.South:
+                                                        x++;
+                                                        break;
+                                                    case Direction.West:
+                                                        z++;
+                                                        break;
+                                                    default:
+                                                        x--;
+                                                        break;
+                                                }
+                                            }
+                                        } else if (absZ > absX && absZ > absY) {
+                                            if (intersection.face.normal.z > 0) {
+                                                switch (turtleRotationRef.current) {
+                                                    case Direction.East:
+                                                        x--;
+                                                        break;
+                                                    case Direction.South:
+                                                        z--;
+                                                        break;
+                                                    case Direction.West:
+                                                        x++;
+                                                        break;
+                                                    default:
+                                                        z++;
+                                                        break;
+                                                }
+                                            } else {
+                                                switch (turtleRotationRef.current) {
+                                                    case Direction.East:
+                                                        x++;
+                                                        break;
+                                                    case Direction.South:
+                                                        z++;
+                                                        break;
+                                                    case Direction.West:
+                                                        x--;
+                                                        break;
+                                                    default:
+                                                        z--;
+                                                        break;
+                                                }
+                                            }
                                         } else {
-                                            x--;
-                                        }
-                                    } else if (absZ > absX && absZ > absY) {
-                                        if (intersection.face.normal.z > 0) {
-                                            z++;
-                                        } else {
-                                            z--;
+                                            if (intersection.face.normal.y > 0) {
+                                                y++;
+                                            } else {
+                                                y--;
+                                            }
                                         }
                                     } else {
-                                        if (intersection.face.normal.y > 0) {
-                                            y++;
+                                        if (absX > absZ && absX > absZ) {
+                                            if (intersection.face.normal.x > 0) {
+                                                x++;
+                                            } else {
+                                                x--;
+                                            }
+                                        } else if (absZ > absX && absZ > absY) {
+                                            if (intersection.face.normal.z > 0) {
+                                                z++;
+                                            } else {
+                                                z--;
+                                            }
                                         } else {
-                                            y--;
+                                            if (intersection.face.normal.y > 0) {
+                                                y++;
+                                            } else {
+                                                y--;
+                                            }
                                         }
                                     }
                                 })();
                                 break;
                         }
 
-                        if ((intersection.object as Mesh).userData?.isBlocks !== true) {
+                        if (
+                            (intersection.object as Mesh).userData?.isBlocks !== true &&
+                            (intersection.object as Mesh).userData?.isTurtle !== true
+                        ) {
                             x +=
                                 (intersection.object as Mesh).position.x -
                                 mathematicalModulo(turtle.location.x, cellDimensions.x);
@@ -342,30 +421,107 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                     const absY = Math.abs(intersection.face.normal.y);
                                     const absZ = Math.abs(intersection.face.normal.z);
 
-                                    if (absX > absZ && absX > absZ) {
-                                        if (intersection.face.normal.x > 0) {
-                                            x++;
+                                    if ((intersection.object as Mesh).userData?.isTurtle === true) {
+                                        if (absX > absZ && absX > absZ) {
+                                            if (intersection.face.normal.x > 0) {
+                                                switch (turtleRotationRef.current) {
+                                                    case Direction.East:
+                                                        z++;
+                                                        break;
+                                                    case Direction.South:
+                                                        x--;
+                                                        break;
+                                                    case Direction.West:
+                                                        z--;
+                                                        break;
+                                                    default:
+                                                        x++;
+                                                        break;
+                                                }
+                                            } else {
+                                                switch (turtleRotationRef.current) {
+                                                    case Direction.East:
+                                                        z--;
+                                                        break;
+                                                    case Direction.South:
+                                                        x++;
+                                                        break;
+                                                    case Direction.West:
+                                                        z++;
+                                                        break;
+                                                    default:
+                                                        x--;
+                                                        break;
+                                                }
+                                            }
+                                        } else if (absZ > absX && absZ > absY) {
+                                            if (intersection.face.normal.z > 0) {
+                                                switch (turtleRotationRef.current) {
+                                                    case Direction.East:
+                                                        x--;
+                                                        break;
+                                                    case Direction.South:
+                                                        z--;
+                                                        break;
+                                                    case Direction.West:
+                                                        x++;
+                                                        break;
+                                                    default:
+                                                        z++;
+                                                        break;
+                                                }
+                                            } else {
+                                                switch (turtleRotationRef.current) {
+                                                    case Direction.East:
+                                                        x++;
+                                                        break;
+                                                    case Direction.South:
+                                                        z++;
+                                                        break;
+                                                    case Direction.West:
+                                                        x--;
+                                                        break;
+                                                    default:
+                                                        z--;
+                                                        break;
+                                                }
+                                            }
                                         } else {
-                                            x--;
-                                        }
-                                    } else if (absZ > absX && absZ > absY) {
-                                        if (intersection.face.normal.z > 0) {
-                                            z++;
-                                        } else {
-                                            z--;
+                                            if (intersection.face.normal.y > 0) {
+                                                y++;
+                                            } else {
+                                                y--;
+                                            }
                                         }
                                     } else {
-                                        if (intersection.face.normal.y > 0) {
-                                            y++;
+                                        if (absX > absZ && absX > absZ) {
+                                            if (intersection.face.normal.x > 0) {
+                                                x++;
+                                            } else {
+                                                x--;
+                                            }
+                                        } else if (absZ > absX && absZ > absY) {
+                                            if (intersection.face.normal.z > 0) {
+                                                z++;
+                                            } else {
+                                                z--;
+                                            }
                                         } else {
-                                            y--;
+                                            if (intersection.face.normal.y > 0) {
+                                                y++;
+                                            } else {
+                                                y--;
+                                            }
                                         }
                                     }
                                 })();
                                 break;
                         }
 
-                        if ((intersection.object as Mesh).userData?.isBlocks !== true) {
+                        if (
+                            (intersection.object as Mesh).userData?.isBlocks !== true &&
+                            (intersection.object as Mesh).userData?.isTurtle !== true
+                        ) {
                             x +=
                                 (intersection.object as Mesh).position.x -
                                 mathematicalModulo(turtle.location.x, cellDimensions.x);
@@ -550,6 +706,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         }
                     }}
                 >
+                    <Turtle3D atlasMap={atlasMap} name={turtle.name} rotation={[0, turtleRotation, 0]} />
                     <BuildBlock ref={buildBlockRef} atlasMap={atlasMap} geometries={geometries} />
                     <group
                         position={[

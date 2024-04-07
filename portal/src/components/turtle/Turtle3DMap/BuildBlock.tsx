@@ -385,6 +385,7 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geo
             receiveShadow
             userData={{
                 isBlocks: true,
+                isTurtle: false,
             }}
         />
     );

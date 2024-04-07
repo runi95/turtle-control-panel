@@ -476,6 +476,7 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(pr
             position={[offsetX, offsetY, offsetZ]}
             userData={{
                 isBlocks: false,
+                isTurtle: false,
             }}
         />
     );

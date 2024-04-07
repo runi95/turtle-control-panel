@@ -13,6 +13,7 @@ import {useMemo} from 'react';
 import {fragmentShader, vertexShader} from './CustomShader';
 import {AtlasMap, useAtlas} from './TextureAtlas';
 import TurtleNameTag from './TurtleNameTag';
+import {MeshProps} from '@react-three/fiber';
 
 type Props = {
     name: string;
@@ -21,7 +22,7 @@ type Props = {
 
 const turtleTextureName = 'computercraft:turtle_advanced';
 
-function Turtle3D({name, atlasMap}: Props) {
+function Turtle3D({name, atlasMap, ...meshProps}: Props & MeshProps) {
     const {data: atlas} = useAtlas();
     const minimizedAtlas = useMemo(() => {
         if (atlas == null) return null;
@@ -101,15 +102,35 @@ function Turtle3D({name, atlasMap}: Props) {
         );
     }, []);
 
+    const locationIndices = useMemo(() => {
+        return new Uint32Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    }, []);
+
+    const locations = useMemo(() => {
+        return new Float32Array([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ]);
+    }, []);
+
     if (atlas == null) return null;
     return (
         <>
             <TurtleNameTag text={name} position={[0, 1, 0]} />
-            <mesh receiveShadow>
+            <mesh
+                {...meshProps}
+                receiveShadow
+                userData={{
+                    isBlocks: false,
+                    isTurtle: true,
+                }}
+            >
                 <bufferGeometry>
                     <float32BufferAttribute attach='attributes-position' args={[positions, 3]} />
                     <float32BufferAttribute attach='attributes-uv' args={[uvs, 2]} />
                     <float32BufferAttribute attach='attributes-uvSlice' args={[uvSlices, 1]} />
+                    <float32BufferAttribute attach='attributes-locationIndex' args={[locationIndices, 1]} />
+                    <float32BufferAttribute attach='attributes-location' args={[locations, 3]} />
                     <bufferAttribute attach='index' args={[indicies, 1]} />
                 </bufferGeometry>
                 <shaderMaterial
