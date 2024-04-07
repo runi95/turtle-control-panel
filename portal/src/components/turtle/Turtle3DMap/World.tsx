@@ -256,9 +256,9 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
 
                         previousFaceIndex.current = intersection.faceIndex ?? null;
 
-                        const locationIndex = (intersection.object as Mesh).geometry.attributes.locationIndex.array[
-                            intersection.faceIndex
-                        ];
+                        const locationIndex = (intersection.object as Mesh)?.geometry?.attributes.locationIndex
+                            ?.array?.[intersection.faceIndex];
+                        if (locationIndex == null) return;
                         let x = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex];
                         let y = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex + 1];
                         let z = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex + 2];
@@ -326,9 +326,9 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         const intersection = e.intersections[0];
                         if (intersection.faceIndex == null) return;
 
-                        const locationIndex = (intersection.object as Mesh).geometry.attributes.locationIndex.array[
-                            intersection.faceIndex
-                        ];
+                        const locationIndex = (intersection.object as Mesh)?.geometry?.attributes?.locationIndex
+                            ?.array?.[intersection.faceIndex];
+                        if (locationIndex == null) return;
                         let x = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex];
                         let y = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex + 1];
                         let z = (intersection.object as Mesh).geometry.attributes.location.array[3 * locationIndex + 2];
