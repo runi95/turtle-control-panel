@@ -81,6 +81,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                             moveTurtleColorArray.current[3] = 0.5;
                             indicatorMeshRef.current.geometry.attributes.color.needsUpdate = true;
                             break;
+                        case WorldState.BUILD:
                         case WorldState.SELECT_SINGLE:
                         case WorldState.SELECT_CHUNK:
                         case WorldState.SELECT_CHUNK_FULL:
