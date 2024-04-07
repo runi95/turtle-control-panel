@@ -32,6 +32,19 @@ npm run build
 npm start
 ```
 
+Or optionally run as dev
+
+```sh
+# Change the working directory
+cd server
+
+# Install dependencies
+npm install
+
+# Start the server in development mode
+npm run dev
+```
+
 #### Environment variables (all optional)
 
 - `WSS_PORT` - Port for the WebSocket server used by the portal  (defaults to 6868) 
