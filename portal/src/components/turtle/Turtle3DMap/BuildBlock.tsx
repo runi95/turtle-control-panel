@@ -336,6 +336,22 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geo
                     uniqueBlocks.current.clear();
                     blocks.current.clear();
                     meshRef.current.visible = false;
+
+                    geometry.current.setAttribute('position', new Float32BufferAttribute([], 3));
+                    geometry.current.setAttribute('normal', new Float32BufferAttribute([], 3));
+                    geometry.current.setAttribute('uv', new Float32BufferAttribute([], 2));
+                    geometry.current.setAttribute('uvSlice', new Float32BufferAttribute([], 1));
+                    geometry.current.setAttribute('color', new Float32BufferAttribute([], 3));
+                    geometry.current.setAttribute('locationIndex', new BufferAttribute(new Uint32Array(), 1));
+                    geometry.current.setAttribute('location', new Float32BufferAttribute([], 3));
+                    geometry.current.setIndex(new BufferAttribute(new Uint32Array(), 1));
+
+                    geometry.current.attributes.position.needsUpdate = true;
+                    geometry.current.attributes.normal.needsUpdate = true;
+                    geometry.current.attributes.color.needsUpdate = true;
+
+                    geometry.current.computeBoundingBox();
+                    geometry.current.computeBoundingSphere();
                 },
                 getBuiltBlocks: () => {
                     return Array.from(blocks.current.values());
