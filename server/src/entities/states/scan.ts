@@ -87,6 +87,7 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
         globalEventEmitter.emit('wupdate', {
             serverId: this.turtle.serverId,
             blocks,
+            deletedBlocks,
         });
     }
 }
