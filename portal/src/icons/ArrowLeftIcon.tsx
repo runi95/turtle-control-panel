@@ -4,7 +4,7 @@ interface Props {
     color?: string;
 }
 
-function ArrowLeft({height = 48, width = 48, color = 'black'}: Props) {
+function ArrowLeftIcon({height = 48, width = 48, color = 'black'}: Props) {
     return (
         <svg
             version='1.0'
@@ -26,4 +26,4 @@ function ArrowLeft({height = 48, width = 48, color = 'black'}: Props) {
     );
 }
 
-export default ArrowLeft;
+export default ArrowLeftIcon;
