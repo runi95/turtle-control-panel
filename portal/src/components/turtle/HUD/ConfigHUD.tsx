@@ -21,7 +21,7 @@ function ConfigHUD() {
             </Modal>
             <div
                 style={{
-                    marginTop: 20,
+                    marginTop: 14,
                     marginRight: 10,
                     cursor: 'pointer',
                 }}

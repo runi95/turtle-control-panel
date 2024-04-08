@@ -99,7 +99,7 @@ function HUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBlockTyp
             >
                 <div
                     style={{
-                        margin: '20px auto 55px 10px',
+                        margin: '14px auto 55px 10px',
                         cursor: 'pointer',
                         pointerEvents: 'all',
                     }}
