@@ -275,6 +275,26 @@ function ActionHUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBl
                     </Container>
                 </>
             );
+        case HUDControlState.MOVE:
+            return (
+                <Container>
+                    <OverlayTrigger placement='top' overlay={<FixedTooltip data-bs-theme='light'>Cancel</FixedTooltip>}>
+                        <ActionButtonContainer onClick={() => setHudWorldState(null)}>
+                            <StopIcon color='#202020' />
+                        </ActionButtonContainer>
+                    </OverlayTrigger>
+                    <OverlayTrigger
+                        placement='top'
+                        overlay={<FixedTooltip data-bs-theme='light'>Return home</FixedTooltip>}
+                    >
+                        <ActionButtonContainer
+                            onClick={() => action({type: 'ACTION', action: 'go-home', data: {serverId, id}})}
+                        >
+                            <HomeIcon color='#202020' />
+                        </ActionButtonContainer>
+                    </OverlayTrigger>
+                </Container>
+            );
     }
 
     return (
@@ -334,33 +354,17 @@ function ActionHUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBl
                         <RefuelIcon color='#202020' />
                     </ActionButtonContainer>
                 </OverlayTrigger>
-                <OverlayTrigger
-                    placement='top'
-                    overlay={<FixedTooltip data-bs-theme='light'>Return home</FixedTooltip>}
-                >
-                    <ActionButtonContainer
-                        onClick={() => action({type: 'ACTION', action: 'go-home', data: {serverId, id}})}
-                    >
-                        <HomeIcon color='#202020' />
-                    </ActionButtonContainer>
-                </OverlayTrigger>
                 <OverlayTrigger placement='top' overlay={<FixedTooltip data-bs-theme='light'>Move</FixedTooltip>}>
-                    {hudWorldState?.control === HUDControlState.MOVE ? (
-                        <ActionButtonContainer onClick={() => setHudWorldState(null)}>
-                            <StopIcon color='#202020' />
-                        </ActionButtonContainer>
-                    ) : (
-                        <ActionButtonContainer
-                            onClick={() =>
-                                setHudWorldState({
-                                    control: HUDControlState.MOVE,
-                                    selection: WorldState.MOVE,
-                                })
-                            }
-                        >
-                            <BootsIcon color='#202020' />
-                        </ActionButtonContainer>
-                    )}
+                    <ActionButtonContainer
+                        onClick={() =>
+                            setHudWorldState({
+                                control: HUDControlState.MOVE,
+                                selection: WorldState.MOVE,
+                            })
+                        }
+                    >
+                        <BootsIcon color='#202020' />
+                    </ActionButtonContainer>
                 </OverlayTrigger>
             </Container>
         </>
