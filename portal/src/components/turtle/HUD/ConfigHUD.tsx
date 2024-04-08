@@ -4,6 +4,7 @@ import {useTurtle} from '../../../api/UseTurtle';
 import {useState} from 'react';
 import {useWebSocket} from '../../../api/UseWebSocket';
 import {useParams} from 'react-router-dom';
+import CogIcon from '../../../icons/CogIcon';
 
 function ConfigHUD() {
     const {serverId, id} = useParams() as {serverId: string; id: string};
@@ -20,7 +21,7 @@ function ConfigHUD() {
             </Modal>
             <div
                 style={{
-                    marginTop: 5,
+                    marginTop: 20,
                     marginRight: 10,
                     cursor: 'pointer',
                 }}
@@ -28,16 +29,7 @@ function ConfigHUD() {
                     setIsModalShown(true);
                 }}
             >
-                <b
-                    style={{
-                        fontSize: '2rem',
-                        color: '#c6c6c6',
-                        textShadow:
-                            '1px 0 black, -1px 0 black, 0 1px black, 0 -1px black, 1px 1px black, -1px -1px black, 1px -1px black, -1px 1px black',
-                    }}
-                >
-                    ⛭
-                </b>
+                <CogIcon color='#c6c6c6' height={32} width={32} />
             </div>
         </>
     );
