@@ -8,6 +8,7 @@ import Peripherals from './Peripherals';
 import ConfigHUD from './ConfigHUD';
 import {WorldState} from '../Turtle3DMap/World';
 import {Block} from '../../../App';
+import ArrowLeft from '../../../icons/ArrowLeft';
 
 interface Props {
     setWorldState: (worldState: WorldState | null) => void;
@@ -98,7 +99,7 @@ function HUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBlockTyp
             >
                 <div
                     style={{
-                        margin: '5px auto 55px 10px',
+                        margin: '20px auto 55px 10px',
                         cursor: 'pointer',
                         pointerEvents: 'all',
                     }}
@@ -106,16 +107,7 @@ function HUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBlockTyp
                         navigate('/dashboard');
                     }}
                 >
-                    <span
-                        style={{
-                            fontSize: '2rem',
-                            color: '#c6c6c6',
-                            textShadow:
-                                '1px 0 black, -1px 0 black, 0 1px black, 0 -1px black, 1px 1px black, -1px -1px black, 1px -1px black, -1px 1px black',
-                        }}
-                    >
-                        🠈
-                    </span>
+                    <ArrowLeft color='#c6c6c6' height={25} width={25} />
                 </div>
                 <div
                     style={{
