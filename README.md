@@ -1,4 +1,4 @@
-# Turtle Control Panel
+![Turtle Control Panel](/images/Banner.png)
 
 A control panel that lets you monitor and control your [ComputerCraft](https://www.computercraft.info/) and/or [ComputerCraft: Tweaked](https://tweaked.cc/) turtles through a WebSocket connection.
 
