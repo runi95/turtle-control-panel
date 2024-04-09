@@ -2,11 +2,11 @@
 
 A control panel that lets you monitor and control your [ComputerCraft](https://www.computercraft.info/) and/or [ComputerCraft: Tweaked](https://tweaked.cc/) turtles through a WebSocket connection.
 
-![Dashboard](/screenshots/Dashboard.png)
+![Dashboard](/images/Dashboard.png)
 
 The turtles show up on the dashboard where their online status, activities and fuel consumption can be easily monitored.
 
-![Turtle](/screenshots/Turtle.png)
+![Turtle](/images/Turtle.png)
 
 Clicking on a specific turtle brings you to that turtle's control panel where you can monitor it, change its current activity, manipulate its inventory or simply watch it move around in the world.
 
