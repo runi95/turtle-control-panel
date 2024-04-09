@@ -1,8 +1,9 @@
 import {Block} from '../../db/block.type';
 import {ItemDetail, Location} from '../../db/turtle.type';
+import {DestinationError} from '../../dlite';
 import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
-import {DestinationError, TurtleBaseState} from './base';
+import {TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
 
 export interface BuildStateData {

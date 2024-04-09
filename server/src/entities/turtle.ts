@@ -38,6 +38,7 @@ import {EventEmitter} from 'events';
 import {TurtleGoHomeState} from './states/gohome';
 import {ExtractionStateData, TurtleExtractionState} from './states/extraction';
 import {BuildStateData, TurtleBuildingState} from './states/building';
+import {ExploreStateData, TurtleExploringState} from './states/explore';
 
 export interface Peripherals {
     [key: string]: {
@@ -538,6 +539,8 @@ export class Turtle {
                 return new TurtleExtractionState(this, data as ExtractionStateData);
             case TURTLE_STATES.BUILDING:
                 return new TurtleBuildingState(this, data as BuildStateData);
+            case TURTLE_STATES.EXPLORING:
+                return new TurtleExploringState(this, data as ExploreStateData);
             default:
                 return null;
         }
@@ -1947,6 +1950,43 @@ export class Turtle {
             file.write([===[${content}]===])
             file.close()
         end)()`);
+    }
+
+    async explore() {
+        return await this.#exec<[Omit<Block, 'x' | 'y' | 'z'> | null, Omit<Block, 'x' | 'y' | 'z'> | null, Omit<Block, 'x' | 'y' | 'z'> | null]>(`(function()
+            local sides = {}
+            local functions = {}
+
+            functions[1] = (function()
+                local isBlock, block = turtle.inspectUp()
+                if isBlock then
+                    sides["up"] = block
+                else
+                    sides["up"] = textutils.json_null
+                end
+            end)
+
+            functions[2] = (function()
+                local isBlock, block = turtle.inspectDown()
+                if isBlock then
+                    sides["down"] = block
+                else
+                    sides["down"] = textutils.json_null
+                end
+            end)
+
+            functions[3] = (function()
+                local isBlock, block = turtle.inspect()
+                if isBlock then
+                    sides["front"] = block
+                else
+                    sides["front"] = textutils.json_null
+                end
+            end)
+
+            parallel.waitForAll(table.unpack(functions))
+            return sides["up"], sides["down"], sides["front"]
+        end)()`)
     }
 
     async sleep(seconds: number): Promise<void> {

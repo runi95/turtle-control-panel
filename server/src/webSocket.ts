@@ -19,6 +19,7 @@ import logger from './logger/server';
 import globalEventEmitter from './globalEventEmitter';
 import {Area} from './db/area.type';
 import {Block} from './db/block.type';
+import {TurtleExploringState} from './entities/states/explore';
 
 declare type TServerInstance = http.Server | HTTPSServer | Http2SecureServer | Http2Server;
 export const createWebSocketServer = (server: TServerInstance) => {
@@ -118,6 +119,18 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                 break;
                             case 'scan':
                                 turtle.state = new TurtleScanState(turtle);
+                                break;
+                            case 'explore':
+                                if (turtle.location == null) {
+                                    throw new Error('Unable to explore without knowing turtle location');
+                                } else {
+                                    turtle.state = new TurtleExploringState(turtle, {
+                                        startChunk: {
+                                            x: Math.floor(turtle.location.x / 16),
+                                            z: Math.floor(turtle.location.z / 16),
+                                        }
+                                    });
+                                }
                                 break;
                             case 'analyze':
                                 const [hasPeripheral] = await turtle.hasPeripheralWithName('geoScanner');

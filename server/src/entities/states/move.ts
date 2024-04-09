@@ -1,8 +1,8 @@
-import DStarLite from '../../dlite';
+import DStarLite, {DestinationError} from '../../dlite';
 import {Node} from '../../dlite/Node';
 import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
-import {DestinationError, TurtleBaseState} from './base';
+import {TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
 
 export interface MovingStateData {

@@ -15,6 +15,7 @@ import {WorldState} from '../Turtle3DMap/World';
 import CheckmarkIcon from '../../../icons/CheckmarkIcon';
 import SingleSelectIcon from '../../../icons/SingleSelectIcon';
 import ChunkFullSelectIcon from '../../../icons/ChunkFullSelectIcon';
+import ExploreIcon from '../../../icons/ExploreIcon';
 import MineModal from '../mine/MineModal';
 import {Block} from '../../../App';
 import ItemSprite from './Inventory/ItemSprite';
@@ -291,6 +292,16 @@ function ActionHUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBl
                             onClick={() => action({type: 'ACTION', action: 'go-home', data: {serverId, id}})}
                         >
                             <HomeIcon color='#202020' />
+                        </ActionButtonContainer>
+                    </OverlayTrigger>
+                    <OverlayTrigger
+                        placement='top'
+                        overlay={<FixedTooltip data-bs-theme='light'>Explore</FixedTooltip>}
+                    >
+                        <ActionButtonContainer
+                            onClick={() => action({type: 'ACTION', action: 'explore', data: {serverId, id}})}
+                        >
+                            <ExploreIcon color='#202020' />
                         </ActionButtonContainer>
                     </OverlayTrigger>
                 </Container>

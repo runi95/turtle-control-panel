@@ -5,6 +5,15 @@ import {getBlock} from '../db';
 import {Block} from '../db/block.type';
 import logger from '../logger/server';
 
+export class DestinationError extends Error {
+    public readonly node: Node;
+
+    constructor(node: Node, message?: string) {
+        super(message);
+        this.node = node;
+    }
+}
+
 const heuristic = {
     calculate(a: Point, b: Point): number {
         return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2) + Math.pow(a.z - b.z, 2));
@@ -12,9 +21,19 @@ const heuristic = {
 };
 
 export type IsBlockMineableFunc = (x: number, y: number, z: number, block: Block | null) => boolean;
+export type Boundaries = {
+    minX?: number;
+    maxX?: number;
+    minY?: number;
+    maxY?: number;
+    minZ?: number;
+    maxZ?: number;
+};
+
 export interface DStarLiteOptions {
     maxSteps?: number;
     isBlockMineableFunc?: IsBlockMineableFunc;
+    boundaries?: Boundaries;
 }
 
 export default class DStarLite {
@@ -22,14 +41,16 @@ export default class DStarLite {
     private readonly serverId: number;
     private readonly cachedBlocks = new Map<string, Block | null>();
     private readonly isBlockMineableFunc: IsBlockMineableFunc | null;
+    private readonly boundaries: Boundaries | null;
 
     constructor(serverId: number, options?: DStarLiteOptions) {
         this.serverId = serverId;
         this.maxSteps = options?.maxSteps ?? 80000;
         this.isBlockMineableFunc = options?.isBlockMineableFunc ?? null;
+        this.boundaries = options?.boundaries ?? null;
     }
 
-    public async search(source: Point, destinations: Point[]): Promise<Node | null | undefined> {
+    public async search(source: Point, destinations: Point[]): Promise<Node | null> {
         if (destinations.length === 0) return null;
         if (destinations.some((d) => d.x === source.x && d.y === source.y && d.z === source.z)) return null;
 
@@ -84,7 +105,7 @@ export default class DStarLite {
         while ((u = openHeap.poll()) !== null) {
             if (steps++ > this.maxSteps) {
                 logger.debug(`Reached max steps of ${this.maxSteps}`);
-                return undefined;
+                throw new DestinationError(u, 'Max steps reached');
             }
 
             u.visited = true;
@@ -142,7 +163,7 @@ export default class DStarLite {
         }
 
         logger.debug(`No valid path to: ${destinations.map(({x, y, z}) => `(${x},${y},${z})`).join(', ')}`);
-        return undefined;
+        throw new DestinationError(startNode, 'No valid path found');;
     }
 
     private calculateKey(s: Node, start: Node): [number, number] {
@@ -186,22 +207,35 @@ export default class DStarLite {
     private succ(u: Node, cachedNodes: Map<string, Node>): Node[] {
         const neighbors: Node[] = [];
 
-        const east = this.getCachedNode(cachedNodes, u.point.x + 1, u.point.y, u.point.z);
-        if (!east.visited) neighbors.push(east); 
-        if (u.point.y < 255) {
+        if (this.boundaries?.maxX == null || u.point.x + 1 <= this.boundaries.maxX) {
+            const east = this.getCachedNode(cachedNodes, u.point.x + 1, u.point.y, u.point.z);
+            if (!east.visited) neighbors.push(east); 
+        }
+
+        if (u.point.y < 255 && (this.boundaries?.maxY == null || u.point.y + 1 <= this.boundaries.maxY)) {
             const up = this.getCachedNode(cachedNodes, u.point.x, u.point.y + 1, u.point.z);
             if (!up.visited) neighbors.push(up); 
         }
-        const south = this.getCachedNode(cachedNodes, u.point.x, u.point.y, u.point.z + 1);
-        if (!south.visited) neighbors.push(south); 
-        const west = this.getCachedNode(cachedNodes, u.point.x - 1, u.point.y, u.point.z);
-        if (!west.visited) neighbors.push(west);
-        if (u.point.y > -59) {
+
+        if (this.boundaries?.maxZ == null || u.point.z + 1 <= this.boundaries.maxZ) {
+            const south = this.getCachedNode(cachedNodes, u.point.x, u.point.y, u.point.z + 1);
+            if (!south.visited) neighbors.push(south); 
+        }
+
+        if (this.boundaries?.minX == null || u.point.x - 1 >= this.boundaries.minX) {
+            const west = this.getCachedNode(cachedNodes, u.point.x - 1, u.point.y, u.point.z);
+            if (!west.visited) neighbors.push(west);
+        }
+
+        if (u.point.y > -59 && (this.boundaries?.minY == null || u.point.y - 1 >= this.boundaries.minY)) {
             const down = this.getCachedNode(cachedNodes, u.point.x, u.point.y - 1, u.point.z);
             if (!down.visited) neighbors.push(down); 
         }
-        const north = this.getCachedNode(cachedNodes, u.point.x, u.point.y, u.point.z - 1);
-        if (!north.visited) neighbors.push(north);
+
+        if (this.boundaries?.minZ == null || u.point.z - 1 >= this.boundaries.minZ) {
+            const north = this.getCachedNode(cachedNodes, u.point.x, u.point.y, u.point.z - 1);
+            if (!north.visited) neighbors.push(north);
+        }
 
         return neighbors;
     }

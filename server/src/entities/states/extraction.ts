@@ -1,10 +1,11 @@
 import {upsertBlocks} from '../../db';
 import {Block} from '../../db/block.type';
 import {Location} from '../../db/turtle.type';
+import {DestinationError} from '../../dlite';
 import {Point} from '../../dlite/Point';
 import globalEventEmitter from '../../globalEventEmitter';
 import {Turtle} from '../turtle';
-import {DestinationError, TurtleBaseState} from './base';
+import {TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
 
 export interface ExtractionStateData {
@@ -141,7 +142,9 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                 try {
                     for await (const _ of this.goToDestinations(
                         this.area,
-                        (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`)
+                        {
+                            isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`)
+                        }
                     )) {
                         yield;
 
@@ -175,7 +178,9 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                 try {
                     for await (const _ of this.goToDestinations(
                         this.remainingAreaIndexes.map((i) => this.area[i]),
-                        (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`)
+                        {
+                            isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`)
+                        }
                     )) {
                         yield;
 
@@ -259,7 +264,9 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                 try {
                     for await (const _ of this.goToDestinations(
                         this.scanIndexes.map((scanIndex) => this.area[scanIndex]),
-                        (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`)
+                        {
+                            isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`)
+                        }
                     )) {
                         yield;
 

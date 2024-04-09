@@ -4,9 +4,10 @@ import {Node} from '../../dlite/Node';
 import {Point} from '../../dlite/Point';
 import {blockToFarmingDetailsMapObject, farmingSeedNames} from '../../helpers/farming';
 import {Turtle} from '../turtle';
-import {DestinationError, TurtleBaseState} from './base';
+import {TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
 import logger from '../../logger/server';
+import {DestinationError} from '../../dlite';
 
 export interface FarmingStateData {
     readonly id: TURTLE_STATES;

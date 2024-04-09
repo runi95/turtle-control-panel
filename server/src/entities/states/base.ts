@@ -1,18 +1,9 @@
 import {Location} from '../../db/turtle.type';
-import DStarLite, {IsBlockMineableFunc} from '../../dlite';
+import DStarLite, {Boundaries, DestinationError, IsBlockMineableFunc} from '../../dlite';
 import {Node} from '../../dlite/Node';
 import {Point} from '../../dlite/Point';
 import {PriorityQueue} from '../../dlite/PriorityQueue';
 import {Turtle} from '../turtle';
-
-export class DestinationError extends Error {
-    public readonly node: Node;
-
-    constructor(node: Node, message?: string) {
-        super(message);
-        this.node = node;
-    }
-}
 
 interface ComparableItem {
     side: string;
@@ -484,7 +475,11 @@ export abstract class TurtleBaseState<T> {
 
     protected async *goToDestinations(
         destinations: Point[],
-        isBlockMineableFunc?: IsBlockMineableFunc
+        options?: {
+            isBlockMineableFunc?: IsBlockMineableFunc;
+            noInspect?: boolean;
+            boundaries?: Boundaries;
+        }
     ): AsyncGenerator<void> {
         const {location} = this.turtle;
         if (location === null) {
@@ -492,20 +487,17 @@ export abstract class TurtleBaseState<T> {
         }
 
         const algorithm = new DStarLite(this.turtle.serverId, {
-            isBlockMineableFunc,
+            isBlockMineableFunc: options?.isBlockMineableFunc,
+            boundaries: options?.boundaries,
         });
         let solution = await algorithm.search(new Point(location.x, location.y, location.z), destinations);
-        if (solution === undefined) {
-            throw new Error('Stuck; unable to reach destination');
-        }
-
         if (solution === null) {
             yield;
             return;
         }
 
         while (solution !== null) {
-            const [didMoveToNode, failedMoveMessage] = await this.moveToNode(solution);
+            const [didMoveToNode, failedMoveMessage] = await this.moveToNode(solution, options?.noInspect);
             if (didMoveToNode) {
                 solution = solution.parent;
                 yield;
@@ -516,7 +508,7 @@ export abstract class TurtleBaseState<T> {
         }
     }
 
-    protected async moveToNode(s: Node): Promise<[true, undefined] | [false, string]> {
+    protected async moveToNode(s: Node, noInspect?: boolean): Promise<[true, undefined] | [false, string]> {
         const {x, y, z} = this.turtle.location as Location;
         if (s.point.y - y > 0) {
             const [didMoveUp, upMessage] = await this.turtle.up();
@@ -528,7 +520,7 @@ export abstract class TurtleBaseState<T> {
             }
 
             // We don't know what the other potential errors are!
-            if (upMessage !== 'Movement obstructed') return [false, upMessage as string];
+            if (noInspect || upMessage !== 'Movement obstructed') return [false, upMessage as string];
 
             if (!s.isMineable) {
                 await this.turtle.inspectUp();
@@ -557,7 +549,7 @@ export abstract class TurtleBaseState<T> {
             }
 
             // We don't know what the other potential errors are!
-            if (downMessage !== 'Movement obstructed') return [false, downMessage as string];
+            if (noInspect || downMessage !== 'Movement obstructed') return [false, downMessage as string];
 
             if (!s.isMineable) {
                 await this.turtle.inspectDown();
@@ -590,7 +582,7 @@ export abstract class TurtleBaseState<T> {
             }
 
             // We don't know what the other potential errors are!
-            if (forwardMessage !== 'Movement obstructed') return [false, forwardMessage as string];
+            if (noInspect || forwardMessage !== 'Movement obstructed') return [false, forwardMessage as string];
 
             if (!s.isMineable) {
                 await this.turtle.inspect();

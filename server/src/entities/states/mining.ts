@@ -1,8 +1,9 @@
 import {Block} from '../../db/block.type';
 import {Location} from '../../db/turtle.type';
+import {DestinationError} from '../../dlite';
 import {Point} from '../../dlite/Point';
 import {Turtle} from '../turtle';
-import {DestinationError, TurtleBaseState} from './base';
+import {TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
 
 export interface MiningStateData {
@@ -95,7 +96,9 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                 }
     
                 try {
-                    for await (const _ of this.goToDestinations(this.area, isMineable)) {
+                    for await (const _ of this.goToDestinations(this.area, {
+                        isBlockMineableFunc: isMineable
+                    })) {
                         yield;
 
                         if (this.checkIfTurtleIsInOrAdjacentToArea()) {
@@ -123,7 +126,9 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
     
             try {
                 // Mine!
-                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]), isMineable)) {
+                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]), {
+                    isBlockMineableFunc: isMineable
+                })) {
                     yield;
 
                     // Go home?

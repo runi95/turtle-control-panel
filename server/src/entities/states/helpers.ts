@@ -1,3 +1,4 @@
+import {ExploreStateData} from './explore';
 import {ExtractionStateData} from './extraction';
 import {FarmingStateData} from './farming';
 import {GoHomeStateData} from './gohome';
@@ -15,6 +16,7 @@ export enum TURTLE_STATES {
     GO_HOME = 6,
     EXTRACTION = 7,
     BUILDING = 8,
+    EXPLORING = 9,
 };
 
-export type StateDataTypes = FarmingStateData | MovingStateData | MiningStateData | RefuelingStateData | ScanningStateData | GoHomeStateData | ExtractionStateData;
+export type StateDataTypes = FarmingStateData | MovingStateData | MiningStateData | RefuelingStateData | ScanningStateData | GoHomeStateData | ExtractionStateData | ExploreStateData;
