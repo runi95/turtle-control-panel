@@ -87,6 +87,7 @@ export default class DStarLite {
     
             destinationNode.rhs = 0;
             destinationNode.key = [heuristic.calculate(startNode.point, destinationNode.point), 0];
+            destinationNode.visited = true;
             openHeap.add(destinationNode);
             destinationNodes.push(destinationNode);
         }
@@ -122,9 +123,7 @@ export default class DStarLite {
                 const pred: Node[] = this.succ(u, cachedNodes);
                 for (const s of pred) {
                     s.parent = u;
-                    if (!destinationNodes.includes(s)) {
-                        s.rhs = Math.min(s.rhs, this.c(s, u) + u.g);
-                    }
+                    s.rhs = Math.min(s.rhs, this.c(s, u) + u.g);
 
                     updateVertex(s);
                 }
@@ -135,21 +134,19 @@ export default class DStarLite {
                 pred.push(u);
                 for (const s of pred) {
                     if (s.rhs === this.c(s, u) + g_old) {
-                        if (!destinationNodes.includes(s)) {
-                            let min_s = Number.POSITIVE_INFINITY;
-                            let nparent = null;
-                            const succ: Node[] = this.succ(u, cachedNodes);
-                            for (const s_ of succ) {
-                                const temp = this.c(s, s_) + s_.g;
-                                if (min_s > temp) {
-                                    nparent = s_;
-                                    min_s = temp;
-                                }
+                        let min_s = Number.POSITIVE_INFINITY;
+                        let nparent = null;
+                        const succ: Node[] = this.succ(u, cachedNodes);
+                        for (const s_ of succ) {
+                            const temp = this.c(s, s_) + s_.g;
+                            if (min_s > temp) {
+                                nparent = s_;
+                                min_s = temp;
                             }
-
-                            s.rhs = min_s;
-                            s.parent = nparent;
                         }
+
+                        s.rhs = min_s;
+                        s.parent = nparent;
                     }
 
                     updateVertex(u);
