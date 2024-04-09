@@ -9,6 +9,7 @@
         "target": "esnext",
         "baseUrl": "src"
     },
+    "sourceMaps": true,
     "module": {
         "type": "commonjs"
     }
