@@ -193,7 +193,7 @@ export default class DStarLite {
         const cachedNode = cachedNodes.get(nodePath);
         if (cachedNode) return cachedNode;
         const block = getBlock(this.serverId, x, y, z);
-        if (!block) {
+        if (block == null || block.name === 'minecraft:water') {
             const node = new Node(new Point(x, y, z), false, this.isBlockMineableFunc !== null ? this.isBlockMineableFunc(x, y, z, block) : false);
             cachedNodes.set(nodePath, node);
             return node;
