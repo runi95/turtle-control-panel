@@ -73,7 +73,11 @@ function Turtle3D({name, atlasMap, ...meshProps}: Props & MeshProps) {
     }, [atlas, atlasMap]);
 
     const positions = useMemo(() => {
-        return new Float32Array(atlasMap.models[atlasMap.textures[turtleTextureName].model].map((m) => m.face).flat());
+        return new Float32Array(
+            atlasMap.models[(atlasMap.textures[turtleTextureName] ?? atlasMap.textures['unknown']).model]
+                .map((m) => m.face)
+                .flat()
+        );
     }, []);
     const uvs = useMemo(() => {
         return new Float32Array([
