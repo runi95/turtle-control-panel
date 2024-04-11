@@ -74,7 +74,7 @@ npm start
 
 Get the contents of [startup.lua](./turtle/startup.lua) onto the turtle. This can be achieved by either uploading the contents onto pastebin and running the `pastebin get <code> startup` on the turtle itself (recommended) or by copying the contents of the file, running `edit startup` on the turtle and pasting the content line by line.
 
-Alternatively if pastebin is down you can run the followin inside your turtle:
+Alternatively if pastebin is down you can run the following inside your turtle:
 
 ```
 > lua
