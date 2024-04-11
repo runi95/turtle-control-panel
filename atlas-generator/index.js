@@ -304,28 +304,6 @@ const elementToTexturedFaces = (element) => {
   const textures = [(await getImageData("unknown.png", 0, 0, 16, 16)).data];
   const texturesMap = new Map([["unknown.png?dx=0&dy=0&dw=16&dh=16", 0]]);
 
-  const getTextureName = (model, texture) => {
-    const extractedName = (() => {
-      if (texture.startsWith("#")) {
-        const extractedTexture = model.textures[texture.substring(1)];
-        if (!extractedTexture) return null;
-
-        if (extractedTexture.startsWith("#")) {
-          return getTextureName(model, extractedTexture);
-        }
-
-        return extractedTexture;
-      }
-
-      return texture;
-    })();
-    if (!extractedName) {
-      return null;
-    }
-
-    return textureToName(model.asset, extractedName);
-  };
-
   const customConfig = (() => {
     const customConfigPath = "./custom-config.json";
     const exists = fs.existsSync(customConfigPath);
