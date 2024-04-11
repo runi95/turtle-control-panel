@@ -349,6 +349,16 @@ const elementToTexturedFaces = (element) => {
         new Promise((resolve, reject) => {
           const override = customConfig?.override?.[`${asset}:${name}`];
           if (override !== undefined) {
+            if (Array.isArray(override.elements)) {
+              textureFacesMap.set(
+                name,
+                override.elements.reduce((acc, curr) => {
+                  return acc.concat(elementToTexturedFaces(curr));
+                }, [])
+              );
+              override.elements = name;
+            }
+
             resolve({ ...override, file, name, asset });
           } else {
             fs.readFile(path, (err, data) => {
