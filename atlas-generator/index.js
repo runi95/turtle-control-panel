@@ -13,12 +13,6 @@ const getImageData = async (sourceImagePath, dx, dy, dw, dh, color) => {
   const canvas = createCanvas(16, 16);
   const context = canvas.getContext("2d");
 
-  if (color != null) {
-    context.fillStyle = color;
-    context.fillRect(0, 0, dw, dh);
-    context.globalCompositeOperation = "multiply";
-  }
-
   context.patternQuality = 'nearest';
   context.drawImage(
     image,
@@ -31,6 +25,36 @@ const getImageData = async (sourceImagePath, dx, dy, dw, dh, color) => {
     16,
     16
   );
+
+  if (color != null) {
+    const match = new RegExp('^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$', 'i').exec(color);
+    const [, rString, gString, bString] = match;
+    const r = parseInt(rString, 16);
+    const g = parseInt(gString, 16);
+    const b = parseInt(bString, 16);
+    const imageData = context.getImageData(0, 0, 16, 16);
+    const {data} = imageData;
+
+    for (let i = 0; i < data.length; i++) {
+      const mod = i % 4;
+      switch (mod) {
+        case 0:
+          data[i] = (data[i] * r) / 255;
+          break;
+        case 1:
+          data[i] = (data[i] * g) / 255;
+          break;
+        case 2:
+          data[i] = (data[i] * b) / 255;
+          break;
+        case 3:
+          // Alpha layer
+          break;
+      }
+    }
+
+    context.putImageData(imageData, 0, 0);
+  }
 
   return context.getImageData(0, 0, 16, 16);
 };
