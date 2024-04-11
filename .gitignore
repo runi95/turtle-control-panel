@@ -2,6 +2,5 @@ node_modules/
 server/db/server.db*
 server/dist
 atlas-generator/assets
-atlas-generator/custom-config.json
 
 .eslintcache
