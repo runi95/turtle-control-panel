@@ -3,7 +3,7 @@ const { createCanvas, loadImage } = require("canvas");
 const { PlaneGeometry } = require("three");
 const deepAssign = require("assign-deep");
 
-const getImageData = async (sourceImagePath, dx, dy, dw, dh) => {
+const getImageData = async (sourceImagePath, dx, dy, dw, dh, color) => {
   const image = await loadImage(sourceImagePath);
   const mul = image.width / 16;
   dx *= mul;
@@ -12,6 +12,12 @@ const getImageData = async (sourceImagePath, dx, dy, dw, dh) => {
   dh *= mul;
   const canvas = createCanvas(16, 16);
   const context = canvas.getContext("2d");
+
+  if (color != null) {
+    context.fillStyle = color;
+    context.fillRect(0, 0, dw, dh);
+    context.globalCompositeOperation = "multiply";
+  }
 
   context.patternQuality = 'nearest';
   context.drawImage(
@@ -76,6 +82,7 @@ const elementToTexturedFaces = (element) => {
       texture: element.faces.west.texture,
       face: planeGeometry.attributes["position"]["array"],
       uv: element.faces.west.uv,
+      color: element.faces.west.color,
     });
   }
 
@@ -112,6 +119,7 @@ const elementToTexturedFaces = (element) => {
       texture: element.faces.east.texture,
       face: planeGeometry.attributes["position"]["array"],
       uv: element.faces.east.uv,
+      color: element.faces.east.color,
     });
   }
 
@@ -149,6 +157,7 @@ const elementToTexturedFaces = (element) => {
       texture: element.faces.up.texture,
       face: planeGeometry.attributes["position"]["array"],
       uv: element.faces.up.uv,
+      color: element.faces.up.color,
     });
   }
 
@@ -186,6 +195,7 @@ const elementToTexturedFaces = (element) => {
       texture: element.faces.down.texture,
       face: planeGeometry.attributes["position"]["array"],
       uv: element.faces.down.uv,
+      color: element.faces.down.color,
     });
   }
 
@@ -223,6 +233,7 @@ const elementToTexturedFaces = (element) => {
       texture: element.faces.north.texture,
       face: planeGeometry.attributes["position"]["array"],
       uv: element.faces.north.uv,
+      color: element.faces.north.color,
     });
   }
 
@@ -260,6 +271,7 @@ const elementToTexturedFaces = (element) => {
       texture: element.faces.south.texture,
       face: planeGeometry.attributes["position"]["array"],
       uv: element.faces.south.uv,
+      color: element.faces.south.color,
     });
   }
 
@@ -476,6 +488,7 @@ const elementToTexturedFaces = (element) => {
           texture,
           index: i,
           uv: curr.uv,
+          color: curr.color
         });
         return acc;
       }, []);
@@ -524,10 +537,11 @@ const elementToTexturedFaces = (element) => {
           dh = (fullTexturePath.uv[3] - fullTexturePath.uv[1]);
         }
 
-        const mapKey = `${filePath}?dx=${dx}&dy=${dy}&dw=${dw}&dh=${dh}`;
+        const {color} = fullTexturePath;
+        const mapKey = `${filePath}?dx=${dx}&dy=${dy}&dw=${dw}&dh=${dh}${color != null ? `&color=${color}` : ''}`;
         let textureIndex = texturesMap.get(mapKey);
         if (textureIndex == null) {
-          const imageData = await getImageData(filePath, dx, dy, dw, dh);
+          const imageData = await getImageData(filePath, dx, dy, dw, dh, color);
           if (imageData != null) {
             textures.push(imageData.data);
             textureIndex = nextTextureIndex;
