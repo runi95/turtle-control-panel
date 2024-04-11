@@ -496,6 +496,12 @@ const elementToTexturedFaces = (element) => {
           asset,
           texture
         )}.png`;
+
+        if (!fs.existsSync(filePath)) {
+            console.log(`Skipping: ${filePath} - missing file`);
+            continue;
+        }
+        
         let dx = 0;
         let dy = 0;
         let dw = 16;
