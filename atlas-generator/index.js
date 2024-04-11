@@ -35,9 +35,6 @@ const getImageData = async (sourceImagePath, dx, dy, dw, dh, color) => {
   return context.getImageData(0, 0, 16, 16);
 };
 
-const textureToName = (asset, texture) =>
-  texture.replace(`${asset}:block/`, "").replace("block/", "");
-
 const elementToTexturedFaces = (element) => {
   const texturedFaces = [];
 
@@ -493,10 +490,7 @@ const elementToTexturedFaces = (element) => {
       const resolvedTextures = [];
       for (const fullTexturePath of fullTexturePaths) {
         const [asset, texture] = getAssetAndName(fullTexturePath.texture);
-        const filePath = `assets/${asset}/textures/block/${textureToName(
-          asset,
-          texture
-        )}.png`;
+        const filePath = `assets/${asset}/textures/${texture}.png`;
 
         if (!fs.existsSync(filePath)) {
             console.log(`Skipping: ${filePath} - missing file`);
