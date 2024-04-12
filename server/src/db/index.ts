@@ -36,6 +36,8 @@ import {
     prepareSelectBlock,
     prepareSelectBlocks,
     prepareSelectBlocksSimple,
+    prepareSelectBlocksSimpleWithName,
+    prepareSelectBlocksWithName,
 } from './queries/queries/blocks';
 import {prepareInsertChunk, prepareSelectChunk, prepareSelectChunks} from './queries/queries/chunks';
 
@@ -80,7 +82,9 @@ const setTurtleHome = prepareUpdateTurtleHome(db);
 
 // Blocks
 const selectBlocks = prepareSelectBlocks(db);
+const selectBlocksWithName = prepareSelectBlocksWithName(db);
 const selectBlocksSimple = prepareSelectBlocksSimple(db);
+const selectBlocksSimpleWithName = prepareSelectBlocksSimpleWithName(db);
 const selectBlock = prepareSelectBlock(db);
 const insertBlock = prepareInsertBlock(db);
 const deleteBlockStatement = prepareDeleteBlock(db);
@@ -146,9 +150,10 @@ export interface GetBlocksOptions {
     toY: number;
     fromZ: number;
     toZ: number;
+    name?: string;
 }
 export const getBlocks = (serverId: number, options: GetBlocksOptions) =>
-    selectBlocks
+    (options.name != null ? selectBlocksWithName : selectBlocks)
         .all({
             server_id: serverId,
             from_x: options.fromX,
@@ -157,10 +162,11 @@ export const getBlocks = (serverId: number, options: GetBlocksOptions) =>
             to_y: options.toY,
             from_z: options.fromZ,
             to_z: options.toZ,
+            name: options.name,
         })
         .map((block) => JSON.parse(block as string)) as Block[];
 export const getBlocksSimple = (serverId: number, options: GetBlocksOptions) =>
-    selectBlocksSimple
+    (options.name != null ? selectBlocksSimpleWithName : selectBlocksSimple)
         .all({
             server_id: serverId,
             from_x: options.fromX,
@@ -169,6 +175,7 @@ export const getBlocksSimple = (serverId: number, options: GetBlocksOptions) =>
             to_y: options.toY,
             from_z: options.fromZ,
             to_z: options.toZ,
+            name: options.name,
         })
         .map((block) => JSON.parse(block as string)) as Omit<Block, 'state' | 'tags'>[];
 export const getBlock = (serverId: number, x: number, y: number, z: number) => {

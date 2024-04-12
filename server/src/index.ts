@@ -32,7 +32,7 @@ fastify
         fastify.get('/servers/:id/blocks', (req, res) => {
             const {params, query} = req;
             const {id} = params as {id: string};
-            const {fromX, toX, fromY, toY, fromZ, toZ, simple} = query as Record<string, string | undefined>;
+            const {fromX, toX, fromY, toY, fromZ, toZ, name, simple} = query as Record<string, string | undefined>;
             res.send(
                 (simple != null ? getBlocksSimple : getBlocks )(Number(id), {
                     fromX: Number(fromX),
@@ -41,6 +41,7 @@ fastify
                     toY: Number(toY),
                     fromZ: Number(fromZ),
                     toZ: Number(toZ),
+                    name
                 })
             );
         });
