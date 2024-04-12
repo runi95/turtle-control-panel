@@ -1,4 +1,4 @@
-import http = require('http');
+import http from 'http';
 import {Server} from 'socket.io';
 import type {Server as HTTPSServer} from 'https';
 import type {Http2SecureServer, Http2Server} from 'http2';
