@@ -1,5 +1,6 @@
 local connectionURL = "127.0.0.1:5757" --replace with your server IP
 
+local version = tonumber(string.sub(os.version(), 9))
 local ws
 local logLevel = 0
 local maxBytesPerMessage = 131072
@@ -35,7 +36,11 @@ local function eval(f, uuid)
     local result = {func()}
     local type = "EVAL"
     local response = { type = type, message = result }
-    send(textutils.serializeJSON(response, {allow_repetitions = true}), uuid)
+    if version >= 1.9 then
+        send(textutils.serializeJSON(response, {allow_repetitions = true}), uuid)
+    else
+        send(textutils.serializeJSON(response), uuid)
+    end
 end
 
 local function handshake(uuid)
@@ -65,7 +70,11 @@ local function handshake(uuid)
     local selectedSlot = turtle.getSelectedSlot()
     local computer = { id = id, label = label, fuel = fuel, inventory = inventory, selectedSlot = selectedSlot, peripherals = peripherals }
     local response = { type = "HANDSHAKE", message = computer }
-    send(textutils.serializeJSON(response, {allow_repetitions = true}), uuid)
+    if version >= 1.9 then
+        send(textutils.serializeJSON(response, {allow_repetitions = true}), uuid)
+    else
+        send(textutils.serializeJSON(response), uuid)
+    end
 end
 
 local function main()
@@ -112,7 +121,11 @@ local function main()
                 elseif obj.type == "RENAME" then
                     os.setComputerLabel(obj["message"])
                     local response = { type = "RENAME" }
-                    send(textutils.serializeJSON(response, {allow_repetitions = true}), obj.uuid)
+                    if version >= 1.9 then
+                        send(textutils.serializeJSON(response, {allow_repetitions = true}), obj.uuid)
+                    else
+                        send(textutils.serializeJSON(response), obj.uuid)
+                    end
                 elseif obj.type == "EVAL" then
                     eval(obj["function"], obj.uuid)
                 elseif obj.type == "DISCONNECT" then
@@ -132,7 +145,11 @@ local function main()
             end, function (msg)
                 printError(msg)
                 local response = { type = "ERROR", message = msg }
-                send(textutils.serializeJSON(response, {allow_repetitions = true}), obj.uuid)
+                if version >= 1.9 then
+                    send(textutils.serializeJSON(response, {allow_repetitions = true}), obj.uuid)
+                else
+                    send(textutils.serializeJSON(response), obj.uuid)
+                end
             end)
         end
     end
@@ -178,7 +195,11 @@ local function inventoryUpdate()
         parallel.waitForAll(table.unpack(f))
 
         if ws then
-            send(textutils.serializeJSON({ type = "INVENTORY_UPDATE", message = inventory }, {allow_repetitions = true}), "update")
+            if version >= 1.9 then
+                send(textutils.serializeJSON({ type = "INVENTORY_UPDATE", message = inventory }, {allow_repetitions = true}), "update")
+            else
+                send(textutils.serializeJSON({ type = "INVENTORY_UPDATE", message = inventory }), "update")
+            end
         end
     end
 
@@ -204,7 +225,11 @@ local function peripheralAttached()
         end
 
         if ws then
-            send(textutils.serializeJSON({ type = "PERIPHERAL_ATTACHED", message = peripherals }, {allow_repetitions = true}), "update")
+            if version >= 1.9 then
+                send(textutils.serializeJSON({ type = "PERIPHERAL_ATTACHED", message = peripherals }, {allow_repetitions = true}), "update")
+            else
+                send(textutils.serializeJSON({ type = "PERIPHERAL_ATTACHED", message = peripherals }), "update")
+            end
         end
     end
 
@@ -220,7 +245,11 @@ local function peripheralDetached()
         local _, side = os.pullEvent("peripheral_detach")
 
         if not peripheral.isPresent(side) and ws then
-            send(textutils.serializeJSON({ type = "PERIPHERAL_DETACHED", message = side }, {allow_repetitions = true}), "update")
+            if version >= 1.9 then
+                send(textutils.serializeJSON({ type = "PERIPHERAL_DETACHED", message = side }, {allow_repetitions = true}), "update")
+            else
+                send(textutils.serializeJSON({ type = "PERIPHERAL_DETACHED", message = side }), "update")
+            end
         end
     end
 end
