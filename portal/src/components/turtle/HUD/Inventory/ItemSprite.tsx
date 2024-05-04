@@ -1,5 +1,6 @@
 import styled from 'styled-components';
-import SpriteTable from '../../../../SpriteTable';
+import {useSpriteTable} from './UseSpriteTable';
+import {useMemo} from 'react';
 
 export interface ItemSpriteProps {
     slot?: number;
@@ -8,9 +9,13 @@ export interface ItemSpriteProps {
 
 function ItemSprite(props: ItemSpriteProps) {
     const {name, slot} = props;
-    const sprite = SpriteTable[name] ?? SpriteTable['???'];
-    const spriteY = 32 * Math.floor((sprite.index - 1) / 32);
-    const spriteX = 32 * (sprite.index - spriteY - 1);
+    const {data} = useSpriteTable();
+    const sprite = useMemo(() => {
+        if (data == null) return 0;
+        return data[name] ?? 0;
+    }, [data, name]);
+    const spriteY = 32 * Math.floor((sprite - 1) / 32);
+    const spriteX = 32 * (sprite - spriteY);
 
     return (
         <ItemImage

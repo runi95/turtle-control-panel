@@ -1,6 +1,7 @@
 {
     "eslint.workingDirectories": [
         "portal",
+        "atlas-generator",
         "server"
     ]
 }
