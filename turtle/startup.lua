@@ -1,4 +1,5 @@
-local connectionURL = "127.0.0.1:5757" --replace with your server IP
+--NOTE: Replace with your server IP
+local connectionURL = "127.0.0.1:5757"
 
 local version = tonumber(string.sub(os.version(), 9))
 local ws
