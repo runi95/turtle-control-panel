@@ -85,6 +85,12 @@ local function main()
     ws, err = http.websocket(connectionURL)
     if ws and logLevel < 2 then
         print("> CONNECTED")
+    elseif err == "Domain not permitted" then
+        print("Unable to connect to \"" .. connectionURL .. "\"")
+        print()
+        print("Potential solutions:")
+        print("https://tweaked.cc/guide/local_ips.html")
+        error(err, 2)
     else
         printError(err)
     end
@@ -164,6 +170,11 @@ local function wrappedMain()
 
         if not ok then
             printError(errorMessage)
+
+            if errorMessage == "Domain not permitted" then
+                -- Exit on this special case
+                break
+            end
         end
     end
 end
