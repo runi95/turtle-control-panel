@@ -62,9 +62,13 @@ local function handshake(uuid)
     local fuelLimit = turtle.getFuelLimit()
     if logLevel < 3 then
         if fuelLevel == 0 then
+            term.setTextColor(colors.yellow)
             print("WARN: Out of fuel")
+            term.setTextColor(colors.white)
         elseif fuelLevel < 0.1 * fuelLimit then
+            term.setTextColor(colors.yellow)
             print("WARN: Low on fuel")
+            term.setTextColor(colors.white)
         end
     end
     local fuel = { level = fuelLevel, limit = fuelLimit }
