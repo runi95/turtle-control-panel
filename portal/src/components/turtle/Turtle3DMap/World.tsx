@@ -91,7 +91,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                             indicatorMeshRef.current.geometry.attributes.color.needsUpdate = true;
                             break;
                         case null:
-                            buildBlockRef.current.reset();
+                            buildBlockRef.current?.reset();
                             previousFaceIndex.current = null;
                             indicatorMeshRef.current.visible = false;
                             indicatorMeshVisibleRef.current = false;
