@@ -10,7 +10,11 @@ The turtles show up on the dashboard where their online status, activities and f
 
 Clicking on a specific turtle brings you to that turtle's control panel where you can monitor it, change its current activity, manipulate its inventory or simply watch it move around in the world.
 
-The 3D map only shows you what the turtle can see (or have seen) and may not be a realistic interpretation of the world as it may have changed since the last time the turtle inspected the blocks. It is highly recommended to use this control panel along side with [Advanced Peripherals](https://www.curseforge.com/minecraft/mc-mods/advanced-peripherals) as it allows for much more rapid world discovery by utilizing the `Geo Scanner` peripheral.
+The 3D map only shows you what the turtle can see (or have seen) and may not be a realistic interpretation of the world as it may have changed since the last time the turtle inspected the blocks. It is highly recommended to use this control panel along with at least one of the supported mods for rapid world discovery:
+
+- [Advanced Peripherals](https://www.curseforge.com/minecraft/mc-mods/advanced-peripherals) by utilizing the `Geo Scanner` peripheral.
+- [Plethora](https://www.curseforge.com/minecraft/mc-mods/plethora-peripherals) by utilizing the `Block Scanner` peripheral.
+- [UnlimitedPeripheralWorks](https://www.curseforge.com/minecraft/mc-mods/unlimitedperipheralworks) by utilizing the `Universal Scanner` peripheral.
 
 ## Setup
 

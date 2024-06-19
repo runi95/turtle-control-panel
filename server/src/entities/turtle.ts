@@ -1953,7 +1953,13 @@ export class Turtle {
     }
 
     async explore() {
-        return await this.#exec<[Omit<Block, 'x' | 'y' | 'z'> | null, Omit<Block, 'x' | 'y' | 'z'> | null, Omit<Block, 'x' | 'y' | 'z'> | null]>(`(function()
+        return await this.#exec<
+            [
+                Omit<Block, 'x' | 'y' | 'z'> | null,
+                Omit<Block, 'x' | 'y' | 'z'> | null,
+                Omit<Block, 'x' | 'y' | 'z'> | null,
+            ]
+        >(`(function()
             local sides = {}
             local functions = {}
 
@@ -1986,7 +1992,7 @@ export class Turtle {
 
             parallel.waitForAll(table.unpack(functions))
             return sides["up"], sides["down"], sides["front"]
-        end)()`)
+        end)()`);
     }
 
     async sleep(seconds: number): Promise<void> {

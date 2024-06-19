@@ -9,6 +9,9 @@ import {useWebSocket} from '../../../../api/UseWebSocket';
 import CraftingTable from './CraftingTable';
 import TurtlePeripheral from './TurtlePeripheral';
 import Drive from './Drive';
+import UniversalScanner from './UniversalScanner';
+import BlockScanner from './BlockScanner';
+import UltimateSensor from './UltimateSensor';
 
 interface Props {
     turtle: Turtle;
@@ -20,45 +23,67 @@ function Peripherals(props: Props) {
 
     const renderPeripheral = (side: string, peripheral: Peripheral, i: number) => {
         const {types, data} = peripheral;
-        const {isModem, isWirelessModem, isGeoScanner, isExternalInventory, isCraftingTable, isTurtle, isDrive} =
-            types.reduce(
-                (acc, curr) => {
-                    switch (curr) {
-                        case 'modem':
-                            acc.isModem = true;
-                            if ((data as {isWireless: boolean} | undefined)?.isWireless) {
-                                acc.isWirelessModem = true;
-                            }
-                            break;
-                        case 'geoScanner':
-                            acc.isGeoScanner = true;
-                            break;
-                        case 'inventory':
-                            acc.isExternalInventory = true;
-                            break;
-                        case 'workbench':
-                            acc.isCraftingTable = true;
-                            break;
-                        case 'turtle':
-                            acc.isTurtle = true;
-                            break;
-                        case 'drive':
-                            acc.isDrive = true;
-                            break;
-                    }
-
-                    return acc;
-                },
-                {
-                    isModem: false,
-                    isWirelessModem: false,
-                    isGeoScanner: false,
-                    isExternalInventory: false,
-                    isCraftingTable: false,
-                    isTurtle: false,
-                    isDrive: false,
+        const {
+            isModem,
+            isWirelessModem,
+            isGeoScanner,
+            isExternalInventory,
+            isCraftingTable,
+            isTurtle,
+            isDrive,
+            isUniversalScanner,
+            isUltimateSensor,
+            isBlockScanner,
+        } = types.reduce(
+            (acc, curr) => {
+                switch (curr) {
+                    case 'modem':
+                        acc.isModem = true;
+                        if ((data as {isWireless: boolean} | undefined)?.isWireless) {
+                            acc.isWirelessModem = true;
+                        }
+                        break;
+                    case 'geoScanner':
+                        acc.isGeoScanner = true;
+                        break;
+                    case 'universal_scanner':
+                        acc.isUniversalScanner = true;
+                        break;
+                    case 'ultimate_sensor':
+                        acc.isUltimateSensor = true;
+                        break;
+                    case 'plethora:scanner':
+                        acc.isBlockScanner = true;
+                        break;
+                    case 'inventory':
+                        acc.isExternalInventory = true;
+                        break;
+                    case 'workbench':
+                        acc.isCraftingTable = true;
+                        break;
+                    case 'turtle':
+                        acc.isTurtle = true;
+                        break;
+                    case 'drive':
+                        acc.isDrive = true;
+                        break;
                 }
-            );
+
+                return acc;
+            },
+            {
+                isModem: false,
+                isWirelessModem: false,
+                isGeoScanner: false,
+                isExternalInventory: false,
+                isCraftingTable: false,
+                isTurtle: false,
+                isDrive: false,
+                isUniversalScanner: false,
+                isUltimateSensor: false,
+                isBlockScanner: false,
+            }
+        );
 
         if (isModem) {
             if (isWirelessModem) {
@@ -81,6 +106,39 @@ function Peripherals(props: Props) {
                     <Accordion.Header>Geo Scanner</Accordion.Header>
                     <Accordion.Body>
                         <GeoScanner action={action} turtle={turtle} />
+                    </Accordion.Body>
+                </Accordion.Item>
+            );
+        }
+
+        if (isUniversalScanner) {
+            return (
+                <Accordion.Item key={i} eventKey={`${i}`}>
+                    <Accordion.Header>Universal Scanner</Accordion.Header>
+                    <Accordion.Body>
+                        <UniversalScanner action={action} turtle={turtle} />
+                    </Accordion.Body>
+                </Accordion.Item>
+            );
+        }
+
+        if (isUltimateSensor) {
+            return (
+                <Accordion.Item key={i} eventKey={`${i}`}>
+                    <Accordion.Header>Ultimate Sensor</Accordion.Header>
+                    <Accordion.Body>
+                        <UltimateSensor action={action} turtle={turtle} />
+                    </Accordion.Body>
+                </Accordion.Item>
+            );
+        }
+
+        if (isBlockScanner) {
+            return (
+                <Accordion.Item key={i} eventKey={`${i}`}>
+                    <Accordion.Header>Block Scanner</Accordion.Header>
+                    <Accordion.Body>
+                        <BlockScanner action={action} turtle={turtle} />
                     </Accordion.Body>
                 </Accordion.Item>
             );

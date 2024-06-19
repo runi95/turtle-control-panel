@@ -140,12 +140,9 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                 }
 
                 try {
-                    for await (const _ of this.goToDestinations(
-                        this.area,
-                        {
-                            isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`)
-                        }
-                    )) {
+                    for await (const _ of this.goToDestinations(this.area, {
+                        isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`),
+                    })) {
                         yield;
 
                         if (this.checkIfTurtleIsInOrAdjacentToArea()) {
@@ -179,7 +176,7 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                     for await (const _ of this.goToDestinations(
                         this.remainingAreaIndexes.map((i) => this.area[i]),
                         {
-                            isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`)
+                            isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`),
                         }
                     )) {
                         yield;
@@ -265,7 +262,7 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                     for await (const _ of this.goToDestinations(
                         this.scanIndexes.map((scanIndex) => this.area[scanIndex]),
                         {
-                            isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`)
+                            isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`),
                         }
                     )) {
                         yield;

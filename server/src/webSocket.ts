@@ -128,13 +128,13 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                         startChunk: {
                                             x: Math.floor(turtle.location.x / 16),
                                             z: Math.floor(turtle.location.z / 16),
-                                        }
+                                        },
                                     });
                                 }
                                 break;
                             case 'analyze':
-                                const [hasPeripheral] = await turtle.hasPeripheralWithName('geoScanner');
-                                if (hasPeripheral) {
+                                const [hasGeoScanner] = await turtle.hasPeripheralWithName('geoScanner');
+                                if (hasGeoScanner) {
                                     const [analysis, analysisFailMessage] = await turtle.usePeripheralWithName<
                                         [{[key: string]: number}, undefined] | [null, string]
                                     >('geoScanner', 'chunkAnalyze');
@@ -143,6 +143,21 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                         if (chunk !== null) {
                                             const [x, z] = chunk;
                                             upsertChunk(turtle.serverId, x, z, analysis);
+                                        }
+                                    }
+                                } else {
+                                    const [hasUltimateSensor] = await turtle.hasPeripheralWithName('ultimate_sensor');
+                                    if (hasUltimateSensor) {
+                                        const [analysis, analysisFailMessage] = await turtle.usePeripheralWithName<
+                                            | [{oresDistribution: {[key: string]: number}; isSlime: boolean}, undefined]
+                                            | [null, string]
+                                        >('ultimate_sensor', 'inspect', '"chunk"');
+                                        if (analysis !== null) {
+                                            const chunk = turtle.chunk;
+                                            if (chunk !== null) {
+                                                const [x, z] = chunk;
+                                                upsertChunk(turtle.serverId, x, z, analysis.oresDistribution);
+                                            }
                                         }
                                     }
                                 }
