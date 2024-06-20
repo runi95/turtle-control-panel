@@ -76,7 +76,7 @@ export abstract class TurtleBaseState<T> {
             if (!isValidInventory) continue;
 
             const {data} = peripheral;
-            const {content} = (data as {content: {name: string; tags?: {[key: string]: boolean}}[] | null});
+            const {content} = data as {content: {name: string; tags?: {[key: string]: boolean}}[] | null};
             if (content === null) continue;
 
             for (let i = 0; i < content.length; i++) {
@@ -107,14 +107,17 @@ export abstract class TurtleBaseState<T> {
                     itemPriorityQueue.add({
                         index: i + 1,
                         side,
-                        priority
+                        priority,
                     });
                 }
             }
         }
 
         let item: ComparableItem | null = null;
-        while ((item = itemPriorityQueue.poll()) !== null && (100 * this.turtle.fuelLevel / this.turtle.fuelLimit) < 90) {
+        while (
+            (item = itemPriorityQueue.poll()) !== null &&
+            (100 * this.turtle.fuelLevel) / this.turtle.fuelLimit < 90
+        ) {
             switch (item.side) {
                 case 'front':
                 case 'top':
@@ -124,8 +127,8 @@ export abstract class TurtleBaseState<T> {
                 case 'back':
                     continue;
                 default:
-                    const connectedHub = hubs.find(
-                        ([_, {data}]) => (data as {remoteNames: string[]})?.remoteNames?.includes((item as ComparableItem).side)
+                    const connectedHub = hubs.find(([_, {data}]) =>
+                        (data as {remoteNames: string[]})?.remoteNames?.includes((item as ComparableItem).side)
                     );
                     if (connectedHub) {
                         let availableSlot = null;
@@ -220,7 +223,10 @@ export abstract class TurtleBaseState<T> {
             });
             if (inventoryWithItem) {
                 const [side, {data}] = inventoryWithItem;
-                const {content, size} = (data as {content: {name: string; count: number; maxCount: string;}[]; size: number;});
+                const {content, size} = data as {
+                    content: {name: string; count: number; maxCount: string}[];
+                    size: number;
+                };
                 if (content === undefined) {
                     continue;
                 }
@@ -251,7 +257,7 @@ export abstract class TurtleBaseState<T> {
                                 side,
                                 1,
                                 null,
-                                freeSlot + 1,
+                                freeSlot + 1
                             );
                             if (pushedItemCount !== content[0].count) continue;
 
@@ -261,7 +267,7 @@ export abstract class TurtleBaseState<T> {
                                 side,
                                 itemInInventoryIndex + 1,
                                 null,
-                                1,
+                                1
                             );
                         }
 
@@ -271,14 +277,14 @@ export abstract class TurtleBaseState<T> {
                         } else if (side === 'back') {
                             await this.turtle.turnLeft();
                             yield;
-        
+
                             await this.turtle.turnLeft();
                             yield;
                         } else if (side === 'right') {
                             await this.turtle.turnRight();
                             yield;
                         }
-                        
+
                         if (side === 'top') {
                             await this.turtle.suckUp();
                             yield;
@@ -291,8 +297,8 @@ export abstract class TurtleBaseState<T> {
                         }
                         break;
                     default:
-                        const connectedHub = hubs.find(
-                            ([_, {data}]) => (data as {remoteNames: string[]})?.remoteNames?.includes(side)
+                        const connectedHub = hubs.find(([_, {data}]) =>
+                            (data as {remoteNames: string[]})?.remoteNames?.includes(side)
                         );
                         if (connectedHub) {
                             const [_, {data}] = connectedHub;
@@ -446,8 +452,8 @@ export abstract class TurtleBaseState<T> {
                         })();
                         break;
                     default:
-                        const connectedHub = hubs.find(
-                            ([_, {data}]) => (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide)
+                        const connectedHub = hubs.find(([_, {data}]) =>
+                            (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide)
                         );
                         if (connectedHub) {
                             const [_, {data}] = connectedHub;
