@@ -191,9 +191,17 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
         const {x, y, z} = this.turtle.location as Location;
         const blocks = [];
         const existingBlocks = new Map<string, boolean>();
+        const deletedBlocks: Location[] = [];
         for (const scannedBlock of scannedBlocks) {
             if (scannedBlock.x === 0 && scannedBlock.y === 0 && scannedBlock.z === 0) continue;
-            if (scannedBlock.name === 'minecraft:air') continue;
+            if (scannedBlock.name === 'minecraft:air') {
+                deletedBlocks.push({
+                    x: scannedBlock.x + x,
+                    y: scannedBlock.y + y,
+                    z: scannedBlock.z + z,
+                });
+                continue;
+            }
             if (scannedBlock.name === 'computercraft:turtle_advanced') continue;
             if (scannedBlock.name === 'computercraft:turtle_normal') continue;
             blocks.push({
@@ -203,21 +211,6 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
                 z: scannedBlock.z + z,
             });
             existingBlocks.set(`${scannedBlock.x},${scannedBlock.y},${scannedBlock.z}`, true);
-        }
-
-        const deletedBlocks = [];
-        for (let i = -scanSize; i < scanSize; i++) {
-            for (let j = -scanSize; j < scanSize; j++) {
-                for (let k = -scanSize; k < scanSize; k++) {
-                    if (!existingBlocks.get(`${i + x},${j + y},${k + z}`)) {
-                        deletedBlocks.push({
-                            x: i + x,
-                            y: j + y,
-                            z: k + z,
-                        });
-                    }
-                }
-            }
         }
 
         deleteBlocks(this.turtle.serverId, deletedBlocks);
