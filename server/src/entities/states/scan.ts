@@ -32,16 +32,19 @@ export class TurtleScanState extends TurtleBaseState<ScanningStateData> {
         const [hasGeoScanner] = await this.turtle.hasPeripheralWithName('geoScanner');
         if (hasGeoScanner) {
             yield* this.geoScanner();
+            return;
         }
 
         const [hasUniversalScanner] = await this.turtle.hasPeripheralWithName('universal_scanner');
         if (hasUniversalScanner) {
             yield* this.universalScanner();
+            return;
         }
 
         const [hasBlockScanner] = await this.turtle.hasPeripheralWithName('plethora:scanner');
         if (hasBlockScanner) {
             yield* this.blockScanner();
+            return;
         }
 
         throw new Error('No Scanner to scan with');
