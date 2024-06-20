@@ -177,32 +177,47 @@ export abstract class TurtleBaseState<T> {
         }
 
         let hasPulledItemFromInventories = false;
-        for (let slot = 1; slot < 27; slot++) {
-            if (count < 1) return;
-            const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
-                (acc, [side, {types, data}]) => {
-                    if (types.includes('inventory')) {
-                        acc.inventories.push([side, {types, data}]);
-                    } else if (types.includes('peripheral_hub')) {
-                        acc.hubs.push([side, {types, data}]);
-                    }
-
-                    return acc;
-                },
-                {
-                    inventories: [] as [string, {data?: unknown; types: string[]}][],
-                    hubs: [] as [string, {data?: unknown; types: string[]}][],
-                }
-            );
-
-            const inventoryWithItem = inventories.find(([side, {data}]) => {
-                const content = (data as {content: {name: string}[]}).content;
-                if (content == null) {
-                    return false;
+        const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
+            (acc, [side, {types, data}]) => {
+                if (types.includes('inventory')) {
+                    acc.inventories.push([side, {types, data}]);
+                } else if (types.includes('peripheral_hub')) {
+                    acc.hubs.push([side, {types, data}]);
                 }
 
-                const itemInInventoryIndex = content?.findIndex((contentItem) => contentItem?.name === itemName);
-                if (!(itemInInventoryIndex > -1)) return false;
+                return acc;
+            },
+            {
+                inventories: [] as [string, {data?: unknown; types: string[]}][],
+                hubs: [] as [string, {data?: unknown; types: string[]}][],
+            }
+        );
+
+        for (const [side, {data}] of inventories) {
+            // Have we gotten all the items we need?
+            if (count < 1) break;
+
+            let {content, size} = data as {
+                content: ({name: string; count: number; maxCount: string} | null)[];
+                size: number;
+            };
+
+            // Is inventory missing item content?
+            if (content == null) continue;
+
+            for (let i = 0; i < size; i++) {
+                // Have we gotten all the items we need?
+                if (count < 1) break;
+                const item = content[i];
+
+                // Is this item slot empty?
+                if (item == null) continue;
+
+                // Is it the correct item type?
+                if (item.name !== itemName) continue;
+
+                // Are there any left in stock?
+                if (item.count < 1) continue;
 
                 switch (side) {
                     case 'front':
@@ -211,64 +226,60 @@ export abstract class TurtleBaseState<T> {
                     case 'left':
                     case 'right':
                     case 'back':
-                        if (itemInInventoryIndex === 0) return true;
-                        if (content?.length < (data as {size: number}).size) return true;
-                        return content?.some((item) => item == null);
-                    default:
-                        return hubs.some(([_, {data}]) => {
-                            if (!(data as {localName: string})?.localName) return false;
-                            return (data as {remoteNames: string[]})?.remoteNames?.includes(side);
-                        });
-                }
-            });
-            if (inventoryWithItem) {
-                const [side, {data}] = inventoryWithItem;
-                const {content, size} = data as {
-                    content: {name: string; count: number; maxCount: string}[];
-                    size: number;
-                };
-                if (content === undefined) {
-                    continue;
-                }
+                        // Is requested item not in first slot?
+                        if (i > 0) {
+                            // Is the first inventory slot available?
+                            const firstItemInInventory = content[0];
+                            if (firstItemInInventory != null) {
+                                let freeSlot = -1;
+                                for (let i = 1; i < size; i++) {
+                                    if (content[i] != null) continue;
+                                    freeSlot = i;
+                                    break;
+                                }
 
-                const itemInInventoryIndex = content?.findIndex((contentItem) => contentItem?.name === itemName);
-                if (!(itemInInventoryIndex > -1)) continue;
+                                // Are there any available slots to move items to?
+                                if (freeSlot === -1) continue;
 
-                switch (side) {
-                    case 'front':
-                    case 'top':
-                    case 'bottom':
-                    case 'left':
-                    case 'right':
-                    case 'back':
-                        if (itemInInventoryIndex > 0) {
-                            let freeSlot = -1;
-                            for (let i = 0; i < size; i++) {
-                                if (content[i] != null) continue;
-                                freeSlot = i;
-                                break;
+                                const [pushedTempItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
+                                    side,
+                                    'pushItems',
+                                    side,
+                                    1,
+                                    null,
+                                    freeSlot + 1
+                                );
+                                if (pushedTempItemCount >= firstItemInInventory.count) {
+                                    content[freeSlot] = firstItemInInventory;
+                                    content[0] = null;
+                                } else if (pushedTempItemCount > 0) {
+                                    content[freeSlot] = {
+                                        name: item.name,
+                                        maxCount: item.maxCount,
+                                        count: pushedTempItemCount,
+                                    };
+                                    continue;
+                                }
                             }
-
-                            if (freeSlot === -1) continue;
 
                             const [pushedItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
                                 side,
                                 'pushItems',
                                 side,
-                                1,
-                                null,
-                                freeSlot + 1
-                            );
-                            if (pushedItemCount !== content[0].count) continue;
-
-                            await this.turtle.usePeripheralWithSide<[number]>(
-                                side,
-                                'pushItems',
-                                side,
-                                itemInInventoryIndex + 1,
+                                i + 1,
                                 null,
                                 1
                             );
+                            if (pushedItemCount === item.count) {
+                                content[0] = item;
+                                content[i] = null;
+                            } else if (pushedItemCount > 0) {
+                                content[0] = {
+                                    name: item.name,
+                                    maxCount: item.maxCount,
+                                    count: pushedItemCount,
+                                };
+                            }
                         }
 
                         if (side === 'left') {
@@ -286,32 +297,60 @@ export abstract class TurtleBaseState<T> {
                         }
 
                         if (side === 'top') {
-                            await this.turtle.suckUp();
+                            await this.turtle.suckUp(Math.min(count, 64));
                             yield;
                         } else if (side === 'bottom') {
-                            await this.turtle.suckDown();
+                            await this.turtle.suckDown(Math.min(count, 64));
                             yield;
                         } else {
-                            await this.turtle.suck();
+                            await this.turtle.suck(Math.min(count, 64));
                             yield;
                         }
+
+                        // Refresh connected inventory state
+                        const expectedCount = content[0]?.count ?? 0;
+                        await this.turtle.connectToInventory(side);
+                        content = (
+                            this.turtle.peripherals[side].data as {
+                                content: {name: string; count: number; maxCount: string}[];
+                                size: number;
+                            }
+                        ).content;
+                        if (content[0] == null) {
+                            hasPulledItemFromInventories = true;
+                            count -= expectedCount;
+                        } else {
+                            const movedCount = expectedCount - (content[0]?.count ?? 0);
+                            if (movedCount > 0) {
+                                hasPulledItemFromInventories = true;
+                                count -= movedCount;
+                            }
+                        }
+                        yield;
+
                         break;
                     default:
                         const connectedHub = hubs.find(([_, {data}]) =>
                             (data as {remoteNames: string[]})?.remoteNames?.includes(side)
                         );
                         if (connectedHub) {
-                            const [_, {data}] = connectedHub;
+                            const [_, {data: hubData}] = connectedHub;
                             const [pushedItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
                                 side,
                                 'pushItems',
-                                (data as {localName: string}).localName,
-                                itemInInventoryIndex + 1,
+                                (hubData as {localName: string}).localName,
+                                i + 1,
                                 count
                             );
                             if (pushedItemCount > 0) {
                                 hasPulledItemFromInventories = true;
                                 count -= pushedItemCount;
+
+                                if (item.count <= pushedItemCount) {
+                                    content[i] = null;
+                                } else {
+                                    item.count -= pushedItemCount;
+                                }
                             }
                         }
                         break;
