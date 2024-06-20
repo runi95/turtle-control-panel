@@ -163,7 +163,7 @@ export abstract class TurtleBaseState<T> {
         }
     }
 
-    protected async *pullItemFromNearbyInventories(itemName: string, count?: number): AsyncGenerator<void> {
+    protected async *pullItemFromNearbyInventories(itemName: string, count: number): AsyncGenerator<void> {
         if (
             !Object.values(this.turtle.peripherals).some(({types}) => {
                 if (types.includes('inventory')) {
@@ -178,7 +178,7 @@ export abstract class TurtleBaseState<T> {
 
         let hasPulledItemFromInventories = false;
         for (let slot = 1; slot < 27; slot++) {
-            if (count != null && count < 1) return;
+            if (count < 1) return;
             const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
                 (acc, [side, {types, data}]) => {
                     if (types.includes('inventory')) {
@@ -307,11 +307,11 @@ export abstract class TurtleBaseState<T> {
                                 'pushItems',
                                 (data as {localName: string}).localName,
                                 itemInInventoryIndex + 1,
-                                count != null ? count : null
+                                count
                             );
                             if (pushedItemCount > 0) {
                                 hasPulledItemFromInventories = true;
-                                if (count != null) count -= pushedItemCount;
+                                count -= pushedItemCount;
                             }
                         }
                         break;
