@@ -1821,7 +1821,9 @@ export class Turtle {
 
     async updateAllAttachedPeripherals(peripherals: Peripherals): Promise<void> {
         let hasAnyPeripheralsToCheck = false;
-        const {inventorySides, modemSides, peripheralHubSides, driveSides} = Object.keys(peripherals).reduce(
+        const {inventorySides, modemSides, peripheralHubSides, driveSides, chatterSides} = Object.keys(
+            peripherals
+        ).reduce(
             (acc, side) => {
                 for (const type of peripherals[side].types) {
                     switch (type) {
@@ -1840,6 +1842,9 @@ export class Turtle {
                         case 'drive':
                             hasAnyPeripheralsToCheck = true;
                             acc.driveSides.push(side);
+                        case 'chatter':
+                            hasAnyPeripheralsToCheck = true;
+                            acc.chatterSides.push(side);
                         default:
                             break;
                     }
@@ -1852,6 +1857,7 @@ export class Turtle {
                 modemSides: [] as string[],
                 peripheralHubSides: [] as string[],
                 driveSides: [] as string[],
+                chatterSides: [] as string[],
             }
         );
 
@@ -1861,7 +1867,7 @@ export class Turtle {
         // Ensures they're queued together
         const [updatedPeripherals] = await this.#exec<
             [{[key: string]: {data?: unknown}}]
-        >(`(function(inventorySides, modemSides, peripheralHubSides, driveSides)
+        >(`(function(inventorySides, modemSides, peripheralHubSides, driveSides, chatterSides)
             local peripherals = {}
             local functions = {}
             local fIndex = 1
@@ -1902,13 +1908,20 @@ export class Turtle {
                 fIndex = fIndex + 1
             end
 
+            for i, side in pairs(chatterSides) do
+                peripherals[side] = {data = {}}
+                functions[fIndex] = (function()
+                    peripherals[side]["data"]["message"] = peripheral.call(side, "getMessage")
+                end)
+            end
+
             parallel.waitForAll(table.unpack(functions))
             return peripherals
         end)({${inventorySides.map((side) => `"${side}"`).join(',')}}, {${modemSides
             .map((side) => `"${side}"`)
             .join(
                 ','
-            )}}, {${peripheralHubSides.map((side) => `"${side}"`).join(',')}}, {${driveSides.map((side) => `"${side}"`).join(',')}})`);
+            )}}, {${peripheralHubSides.map((side) => `"${side}"`).join(',')}}, {${driveSides.map((side) => `"${side}"`).join(',')}}, {${chatterSides.map((side) => `"${side}"`).join(',')}})`);
 
         const newPeripherals = {
             ...this.peripherals,

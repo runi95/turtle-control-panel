@@ -438,6 +438,48 @@ export const createWebSocketServer = (server: TServerInstance) => {
                             case 'drive-create-file':
                                 await turtle.writeToFile(msg.data.file, msg.data.content);
                                 break;
+                            case 'chatter-set-message':
+                                if (msg.data.side == null) {
+                                    throw new Error('Cannot call chatter-set-message without a <side>');
+                                }
+
+                                if (msg.data.message == null) {
+                                    throw new Error('Cannot call chatter-set-message without a <message>');
+                                }
+
+                                await turtle.usePeripheralWithSide(msg.data.side, 'setMessage', msg.data.message);
+
+                                (() => {
+                                    const newPeripherals = {
+                                        ...turtle.peripherals,
+                                        [msg.data.side]: {
+                                            ...turtle.peripherals[msg.data.side],
+                                            data: {
+                                                message: msg.data.message,
+                                            },
+                                        },
+                                    };
+                                    turtle.peripherals = newPeripherals;
+                                })();
+                                break;
+                            case 'chatter-clear-message':
+                                if (msg.data.side == null) {
+                                    throw new Error('Cannot call chatter-clear-message without a <side>');
+                                }
+
+                                await turtle.usePeripheralWithSide(msg.data.side, 'clearMessage');
+
+                                (() => {
+                                    const newPeripherals = {
+                                        ...turtle.peripherals,
+                                        [msg.data.side]: {
+                                            ...turtle.peripherals[msg.data.side],
+                                            data: {},
+                                        },
+                                    };
+                                    turtle.peripherals = newPeripherals;
+                                })();
+                                break;
                             case 'suck':
                                 await turtle.suck();
                                 break;

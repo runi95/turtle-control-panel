@@ -12,6 +12,7 @@ import Drive from './Drive';
 import UniversalScanner from './UniversalScanner';
 import BlockScanner from './BlockScanner';
 import UltimateSensor from './UltimateSensor';
+import Chatter from './Chatter';
 
 interface Props {
     turtle: Turtle;
@@ -34,6 +35,7 @@ function Peripherals(props: Props) {
             isUniversalScanner,
             isUltimateSensor,
             isBlockScanner,
+            isChatter,
         } = types.reduce(
             (acc, curr) => {
                 switch (curr) {
@@ -67,6 +69,9 @@ function Peripherals(props: Props) {
                     case 'drive':
                         acc.isDrive = true;
                         break;
+                    case 'chatter':
+                        acc.isChatter = true;
+                        break;
                 }
 
                 return acc;
@@ -82,6 +87,7 @@ function Peripherals(props: Props) {
                 isUniversalScanner: false,
                 isUltimateSensor: false,
                 isBlockScanner: false,
+                isChatter: false,
             }
         );
 
@@ -183,6 +189,17 @@ function Peripherals(props: Props) {
                     <Accordion.Header>Drive</Accordion.Header>
                     <Accordion.Body>
                         <Drive action={action} peripheral={peripheral} turtle={turtle} />
+                    </Accordion.Body>
+                </Accordion.Item>
+            );
+        }
+
+        if (isChatter) {
+            return (
+                <Accordion.Item key={i} eventKey={`${i}`}>
+                    <Accordion.Header>Chatter</Accordion.Header>
+                    <Accordion.Body>
+                        <Chatter action={action} side={side} peripheral={peripheral} turtle={turtle} />
                     </Accordion.Body>
                 </Accordion.Item>
             );
