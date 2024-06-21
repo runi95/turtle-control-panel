@@ -20,6 +20,7 @@ import globalEventEmitter from './globalEventEmitter';
 import {Area} from './db/area.type';
 import {Block} from './db/block.type';
 import {TurtleExploringState} from './entities/states/explore';
+import {TurtleInventoryDumpState} from './entities/states/inventory-dump';
 
 declare type TServerInstance = http.Server | HTTPSServer | Http2SecureServer | Http2Server;
 export const createWebSocketServer = (server: TServerInstance) => {
@@ -165,6 +166,8 @@ export const createWebSocketServer = (server: TServerInstance) => {
                             case 'inventory-transfer':
                                 await turtle.inventoryTransfer(msg.data.fromSlot, msg.data.toSlot, msg.data.count);
                                 break;
+                            case 'inventory-dump':
+                                turtle.state = new TurtleInventoryDumpState(turtle);
                             case 'locate':
                                 await turtle.gpsLocate();
                                 break;

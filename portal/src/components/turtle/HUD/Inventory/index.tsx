@@ -109,7 +109,7 @@ function Inventory() {
                                     <b>Equip</b>
                                 </button>
                             </ButtonSlot>
-                            <ButtonSlot style={{gridColumn: 'span 2'}} key='suck-btn'>
+                            <ButtonSlot key='suck-btn'>
                                 <button
                                     className='text-muted inventory-button'
                                     onClick={() =>
@@ -118,6 +118,21 @@ function Inventory() {
                                     disabled={!turtle.isOnline}
                                 >
                                     <b>Suck</b>
+                                </button>
+                            </ButtonSlot>
+                            <ButtonSlot key='inventory-dump-btn'>
+                                <button
+                                    className='text-muted inventory-button'
+                                    onClick={() =>
+                                        action({
+                                            type: 'ACTION',
+                                            action: 'inventory-dump',
+                                            data: {serverId, id: turtle.id},
+                                        })
+                                    }
+                                    disabled={!turtle.isOnline}
+                                >
+                                    <b>Dump</b>
                                 </button>
                             </ButtonSlot>
                             <ButtonSlot key='drop-btn'>
