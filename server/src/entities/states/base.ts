@@ -461,33 +461,48 @@ export abstract class TurtleBaseState<T> {
                 case 'front':
                     await (async () => {
                         const [didDrop] = await this.turtle.drop();
-                        if (didDrop) hasEmptiedAnySlot = true;
+                        if (didDrop) {
+                            hasEmptiedAnySlot = true;
+                            await this.turtle.connectToInventory('front');
+                        }
                     })();
                     break;
                 case 'top':
                     await (async () => {
                         const [didDrop] = await this.turtle.dropUp();
-                        if (didDrop) hasEmptiedAnySlot = true;
+                        if (didDrop) {
+                            hasEmptiedAnySlot = true;
+                            await this.turtle.connectToInventory('top');
+                        }
                     })();
                     break;
                 case 'bottom':
                     await (async () => {
                         const [didDrop] = await this.turtle.dropDown();
-                        if (didDrop) hasEmptiedAnySlot = true;
+                        if (didDrop) {
+                            hasEmptiedAnySlot = true;
+                            await this.turtle.connectToInventory('bottom');
+                        }
                     })();
                     break;
                 case 'left':
                     await (async () => {
                         await this.turtle.turnLeft();
                         const [didDrop] = await this.turtle.drop();
-                        if (didDrop) hasEmptiedAnySlot = true;
+                        if (didDrop) {
+                            hasEmptiedAnySlot = true;
+                            await this.turtle.connectToInventory('front');
+                        }
                     })();
                     break;
                 case 'right':
                     await (async () => {
                         await this.turtle.turnRight();
                         const [didDrop] = await this.turtle.drop();
-                        if (didDrop) hasEmptiedAnySlot = true;
+                        if (didDrop) {
+                            hasEmptiedAnySlot = true;
+                            await this.turtle.connectToInventory('front');
+                        }
                     })();
                     break;
                 case 'back':
@@ -495,7 +510,10 @@ export abstract class TurtleBaseState<T> {
                         await this.turtle.turnLeft();
                         await this.turtle.turnLeft();
                         const [didDrop] = await this.turtle.drop();
-                        if (didDrop) hasEmptiedAnySlot = true;
+                        if (didDrop) {
+                            hasEmptiedAnySlot = true;
+                            await this.turtle.connectToInventory('front');
+                        }
                     })();
                     break;
                 default:
@@ -512,6 +530,7 @@ export abstract class TurtleBaseState<T> {
                         );
                         if (pulledItemCount > 0) {
                             hasEmptiedAnySlot = true;
+                            await this.turtle.connectToInventory(bestMatchingSide);
                         }
                     }
                     break;
