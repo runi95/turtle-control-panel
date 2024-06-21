@@ -3,6 +3,7 @@ import DStarLite, {Boundaries, DestinationError, IsBlockMineableFunc} from '../.
 import {Node} from '../../dlite/Node';
 import {Point} from '../../dlite/Point';
 import {PriorityQueue} from '../../dlite/PriorityQueue';
+import {levenshteinDistance} from '../../helpers/levenshtein-distance';
 import {Turtle} from '../turtle';
 
 interface ComparableItem {
@@ -390,127 +391,133 @@ export abstract class TurtleBaseState<T> {
         let hasEmptiedAnySlot = false;
         for (let slot = 1; slot < 16; slot++) {
             const item = this.turtle.inventory[slot];
-            if (item) {
-                const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
-                    (acc, [side, {types, data}]) => {
-                        if (types.includes('inventory')) {
-                            acc.inventories.push([side, {types, data}]);
-                        } else if (types.includes('peripheral_hub')) {
-                            acc.hubs.push([side, {types, data}]);
-                        }
+            if (item == null) continue;
 
-                        return acc;
-                    },
-                    {
-                        inventories: [] as [string, {data?: unknown; types: string[]}][],
-                        hubs: [] as [string, {data?: unknown; types: string[]}][],
+            const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
+                (acc, [side, {types, data}]) => {
+                    if (types.includes('inventory')) {
+                        acc.inventories.push([side, {types, data}]);
+                    } else if (types.includes('peripheral_hub')) {
+                        acc.hubs.push([side, {types, data}]);
                     }
-                );
 
-                const bestMatchingInventory =
-                    inventories.find(([side, {data}]) => {
-                        const content = (data as {content: {name: string}[]}).content;
-                        if (content === undefined) {
-                            return false;
-                        }
-
-                        const containsItem = content?.some((contentItem) => {
-                            if (contentItem == null) return false;
-                            const {name} = contentItem;
-                            return name === item?.name;
-                        });
-                        if (!containsItem) return false;
-
-                        switch (side) {
-                            case 'front':
-                            case 'top':
-                            case 'bottom':
-                            case 'left':
-                            case 'right':
-                            case 'back':
-                                return true;
-                            default:
-                                return hubs.some(([_, {data}]) => {
-                                    if (!(data as {localName: string})?.localName) return false;
-                                    return (data as {remoteNames: string[]})?.remoteNames?.includes(side);
-                                });
-                        }
-                    }) ??
-                    inventories.find(([side]) => {
-                        if (side === 'front') return true;
-                        if (side === 'top') return true;
-                        if (side === 'bottom') return true;
-                        if (side === 'left') return true;
-                        if (side === 'right') return true;
-                        if (side === 'back') return true;
-                        return false;
-                    });
-                if (bestMatchingInventory === undefined) continue;
-                const [bestMatchingSide] = bestMatchingInventory;
-                await this.turtle.select(slot);
-
-                switch (bestMatchingSide) {
-                    case 'front':
-                        await (async () => {
-                            const [didDrop] = await this.turtle.drop();
-                            if (didDrop) hasEmptiedAnySlot = true;
-                        })();
-                        break;
-                    case 'top':
-                        await (async () => {
-                            const [didDrop] = await this.turtle.dropUp();
-                            if (didDrop) hasEmptiedAnySlot = true;
-                        })();
-                        break;
-                    case 'bottom':
-                        await (async () => {
-                            const [didDrop] = await this.turtle.dropDown();
-                            if (didDrop) hasEmptiedAnySlot = true;
-                        })();
-                        break;
-                    case 'left':
-                        await (async () => {
-                            await this.turtle.turnLeft();
-                            const [didDrop] = await this.turtle.drop();
-                            if (didDrop) hasEmptiedAnySlot = true;
-                        })();
-                        break;
-                    case 'right':
-                        await (async () => {
-                            await this.turtle.turnRight();
-                            const [didDrop] = await this.turtle.drop();
-                            if (didDrop) hasEmptiedAnySlot = true;
-                        })();
-                        break;
-                    case 'back':
-                        await (async () => {
-                            await this.turtle.turnLeft();
-                            await this.turtle.turnLeft();
-                            const [didDrop] = await this.turtle.drop();
-                            if (didDrop) hasEmptiedAnySlot = true;
-                        })();
-                        break;
-                    default:
-                        const connectedHub = hubs.find(([_, {data}]) =>
-                            (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide)
-                        );
-                        if (connectedHub) {
-                            const [_, {data}] = connectedHub;
-                            const [pulledItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
-                                bestMatchingSide,
-                                'pullItems',
-                                (data as {localName: string}).localName,
-                                slot
-                            );
-                            if (pulledItemCount > 0) {
-                                hasEmptiedAnySlot = true;
-                            }
-                        }
-                        break;
+                    return acc;
+                },
+                {
+                    inventories: [] as [string, {data?: unknown; types: string[]}][],
+                    hubs: [] as [string, {data?: unknown; types: string[]}][],
                 }
+            );
 
-                yield;
+            let bestStringMatch = Number.MAX_VALUE;
+            const bestMatchingInventory = inventories.reduce(
+                (bestMatch, inventory) => {
+                    const [_, {data}] = inventory;
+                    const {content, size} = data as {
+                        content: ({name: string; count: number; maxCount: string} | null)[];
+                        size: number;
+                    };
+                    if (content == null) return bestMatch;
+
+                    let currentBestMatch = Number.MAX_VALUE;
+                    for (let i = 0; i < size; i++) {
+                        const invItem = content[i];
+                        if (invItem == null) continue;
+
+                        const distance = levenshteinDistance(item.name, invItem.name);
+                        if (distance < currentBestMatch) {
+                            currentBestMatch = distance;
+                        }
+                    }
+
+                    if (currentBestMatch < bestStringMatch) {
+                        bestStringMatch = currentBestMatch;
+                        return inventory;
+                    }
+
+                    return bestMatch;
+                },
+                inventories.find(([_, {data}]) => {
+                    const {content, size} = data as {
+                        content: ({name: string; count: number; maxCount: string} | null)[];
+                        size: number;
+                    };
+                    if (content == null) return size > 0;
+
+                    for (let i = 0; i < size; i++) {
+                        const invItem = content[i];
+                        if (invItem == null) return true;
+                        if (invItem.name === item.name) return true;
+                    }
+
+                    return false;
+                }) ?? null
+            );
+            if (bestMatchingInventory == null) continue;
+            const [bestMatchingSide] = bestMatchingInventory;
+            await this.turtle.select(slot);
+
+            switch (bestMatchingSide) {
+                case 'front':
+                    await (async () => {
+                        const [didDrop] = await this.turtle.drop();
+                        if (didDrop) hasEmptiedAnySlot = true;
+                    })();
+                    break;
+                case 'top':
+                    await (async () => {
+                        const [didDrop] = await this.turtle.dropUp();
+                        if (didDrop) hasEmptiedAnySlot = true;
+                    })();
+                    break;
+                case 'bottom':
+                    await (async () => {
+                        const [didDrop] = await this.turtle.dropDown();
+                        if (didDrop) hasEmptiedAnySlot = true;
+                    })();
+                    break;
+                case 'left':
+                    await (async () => {
+                        await this.turtle.turnLeft();
+                        const [didDrop] = await this.turtle.drop();
+                        if (didDrop) hasEmptiedAnySlot = true;
+                    })();
+                    break;
+                case 'right':
+                    await (async () => {
+                        await this.turtle.turnRight();
+                        const [didDrop] = await this.turtle.drop();
+                        if (didDrop) hasEmptiedAnySlot = true;
+                    })();
+                    break;
+                case 'back':
+                    await (async () => {
+                        await this.turtle.turnLeft();
+                        await this.turtle.turnLeft();
+                        const [didDrop] = await this.turtle.drop();
+                        if (didDrop) hasEmptiedAnySlot = true;
+                    })();
+                    break;
+                default:
+                    const connectedHub = hubs.find(([_, {data}]) =>
+                        (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide)
+                    );
+                    if (connectedHub) {
+                        const [_, {data}] = connectedHub;
+                        const [pulledItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
+                            bestMatchingSide,
+                            'pullItems',
+                            (data as {localName: string}).localName,
+                            slot
+                        );
+                        if (pulledItemCount > 0) {
+                            hasEmptiedAnySlot = true;
+                        }
+                    }
+                    break;
             }
+
+            yield;
         }
 
         if (!hasEmptiedAnySlot) {
