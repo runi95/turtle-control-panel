@@ -378,7 +378,7 @@ export abstract class TurtleBaseState<T> {
 
         // Has any items in inventory?
         let itemsInInventory = 0;
-        for (let slot = 1; slot < 27; slot++) {
+        for (let slot = 1; slot < 16; slot++) {
             if (this.turtle.inventory[slot]) itemsInInventory++;
         }
 
@@ -388,7 +388,7 @@ export abstract class TurtleBaseState<T> {
         }
 
         let hasEmptiedAnySlot = false;
-        for (let slot = 1; slot < 27; slot++) {
+        for (let slot = 1; slot < 16; slot++) {
             const item = this.turtle.inventory[slot];
             if (item) {
                 const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
