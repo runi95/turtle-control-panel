@@ -100,16 +100,7 @@ function Inventory() {
                 <Col key='inventory-grid' md='auto'>
                     <div className='inventory-container'>
                         <InventoryGrid>
-                            <ButtonSlot key='equip-btn'>
-                                <button
-                                    className='text-muted inventory-button'
-                                    onClick={() => setIsEquipModalVisible(true)}
-                                    disabled={!turtle.isOnline}
-                                >
-                                    <b>Equip</b>
-                                </button>
-                            </ButtonSlot>
-                            <ButtonSlot key='suck-btn'>
+                            <ButtonSlot style={{gridColumn: 'span 2'}} key='suck-btn'>
                                 <button
                                     className='text-muted inventory-button'
                                     onClick={() =>
@@ -193,6 +184,15 @@ function Inventory() {
                                     />
                                 );
                             })}
+                            <ButtonSlot style={{gridColumn: 'span 4'}} key='equip-btn'>
+                                <button
+                                    className='text-muted inventory-button'
+                                    onClick={() => setIsEquipModalVisible(true)}
+                                    disabled={!turtle.isOnline}
+                                >
+                                    <b>Equip</b>
+                                </button>
+                            </ButtonSlot>
                         </InventoryGrid>
                     </div>
                 </Col>
