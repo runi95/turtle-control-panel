@@ -1913,6 +1913,7 @@ export class Turtle {
                 functions[fIndex] = (function()
                     peripherals[side]["data"]["message"] = peripheral.call(side, "getMessage")
                 end)
+                fIndex = fIndex + 1
             end
 
             parallel.waitForAll(table.unpack(functions))
