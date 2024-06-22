@@ -13,6 +13,7 @@ import UniversalScanner from './UniversalScanner';
 import BlockScanner from './BlockScanner';
 import UltimateSensor from './UltimateSensor';
 import Chatter from './Chatter';
+import EndAutomataCore from './EndAutomataCore';
 
 interface Props {
     turtle: Turtle;
@@ -36,6 +37,7 @@ function Peripherals(props: Props) {
             isUltimateSensor,
             isBlockScanner,
             isChatter,
+            isEndAutomata,
         } = types.reduce(
             (acc, curr) => {
                 switch (curr) {
@@ -72,6 +74,9 @@ function Peripherals(props: Props) {
                     case 'chatter':
                         acc.isChatter = true;
                         break;
+                    case 'endAutomata':
+                        acc.isEndAutomata = true;
+                        break;
                 }
 
                 return acc;
@@ -88,6 +93,7 @@ function Peripherals(props: Props) {
                 isUltimateSensor: false,
                 isBlockScanner: false,
                 isChatter: false,
+                isEndAutomata: false,
             }
         );
 
@@ -200,6 +206,17 @@ function Peripherals(props: Props) {
                     <Accordion.Header>Chatter</Accordion.Header>
                     <Accordion.Body>
                         <Chatter action={action} side={side} peripheral={peripheral} turtle={turtle} />
+                    </Accordion.Body>
+                </Accordion.Item>
+            );
+        }
+
+        if (isEndAutomata) {
+            return (
+                <Accordion.Item key={i} eventKey={`${i}`}>
+                    <Accordion.Header>End automata core</Accordion.Header>
+                    <Accordion.Body>
+                        <EndAutomataCore action={action} side={side} peripheral={peripheral} turtle={turtle} />
                     </Accordion.Body>
                 </Accordion.Item>
             );

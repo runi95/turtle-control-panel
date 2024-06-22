@@ -22,6 +22,8 @@ import {Block} from './db/block.type';
 import {TurtleExploringState} from './entities/states/explore';
 import {TurtleInventoryDumpState} from './entities/states/inventory-dump';
 
+const endAutomataLocationRegex = new RegExp('\\((-?\\d+),(-?\\d+),(-?\\d+)\\)$');
+
 declare type TServerInstance = http.Server | HTTPSServer | Http2SecureServer | Http2Server;
 export const createWebSocketServer = (server: TServerInstance) => {
     const io = new Server(server, {
@@ -479,6 +481,109 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                     };
                                     turtle.peripherals = newPeripherals;
                                 })();
+                                break;
+                            case 'end-automata-warp':
+                                if (msg.data.side == null) {
+                                    throw new Error('Cannot call end-automata-warp without a <side>');
+                                }
+
+                                if (msg.data.point == null) {
+                                    throw new Error('Cannot call end-automata-warp without a <point>');
+                                }
+
+                                const regexResults = endAutomataLocationRegex.exec(msg.data.point);
+                                if (regexResults == null) {
+                                    throw new Error('Invalid warp <point>, location data is missing');
+                                }
+
+                                const x = Number(regexResults[1]);
+                                const y = Number(regexResults[2]);
+                                const z = Number(regexResults[3]);
+                                if (
+                                    x == null ||
+                                    y == null ||
+                                    z == null ||
+                                    Number.isNaN(x) ||
+                                    Number.isNaN(y) ||
+                                    Number.isNaN(z)
+                                ) {
+                                    throw new Error('Invalid warp <point>, location data is corrupt');
+                                }
+
+                                const [didWarp] = await turtle.usePeripheralWithSide<[boolean]>(
+                                    msg.data.side,
+                                    'warpToPoint',
+                                    msg.data.point
+                                );
+                                if (didWarp) {
+                                    turtle.location = {
+                                        x,
+                                        y,
+                                        z,
+                                    };
+                                }
+                                break;
+                            case 'end-automata-delete-point':
+                                if (msg.data.side == null) {
+                                    throw new Error('Cannot call end-automata-delete-point without a <side>');
+                                }
+
+                                if (msg.data.point == null) {
+                                    throw new Error('Cannot call end-automata-delete-point without a <point>');
+                                }
+
+                                const [didDelete] = await turtle.usePeripheralWithSide<[boolean]>(
+                                    msg.data.side,
+                                    'deletePoint',
+                                    msg.data.point
+                                );
+                                if (didDelete) {
+                                    const {points} = turtle.peripherals[msg.data.side].data as {
+                                        points?: string[];
+                                    };
+                                    if (points != null) {
+                                        const newPeripherals = {
+                                            ...turtle.peripherals,
+                                            [msg.data.side]: {
+                                                ...turtle.peripherals[msg.data.side],
+                                                data: {
+                                                    points: points.filter((point) => point !== msg.data.point),
+                                                },
+                                            },
+                                        };
+                                        turtle.peripherals = newPeripherals;
+                                    }
+                                }
+                                break;
+                            case 'end-automata-save-point':
+                                if (msg.data.side == null) {
+                                    throw new Error('Cannot call end-automata-save-point without a <side>');
+                                }
+
+                                if (msg.data.point == null) {
+                                    throw new Error('Cannot call end-automata-save-point without a <point>');
+                                }
+
+                                const [didSave] = await turtle.usePeripheralWithSide<[boolean]>(
+                                    msg.data.side,
+                                    'savePoint',
+                                    msg.data.point
+                                );
+                                if (didSave) {
+                                    const {points} = turtle.peripherals[msg.data.side].data as {
+                                        points?: string[];
+                                    };
+                                    const newPeripherals = {
+                                        ...turtle.peripherals,
+                                        [msg.data.side]: {
+                                            ...turtle.peripherals[msg.data.side],
+                                            data: {
+                                                points: [...(points ?? []), msg.data.point],
+                                            },
+                                        },
+                                    };
+                                    turtle.peripherals = newPeripherals;
+                                }
                                 break;
                             case 'suck':
                                 await turtle.suck();
