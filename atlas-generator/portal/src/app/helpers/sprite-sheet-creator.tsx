@@ -187,7 +187,13 @@ export const createSpriteSheet = async (
   const blocksToRender: LoadedItemFile[] = [];
   for (const item of items) {
     try {
-      const split = item.parent?.split("/");
+      const parentAssetSplit = item.parent?.split(":");
+      const parentSplit = (
+        parentAssetSplit != null && parentAssetSplit.length > 1
+          ? parentAssetSplit[1]
+          : item.parent
+      )?.split("/");
+
       if (
         (item.parent === "item/generated" ||
           item.parent === "minecraft:item/generated") &&
@@ -202,12 +208,17 @@ export const createSpriteSheet = async (
         const itemImages: HTMLImageElement[] = [];
         for (const layer of layers) {
           const assetSplit = layer.split(":");
-          const asset = assetSplit != null ? assetSplit[0] : item.asset;
+          const asset =
+            assetSplit != null && assetSplit.length > 1
+              ? assetSplit[0]
+              : item.asset;
 
           const textures = (fileTree?.[asset] as FileTree)?.textures;
           if (textures == null) continue;
 
-          const paths = (assetSplit != null ? assetSplit[1] : layer).split("/");
+          const paths = (
+            assetSplit != null && assetSplit.length > 1 ? assetSplit[1] : layer
+          ).split("/");
           const itemTextureDirectory = paths
             .slice(0, paths.length - 1)
             .reduce((acc, curr) => {
@@ -232,20 +243,18 @@ export const createSpriteSheet = async (
           name: `${item.asset}:${item.name}`,
           image: finalImage,
         });
-      } else if (split != null && split[0].endsWith("item")) {
-        const assetSplit = split?.[0].split(":");
-        const asset = assetSplit != null ? assetSplit[0] : item.asset;
-        const textures = (fileTree?.[asset] as FileTree)?.textures;
+      } else if (parentSplit != null && parentSplit[0] === "item") {
+        const textures = (fileTree?.[item.asset] as FileTree)?.textures;
         if (textures == null) continue;
         const itemTextures = (textures as FileTree)?.item;
         if (itemTextures == null) continue;
         const itemTexture = (itemTextures as FileTree)?.[`${item.name}.png`];
         if (itemTexture == null) continue;
         spriteTextures.push({
-          name: `${asset}:${item.name}`,
+          name: `${item.asset}:${item.name}`,
           image: await loadImageFile(itemTexture as File),
         });
-      } else if (split != null && split[0].endsWith("block")) {
+      } else if (parentSplit != null && parentSplit[0] === "block") {
         blocksToRender.push(item);
       } else {
         console.log(`Can't render: ${item.parent}`);
@@ -319,11 +328,19 @@ export const createSpriteSheet = async (
   for (const blockToRender of blocksToRender) {
     if (blockToRender.parent == null) continue;
 
-    const minimizedAtlas = createMinimizedAtlas(
-      atlasMap,
-      atlas,
-      `${blockToRender.asset}:${blockToRender.name}`
-    );
+    const parentAssetSplit = blockToRender.parent?.split(":");
+    const asset =
+      parentAssetSplit != null && parentAssetSplit.length > 1
+        ? parentAssetSplit[0]
+        : blockToRender.asset;
+    const split = (
+      parentAssetSplit != null && parentAssetSplit.length > 1
+        ? parentAssetSplit[1]
+        : blockToRender.parent
+    )?.split("/");
+    const modelName = `${asset}:${split[split.length - 1]}`;
+
+    const minimizedAtlas = createMinimizedAtlas(atlasMap, atlas, modelName);
     shaderMaterial.uniforms.diffuseMap.value = minimizedAtlas.atlasTexture;
     shaderMaterial.needsUpdate = true;
 
@@ -343,12 +360,6 @@ export const createSpriteSheet = async (
       indices: [],
     };
 
-    const assetSplit = blockToRender.parent.split(":");
-    const asset = assetSplit.length > 1 ? assetSplit[0] : blockToRender.asset;
-    const split = (
-      assetSplit.length > 1 ? assetSplit[1] : blockToRender.parent
-    ).split("/");
-    const modelName = `${asset}:${split[split.length - 1]}`;
     const atlasMapTexture = atlasMap.textures[modelName];
     if (atlasMapTexture == null) {
       console.log(`${modelName} is broken!`);
