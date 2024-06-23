@@ -133,6 +133,7 @@ function LandingPage() {
       files,
       atlasMap,
       atlas,
+      canvasRef.current,
       spriteSheetCanvasRef.current
     );
 

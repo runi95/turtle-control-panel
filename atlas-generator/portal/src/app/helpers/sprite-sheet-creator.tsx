@@ -35,6 +35,7 @@ export const createSpriteSheet = async (
   files: FileList,
   atlasMap: AtlasMap,
   atlas: ArrayBuffer,
+  mergeCanvas: HTMLCanvasElement,
   outputCanvas: HTMLCanvasElement
 ) => {
   const fileTree: FileTree = {};
@@ -110,7 +111,7 @@ export const createSpriteSheet = async (
 
   const spriteTextures: {
     name: string;
-    image: HTMLImageElement;
+    image: CanvasImageSource;
   }[] = [];
 
   spriteTextures.push(
@@ -130,41 +131,57 @@ export const createSpriteSheet = async (
     })
   );
 
-  const addItemSprite = async (fullName: string, file: File) => {
-    spriteTextures.push(
-      await new Promise<{
-        name: string;
-        image: HTMLImageElement;
-      }>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const result = e.target?.result;
-          if (result == null) {
-            reject(new Error("No data to load for file"));
-            return;
-          }
-          try {
-            const img = new Image();
-            img.src = result as string;
-            img.onload = () => {
-              resolve({
-                name: fullName,
-                image: img,
-              });
-            };
-            img.onerror = reject;
-          } catch (err) {
-            reject(err);
-          }
-        };
+  const loadImageFile = async (file: File) => {
+    return await new Promise<HTMLImageElement>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result;
+        if (result == null) {
+          reject(new Error("No data to load for file"));
+          return;
+        }
+        try {
+          const img = new Image();
+          img.src = result as string;
+          img.onload = () => {
+            resolve(img);
+          };
+          img.onerror = reject;
+        } catch (err) {
+          reject(err);
+        }
+      };
 
-        reader.onerror = (e) => {
-          reject(e);
-        };
+      reader.onerror = (e) => {
+        reject(e);
+      };
 
-        reader.readAsDataURL(file);
-      })
-    );
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const mergeContext = mergeCanvas.getContext("2d");
+  if (mergeContext == null) throw new Error("Canvas has null context");
+  mergeContext.imageSmoothingEnabled = false;
+  mergeContext.globalCompositeOperation = "source-over";
+
+  const mergeImageLayers = async (
+    layers: HTMLImageElement[]
+  ): Promise<HTMLImageElement> => {
+    mergeContext.clearRect(0, 0, 16, 16);
+
+    for (const layer of layers) {
+      mergeContext.drawImage(layer, 0, 0, 16, 16);
+    }
+
+    return await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.src = mergeCanvas.toDataURL("image/png");
+      img.onload = () => {
+        resolve(img);
+      };
+      img.onerror = reject;
+    });
   };
 
   const blocksToRender: LoadedItemFile[] = [];
@@ -176,17 +193,45 @@ export const createSpriteSheet = async (
           item.parent === "minecraft:item/generated") &&
         item.textures?.layer0 != null
       ) {
-        const { layer0 } = item.textures;
-        const split = layer0.split("/");
-        const assetSplit = split?.[0].split(":");
-        const asset = assetSplit != null ? assetSplit[0] : item.asset;
-        const textures = (fileTree?.[asset] as FileTree)?.textures;
-        if (textures == null) continue;
-        const itemTextures = (textures as FileTree)?.item;
-        if (itemTextures == null) continue;
-        const itemTexture = (itemTextures as FileTree)?.[`${item.name}.png`];
-        if (itemTexture == null) continue;
-        await addItemSprite(`${asset}:${item.name}`, itemTexture as File);
+        const layers: string[] = [];
+        let layerIndex = 0;
+        while (item.textures[`layer${layerIndex}`] != null) {
+          layers.push(item.textures[`layer${layerIndex++}`]);
+        }
+
+        const itemImages: HTMLImageElement[] = [];
+        for (const layer of layers) {
+          const assetSplit = layer.split(":");
+          const asset = assetSplit != null ? assetSplit[0] : item.asset;
+
+          const textures = (fileTree?.[asset] as FileTree)?.textures;
+          if (textures == null) continue;
+
+          const paths = (assetSplit != null ? assetSplit[1] : layer).split("/");
+          const itemTextureDirectory = paths
+            .slice(0, paths.length - 1)
+            .reduce((acc, curr) => {
+              if (acc == null) return acc;
+              return (acc as FileTree)[curr];
+            }, textures);
+          if (itemTextureDirectory == null) continue;
+
+          const itemTexture = (itemTextureDirectory as FileTree)[
+            `${paths[paths.length - 1]}.png`
+          ];
+          if (itemTexture == null) continue;
+          itemImages.push(await loadImageFile(itemTexture as File));
+        }
+
+        if (itemImages.length < 1) continue;
+        const finalImage =
+          itemImages.length === 1
+            ? itemImages[0]
+            : await mergeImageLayers(itemImages);
+        spriteTextures.push({
+          name: `${item.asset}:${item.name}`,
+          image: finalImage,
+        });
       } else if (split != null && split[0].endsWith("item")) {
         const assetSplit = split?.[0].split(":");
         const asset = assetSplit != null ? assetSplit[0] : item.asset;
@@ -196,7 +241,10 @@ export const createSpriteSheet = async (
         if (itemTextures == null) continue;
         const itemTexture = (itemTextures as FileTree)?.[`${item.name}.png`];
         if (itemTexture == null) continue;
-        await addItemSprite(`${asset}:${item.name}`, itemTexture as File);
+        spriteTextures.push({
+          name: `${asset}:${item.name}`,
+          image: await loadImageFile(itemTexture as File),
+        });
       } else if (split != null && split[0].endsWith("block")) {
         blocksToRender.push(item);
       } else {
