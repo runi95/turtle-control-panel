@@ -14,7 +14,7 @@ function ItemSprite(props: ItemSpriteProps) {
         if (data == null) return 0;
         return data[name] ?? 0;
     }, [data, name]);
-    const spriteY = 32 * Math.floor((sprite - 1) / 32);
+    const spriteY = 32 * Math.floor(sprite / 32);
     const spriteX = 32 * (sprite - spriteY);
 
     return (
