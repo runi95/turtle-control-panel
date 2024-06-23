@@ -20,6 +20,9 @@ type FileTree = {
 
 export type ItemData = {
   parent?: string;
+  textures?: {
+    [key: string]: string;
+  };
 };
 
 export type LoadedItemFile = ItemData & {
@@ -168,7 +171,13 @@ export const createSpriteSheet = async (
   for (const item of items) {
     try {
       const split = item.parent?.split("/");
-      if (item.parent === "item/generated") {
+      if (
+        (item.parent === "item/generated" ||
+          item.parent === "minecraft:item/generated") &&
+        item.textures?.layer0 != null
+      ) {
+        const { layer0 } = item.textures;
+        const split = layer0.split("/");
         const assetSplit = split?.[0].split(":");
         const asset = assetSplit != null ? assetSplit[0] : item.asset;
         const textures = (fileTree?.[asset] as FileTree)?.textures;
