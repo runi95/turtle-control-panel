@@ -81,7 +81,7 @@ export const createAtlas = async (
             faces: {
               down: { uv: [3.5, 8.25, 7, 4.75], texture: "#texture" },
               up: { uv: [7, 8.25, 10.5, 4.75], texture: "#texture" },
-              north: { uv: [14, 8.25, 10.5, 10.75], texture: "#texture" },
+              north: { uv: [14, 10.75, 10.5, 8.25], texture: "#texture" },
               south: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
               west: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
               east: { uv: [3.5, 8.25, 7, 10.75], texture: "#texture" },
@@ -93,7 +93,7 @@ export const createAtlas = async (
             faces: {
               down: { uv: [7, 3.5, 3.5, 0], texture: "#texture" },
               up: { uv: [10.5, 3.5, 7, 0], texture: "#texture" },
-              north: { uv: [10.5, 8.25, 14, 10.75], texture: "#texture" },
+              north: { uv: [14, 8.25, 10.5, 10.75], texture: "#texture" },
               south: { uv: [3.5, 8.25, 7, 10.75], texture: "#texture" },
               west: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
               east: { uv: [0, 8.25, 3.5, 10.75], texture: "#texture" },

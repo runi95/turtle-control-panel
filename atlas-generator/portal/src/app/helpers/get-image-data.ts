@@ -21,12 +21,17 @@ export const getImageData = async (
         return;
       }
 
+      context.save();
+
       // Prepare canvas for redrawing
       context.clearRect(0, 0, canvas.width, canvas.height);
 
       // context.patternQuality = 'nearest';
       context.imageSmoothingQuality = "high";
-      context.drawImage(image, dx, dy, dw, dh, 0, 0, 16, 16);
+      const scaleW = Math.sign(dw);
+      const scaleH = Math.sign(dh);
+      context.scale(scaleW, scaleH);
+      context.drawImage(image, dx, dy, dw, dh, 0, 0, 16 * scaleW, 16 * scaleH);
 
       if (color != null) {
         const match = new RegExp(
@@ -65,7 +70,9 @@ export const getImageData = async (
         context.putImageData(imageData, 0, 0);
       }
 
-      resolve(context.getImageData(0, 0, 16, 16));
+      const imageData = context.getImageData(0, 0, 16, 16);
+      context.restore();
+      resolve(imageData);
     });
 
     image.addEventListener("error", (err) => {
