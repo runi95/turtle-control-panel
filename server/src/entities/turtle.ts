@@ -1821,45 +1821,48 @@ export class Turtle {
 
     async updateAllAttachedPeripherals(peripherals: Peripherals): Promise<void> {
         let hasAnyPeripheralsToCheck = false;
-        const {inventorySides, modemSides, peripheralHubSides, driveSides, chatterSides} = Object.keys(
-            peripherals
-        ).reduce(
-            (acc, side) => {
-                for (const type of peripherals[side].types) {
-                    switch (type) {
-                        case 'inventory':
-                            acc.inventorySides.push(side);
-                            hasAnyPeripheralsToCheck = true;
-                            return acc;
-                        case 'modem':
-                            hasAnyPeripheralsToCheck = true;
-                            acc.modemSides.push(side);
-                            break;
-                        case 'peripheral_hub':
-                            hasAnyPeripheralsToCheck = true;
-                            acc.peripheralHubSides.push(side);
-                            break;
-                        case 'drive':
-                            hasAnyPeripheralsToCheck = true;
-                            acc.driveSides.push(side);
-                        case 'chatter':
-                            hasAnyPeripheralsToCheck = true;
-                            acc.chatterSides.push(side);
-                        default:
-                            break;
+        const {inventorySides, modemSides, peripheralHubSides, driveSides, chatterSides, endAutomataSides} =
+            Object.keys(peripherals).reduce(
+                (acc, side) => {
+                    for (const type of peripherals[side].types) {
+                        switch (type) {
+                            case 'inventory':
+                                acc.inventorySides.push(side);
+                                hasAnyPeripheralsToCheck = true;
+                                return acc;
+                            case 'modem':
+                                hasAnyPeripheralsToCheck = true;
+                                acc.modemSides.push(side);
+                                break;
+                            case 'peripheral_hub':
+                                hasAnyPeripheralsToCheck = true;
+                                acc.peripheralHubSides.push(side);
+                                break;
+                            case 'drive':
+                                hasAnyPeripheralsToCheck = true;
+                                acc.driveSides.push(side);
+                            case 'chatter':
+                                hasAnyPeripheralsToCheck = true;
+                                acc.chatterSides.push(side);
+                            case 'endAutomata':
+                                hasAnyPeripheralsToCheck = true;
+                                acc.endAutomataSides.push(side);
+                            default:
+                                break;
+                        }
                     }
-                }
 
-                return acc;
-            },
-            {
-                inventorySides: [] as string[],
-                modemSides: [] as string[],
-                peripheralHubSides: [] as string[],
-                driveSides: [] as string[],
-                chatterSides: [] as string[],
-            }
-        );
+                    return acc;
+                },
+                {
+                    inventorySides: [] as string[],
+                    modemSides: [] as string[],
+                    peripheralHubSides: [] as string[],
+                    driveSides: [] as string[],
+                    chatterSides: [] as string[],
+                    endAutomataSides: [] as string[],
+                }
+            );
 
         // There are no peripherals to check
         if (!hasAnyPeripheralsToCheck) return;
@@ -1867,7 +1870,7 @@ export class Turtle {
         // Ensures they're queued together
         const [updatedPeripherals] = await this.#exec<
             [{[key: string]: {data?: unknown}}]
-        >(`(function(inventorySides, modemSides, peripheralHubSides, driveSides, chatterSides)
+        >(`(function(inventorySides, modemSides, peripheralHubSides, driveSides, chatterSides, endAutomataSides)
             local peripherals = {}
             local functions = {}
             local fIndex = 1
@@ -1916,13 +1919,25 @@ export class Turtle {
                 fIndex = fIndex + 1
             end
 
+            for i, side in pairs(endAutomataSides) do
+                peripherals[side] = {data = {}}
+                functions[fIndex] = (function()
+                    peripherals[side]["data"]["points"] = (function(list)
+                        return next(list) == nil and textutils.json_null or list
+                    end)(peripheral.call(side, "points"))
+                end)
+                fIndex = fIndex + 1
+            end
+
             parallel.waitForAll(table.unpack(functions))
             return peripherals
         end)({${inventorySides.map((side) => `"${side}"`).join(',')}}, {${modemSides
             .map((side) => `"${side}"`)
-            .join(
-                ','
-            )}}, {${peripheralHubSides.map((side) => `"${side}"`).join(',')}}, {${driveSides.map((side) => `"${side}"`).join(',')}}, {${chatterSides.map((side) => `"${side}"`).join(',')}})`);
+            .join(',')}},
+            {${peripheralHubSides.map((side) => `"${side}"`).join(',')}},
+            {${driveSides.map((side) => `"${side}"`).join(',')}},
+            {${chatterSides.map((side) => `"${side}"`).join(',')}},
+            {${endAutomataSides.map((side) => `"${side}"`).join(',')}})`);
 
         const newPeripherals = {
             ...this.peripherals,
