@@ -65,6 +65,8 @@ const blockNameOverride = (blockName: string) => {
             return 'computercraft:disk_drive_full';
         case 'computercraft:printer':
             return 'computercraft:printer_both_full';
+        case 'computercraft:wired_modem_full':
+            return 'computercraft:wired_modem_full_off';
         default:
             return blockName;
     }
