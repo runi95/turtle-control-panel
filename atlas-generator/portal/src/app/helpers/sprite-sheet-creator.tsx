@@ -31,6 +31,12 @@ export type LoadedItemFile = ItemData & {
   asset: string;
 };
 
+type CustomConfig = {
+  override: {
+    [key: string]: ItemData;
+  };
+};
+
 export const createSpriteSheet = async (
   files: FileList,
   atlasMap: AtlasMap,
@@ -54,6 +60,14 @@ export const createSpriteSheet = async (
     last[split[split.length - 1]] = file;
   }
 
+  const customConfig: CustomConfig = {
+    override: {
+      "chest.json": {
+        parent: "minecraft:block/chest",
+      },
+    },
+  };
+
   const promises: Promise<LoadedItemFile>[] = [];
   for (const asset of Object.keys(fileTree)) {
     const models = (fileTree?.[asset] as FileTree)?.models;
@@ -64,6 +78,22 @@ export const createSpriteSheet = async (
     console.log(`Loading items from ${asset}/items...`);
 
     for (const key of Object.keys(item)) {
+      const override = customConfig?.override?.[key];
+      if (override != null) {
+        promises.push(
+          new Promise<LoadedItemFile>((resolve, reject) => {
+            const name = key.substring(0, key.length - 5);
+            resolve({
+              ...override,
+              asset,
+              name,
+              file: key,
+            });
+          })
+        );
+        continue;
+      }
+
       const file = (item as FileTree)[key] as File;
       if (typeof file.size !== "number" || !(file.size > 0)) continue;
       if (file.type !== "application/json") continue;
