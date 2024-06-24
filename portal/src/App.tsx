@@ -21,6 +21,7 @@ export interface Block {
     state: BlockState;
     name: string;
     tags: BlockTags;
+    facing?: 'north' | 'east' | 'south' | 'west';
     x: number;
     y: number;
     z: number;

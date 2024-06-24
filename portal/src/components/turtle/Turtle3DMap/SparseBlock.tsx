@@ -76,6 +76,7 @@ interface Cell {
     position: [number, number, number];
     type: string;
     visible: boolean;
+    facing?: 'north' | 'east' | 'south' | 'west';
 }
 
 const CreateTerrain = (dimensions: Vector3, fromX: number, fromY: number, fromZ: number, blocks: Blocks) => {
@@ -97,6 +98,7 @@ const CreateTerrain = (dimensions: Vector3, fromX: number, fromY: number, fromZ:
                         position: [x, y, z],
                         type: block.name,
                         visible: true,
+                        facing: block.facing,
                     });
                 }
             }
@@ -172,7 +174,26 @@ const BuildMeshDataFromVoxels = (
         for (let i = 0; i < blockFaces.length; i++) {
             const blockFace = blockFaces[i];
             const bi = mesh.positions.length / 3;
-            const localPositions = [...blockFace.face];
+            const localPositions =
+                cell.facing != null && cell.facing != 'north'
+                    ? (() => {
+                          const planeGeometry = new PlaneGeometry();
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          (planeGeometry.attributes.position as any).array = [...blockFace.face];
+                          switch (cell.facing) {
+                              case 'east':
+                                  planeGeometry.rotateY(Math.PI + Math.PI / 2);
+                                  break;
+                              case 'south':
+                                  planeGeometry.rotateY(Math.PI);
+                                  break;
+                              case 'west':
+                                  planeGeometry.rotateY(Math.PI / 2);
+                                  break;
+                          }
+                          return planeGeometry.attributes['position']['array'];
+                      })()
+                    : [...blockFace.face];
             for (let j = 0; j < 3; j++) {
                 for (let v = 0; v < 4; v++) {
                     localPositions[v * 3 + j] += cell.position[j];
