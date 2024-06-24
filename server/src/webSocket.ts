@@ -679,7 +679,7 @@ export const createWebSocketServer = (server: TServerInstance) => {
             socket.send(JSON.stringify({type: 'AUPDATE', message: obj}));
         globalEventEmitter.on('aupdate', aupdate);
 
-        socket.on('close', () => {
+        socket.conn.on('close', () => {
             globalEventEmitter.off('tconnect', tconnect);
             globalEventEmitter.off('tdisconnect', tdisconnect);
             globalEventEmitter.off('tupdate', tupdate);
