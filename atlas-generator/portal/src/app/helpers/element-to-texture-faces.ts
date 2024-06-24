@@ -100,18 +100,18 @@ export const elementToTexturedFaces = (element: Element): TexturedFace[] => {
   if (element.faces.up) {
     const planeGeometry = new PlaneGeometry();
     (planeGeometry.attributes.position as any).array = [
-      front,
-      bottom,
-      right,
       back,
       bottom,
-      right,
+      left,
       front,
       bottom,
       left,
       back,
       bottom,
-      left,
+      right,
+      front,
+      bottom,
+      right,
     ];
 
     const { rotation } = element;
