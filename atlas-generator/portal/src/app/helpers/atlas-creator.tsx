@@ -19,6 +19,12 @@ type Result = {
   atlasMap: AtlasMap;
 };
 
+type CustomConfig = {
+  override: {
+    [key: string]: ModelData;
+  };
+};
+
 export const createAtlas = async (
   canvas: HTMLCanvasElement,
   files: FileList
@@ -61,8 +67,53 @@ export const createAtlas = async (
   const texturesMap = new Map([["unknown.png?dx=0&dy=0&dw=16&dh=16", 0]]);
   let nextTextureIndex = 1;
 
-  // TODO: Add this functionality back?
-  const customConfig = {};
+  const customConfig: CustomConfig = {
+    override: {
+      "chest.json": {
+        parent: "block/block",
+        textures: {
+          texture: "minecraft:entity/chest/normal",
+        },
+        elements: [
+          {
+            from: [1, 0, 1],
+            to: [15, 10, 15],
+            faces: {
+              down: { uv: [3.5, 8.25, 7, 4.75], texture: "#texture" },
+              up: { uv: [7, 8.25, 10.5, 4.75], texture: "#texture" },
+              north: { uv: [14, 8.25, 10.5, 10.75], texture: "#texture" },
+              south: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
+              west: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
+              east: { uv: [3.5, 8.25, 7, 10.75], texture: "#texture" },
+            },
+          },
+          {
+            from: [1, 10, 1],
+            to: [15, 15, 15],
+            faces: {
+              down: { uv: [7, 3.5, 3.5, 0], texture: "#texture" },
+              up: { uv: [10.5, 3.5, 7, 0], texture: "#texture" },
+              north: { uv: [10.5, 8.25, 14, 10.75], texture: "#texture" },
+              south: { uv: [3.5, 8.25, 7, 10.75], texture: "#texture" },
+              west: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
+              east: { uv: [0, 8.25, 3.5, 10.75], texture: "#texture" },
+            },
+          },
+          {
+            from: [7, 7, 0],
+            to: [9, 11, 1],
+            faces: {
+              down: { uv: [0.5, 0, 1, 0.25], texture: "#texture" },
+              up: { uv: [0.5, 0, 1, 0.25], texture: "#texture" },
+              north: { uv: [0.5, 0, 1, 1.25], texture: "#texture" },
+              west: { uv: [0.75, 0, 1, 1.25], texture: "#texture" },
+              east: { uv: [0.5, 0, 0.75, 1.25], texture: "#texture" },
+            },
+          },
+        ],
+      },
+    },
+  };
 
   const textureFacesMap = new Map<string, TexturedFace[]>();
   const referencedTextureFaces = new Set<string>();
@@ -76,6 +127,32 @@ export const createAtlas = async (
     console.log(`Loading models from ${asset}/models...`);
 
     for (const key of Object.keys(block)) {
+      const override = customConfig?.override?.[key];
+      if (override != null) {
+        promises.push(
+          new Promise<LoadedModelFile>((resolve, reject) => {
+            const name = key.substring(0, key.length - 5);
+            if (Array.isArray(override.elements)) {
+              textureFacesMap.set(
+                name,
+                override.elements.reduce((acc, curr) => {
+                  return acc.concat(elementToTexturedFaces(curr));
+                }, [] as TexturedFace[])
+              );
+              override.elements = name as any;
+            }
+
+            resolve({
+              ...override,
+              asset,
+              name,
+              file: key,
+            });
+          })
+        );
+        continue;
+      }
+
       const file = (block as FileTree)[key] as File;
       if (typeof file.size !== "number" || !(file.size > 0)) continue;
       if (file.type !== "application/json") continue;
