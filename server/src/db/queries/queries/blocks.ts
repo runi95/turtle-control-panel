@@ -71,7 +71,8 @@ export const prepareSelectBlocksSimple = (db: Database) =>
 'y', \`b\`.\`y\`,
 'z', \`b\`.\`z\`,
 'name', \`b\`.\`name\`,
-'facing', json_extract(\`b\`.\`state\`, '$.facing')
+'facing', json_extract(\`b\`.\`state\`, '$.facing'),
+'axis', json_extract(\`b\`.\`state\`, '$.axis')
 ) FROM \`blocks\` AS \`b\`
 LEFT JOIN
 (

@@ -25,6 +25,9 @@ import {useBlocks} from '../../../api/UseBlocks';
 import {useParams} from 'react-router-dom';
 import {WorldChunk} from './World';
 
+const HALF_PI = Math.PI / 2;
+const ONE_AND_HALF_PI = Math.PI + HALF_PI;
+
 const blockNameOverride = (blockName: string) => {
     switch (blockName) {
         case 'minecraft:wheat':
@@ -77,6 +80,7 @@ interface Cell {
     type: string;
     visible: boolean;
     facing?: 'north' | 'east' | 'south' | 'west';
+    axis?: 'x' | 'y' | 'z';
 }
 
 const CreateTerrain = (dimensions: Vector3, fromX: number, fromY: number, fromZ: number, blocks: Blocks) => {
@@ -99,6 +103,7 @@ const CreateTerrain = (dimensions: Vector3, fromX: number, fromY: number, fromZ:
                         type: block.name,
                         visible: true,
                         facing: block.facing,
+                        axis: block.axis,
                     });
                 }
             }
@@ -172,25 +177,38 @@ const BuildMeshDataFromVoxels = (
 
         const indexes = [];
         for (let i = 0; i < blockFaces.length; i++) {
+            if (cell.type === 'minecraft:oak_log') {
+                console.log(cell);
+            }
             const blockFace = blockFaces[i];
             const bi = mesh.positions.length / 3;
             const localPositions =
-                cell.facing != null && cell.facing != 'north'
+                (cell.facing != null && cell.facing !== 'north') || (cell.axis != null && cell.axis !== 'y')
                     ? (() => {
                           const planeGeometry = new PlaneGeometry();
                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           (planeGeometry.attributes.position as any).array = [...blockFace.face];
                           switch (cell.facing) {
                               case 'east':
-                                  planeGeometry.rotateY(Math.PI + Math.PI / 2);
+                                  planeGeometry.rotateY(ONE_AND_HALF_PI);
                                   break;
                               case 'south':
                                   planeGeometry.rotateY(Math.PI);
                                   break;
                               case 'west':
-                                  planeGeometry.rotateY(Math.PI / 2);
+                                  planeGeometry.rotateY(HALF_PI);
                                   break;
                           }
+
+                          switch (cell.axis) {
+                              case 'x':
+                                  planeGeometry.rotateZ(HALF_PI);
+                                  break;
+                              case 'z':
+                                  planeGeometry.rotateX(HALF_PI);
+                                  break;
+                          }
+
                           return planeGeometry.attributes['position']['array'];
                       })()
                     : [...blockFace.face];
