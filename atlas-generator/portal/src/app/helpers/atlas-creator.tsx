@@ -267,11 +267,16 @@ export const createAtlas = async (
         let textureIndex = texturesMap.get(mapKey);
         if (textureIndex == null) {
           const split = texture.split("/");
-          const textureFile = (
-            ((fileTree?.[asset] as FileTree)?.textures as FileTree)?.[
-              split[0]
-            ] as FileTree
-          )?.[`${split[1]}.png`];
+          const textureFileDirectory = split
+            .slice(0, split.length - 1)
+            .reduce((acc, curr) => {
+              if (acc == null) return acc;
+              return (acc as FileTree)[curr] as FileTree;
+            }, (fileTree[asset] as FileTree)?.textures as FileTree);
+          if (textureFileDirectory == null) continue;
+          const textureFile = textureFileDirectory[
+            `${split[split.length - 1]}.png`
+          ] as File;
           if (textureFile == null) continue;
           const base64Texture = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
@@ -289,7 +294,7 @@ export const createAtlas = async (
               reject(e);
             };
 
-            reader.readAsDataURL(textureFile as File);
+            reader.readAsDataURL(textureFile);
           });
 
           const imageData = await getImageData(
