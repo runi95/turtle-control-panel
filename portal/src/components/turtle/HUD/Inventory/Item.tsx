@@ -57,7 +57,8 @@ function Item(props: ItemProps) {
                     const itemName = e.dataTransfer.getData('itemName');
                     const itemAmount = e.dataTransfer.getData('itemAmount');
                     const toSlot = (e.target as HTMLBaseElement)?.dataset?.inventorySlot;
-                    if (fromSlot && toSlot && fromSlot !== toSlot) {
+                    if (fromSlot && toSlot) {
+                        if (side === fromSide && fromSlot === toSlot) return;
                         onDrop(
                             shiftKey,
                             fromSide,
