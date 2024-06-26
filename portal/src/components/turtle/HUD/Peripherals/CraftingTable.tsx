@@ -26,6 +26,14 @@ function CraftingTable(props: Props) {
             >
                 Craft
             </Btn>
+            <Btn
+                onClick={() => action({type: 'ACTION', action: 'auto-craft', data: {serverId, id}})}
+                variant='outline-info'
+                size='sm'
+                disabled={!turtle.isOnline}
+            >
+                Auto Craft
+            </Btn>
         </PeripheralContainer>
     );
 }

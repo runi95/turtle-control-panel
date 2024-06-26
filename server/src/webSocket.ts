@@ -21,6 +21,7 @@ import {Area} from './db/area.type';
 import {Block} from './db/block.type';
 import {TurtleExploringState} from './entities/states/explore';
 import {TurtleInventoryDumpState} from './entities/states/inventory-dump';
+import {TurtleAutocraftState} from './entities/states/autocraft';
 
 const endAutomataLocationRegex = new RegExp('\\((-?\\d+),(-?\\d+),(-?\\d+)\\)$');
 
@@ -100,6 +101,11 @@ export const createWebSocketServer = (server: TServerInstance) => {
                                 break;
                             case 'craft':
                                 await turtle.craft();
+                                break;
+                            case 'auto-craft':
+                                turtle.state = new TurtleAutocraftState(turtle, {
+                                    recipe: turtle.inventory,
+                                });
                                 break;
                             case 'drop':
                                 await turtle.drop();

@@ -19,6 +19,7 @@ export enum TURTLE_STATES {
     BUILDING = 8,
     EXPLORING = 9,
     INVENTORY_DUMP = 10,
+    AUTO_CRAFT = 11,
 }
 
 export type StateDataTypes =
