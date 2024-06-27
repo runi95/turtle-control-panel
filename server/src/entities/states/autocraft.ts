@@ -32,50 +32,60 @@ export class TurtleAutocraftState extends TurtleBaseState<AutocraftStateData> {
             'craft',
             '0'
         );
-        if (!didInitialCraft) {
-            throw new Error(initialCraftMessage);
-        }
+        if (!didInitialCraft) throw new Error(initialCraftMessage);
 
         while (true) {
-            const [didCraft, craftMessage] = await this.turtle.usePeripheralWithName<[boolean, string]>(
-                'workbench',
-                'craft'
-            );
-            if (!didCraft) {
-                throw new Error(craftMessage);
-            }
+            let isRecipeReady = true;
+            for (let i = 1; i <= 16; i++) {
+                const item = this.data.recipe[i];
+                const invItem = this.turtle.inventory[i];
+                try {
+                    if (item == null) {
+                        if (invItem == null) continue;
 
-            await this.turtle.sleep(0.1);
-
-            for await (const _ of this.transferIntoNearbyInventories()) {
-                yield;
-            }
-
-            let hasAllItems = false;
-            while (!hasAllItems) {
-                hasAllItems = true;
-                for (let i = 1; i <= 16; i++) {
-                    const item = this.data.recipe[i];
-                    if (item == null) continue;
-                    if (item.name === this.turtle.inventory[i]?.name) continue;
-
-                    try {
-                        await this.turtle.updateAllAttachedPeripherals(this.turtle.peripherals);
-                        for await (const _ of this.pullItemsFromNearbyInventories(item, i)) {
+                        for await (const _ of this.transferSlotIntoNearbyInventories(i)) {
                             yield;
                         }
-                    } catch (err) {
-                        if (typeof err === 'string') {
-                            this.warning = err;
-                        } else {
-                            this.warning = (err as Error).message;
-                        }
-
-                        await this.turtle.sleep(5);
-                        hasAllItems = false;
-                        break;
+                        continue;
                     }
+                    if (invItem != null) {
+                        if (item.name === invItem.name) continue;
+
+                        for await (const _ of this.transferSlotIntoNearbyInventories(i)) {
+                            yield;
+                        }
+                    }
+
+                    await this.turtle.updateAllAttachedPeripherals(this.turtle.peripherals);
+                    yield;
+
+                    for await (const _ of this.pullItemsFromNearbyInventories(item, i)) {
+                        yield;
+                    }
+                } catch (err) {
+                    if (typeof err === 'string') {
+                        this.warning = err;
+                    } else {
+                        this.warning = (err as Error).message;
+                    }
+
+                    yield;
+                    await this.turtle.sleep(5);
+                    yield;
+
+                    isRecipeReady = false;
+                    break;
                 }
+            }
+
+            if (isRecipeReady) {
+                const [didCraft, craftMessage] = await this.turtle.usePeripheralWithName<[boolean, string]>(
+                    'workbench',
+                    'craft'
+                );
+                if (!didCraft) throw new Error(craftMessage);
+
+                await this.turtle.sleep(0.5);
             }
         }
     }

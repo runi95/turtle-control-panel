@@ -364,6 +364,147 @@ export abstract class TurtleBaseState<T> {
         }
     }
 
+    protected async *transferSlotIntoNearbyInventories(slot: number): AsyncGenerator<void> {
+        const item = this.turtle.inventory[slot];
+        if (item == null) return;
+
+        const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
+            (acc, [side, {types, data}]) => {
+                if (types.includes('inventory')) {
+                    acc.inventories.push([side, {types, data}]);
+                } else if (types.includes('peripheral_hub')) {
+                    acc.hubs.push([side, {types, data}]);
+                }
+
+                return acc;
+            },
+            {
+                inventories: [] as [string, {data?: unknown; types: string[]}][],
+                hubs: [] as [string, {data?: unknown; types: string[]}][],
+            }
+        );
+
+        let bestStringMatch = Number.MAX_VALUE;
+        const bestMatchingInventory = inventories.reduce(
+            (bestMatch, inventory) => {
+                const [_, {data}] = inventory;
+                const {content, size} = data as {
+                    content: ({name: string; count: number; maxCount: string} | null)[];
+                    size: number;
+                };
+                if (content == null) return bestMatch;
+
+                let currentBestMatch = Number.MAX_VALUE;
+                for (let i = 0; i < size; i++) {
+                    const invItem = content[i];
+                    if (invItem == null) continue;
+
+                    const distance = levenshteinDistance(item.name, invItem.name);
+                    if (distance < currentBestMatch) {
+                        currentBestMatch = distance;
+                    }
+                }
+
+                if (currentBestMatch < bestStringMatch) {
+                    bestStringMatch = currentBestMatch;
+                    return inventory;
+                }
+
+                return bestMatch;
+            },
+            inventories.find(([_, {data}]) => {
+                const {content, size} = data as {
+                    content: ({name: string; count: number; maxCount: string} | null)[];
+                    size: number;
+                };
+                if (content == null) return size > 0;
+
+                for (let i = 0; i < size; i++) {
+                    const invItem = content[i];
+                    if (invItem == null) return true;
+                    if (invItem.name === item.name) return true;
+                }
+
+                return false;
+            }) ?? null
+        );
+        if (bestMatchingInventory == null) return;
+        const [bestMatchingSide] = bestMatchingInventory;
+        await this.turtle.select(slot);
+
+        switch (bestMatchingSide) {
+            case 'front':
+                await (async () => {
+                    const [didDrop, dropMessage] = await this.turtle.drop();
+                    if (!didDrop) throw new Error(dropMessage);
+
+                    await this.turtle.connectToInventory('front');
+                })();
+                break;
+            case 'top':
+                await (async () => {
+                    const [didDrop, dropMessage] = await this.turtle.dropUp();
+                    if (!didDrop) throw new Error(dropMessage);
+
+                    await this.turtle.connectToInventory('top');
+                })();
+                break;
+            case 'bottom':
+                await (async () => {
+                    const [didDrop, dropMessage] = await this.turtle.dropDown();
+                    if (!didDrop) throw new Error(dropMessage);
+
+                    await this.turtle.connectToInventory('bottom');
+                })();
+                break;
+            case 'left':
+                await (async () => {
+                    await this.turtle.turnLeft();
+                    const [didDrop, dropMessage] = await this.turtle.drop();
+                    if (!didDrop) throw new Error(dropMessage);
+
+                    await this.turtle.connectToInventory('front');
+                })();
+                break;
+            case 'right':
+                await (async () => {
+                    await this.turtle.turnRight();
+                    const [didDrop, dropMessage] = await this.turtle.drop();
+                    if (!didDrop) throw new Error(dropMessage);
+
+                    await this.turtle.connectToInventory('front');
+                })();
+                break;
+            case 'back':
+                await (async () => {
+                    await this.turtle.turnLeft();
+                    await this.turtle.turnLeft();
+                    const [didDrop, dropMessage] = await this.turtle.drop();
+                    if (!didDrop) throw new Error(dropMessage);
+
+                    await this.turtle.connectToInventory('front');
+                })();
+                break;
+            default:
+                const connectedHub = hubs.find(([_, {data}]) =>
+                    (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide)
+                );
+                if (connectedHub) {
+                    const [_, {data}] = connectedHub;
+                    const [pulledItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
+                        bestMatchingSide,
+                        'pullItems',
+                        (data as {localName: string}).localName,
+                        slot
+                    );
+                    if (pulledItemCount < 1) throw new Error(`Unable to transfer to '${bestMatchingSide}'`);
+
+                    await this.turtle.connectToInventory(bestMatchingSide);
+                }
+                break;
+        }
+    }
+
     protected async *transferIntoNearbyInventories(): AsyncGenerator<void> {
         if (
             !Object.values(this.turtle.peripherals).some(({types}) => {
@@ -388,159 +529,10 @@ export abstract class TurtleBaseState<T> {
             return; // Done!
         }
 
-        let hasEmptiedAnySlot = false;
         for (let slot = 1; slot < 16; slot++) {
-            const item = this.turtle.inventory[slot];
-            if (item == null) continue;
-
-            const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(
-                (acc, [side, {types, data}]) => {
-                    if (types.includes('inventory')) {
-                        acc.inventories.push([side, {types, data}]);
-                    } else if (types.includes('peripheral_hub')) {
-                        acc.hubs.push([side, {types, data}]);
-                    }
-
-                    return acc;
-                },
-                {
-                    inventories: [] as [string, {data?: unknown; types: string[]}][],
-                    hubs: [] as [string, {data?: unknown; types: string[]}][],
-                }
-            );
-
-            let bestStringMatch = Number.MAX_VALUE;
-            const bestMatchingInventory = inventories.reduce(
-                (bestMatch, inventory) => {
-                    const [_, {data}] = inventory;
-                    const {content, size} = data as {
-                        content: ({name: string; count: number; maxCount: string} | null)[];
-                        size: number;
-                    };
-                    if (content == null) return bestMatch;
-
-                    let currentBestMatch = Number.MAX_VALUE;
-                    for (let i = 0; i < size; i++) {
-                        const invItem = content[i];
-                        if (invItem == null) continue;
-
-                        const distance = levenshteinDistance(item.name, invItem.name);
-                        if (distance < currentBestMatch) {
-                            currentBestMatch = distance;
-                        }
-                    }
-
-                    if (currentBestMatch < bestStringMatch) {
-                        bestStringMatch = currentBestMatch;
-                        return inventory;
-                    }
-
-                    return bestMatch;
-                },
-                inventories.find(([_, {data}]) => {
-                    const {content, size} = data as {
-                        content: ({name: string; count: number; maxCount: string} | null)[];
-                        size: number;
-                    };
-                    if (content == null) return size > 0;
-
-                    for (let i = 0; i < size; i++) {
-                        const invItem = content[i];
-                        if (invItem == null) return true;
-                        if (invItem.name === item.name) return true;
-                    }
-
-                    return false;
-                }) ?? null
-            );
-            if (bestMatchingInventory == null) continue;
-            const [bestMatchingSide] = bestMatchingInventory;
-            await this.turtle.select(slot);
-
-            switch (bestMatchingSide) {
-                case 'front':
-                    await (async () => {
-                        const [didDrop] = await this.turtle.drop();
-                        if (didDrop) {
-                            hasEmptiedAnySlot = true;
-                            await this.turtle.connectToInventory('front');
-                        }
-                    })();
-                    break;
-                case 'top':
-                    await (async () => {
-                        const [didDrop] = await this.turtle.dropUp();
-                        if (didDrop) {
-                            hasEmptiedAnySlot = true;
-                            await this.turtle.connectToInventory('top');
-                        }
-                    })();
-                    break;
-                case 'bottom':
-                    await (async () => {
-                        const [didDrop] = await this.turtle.dropDown();
-                        if (didDrop) {
-                            hasEmptiedAnySlot = true;
-                            await this.turtle.connectToInventory('bottom');
-                        }
-                    })();
-                    break;
-                case 'left':
-                    await (async () => {
-                        await this.turtle.turnLeft();
-                        const [didDrop] = await this.turtle.drop();
-                        if (didDrop) {
-                            hasEmptiedAnySlot = true;
-                            await this.turtle.connectToInventory('front');
-                        }
-                    })();
-                    break;
-                case 'right':
-                    await (async () => {
-                        await this.turtle.turnRight();
-                        const [didDrop] = await this.turtle.drop();
-                        if (didDrop) {
-                            hasEmptiedAnySlot = true;
-                            await this.turtle.connectToInventory('front');
-                        }
-                    })();
-                    break;
-                case 'back':
-                    await (async () => {
-                        await this.turtle.turnLeft();
-                        await this.turtle.turnLeft();
-                        const [didDrop] = await this.turtle.drop();
-                        if (didDrop) {
-                            hasEmptiedAnySlot = true;
-                            await this.turtle.connectToInventory('front');
-                        }
-                    })();
-                    break;
-                default:
-                    const connectedHub = hubs.find(([_, {data}]) =>
-                        (data as {remoteNames: string[]})?.remoteNames?.includes(bestMatchingSide)
-                    );
-                    if (connectedHub) {
-                        const [_, {data}] = connectedHub;
-                        const [pulledItemCount] = await this.turtle.usePeripheralWithSide<[number]>(
-                            bestMatchingSide,
-                            'pullItems',
-                            (data as {localName: string}).localName,
-                            slot
-                        );
-                        if (pulledItemCount > 0) {
-                            hasEmptiedAnySlot = true;
-                            await this.turtle.connectToInventory(bestMatchingSide);
-                        }
-                    }
-                    break;
+            for await (const _ of this.transferSlotIntoNearbyInventories(slot)) {
+                yield;
             }
-
-            yield;
-        }
-
-        if (!hasEmptiedAnySlot) {
-            throw new Error('No inventory to empty into');
         }
     }
 
