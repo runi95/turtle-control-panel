@@ -177,9 +177,6 @@ const BuildMeshDataFromVoxels = (
 
         const indexes = [];
         for (let i = 0; i < blockFaces.length; i++) {
-            if (cell.type === 'minecraft:oak_log') {
-                console.log(cell);
-            }
             const blockFace = blockFaces[i];
             const bi = mesh.positions.length / 3;
             const localPositions =

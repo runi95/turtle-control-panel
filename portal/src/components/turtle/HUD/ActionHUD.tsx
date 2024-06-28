@@ -20,6 +20,7 @@ import MineModal from '../mine/MineModal';
 import {Block} from '../../../App';
 import ItemSprite from './Inventory/ItemSprite';
 import BuildModal from '../build/BuildModal';
+import BookIcon from '../../../icons/BookIcon';
 
 enum HUDControlState {
     MOVE,
@@ -209,6 +210,23 @@ function ActionHUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBl
                                 }}
                             >
                                 <StopIcon color='#202020' />
+                            </ActionButtonContainer>
+                        </OverlayTrigger>
+                        <OverlayTrigger
+                            placement='top'
+                            overlay={<FixedTooltip data-bs-theme='light'>Load Grabcraft blueprint</FixedTooltip>}
+                        >
+                            <ActionButtonContainer
+                                onClick={() =>
+                                    setModalState({
+                                        modal: 'build',
+                                        data: null,
+                                    })
+                                }
+                            >
+                                <BuildSpriteContainer>
+                                    <BookIcon color='#202020' />
+                                </BuildSpriteContainer>
                             </ActionButtonContainer>
                         </OverlayTrigger>
                         <OverlayTrigger
