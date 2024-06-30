@@ -4,6 +4,7 @@ import {getOnlineTurtleById, getOnlineTurtles} from './entities/turtle';
 import logger from './logger/server';
 import {getAreas, getBlocks, getBlocksSimple, getChunk, getDashboard, getTurtle, getTurtlesByServerId} from './db';
 import {createWebSocketServer} from './webSocket';
+import {Readable} from 'node:stream';
 
 logger.info('Starting server...');
 
@@ -17,6 +18,35 @@ fastify
     .then(() => {
         // Instantiates the WebSocket server
         createWebSocketServer(fastify.server);
+
+        fastify.get('/grabcraft', (reg, res) => {
+            const {query} = reg;
+            if (query == null) {
+                throw new Error(`Missing 'url' query parameter`);
+            }
+
+            const {url} = query as {url?: string};
+            if (url == null) {
+                throw new Error(`Missing 'url' query parameter`);
+            }
+
+            const parsed = new URL(url);
+            if (parsed.hostname !== 'www.grabcraft.com' && parsed.hostname !== 'grabcraft.com') {
+                throw new Error(`Invalid hostname for 'url' parameter`);
+            }
+
+            fetch(parsed)
+                .then(({body}) => {
+                    if (body == null) {
+                        res.send();
+                        return;
+                    }
+                    res.send(Readable.fromWeb(body as any));
+                })
+                .catch((err) => {
+                    throw err;
+                });
+        });
 
         fastify.get('/servers', (_req, res) => {
             res.send({
@@ -34,14 +64,14 @@ fastify
             const {id} = params as {id: string};
             const {fromX, toX, fromY, toY, fromZ, toZ, name, simple} = query as Record<string, string | undefined>;
             res.send(
-                (simple != null ? getBlocksSimple : getBlocks )(Number(id), {
+                (simple != null ? getBlocksSimple : getBlocks)(Number(id), {
                     fromX: Number(fromX),
                     toX: Number(toX),
                     fromY: Number(fromY),
                     toY: Number(toY),
                     fromZ: Number(fromZ),
                     toZ: Number(toZ),
-                    name
+                    name,
                 })
             );
         });
@@ -63,10 +93,12 @@ fastify
             const {params} = req;
             const {serverId} = params as {serverId: string};
             const turtles = getTurtlesByServerId(Number(serverId));
-            res.send(turtles.map((turtle) => ({
-                ...turtle,
-                isOnline: getOnlineTurtleById(Number(serverId), turtle.id) == null
-            })));
+            res.send(
+                turtles.map((turtle) => ({
+                    ...turtle,
+                    isOnline: getOnlineTurtleById(Number(serverId), turtle.id) == null,
+                }))
+            );
         });
 
         fastify.get('/servers/:serverId/turtles/:id', (req, res) => {

@@ -12,12 +12,13 @@ import ArrowLeftIcon from '../../../icons/ArrowLeftIcon';
 
 interface Props {
     setWorldState: (worldState: WorldState | null) => void;
+    setBlocksToPlace: (blocks: Omit<Block, 'state' | 'tags'>[]) => void;
     getSelectedBlocks: () => Location[];
     getBuiltBlocks: () => Omit<Block, 'state' | 'tags'>[];
     setBuildBlockType: (type: string) => void;
 }
 
-function HUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBlockType}: Props) {
+function HUD({setWorldState, setBlocksToPlace, getSelectedBlocks, getBuiltBlocks, setBuildBlockType}: Props) {
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const navigate = useNavigate();
     const {data: turtle} = useTurtle(serverId, id);
@@ -136,6 +137,7 @@ function HUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBlockTyp
             >
                 <ActionHUD
                     setWorldState={setWorldState}
+                    setBlocksToPlace={setBlocksToPlace}
                     getSelectedBlocks={getSelectedBlocks}
                     getBuiltBlocks={getBuiltBlocks}
                     setBuildBlockType={setBuildBlockType}

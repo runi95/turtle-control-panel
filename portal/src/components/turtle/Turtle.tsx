@@ -2,6 +2,7 @@ import {useRef} from 'react';
 import HUD from './HUD';
 import Turtle3DMap from './Turtle3DMap';
 import {WorldHandle, WorldState} from './Turtle3DMap/World';
+import {Block} from '../../App';
 
 function Turtle() {
     const worldRef = useRef<WorldHandle>(null!);
@@ -9,6 +10,11 @@ function Turtle() {
     function setWorldState(worldState: WorldState | null) {
         if (worldRef.current == null) return;
         worldRef.current.setState(worldState);
+    }
+
+    function setBlocksToPlace(blocks: Omit<Block, 'state' | 'tags'>[]) {
+        if (worldRef.current == null) return;
+        worldRef.current.setBlocksToPlace(blocks);
     }
 
     function getSelectedBlocks() {
@@ -31,6 +37,7 @@ function Turtle() {
             <Turtle3DMap worldRef={worldRef} />
             <HUD
                 setWorldState={setWorldState}
+                setBlocksToPlace={setBlocksToPlace}
                 getSelectedBlocks={getSelectedBlocks}
                 getBuiltBlocks={getBuiltBlocks}
                 setBuildBlockType={setBuildBlockType}

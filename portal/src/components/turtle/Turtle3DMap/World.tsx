@@ -12,6 +12,7 @@ import OtherTurtles from './OtherTurtles';
 import HomeMarker from './HomeMarker';
 import BuildBlock, {BuildBlockHandle} from './BuildBlock';
 import {Block} from '../../../App';
+import SchemaPlacer, {SchemaPlacerHandle} from './SchemaPlacer';
 
 export enum WorldState {
     MOVE,
@@ -42,6 +43,7 @@ interface Props {
 
 export type WorldHandle = {
     setState: (state: WorldState | null) => void;
+    setBlocksToPlace: (blocks: Omit<Block, 'state' | 'tags'>[]) => void;
     getSelectedBlocks: () => Location[];
     getBuiltBlocks: () => Omit<Block, 'state' | 'tags'>[];
     setBuildBlockType: (type: string) => void;
@@ -58,6 +60,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
     const indicatorMeshVisibleRef = useRef<boolean>(false);
     const chunkRefs = useRef<SparseBlockHandle[]>([]);
     const buildBlockRef = useRef<BuildBlockHandle>(null!);
+    const schemaPlacerRef = useRef<SchemaPlacerHandle>(null!);
     const buildBlockTypeRef = useRef<string>('minecraft:cobblestone');
     const selectedBlocks = useRef(new Map<string, Location>());
     const outlineMap = useLoader(TextureLoader, '/outline.png');
@@ -114,8 +117,23 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                             }
 
                             selectedBlocks.current.clear();
+
+                            if (schemaPlacerRef.current.getSchema() != null) {
+                                schemaPlacerRef.current.reset();
+                            }
                             break;
                     }
+                },
+                setBlocksToPlace(blocks: Omit<Block, 'state' | 'tags'>[]) {
+                    const blocksMap = new Map<string, Omit<Block, 'state' | 'tags'>>();
+                    for (const block of blocks) {
+                        const {x, y, z} = block;
+                        blocksMap.set(`${x},${y},${z}`, block);
+                    }
+
+                    schemaPlacerRef.current.setSchema(blocksMap);
+                    indicatorMeshRef.current.visible = false;
+                    indicatorMeshVisibleRef.current = false;
                 },
                 getSelectedBlocks() {
                     return Array.from(selectedBlocks.current.values());
@@ -251,9 +269,14 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         const intersection = e.intersections[0];
                         if (intersection.faceIndex == null) return;
                         // if (intersection.faceIndex === previousFaceIndex.current) return;
+                        const schema = schemaPlacerRef.current.getSchema();
                         if (previousFaceIndex.current === null) {
-                            indicatorMeshRef.current.visible = true;
-                            indicatorMeshVisibleRef.current = true;
+                            if (schema != null) {
+                                schemaPlacerRef.current.setVisible(true);
+                            } else {
+                                indicatorMeshRef.current.visible = true;
+                                indicatorMeshVisibleRef.current = true;
+                            }
                         }
 
                         previousFaceIndex.current = intersection.faceIndex ?? null;
@@ -386,13 +409,18 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                 mathematicalModulo(turtle.location.z, cellDimensions.z);
                         }
 
-                        tempMatrix.setPosition(tempVector.set(x, y, z));
-                        indicatorMeshRef.current.setMatrixAt(0, tempMatrix);
-                        indicatorMeshRef.current.instanceMatrix.needsUpdate = true;
+                        if (schema != null) {
+                            schemaPlacerRef.current.setMeshPosition(x, y, z);
+                        } else {
+                            tempMatrix.setPosition(tempVector.set(x, y, z));
+                            indicatorMeshRef.current.setMatrixAt(0, tempMatrix);
+                            indicatorMeshRef.current.instanceMatrix.needsUpdate = true;
+                        }
                     }}
                     onPointerLeave={(e) => {
                         e.stopPropagation();
                         previousFaceIndex.current = null;
+                        schemaPlacerRef.current.setVisible(false);
                         indicatorMeshRef.current.visible = false;
                         indicatorMeshVisibleRef.current = false;
                     }}
@@ -550,7 +578,32 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                 break;
                             case WorldState.BUILD:
                                 (() => {
-                                    buildBlockRef.current.addBlock(x, y, z, buildBlockTypeRef.current);
+                                    const schema = schemaPlacerRef.current.getSchema();
+                                    if (schema != null) {
+                                        const addedBlocks: Omit<Block, 'state' | 'tags'>[] = [];
+                                        const meshPosition = schemaPlacerRef.current.getMeshPosition();
+                                        for (const block of schema.values()) {
+                                            const {x, y, z, name} = block;
+                                            addedBlocks.push({
+                                                x: x + meshPosition.x,
+                                                y: y + meshPosition.y,
+                                                z: z + meshPosition.z,
+                                                name,
+                                            });
+                                        }
+
+                                        buildBlockRef.current.addBlocks(addedBlocks);
+                                        schemaPlacerRef.current.reset();
+                                    } else {
+                                        buildBlockRef.current.addBlocks([
+                                            {
+                                                x,
+                                                y,
+                                                z,
+                                                name: buildBlockTypeRef.current,
+                                            },
+                                        ]);
+                                    }
                                 })();
                                 break;
                             case WorldState.SELECT_SINGLE:
@@ -708,6 +761,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                 >
                     <Turtle3D atlasMap={atlasMap} name={turtle.name} rotation={[0, turtleRotation, 0]} />
                     <BuildBlock ref={buildBlockRef} atlasMap={atlasMap} geometries={geometries} />
+                    <SchemaPlacer ref={schemaPlacerRef} atlasMap={atlasMap} geometries={geometries} />
                     <group
                         position={[
                             -mathematicalModulo(turtle.location.x, cellDimensions.x),

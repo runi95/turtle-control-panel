@@ -21,6 +21,7 @@ import {Block} from '../../../App';
 import ItemSprite from './Inventory/ItemSprite';
 import BuildModal from '../build/BuildModal';
 import BookIcon from '../../../icons/BookIcon';
+import GrabcraftModal from '../grabcraft/GrabcraftModal';
 
 enum HUDControlState {
     MOVE,
@@ -35,18 +36,19 @@ type HUDState = {
 };
 
 type ModalState = {
-    modal: 'build' | 'mine';
+    modal: 'build' | 'mine' | 'grabcraft';
     data: unknown;
 };
 
 interface Props {
     setWorldState: (worldState: WorldState | null) => void;
+    setBlocksToPlace: (blocks: Omit<Block, 'state' | 'tags'>[]) => void;
     getSelectedBlocks: () => Location[];
     getBuiltBlocks: () => Omit<Block, 'state' | 'tags'>[];
     setBuildBlockType: (type: string) => void;
 }
 
-function ActionHUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBlockType}: Props) {
+function ActionHUD({setWorldState, setBlocksToPlace, getSelectedBlocks, getBuiltBlocks, setBuildBlockType}: Props) {
     const [hudWorldState, setHudWorldState] = useState<HUDState | null>(null);
     const {serverId, id} = useParams() as {serverId: string; id: string};
     const {action} = useWebSocket();
@@ -198,6 +200,15 @@ function ActionHUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBl
                             }}
                         />
                     ) : null}
+                    {modalState?.modal === 'grabcraft' ? (
+                        <GrabcraftModal
+                            hideModal={() => setModalState(null)}
+                            onBuild={(blocks) => {
+                                setModalState(null);
+                                setBlocksToPlace(blocks);
+                            }}
+                        />
+                    ) : null}
                     <Container>
                         <OverlayTrigger
                             placement='top'
@@ -219,7 +230,7 @@ function ActionHUD({setWorldState, getSelectedBlocks, getBuiltBlocks, setBuildBl
                             <ActionButtonContainer
                                 onClick={() =>
                                     setModalState({
-                                        modal: 'build',
+                                        modal: 'grabcraft',
                                         data: null,
                                     })
                                 }

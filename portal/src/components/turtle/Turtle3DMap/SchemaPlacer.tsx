@@ -15,6 +15,7 @@ import {
     SRGBColorSpace,
     ShaderMaterial,
     UnsignedByteType,
+    Vector3,
 } from 'three';
 import {forwardRef, useImperativeHandle, useMemo, useRef} from 'react';
 import {fragmentShader, vertexShader} from './CustomShader';
@@ -184,13 +185,17 @@ interface Props {
     atlasMap: AtlasMap;
 }
 
-export type BuildBlockHandle = {
-    addBlocks: (blocksToAdd: Omit<Block, 'state' | 'tags'>[]) => void;
+export type SchemaPlacerHandle = {
+    setSchema: (schema: BlockMap) => void;
+    setMeshPosition: (x: number, y: number, z: number) => void;
+    setVisible: (isVisible: boolean) => void;
+    isVisible: () => boolean;
+    getMeshPosition: () => Vector3;
     reset: () => void;
-    getBuiltBlocks: () => Omit<Block, 'state' | 'tags'>[];
+    getSchema: () => BlockMap | null;
 };
 
-const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geometries, atlasMap}, ref) {
+const SchemaPlacer = forwardRef<SchemaPlacerHandle, Props>(function SchemaPlacer({geometries, atlasMap}, ref) {
     const meshRef = useRef<Mesh>(null!);
     const shaderMaterial = useMemo(
         () =>
@@ -217,9 +222,8 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geo
         []
     );
     const {data: atlas} = useAtlas();
-    const blocks = useRef<BlockMap>(new Map());
-    const uniqueBlocks = useRef(new Map<string, boolean>());
     const geometry = useRef<BufferGeometry>(new BufferGeometry());
+    const schemaRef = useRef<BlockMap | null>(null);
     const atlasTextureMap = useRef<{
         [key: number]: number;
     }>({});
@@ -228,71 +232,62 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geo
         ref,
         () => {
             return {
-                addBlocks: (blocksToAdd: Omit<Block, 'state' | 'tags'>[]) => {
+                setSchema: (schema: BlockMap) => {
                     if (atlas == null) return;
 
-                    // Create new minimized atlas
-                    let hasNewBlockType = false;
-                    for (const {name} of blocksToAdd) {
-                        if (uniqueBlocks.current.get(name) == null) {
-                            hasNewBlockType = true;
-                            uniqueBlocks.current.set(name, true);
-                        }
+                    schemaRef.current = schema;
+                    const uniqueBlocks = new Map<string, boolean>();
+                    for (const {name} of schemaRef.current.values()) {
+                        uniqueBlocks.set(name, true);
                     }
 
-                    if (hasNewBlockType) {
-                        const uniqueTextures = new Set<number>([0]);
-                        const unknown = atlasMap.textures['unknown'];
-                        for (const blockName of uniqueBlocks.current.keys()) {
-                            const texture = atlasMap.textures[blockNameOverride(blockName)] ?? unknown;
-                            const {model: _model, ...textureKeys} = texture;
-                            Object.keys(textureKeys).forEach((key) => {
-                                const textureIndex = texture[key];
-                                if (typeof textureIndex === 'number') {
-                                    uniqueTextures.add(textureIndex);
-                                } else {
-                                    Object.keys(textureIndex).forEach((textureIndexKey) =>
-                                        uniqueTextures.add(textureIndex[textureIndexKey])
-                                    );
-                                }
-                            });
-                        }
-
-                        const originalUintArray = new Uint8Array(atlas);
-                        const newUintArray = new Uint8Array(uniqueTextures.size * 1024);
-
-                        let i = 0;
-                        const updatedAtlasTextureMap: {
-                            [key: number]: number;
-                        } = {};
-                        for (const uniqueTexture of uniqueTextures.values()) {
-                            const start = uniqueTexture * 1024;
-                            updatedAtlasTextureMap[uniqueTexture] = i;
-                            newUintArray.set(originalUintArray.subarray(start, start + 1024), 1024 * i++);
-                        }
-
-                        atlasTextureMap.current = updatedAtlasTextureMap;
-
-                        const atlasTexture = new DataArrayTexture(newUintArray, 16, 16, newUintArray.length / 1024);
-                        atlasTexture.format = RGBAFormat;
-                        atlasTexture.type = UnsignedByteType;
-                        atlasTexture.minFilter = LinearMipMapLinearFilter;
-                        atlasTexture.magFilter = NearestFilter;
-                        atlasTexture.wrapS = ClampToEdgeWrapping;
-                        atlasTexture.wrapT = ClampToEdgeWrapping;
-                        atlasTexture.generateMipmaps = true;
-                        atlasTexture.colorSpace = SRGBColorSpace;
-
-                        atlasTexture.needsUpdate = true;
-                        shaderMaterial.uniforms.diffuseMap.value = atlasTexture;
+                    // Create minimized atlas
+                    const uniqueTextures = new Set<number>([0]);
+                    const unknown = atlasMap.textures['unknown'];
+                    for (const blockName of uniqueBlocks.keys()) {
+                        const texture = atlasMap.textures[blockNameOverride(blockName)] ?? unknown;
+                        const {model: _model, ...textureKeys} = texture;
+                        Object.keys(textureKeys).forEach((key) => {
+                            const textureIndex = texture[key];
+                            if (typeof textureIndex === 'number') {
+                                uniqueTextures.add(textureIndex);
+                            } else {
+                                Object.keys(textureIndex).forEach((textureIndexKey) =>
+                                    uniqueTextures.add(textureIndex[textureIndexKey])
+                                );
+                            }
+                        });
                     }
 
-                    for (const block of blocksToAdd) {
-                        const {x, y, z} = block;
-                        blocks.current.set(`${x},${y},${z}`, block);
+                    const originalUintArray = new Uint8Array(atlas);
+                    const newUintArray = new Uint8Array(uniqueTextures.size * 1024);
+
+                    let i = 0;
+                    const updatedAtlasTextureMap: {
+                        [key: number]: number;
+                    } = {};
+                    for (const uniqueTexture of uniqueTextures.values()) {
+                        const start = uniqueTexture * 1024;
+                        updatedAtlasTextureMap[uniqueTexture] = i;
+                        newUintArray.set(originalUintArray.subarray(start, start + 1024), 1024 * i++);
                     }
 
-                    const build = Rebuild(geometries, atlasMap, atlasTextureMap.current, blocks.current);
+                    atlasTextureMap.current = updatedAtlasTextureMap;
+
+                    const atlasTexture = new DataArrayTexture(newUintArray, 16, 16, newUintArray.length / 1024);
+                    atlasTexture.format = RGBAFormat;
+                    atlasTexture.type = UnsignedByteType;
+                    atlasTexture.minFilter = LinearMipMapLinearFilter;
+                    atlasTexture.magFilter = NearestFilter;
+                    atlasTexture.wrapS = ClampToEdgeWrapping;
+                    atlasTexture.wrapT = ClampToEdgeWrapping;
+                    atlasTexture.generateMipmaps = true;
+                    atlasTexture.colorSpace = SRGBColorSpace;
+
+                    atlasTexture.needsUpdate = true;
+                    shaderMaterial.uniforms.diffuseMap.value = atlasTexture;
+
+                    const build = Rebuild(geometries, atlasMap, atlasTextureMap.current, schemaRef.current);
                     geometry.current.setAttribute('position', new Float32BufferAttribute(build.positions, 3));
                     geometry.current.setAttribute('normal', new Float32BufferAttribute(build.normals, 3));
                     geometry.current.setAttribute('uv', new Float32BufferAttribute(build.uvs, 2));
@@ -310,9 +305,23 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geo
                     geometry.current.computeBoundingSphere();
                     meshRef.current.visible = true;
                 },
+                getSchema: () => {
+                    return schemaRef.current;
+                },
+                setMeshPosition: (x: number, y: number, z: number) => {
+                    meshRef.current.position.set(x, y, z);
+                },
+                getMeshPosition: () => {
+                    return meshRef.current.position;
+                },
+                setVisible: (isVisible: boolean) => {
+                    meshRef.current.visible = isVisible;
+                },
+                isVisible: () => {
+                    return meshRef.current.visible;
+                },
                 reset: () => {
-                    uniqueBlocks.current.clear();
-                    blocks.current.clear();
+                    schemaRef.current = null;
                     meshRef.current.visible = false;
 
                     geometry.current.setAttribute('position', new Float32BufferAttribute([], 3));
@@ -330,9 +339,6 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geo
 
                     geometry.current.computeBoundingBox();
                     geometry.current.computeBoundingSphere();
-                },
-                getBuiltBlocks: () => {
-                    return Array.from(blocks.current.values());
                 },
             };
         },
@@ -352,4 +358,4 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geo
     );
 });
 
-export default BuildBlock;
+export default SchemaPlacer;
