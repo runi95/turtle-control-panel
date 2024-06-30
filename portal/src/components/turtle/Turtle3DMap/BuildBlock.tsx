@@ -20,51 +20,7 @@ import {forwardRef, useImperativeHandle, useMemo, useRef} from 'react';
 import {fragmentShader, vertexShader} from './CustomShader';
 import {Block} from '../../../App';
 import {AtlasMap, useAtlas} from './TextureAtlas';
-
-const blockNameOverride = (blockName: string) => {
-    switch (blockName) {
-        case 'minecraft:wheat':
-            return 'minecraft:wheat_stage7';
-        case 'minecraft:cocoa':
-            return 'minecraft:cocoa_stage2';
-        case 'minecraft:beetroots':
-            return 'minecraft:beetroots_stage3';
-        case 'minecraft:carrots':
-            return 'minecraft:carrots_stage3';
-        case 'minecraft:melon_stem':
-            return 'minecraft:melon_stem_stage6';
-        case 'minecraft:pumpkin_stem':
-            return 'minecraft:pumpkin_stem_stage6';
-        case 'minecraft:nether_wart':
-            return 'minecraft:nether_wart_stage2';
-        case 'minecraft:potatoes':
-            return 'minecraft:potatoes_stage3';
-        case 'minecraft:sweet_berry_bush':
-            return 'minecraft:sweet_berry_bush_stage3';
-        case 'minecraft:torchflower_crop':
-            return 'minecraft:torchflower_crop_stage1';
-        case 'minecraft:bamboo':
-            return 'minecraft:bamboo4_age1';
-        case 'minecraft:snow':
-            return 'minecraft:snow_height2';
-        case 'minecraft:tall_grass':
-            return 'minecraft:tall_grass_bottom';
-        case 'minecraft:tall_seagrass':
-            return 'minecraft:tall_seagrass_bottom';
-        case 'computercraft:wireless_modem_normal':
-            return 'computercraft:wireless_modem_normal_on';
-        case 'computercraft:wired_modem':
-            return 'computercraft:wired_modem_on';
-        case 'computercraft:computer_normal':
-            return 'computercraft:computer_normal_on';
-        case 'computercraft:disk_drive':
-            return 'computercraft:disk_drive_full';
-        case 'computercraft:printer':
-            return 'computercraft:printer_both_full';
-        default:
-            return blockName;
-    }
-};
+import {blockNameOverride} from './Helpers';
 
 interface CellMesh {
     positions: Float32Array;
