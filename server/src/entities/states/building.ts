@@ -123,16 +123,16 @@ export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
 
                 // Got no new items
                 if (
-                    !Object.values(this.turtle.inventory).some(
-                        (item) => {
-                            if (item == null) return false;
-                            const remaining = this.remainingBlocksOfType.get(item.name);
-                            if (remaining == null) return false;
-                            return remaining > 0;
-                        }
-                    )
+                    !Object.values(this.turtle.inventory).some((item) => {
+                        if (item == null) return false;
+                        const remaining = this.remainingBlocksOfType.get(item.name);
+                        if (remaining == null) return false;
+                        return remaining > 0;
+                    })
                 )
-                    throw new Error(`Missing (${this.remainingAreaIndexes.length}) [${Array.from(this.remainingBlocksOfType.keys()).join(', ')}]`);
+                    throw new Error(
+                        `Missing (${this.remainingAreaIndexes.length}) [${Array.from(this.remainingBlocksOfType.keys()).join(', ')}]`
+                    );
             }
 
             // Get to the building area!
@@ -143,9 +143,7 @@ export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
                 }
 
                 try {
-                    for await (const _ of this.goToDestinations(
-                        this.blocks.slice(this.currentYLayer)
-                    )) {
+                    for await (const _ of this.goToDestinations(this.blocks.slice(this.currentYLayer))) {
                         yield;
 
                         if (this.checkIfTurtleIsInOrAdjacentToArea()) {
@@ -169,7 +167,7 @@ export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
                 // Build!
                 for await (const _ of this.goToDestinations(
                     this.remainingAreaIndexes
-                        .filter((i) => i > this.currentYLayer)
+                        .filter((i) => i >= this.currentYLayer)
                         .map((i) => ({...this.blocks[i], y: this.blocks[i].y + 1}))
                 )) {
                     yield;
@@ -184,12 +182,10 @@ export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
                     continue;
                 }
 
-                const itemSlot = Object.values(this.turtle.inventory).findIndex(
-                    (item) => {
-                        if (item == null) return false;
-                        return this.blocks[currentAreaIndexBelow].name === item.name;
-                    }
-                );
+                const itemSlot = Object.values(this.turtle.inventory).findIndex((item) => {
+                    if (item == null) return false;
+                    return this.blocks[currentAreaIndexBelow].name === item.name;
+                });
                 if (!(itemSlot > -1)) continue;
 
                 if (itemSlot + 1 !== this.turtle.selectedSlot) {
