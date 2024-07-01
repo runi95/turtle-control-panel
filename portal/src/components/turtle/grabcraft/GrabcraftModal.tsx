@@ -101,8 +101,8 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                                 const {name: grabcraftName} = renderObject[y][x][z];
                                 const grabcraftNameLowered = grabcraftName.toLowerCase();
 
-                                // Always skip layer 1 as it's not part of the actual build
-                                if (y === '1') continue;
+                                // Always skip layer 1 Dirt as it's not part of the actual build
+                                if (y === '1' && grabcraftName === 'Dirt') continue;
 
                                 const name = (() => {
                                     const blockName = grabcraftNameToBlockNameMap.get(grabcraftNameLowered);
