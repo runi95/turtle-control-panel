@@ -71,13 +71,30 @@ export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
                 return; // Done!
             }
 
-            // Has building material?
+            const buildingMaterials = this.blocks.reduce(
+                (acc, curr, i) => {
+                    if (i >= this.currentYLayer) {
+                        const existingValue = acc.optional.get(curr.name) ?? 0;
+                        acc.optional.set(curr.name, existingValue + 1);
+                    } else {
+                        const existingValue = acc.required.get(curr.name) ?? 0;
+                        acc.required.set(curr.name, existingValue + 1);
+                    }
+
+                    return acc;
+                },
+                {
+                    required: new Map<string, number>(),
+                    optional: new Map<string, number>(),
+                }
+            );
+            // Has any building material for current layer?
             if (
                 !Object.values(this.turtle.inventory).some((item: ItemDetail) => {
                     if (item == null) return false;
-                    const remaining = this.remainingBlocksOfType.get(item.name);
-                    if (remaining == null) return false;
-                    return remaining > 0;
+                    const requiredItemCount = buildingMaterials.required.get(item.name);
+                    if (requiredItemCount == null) return false;
+                    return requiredItemCount > 0;
                 })
             ) {
                 // Return home?
