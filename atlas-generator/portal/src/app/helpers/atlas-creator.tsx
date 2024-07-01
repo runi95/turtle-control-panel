@@ -112,6 +112,56 @@ export const createAtlas = async (
           },
         ],
       },
+      "water.json": {
+        parent: "block/cube_all",
+        textures: {
+          all: "minecraft:block/water_still",
+        },
+        elements: [
+          {
+            from: [0, 0, 0],
+            to: [16, 16, 16],
+            faces: {
+              down: {
+                texture: "#all",
+                cullface: "down",
+                color: "#005AFF",
+              },
+              up: {
+                texture: "#all",
+                cullface: "up",
+                color: "#005AFF",
+              },
+              north: {
+                texture: "#all",
+                cullface: "north",
+                color: "#005AFF",
+              },
+              south: {
+                texture: "#all",
+                cullface: "south",
+                color: "#005AFF",
+              },
+              west: {
+                texture: "#all",
+                cullface: "west",
+                color: "#005AFF",
+              },
+              east: {
+                texture: "#all",
+                cullface: "east",
+                color: "#005AFF",
+              },
+            },
+          },
+        ],
+      },
+      "lava.json": {
+        parent: "block/cube_all",
+        textures: {
+          all: "minecraft:block/lava_still",
+        },
+      },
     },
   };
 

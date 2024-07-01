@@ -47,7 +47,7 @@ export type ModelData = {
   textures?: {
     [key: string]: string;
   };
-  elements: Element[];
+  elements?: Element[];
 };
 
 export type LoadedModelFile = ModelData & {
