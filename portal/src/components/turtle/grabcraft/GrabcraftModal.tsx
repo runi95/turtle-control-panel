@@ -165,6 +165,8 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                     const blocks: Omit<Block, 'state' | 'tags'>[] = [];
                     const grabcraftNameToBlockNameMap = new Map<string, string>();
 
+                    let largestX = 0;
+                    let largestZ = 0;
                     for (const y in renderObject) {
                         for (const x in renderObject[y]) {
                             for (const z in renderObject[y][x]) {
@@ -203,19 +205,37 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                                     return bestStringMatch;
                                 })();
 
+                                const parsedX = Number(x);
+                                const parsedY = Number(y);
+                                const parsedZ = Number(z);
+                                if (parsedX > largestX) {
+                                    largestX = parsedX;
+                                }
+
+                                if (parsedZ > largestZ) {
+                                    largestZ = parsedZ;
+                                }
+
                                 blocks.push({
-                                    x: Number(x),
-                                    y: Number(y) - 1,
-                                    z: Number(z),
+                                    x: parsedX,
+                                    y: parsedY - 1,
+                                    z: parsedZ,
                                     name: name == null ? 'minecraft:dirt' : name,
                                 });
                             }
                         }
                     }
 
+                    const xOffset = Math.floor(largestX / 2);
+                    const zOffset = Math.floor(largestZ / 2);
                     setBuildData({
                         image,
-                        blocks,
+                        blocks: blocks.map(({x, y, z, name}) => ({
+                            x: x - xOffset,
+                            y,
+                            z: z - zOffset,
+                            name,
+                        })),
                     });
                 })
                 .catch((err) => {
