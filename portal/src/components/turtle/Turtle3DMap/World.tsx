@@ -432,8 +432,10 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         if (!(e.intersections.length > 0)) return;
                         if (!turtle) return;
 
-                        const intersection = e.intersections[0];
-                        if (intersection.faceIndex == null) return;
+                        const intersection = e.intersections.find(
+                            (intersection) => intersection.object?.userData?.isSchema !== true
+                        );
+                        if (intersection?.faceIndex == null) return;
 
                         const locationIndex = (intersection.object as Mesh)?.geometry?.attributes?.locationIndex
                             ?.array?.[intersection.faceIndex];
