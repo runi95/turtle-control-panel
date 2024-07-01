@@ -351,8 +351,9 @@ const SchemaPlacer = forwardRef<SchemaPlacerHandle, Props>(function SchemaPlacer
             args={[geometry.current, shaderMaterial]}
             receiveShadow
             userData={{
-                isBlocks: true,
+                isBlocks: false,
                 isTurtle: false,
+                isSchema: true,
             }}
         />
     );

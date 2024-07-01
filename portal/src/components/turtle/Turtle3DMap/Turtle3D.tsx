@@ -127,6 +127,7 @@ function Turtle3D({name, atlasMap, ...meshProps}: Props & MeshProps) {
                 userData={{
                     isBlocks: false,
                     isTurtle: true,
+                    isSchema: false,
                 }}
             >
                 <bufferGeometry>

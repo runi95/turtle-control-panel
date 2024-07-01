@@ -266,8 +266,10 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         if (worldStateRef.current == null) return;
                         if (!(e.intersections.length > 0)) return;
 
-                        const intersection = e.intersections[0];
-                        if (intersection.faceIndex == null) return;
+                        const intersection = e.intersections.find(
+                            (intersection) => intersection.object?.userData?.isSchema !== true
+                        );
+                        if (intersection?.faceIndex == null) return;
                         // if (intersection.faceIndex === previousFaceIndex.current) return;
                         const schema = schemaPlacerRef.current.getSchema();
                         if (previousFaceIndex.current === null) {

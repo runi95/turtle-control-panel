@@ -347,6 +347,7 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geo
             userData={{
                 isBlocks: true,
                 isTurtle: false,
+                isSchema: false,
             }}
         />
     );
