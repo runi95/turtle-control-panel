@@ -25,7 +25,7 @@ export class TurtleMoveState extends TurtleBaseState<MovingStateData> {
 
         this.data = {
             ...data,
-            id: TURTLE_STATES.MOVING
+            id: TURTLE_STATES.MOVING,
         };
         this.algorithm = new DStarLite(this.turtle.serverId);
     }

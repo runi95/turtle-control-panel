@@ -1,7 +1,6 @@
 import {Database} from 'better-sqlite3';
 
-export const prepareSelectServer = (db: Database) =>
-    db.prepare('SELECT * FROM `servers` WHERE `remote_address` = ?');
+export const prepareSelectServer = (db: Database) => db.prepare('SELECT * FROM `servers` WHERE `remote_address` = ?');
 
 export const prepareInsertServer = (db: Database) =>
     db.prepare(

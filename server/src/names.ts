@@ -132,5 +132,5 @@ export default [
     'Våle',
     'Vår',
     'Yme',
-    'Æge'
+    'Æge',
 ];

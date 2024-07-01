@@ -84,7 +84,7 @@ export default class DStarLite {
         for (const destination of destinations) {
             const destinationNode = this.getCachedNode(cachedNodes, destination.x, destination.y, destination.z);
             cachedNodes.set(`${destination.x},${destination.y},${destination.z}`, destinationNode);
-    
+
             destinationNode.rhs = 0;
             destinationNode.key = [heuristic.calculate(startNode.point, destinationNode.point), 0];
             destinationNode.visited = true;
@@ -160,7 +160,7 @@ export default class DStarLite {
         }
 
         logger.debug(`No valid path to: ${destinations.map(({x, y, z}) => `(${x},${y},${z})`).join(', ')}`);
-        throw new DestinationError(startNode, 'No valid path found');;
+        throw new DestinationError(startNode, 'No valid path found');
     }
 
     private calculateKey(s: Node, start: Node): [number, number] {
@@ -191,12 +191,20 @@ export default class DStarLite {
         if (cachedNode) return cachedNode;
         const block = getBlock(this.serverId, x, y, z);
         if (block == null || block.name === 'minecraft:water') {
-            const node = new Node(new Point(x, y, z), false, this.isBlockMineableFunc !== null ? this.isBlockMineableFunc(x, y, z, block) : false);
+            const node = new Node(
+                new Point(x, y, z),
+                false,
+                this.isBlockMineableFunc !== null ? this.isBlockMineableFunc(x, y, z, block) : false
+            );
             cachedNodes.set(nodePath, node);
             return node;
         }
 
-        const node = new Node(new Point(x, y, z), true, this.isBlockMineableFunc !== null ? this.isBlockMineableFunc(x, y, z, block) : false);
+        const node = new Node(
+            new Point(x, y, z),
+            true,
+            this.isBlockMineableFunc !== null ? this.isBlockMineableFunc(x, y, z, block) : false
+        );
         cachedNodes.set(nodePath, node);
         return node;
     }
@@ -206,17 +214,17 @@ export default class DStarLite {
 
         if (this.boundaries?.maxX == null || u.point.x + 1 <= this.boundaries.maxX) {
             const east = this.getCachedNode(cachedNodes, u.point.x + 1, u.point.y, u.point.z);
-            if (!east.visited) neighbors.push(east); 
+            if (!east.visited) neighbors.push(east);
         }
 
         if (u.point.y < 255 && (this.boundaries?.maxY == null || u.point.y + 1 <= this.boundaries.maxY)) {
             const up = this.getCachedNode(cachedNodes, u.point.x, u.point.y + 1, u.point.z);
-            if (!up.visited) neighbors.push(up); 
+            if (!up.visited) neighbors.push(up);
         }
 
         if (this.boundaries?.maxZ == null || u.point.z + 1 <= this.boundaries.maxZ) {
             const south = this.getCachedNode(cachedNodes, u.point.x, u.point.y, u.point.z + 1);
-            if (!south.visited) neighbors.push(south); 
+            if (!south.visited) neighbors.push(south);
         }
 
         if (this.boundaries?.minX == null || u.point.x - 1 >= this.boundaries.minX) {
@@ -226,7 +234,7 @@ export default class DStarLite {
 
         if (u.point.y > -59 && (this.boundaries?.minY == null || u.point.y - 1 >= this.boundaries.minY)) {
             const down = this.getCachedNode(cachedNodes, u.point.x, u.point.y - 1, u.point.z);
-            if (!down.visited) neighbors.push(down); 
+            if (!down.visited) neighbors.push(down);
         }
 
         if (this.boundaries?.minZ == null || u.point.z - 1 >= this.boundaries.minZ) {

@@ -1,8 +1,9 @@
 import {Database} from 'better-sqlite3';
 
-export const prepareDashboard = (db: Database) => db
-    .prepare(
-        `SELECT json_object(
+export const prepareDashboard = (db: Database) =>
+    db
+        .prepare(
+            `SELECT json_object(
             'id', \`s\`.\`id\`,
             'remoteAddress', \`s\`.\`remote_address\`,
             'name', \`s\`.\`name\`,
@@ -17,5 +18,5 @@ export const prepareDashboard = (db: Database) => db
         ) FROM \`servers\` AS \`s\`
         LEFT JOIN \`turtles\` AS \`t\` ON \`t\`.\`server_id\` = \`s\`.\`id\`
         GROUP BY \`s\`.\`id\``
-    )
-    .pluck();
+        )
+        .pluck();

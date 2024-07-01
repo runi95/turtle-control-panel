@@ -51,3 +51,4 @@ function MineArea(props: MineAreaProps) {
 }
 
 export default MineArea;
+

@@ -30,7 +30,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
 
         this.data = {
             ...data,
-            id: TURTLE_STATES.MINING
+            id: TURTLE_STATES.MINING,
         };
 
         const {isExcludeMode, includeOrExcludeList, area} = this.data;
@@ -56,7 +56,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             if (areaX === x && (areaY === y + 1 || areaY === y - 1) && areaZ === z) return true;
             if (areaX === x && areaY === y && (areaZ === z + 1 || areaZ === z - 1)) return true;
             return false;
-        })
+        });
     }
 
     public async *act() {
@@ -78,26 +78,26 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
             if (this.turtle.location === null) {
                 throw new Error('Unable to mine without knowing turtle location');
             }
-    
+
             if (this.turtle.selectedSlot !== 1) {
                 await this.turtle.select(1); // Ensures proper item stacking
                 yield;
             }
-    
+
             if (this.remainingAreaIndexes.length === 0) {
                 return; // Done!
             }
-    
+
             // Get to the mining area!
             if (!this.isInOrAdjacentToMiningArea) {
                 if (this.checkIfTurtleIsInOrAdjacentToArea()) {
                     this.isInOrAdjacentToMiningArea = true;
                     yield;
                 }
-    
+
                 try {
                     for await (const _ of this.goToDestinations(this.area, {
-                        isBlockMineableFunc: isMineable
+                        isBlockMineableFunc: isMineable,
                     })) {
                         yield;
 
@@ -117,23 +117,30 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                     }
                 }
             }
-    
+
             const {x, y, z} = this.turtle.location;
-            const areaIndexOfTurtle = this.remainingAreaIndexes.findIndex((i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z);
+            const areaIndexOfTurtle = this.remainingAreaIndexes.findIndex(
+                (i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z
+            );
             if (areaIndexOfTurtle > -1) {
                 this.remainingAreaIndexes.splice(areaIndexOfTurtle, 1);
             }
-    
+
             try {
                 // Mine!
-                for await (const _ of this.goToDestinations(this.remainingAreaIndexes.map((i) => this.area[i]), {
-                    isBlockMineableFunc: isMineable
-                })) {
+                for await (const _ of this.goToDestinations(
+                    this.remainingAreaIndexes.map((i) => this.area[i]),
+                    {
+                        isBlockMineableFunc: isMineable,
+                    }
+                )) {
                     yield;
 
                     // Go home?
-                    const hasAvailableSpaceInInventory = Object.values(this.turtle.inventory).some((value) => value == null);
-                    const fuelPercentage = 100 * this.turtle.fuelLevel / this.turtle.fuelLimit;
+                    const hasAvailableSpaceInInventory = Object.values(this.turtle.inventory).some(
+                        (value) => value == null
+                    );
+                    const fuelPercentage = (100 * this.turtle.fuelLevel) / this.turtle.fuelLimit;
                     if (fuelPercentage < 10 || !hasAvailableSpaceInInventory) {
                         const home = this.turtle.home;
                         if (home === null) {
@@ -165,7 +172,7 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                             yield;
                         }
 
-                        if ((100 * this.turtle.fuelLevel / this.turtle.fuelLimit) < 10) {
+                        if ((100 * this.turtle.fuelLevel) / this.turtle.fuelLimit < 10) {
                             for await (const _ of this.refuelFromNearbyInventories()) {
                                 yield;
                             }
@@ -173,16 +180,21 @@ export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
                     }
                 }
             } catch (err) {
-                if (err instanceof DestinationError && (err.message === 'Movement obstructed' || err.message === 'Cannot break unbreakable block')) {
+                if (
+                    err instanceof DestinationError &&
+                    (err.message === 'Movement obstructed' || err.message === 'Cannot break unbreakable block')
+                ) {
                     const {x, y, z} = err.node.point;
-                    const obstructedAreaIndex = this.remainingAreaIndexes.findIndex((i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z);
+                    const obstructedAreaIndex = this.remainingAreaIndexes.findIndex(
+                        (i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z
+                    );
                     if (obstructedAreaIndex > -1) {
                         this.remainingAreaIndexes.splice(areaIndexOfTurtle, 1);
                     }
 
                     yield;
                     continue;
-                } else if (typeof err === "string") {
+                } else if (typeof err === 'string') {
                     throw new Error(err);
                 } else {
                     throw err;

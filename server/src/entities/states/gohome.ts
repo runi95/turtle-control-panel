@@ -6,12 +6,12 @@ import {TURTLE_STATES} from './helpers';
 
 export interface GoHomeStateData {
     readonly id: TURTLE_STATES;
-} 
+}
 
 export class TurtleGoHomeState extends TurtleBaseState<GoHomeStateData> {
     public readonly name = 'returning home';
     public data = {
-        id: TURTLE_STATES.GO_HOME
+        id: TURTLE_STATES.GO_HOME,
     };
     public warning: string | null = null;
 

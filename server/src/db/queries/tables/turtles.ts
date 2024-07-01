@@ -1,7 +1,8 @@
 import {Database} from 'better-sqlite3';
 
-export const createTurtlesTable = (db: Database) => db.exec(
-    `CREATE TABLE IF NOT EXISTS \`turtles\` (
+export const createTurtlesTable = (db: Database) =>
+    db.exec(
+        `CREATE TABLE IF NOT EXISTS \`turtles\` (
     server_id INT NOT NULL,
     id INT NOT NULL,
     name VARCHAR(32) NOT NULL,
@@ -17,4 +18,4 @@ export const createTurtlesTable = (db: Database) => db.exec(
     CONSTRAINT pk_turtles PRIMARY KEY (\`server_id\`, \`id\`),
     FOREIGN KEY (\`server_id\`) REFERENCES \`servers\`(\`id\`) ON UPDATE CASCADE ON DELETE CASCADE
 );`
-);
+    );

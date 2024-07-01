@@ -4,12 +4,12 @@ import {TURTLE_STATES} from './helpers';
 
 export interface RefuelingStateData {
     readonly id: TURTLE_STATES;
-} 
+}
 
 export class TurtleRefuelingState extends TurtleBaseState<RefuelingStateData> {
     public readonly name = 'refueling';
     public data = {
-        id: TURTLE_STATES.REFUELING
+        id: TURTLE_STATES.REFUELING,
     };
     public warning: string | null = null;
 

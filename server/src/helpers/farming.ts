@@ -12,7 +12,7 @@ export const blockToFarmingDetailsMapObject: {
         seed: string;
         harvest: string;
         maxAge: number;
-    }
+    };
 } = {
     'minecraft:wheat': {
         seed: 'minecraft:wheat_seeds',

@@ -33,7 +33,7 @@ export class TurtleExploringState extends TurtleBaseState<ExploreStateData> {
     private async exploreSurroundings(x: number, y: number, z: number, locationsToExplore: Location[]) {
         const locationIndex = locationsToExplore.findIndex((loc) => loc.x === x && loc.y === y && loc.z === z);
         if (locationIndex > 0) {
-            locationsToExplore.splice(locationIndex, 1)
+            locationsToExplore.splice(locationIndex, 1);
         }
 
         const [exploreUp, exploreDown, exploreFront] = await this.turtle.explore();
@@ -47,15 +47,7 @@ export class TurtleExploringState extends TurtleBaseState<ExploreStateData> {
         }
 
         if (exploreUp != null) {
-            upsertBlock(
-                this.turtle.serverId,
-                x,
-                y + 1,
-                z,
-                exploreUp.name,
-                exploreUp.state,
-                exploreUp.tags
-            );
+            upsertBlock(this.turtle.serverId, x, y + 1, z, exploreUp.name, exploreUp.state, exploreUp.tags);
             blocks.push({
                 x,
                 y: y + 1,
@@ -79,15 +71,7 @@ export class TurtleExploringState extends TurtleBaseState<ExploreStateData> {
         }
 
         if (exploreDown != null) {
-            upsertBlock(
-                this.turtle.serverId,
-                x,
-                y - 1,
-                z,
-                exploreDown.name,
-                exploreDown.state,
-                exploreDown.tags
-            );
+            upsertBlock(this.turtle.serverId, x, y - 1, z, exploreDown.name, exploreDown.state, exploreDown.tags);
             blocks.push({
                 x,
                 y: y - 1,
@@ -231,7 +215,7 @@ export class TurtleExploringState extends TurtleBaseState<ExploreStateData> {
                 try {
                     for await (const _ of this.goToDestinations(locationsToExplore, {
                         noInspect: true,
-                        boundaries
+                        boundaries,
                     })) {
                         yield;
                     }
@@ -245,7 +229,10 @@ export class TurtleExploringState extends TurtleBaseState<ExploreStateData> {
 
                         yield;
                         continue;
-                    } else if (err instanceof DestinationError && (err.message === 'No valid path found' || err.message === 'Max steps reached')) {
+                    } else if (
+                        err instanceof DestinationError &&
+                        (err.message === 'No valid path found' || err.message === 'Max steps reached')
+                    ) {
                         const {x, y, z} = this.turtle.location;
                         await this.exploreSurroundings(x, y, z, locationsToExplore);
 
