@@ -190,7 +190,7 @@ export default class DStarLite {
         const cachedNode = cachedNodes.get(nodePath);
         if (cachedNode) return cachedNode;
         const block = getBlock(this.serverId, x, y, z);
-        if (block == null || block.name === 'minecraft:water') {
+        if (block == null || block.name === 'minecraft:water' || block.name === 'minecraft:grass') {
             const node = new Node(
                 new Point(x, y, z),
                 false,
