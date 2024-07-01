@@ -118,6 +118,7 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
 
                                         const split = texture.split(':');
                                         if (split.length !== 2) continue;
+                                        if (split[0] !== 'minecraft') continue;
 
                                         const distance = levenshteinDistance(grabcraftNameLowered, split[1]);
                                         if (distance < currentBestMatch) {
