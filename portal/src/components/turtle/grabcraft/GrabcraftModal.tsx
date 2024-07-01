@@ -5,24 +5,94 @@ import {httpServerUrl} from '../../../api';
 import {useAtlasMap} from '../Turtle3DMap/TextureAtlas';
 import {Block} from '../../../App';
 
-const levenshteinDistance = (a: string, b: string): number => {
-    const arr = [];
-    for (let i = 0; i <= b.length; i++) {
-        arr[i] = [i];
-        for (let j = 1; j <= a.length; j++) {
-            arr[i][j] =
-                i === 0
-                    ? j
-                    : Math.min(
-                          arr[i - 1][j] + 1,
-                          arr[i][j - 1] + 1,
-                          arr[i - 1][j - 1] + (a[j - 1] === b[i - 1] ? 0 : 1)
-                      );
+const jaroWinklerDistance = (a: string, b: string): number => {
+    const matches = (() => {
+        const bound = Math.floor(Math.max(a.length, b.length) / 2) - 1;
+        const matched = [];
+        let matches = 0;
+        for (let i = 0; i < a.length; i++) {
+            for (let j = Math.max(0, i - bound); j <= Math.min(b.length, i + bound); j++) {
+                if (a[i] === b[j] && !matched[j]) {
+                    matched[j] = true;
+                    matches++;
+                    break;
+                }
+            }
         }
+
+        return matches;
+    })();
+
+    if (matches > 0) {
+        const transpositions = (() => {
+            const bound = Math.max(a.length, b.length);
+
+            let aMatches = '';
+            const aMatched = [];
+            for (let i = 0; i < a.length; i++) {
+                for (let j = Math.max(0, i - bound); j <= Math.min(b.length, i + bound); j++) {
+                    if (a[i] === b[j] && !aMatched[j]) {
+                        aMatches += a[i];
+                        aMatched[j] = true;
+                        break;
+                    }
+                }
+            }
+
+            let bMatches = '';
+            const bMatched = [];
+            for (let i = 0; i < b.length; i++) {
+                for (let j = Math.max(0, i - bound); j <= Math.min(a.length, i + bound); j++) {
+                    if (b[i] === a[j] && !bMatched[j]) {
+                        bMatches += b[i];
+                        bMatched[j] = true;
+                        break;
+                    }
+                }
+            }
+
+            let transpositions = 0;
+            for (let i = 0; i < aMatches.length; i++) {
+                if (aMatches[i] !== bMatches[i]) transpositions++;
+            }
+
+            return Math.floor(transpositions / 2);
+        })();
+
+        const similarity = (matches / a.length + matches / b.length + (matches - transpositions) / matches) / 3;
+        if (similarity < 0.7) return similarity;
+
+        const prefix = (() => {
+            for (let i = 0; i < a.length && i < b.length; i++) {
+                if (a[i] !== b[i]) return i;
+            }
+
+            return Math.min(a.length, b.length);
+        })();
+        return similarity + prefix * 0.1 * (1 - similarity);
     }
 
-    return arr[b.length][a.length];
+    return 0;
 };
+
+// const levenshteinDistance = (a: string, b: string): number => {
+//     const arr = [];
+//     for (let i = 0; i <= b.length; i++) {
+//         arr[i] = [i];
+//         for (let j = 1; j <= a.length; j++) {
+//             arr[i][j] =
+//                 i === 0
+//                     ? j
+//                     : Math.min(
+//                           arr[i - 1][j] + 1,
+//                           arr[i][j - 1] + 1,
+//                           arr[i - 1][j - 1] + (a[j - 1] === b[i - 1] ? 0 : 1)
+//                       );
+//         }
+//     }
+
+//     return arr[b.length][a.length];
+// };
 
 type Props = {
     hideModal: () => void;
@@ -99,7 +169,7 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                         for (const x in renderObject[y]) {
                             for (const z in renderObject[y][x]) {
                                 const {name: grabcraftName} = renderObject[y][x][z];
-                                const grabcraftNameLowered = grabcraftName.toLowerCase();
+                                const grabcraftNameLowered = grabcraftName.toLowerCase().replaceAll(' ', '_');
 
                                 // Always skip layer 1 Dirt as it's not part of the actual build
                                 if (y === '1' && grabcraftName === 'Dirt') continue;
@@ -111,7 +181,7 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                                     }
 
                                     if (atlasMap == null) return null;
-                                    let currentBestMatch = Number.MAX_VALUE;
+                                    let currentBestMatch = 0;
                                     let bestStringMatch: string | null = null;
                                     for (const texture in atlasMap.textures) {
                                         if (texture === 'unknown') continue;
@@ -120,8 +190,8 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                                         if (split.length !== 2) continue;
                                         if (split[0] !== 'minecraft') continue;
 
-                                        const distance = levenshteinDistance(grabcraftNameLowered, split[1]);
-                                        if (distance < currentBestMatch) {
+                                        const distance = jaroWinklerDistance(grabcraftNameLowered, split[1]);
+                                        if (distance > currentBestMatch) {
                                             currentBestMatch = distance;
                                             bestStringMatch = texture;
                                         }
