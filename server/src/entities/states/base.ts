@@ -38,9 +38,9 @@ export abstract class TurtleBaseState<T> {
             serverId: this.turtle.serverId,
             data: {
                 state: {
-                    ...this.data,
                     name: this.name,
                     warning: this.#warning,
+                    data: this.data,
                 },
             },
         });

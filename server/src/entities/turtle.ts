@@ -502,11 +502,22 @@ export class Turtle {
                         : {
                               name: this.state.name,
                               warning: this.state.warning,
+                              data: this.state.data,
                           },
                 error: null,
             },
         });
-        updateTurtleState(this.serverId, this.id, this.state === null ? null : this.state.data);
+        updateTurtleState(
+            this.serverId,
+            this.id,
+            this.state === null
+                ? null
+                : {
+                      name: this.state.name,
+                      warning: this.state.warning,
+                      data: this.state.data,
+                  }
+        );
 
         if (state === null) {
             this.#actIterator = null;
