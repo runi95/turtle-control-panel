@@ -23,7 +23,7 @@ export interface Peripherals {
 
 export interface BaseState {
     id: number;
-    error?: string;
+    warning?: string;
     name: string;
     [key: string]: unknown;
 }

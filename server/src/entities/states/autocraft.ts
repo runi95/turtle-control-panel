@@ -12,7 +12,6 @@ export class TurtleAutocraftState extends TurtleBaseState<AutocraftStateData> {
     public readonly id = TURTLE_STATES.AUTO_CRAFT;
     public readonly name = 'auto crafting';
     public data;
-    public warning: string | null = null;
 
     constructor(turtle: Turtle, data: Omit<AutocraftStateData, 'id'>) {
         super(turtle);

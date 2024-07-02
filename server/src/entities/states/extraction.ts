@@ -18,7 +18,6 @@ export interface ExtractionStateData {
 export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> {
     public readonly name = 'mining (extract all ores)';
     public data: ExtractionStateData;
-    public warning: string | null = null;
 
     private readonly mineableBlockMap = new Map<string, boolean>();
     private readonly mineableBlockIncludeOrExcludeMap = new Map<string, boolean>();

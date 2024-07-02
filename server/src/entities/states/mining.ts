@@ -15,7 +15,6 @@ export interface MiningStateData {
 export class TurtleMiningState extends TurtleBaseState<MiningStateData> {
     public readonly name = 'mining';
     public data: MiningStateData;
-    public warning: string | null = null;
 
     private readonly mineableBlockMap = new Map<string, boolean>();
     private readonly mineableBlockIncludeOrExcludeMap = new Map<string, boolean>();

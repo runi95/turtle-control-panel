@@ -13,7 +13,6 @@ export interface BuildStateData {
 export class TurtleBuildingState extends TurtleBaseState<BuildStateData> {
     public readonly name = 'building';
     public data: BuildStateData;
-    public warning: string | null = null;
 
     private isInOrAdjacentToBuildingArea: boolean = false;
     private blocks: Omit<Block, 'state' | 'tags'>[];

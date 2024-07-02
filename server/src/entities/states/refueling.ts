@@ -11,7 +11,6 @@ export class TurtleRefuelingState extends TurtleBaseState<RefuelingStateData> {
     public data = {
         id: TURTLE_STATES.REFUELING,
     };
-    public warning: string | null = null;
 
     constructor(turtle: Turtle) {
         super(turtle);

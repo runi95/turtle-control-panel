@@ -17,7 +17,6 @@ export interface ExploreStateData {
 export class TurtleExploringState extends TurtleBaseState<ExploreStateData> {
     public readonly name = 'exploring';
     public data: ExploreStateData;
-    public warning: string | null = null;
 
     private chunkOffsetIndex = 0;
 

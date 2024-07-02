@@ -12,7 +12,6 @@ export class TurtleInventoryDumpState extends TurtleBaseState<InventoryDumpState
     public data = {
         id: TURTLE_STATES.INVENTORY_DUMP,
     };
-    public warning: string | null = null;
 
     constructor(turtle: Turtle) {
         super(turtle);

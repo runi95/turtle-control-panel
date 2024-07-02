@@ -3,6 +3,7 @@ import DStarLite, {Boundaries, DestinationError, IsBlockMineableFunc} from '../.
 import {Node} from '../../dlite/Node';
 import {Point} from '../../dlite/Point';
 import {PriorityQueue} from '../../dlite/PriorityQueue';
+import globalEventEmitter from '../../globalEventEmitter';
 import {levenshteinDistance} from '../../helpers/levenshtein-distance';
 import {Turtle} from '../turtle';
 
@@ -15,7 +16,7 @@ interface ComparableItem {
 export abstract class TurtleBaseState<T> {
     public abstract readonly name: string;
     public abstract data: T;
-    public abstract warning: string | null;
+    #warning: string | null = null;
 
     protected readonly turtle: Turtle;
 
@@ -24,6 +25,26 @@ export abstract class TurtleBaseState<T> {
     }
 
     public abstract act(): AsyncIterator<string | undefined>;
+
+    public get warning(): string | null {
+        return this.#warning;
+    }
+
+    public set warning(warning: string | null) {
+        this.#warning = warning;
+
+        globalEventEmitter.emit('tupdate', {
+            id: this.turtle.id,
+            serverId: this.turtle.serverId,
+            data: {
+                state: {
+                    ...this.data,
+                    name: this.name,
+                    warning: this.#warning,
+                },
+            },
+        });
+    }
 
     protected async *refuelFromNearbyInventories(): AsyncGenerator<void> {
         const {inventories, hubs} = Object.entries(this.turtle.peripherals).reduce(

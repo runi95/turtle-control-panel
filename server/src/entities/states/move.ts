@@ -15,7 +15,6 @@ export interface MovingStateData {
 export class TurtleMoveState extends TurtleBaseState<MovingStateData> {
     public readonly name = 'moving';
     public data: MovingStateData;
-    public warning: string | null = null;
 
     private readonly algorithm: DStarLite;
     private solution: Node | null = null;

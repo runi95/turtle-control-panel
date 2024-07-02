@@ -13,7 +13,6 @@ export class TurtleGoHomeState extends TurtleBaseState<GoHomeStateData> {
     public data = {
         id: TURTLE_STATES.GO_HOME,
     };
-    public warning: string | null = null;
 
     constructor(turtle: Turtle) {
         super(turtle);
