@@ -171,7 +171,10 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                         for (const x in renderObject[y]) {
                             for (const z in renderObject[y][x]) {
                                 const {name: grabcraftName} = renderObject[y][x][z];
-                                const grabcraftNameLowered = grabcraftName.toLowerCase().replaceAll(' ', '_');
+                                const grabcraftNameLowered = grabcraftName
+                                    .toLowerCase()
+                                    .replaceAll(new RegExp('\\([^)]+\\)', 'g'), '')
+                                    .replaceAll(' ', '_');
 
                                 // Always skip layer 1 Dirt as it's not part of the actual build
                                 if (y === '1' && grabcraftName === 'Dirt') continue;
