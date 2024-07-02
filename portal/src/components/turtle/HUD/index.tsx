@@ -49,18 +49,12 @@ function HUD({setWorldState, setBlocksToPlace, getSelectedBlocks, getBuiltBlocks
                     {turtle.error ? (
                         <h5>
                             <span>
-                                {' '}
-                                {turtle.error != null ? (
-                                    <span className='text-danger'>{turtle.error}</span>
-                                ) : (
-                                    <span className='text-danger'>{turtle.state?.warning}</span>
-                                )}
+                                (<span className='text-danger'>{turtle.error}</span>)
                             </span>
                         </h5>
                     ) : turtle.state?.warning ? (
                         <h5>
                             <span>
-                                {' '}
                                 (<span className='text-warning'>{turtle.state.warning as string}</span>)
                             </span>
                         </h5>
