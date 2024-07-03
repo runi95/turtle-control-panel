@@ -748,6 +748,7 @@ export const grabcraftNameToBlockMap: {
     'Block of Raw Gold': 'minecraft:raw_gold_block',
     'Block of Raw Iron': 'minecraft:raw_iron_block',
     'Red Banner': 'minecraft:red_banner',
+    Bed: 'minecraft:red_bed',
     'Red Bed': 'minecraft:red_bed',
     'Red Candle': 'minecraft:red_candle',
     'Cake with Red Candle': 'minecraft:red_candle_cake',
