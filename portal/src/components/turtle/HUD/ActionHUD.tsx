@@ -272,9 +272,9 @@ function ActionHUD({setWorldState, setBlocksToPlace, getSelectedBlocks, getBuilt
                                             blocks: getBuiltBlocks()
                                                 .sort((a, b) => {
                                                     if (a.y < b.y) {
-                                                        return 1;
-                                                    } else if (a.y > b.y) {
                                                         return -1;
+                                                    } else if (a.y > b.y) {
+                                                        return 1;
                                                     } else if (a.x < b.x) {
                                                         return -1;
                                                     } else if (a.x > b.x) {
