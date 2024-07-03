@@ -105,11 +105,12 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                                 if (capturedGrabcraftName == null) continue;
                                 if (capturedGrabcraftName.length < 2) continue;
 
-                                const grabcraftName = capturedGrabcraftName[1];
+                                const grabcraftName = capturedGrabcraftName[1].trim();
 
                                 // Always skip layer 1 Dirt as it's not part of the actual build
                                 if (y === '1' && grabcraftName === 'Dirt') continue;
                                 if (y === '1' && grabcraftName === 'Still Water') continue;
+                                if (grabcraftName === '') continue;
                                 if (grabcraftName === 'Air') continue;
                                 if (grabcraftName === 'Grass') continue;
                                 if (grabcraftName === 'Water') continue;
