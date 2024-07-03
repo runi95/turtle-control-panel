@@ -123,6 +123,7 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                                     let currentBestMatch = Number.MAX_VALUE;
                                     let bestStringMatch: string | null = null;
                                     for (const key of mapKeys) {
+                                        if (key === 'Air') continue;
                                         const distance = levenshteinDistance(grabcraftName, key);
                                         if (distance < currentBestMatch) {
                                             currentBestMatch = distance;
