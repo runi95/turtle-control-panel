@@ -43,9 +43,9 @@ interface Props {
 
 export type WorldHandle = {
     setState: (state: WorldState | null) => void;
-    setBlocksToPlace: (blocks: Omit<Block, 'state' | 'tags'>[]) => void;
+    setBlocksToPlace: (blocks: Omit<Block, 'tags'>[]) => void;
     getSelectedBlocks: () => Location[];
-    getBuiltBlocks: () => Omit<Block, 'state' | 'tags'>[];
+    getBuiltBlocks: () => Omit<Block, 'tags'>[];
     setBuildBlockType: (type: string) => void;
 };
 
@@ -124,8 +124,8 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                             break;
                     }
                 },
-                setBlocksToPlace(blocks: Omit<Block, 'state' | 'tags'>[]) {
-                    const blocksMap = new Map<string, Omit<Block, 'state' | 'tags'>>();
+                setBlocksToPlace(blocks: Omit<Block, 'tags'>[]) {
+                    const blocksMap = new Map<string, Omit<Block, 'tags'>>();
                     for (const block of blocks) {
                         const {x, y, z} = block;
                         blocksMap.set(`${x},${y},${z}`, block);
@@ -584,15 +584,16 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                 (() => {
                                     const schema = schemaPlacerRef.current.getSchema();
                                     if (schema != null) {
-                                        const addedBlocks: Omit<Block, 'state' | 'tags'>[] = [];
+                                        const addedBlocks: Omit<Block, 'tags'>[] = [];
                                         const meshPosition = schemaPlacerRef.current.getMeshPosition();
                                         for (const block of schema.values()) {
-                                            const {x, y, z, name} = block;
+                                            const {x, y, z, name, state} = block;
                                             addedBlocks.push({
                                                 x: x + meshPosition.x,
                                                 y: y + meshPosition.y,
                                                 z: z + meshPosition.z,
                                                 name,
+                                                state,
                                             });
                                         }
 
@@ -605,6 +606,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                                                 y,
                                                 z,
                                                 name: buildBlockTypeRef.current,
+                                                state: {},
                                             },
                                         ]);
                                     }

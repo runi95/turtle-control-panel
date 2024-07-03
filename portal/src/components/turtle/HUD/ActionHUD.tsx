@@ -42,9 +42,9 @@ type ModalState = {
 
 interface Props {
     setWorldState: (worldState: WorldState | null) => void;
-    setBlocksToPlace: (blocks: Omit<Block, 'state' | 'tags'>[]) => void;
+    setBlocksToPlace: (blocks: Omit<Block, 'tags'>[]) => void;
     getSelectedBlocks: () => Location[];
-    getBuiltBlocks: () => Omit<Block, 'state' | 'tags'>[];
+    getBuiltBlocks: () => Omit<Block, 'tags'>[];
     setBuildBlockType: (type: string) => void;
 }
 
@@ -287,11 +287,12 @@ function ActionHUD({setWorldState, setBlocksToPlace, getSelectedBlocks, getBuilt
 
                                                     return 0;
                                                 })
-                                                .map(({x, y, z, name}) => ({
+                                                .map(({x, y, z, name, state}) => ({
                                                     name,
                                                     x: x + turtle.location.x,
                                                     y: y + turtle.location.y,
                                                     z: z + turtle.location.z,
+                                                    state,
                                                 })),
                                         },
                                     });

@@ -12,9 +12,9 @@ import ArrowLeftIcon from '../../../icons/ArrowLeftIcon';
 
 interface Props {
     setWorldState: (worldState: WorldState | null) => void;
-    setBlocksToPlace: (blocks: Omit<Block, 'state' | 'tags'>[]) => void;
+    setBlocksToPlace: (blocks: Omit<Block, 'tags'>[]) => void;
     getSelectedBlocks: () => Location[];
-    getBuiltBlocks: () => Omit<Block, 'state' | 'tags'>[];
+    getBuiltBlocks: () => Omit<Block, 'tags'>[];
     setBuildBlockType: (type: string) => void;
 }
 

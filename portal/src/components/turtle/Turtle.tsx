@@ -12,7 +12,7 @@ function Turtle() {
         worldRef.current.setState(worldState);
     }
 
-    function setBlocksToPlace(blocks: Omit<Block, 'state' | 'tags'>[]) {
+    function setBlocksToPlace(blocks: Omit<Block, 'tags'>[]) {
         if (worldRef.current == null) return;
         worldRef.current.setBlocksToPlace(blocks);
     }

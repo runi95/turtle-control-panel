@@ -178,7 +178,7 @@ const Rebuild = (
     return BuildMeshDataFromVoxels(blocks, geometries, atlasMap, textureOverrides);
 };
 
-type BlockMap = Map<string, Omit<Block, 'state' | 'tags'>>;
+type BlockMap = Map<string, Omit<Block, 'tags'>>;
 
 interface Props {
     geometries: PlaneGeometry[];

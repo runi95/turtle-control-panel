@@ -177,7 +177,7 @@ const Rebuild = (
     return BuildMeshDataFromVoxels(blocks, geometries, atlasMap, textureOverrides);
 };
 
-type BlockMap = Map<string, Omit<Block, 'state' | 'tags'>>;
+type BlockMap = Map<string, Omit<Block, 'tags'>>;
 
 interface Props {
     geometries: PlaneGeometry[];
@@ -185,9 +185,9 @@ interface Props {
 }
 
 export type BuildBlockHandle = {
-    addBlocks: (blocksToAdd: Omit<Block, 'state' | 'tags'>[]) => void;
+    addBlocks: (blocksToAdd: Omit<Block, 'tags'>[]) => void;
     reset: () => void;
-    getBuiltBlocks: () => Omit<Block, 'state' | 'tags'>[];
+    getBuiltBlocks: () => Omit<Block, 'tags'>[];
 };
 
 const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geometries, atlasMap}, ref) {
@@ -228,7 +228,7 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock({geo
         ref,
         () => {
             return {
-                addBlocks: (blocksToAdd: Omit<Block, 'state' | 'tags'>[]) => {
+                addBlocks: (blocksToAdd: Omit<Block, 'tags'>[]) => {
                     if (atlas == null) return;
 
                     // Create new minimized atlas

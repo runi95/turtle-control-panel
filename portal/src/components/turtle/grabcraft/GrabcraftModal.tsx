@@ -26,12 +26,12 @@ const levenshteinDistance = (a: string, b: string): number => {
 
 type Props = {
     hideModal: () => void;
-    onBuild: (blocks: Omit<Block, 'state' | 'tags'>[]) => void;
+    onBuild: (blocks: Omit<Block, 'tags'>[]) => void;
 };
 
 type BuildData = {
     image: string | null;
-    blocks: Omit<Block, 'state' | 'tags'>[];
+    blocks: Omit<Block, 'tags'>[];
 };
 
 type RenderObject = {
@@ -91,18 +91,21 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                         }));
                 })
                 .then(({image, renderObject}) => {
-                    const blocks: Omit<Block, 'state' | 'tags'>[] = [];
+                    const blocks: Omit<Block, 'tags'>[] = [];
                     const grabcraftNameToBlockNameMap = new Map<string, string>();
 
                     let largestX = 0;
                     let largestZ = 0;
                     const mapKeys = Object.keys(grabcraftNameToBlockMap);
+                    const grabcraftNameRegexp = new RegExp('([\\d\\w-_ ]+) ?(\\([^)]+\\))?');
                     for (const y in renderObject) {
                         for (const x in renderObject[y]) {
                             for (const z in renderObject[y][x]) {
-                                const grabcraftName = renderObject[y][x][z].name
-                                    .replaceAll(new RegExp('\\([^)]+\\)', 'g'), '')
-                                    .trim();
+                                const capturedGrabcraftName = grabcraftNameRegexp.exec(renderObject[y][x][z].name);
+                                if (capturedGrabcraftName == null) continue;
+                                if (capturedGrabcraftName.length < 2) continue;
+
+                                const grabcraftName = capturedGrabcraftName[1];
 
                                 // Always skip layer 1 Dirt as it's not part of the actual build
                                 if (y === '1' && grabcraftName === 'Dirt') continue;
@@ -133,6 +136,44 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                                     return bestStringMatch;
                                 })();
 
+                                const state = (() => {
+                                    const blockState: {
+                                        [key: string]: string;
+                                    } = {};
+                                    if (capturedGrabcraftName.length < 3) return blockState;
+                                    const grabcraftCapturedState = capturedGrabcraftName[2];
+                                    if (grabcraftCapturedState == null) return blockState;
+
+                                    let facing: 'north' | 'east' | 'south' | 'west' | null = null;
+                                    const split = grabcraftCapturedState
+                                        .substring(1, grabcraftCapturedState.length - 1)
+                                        .split(',');
+                                    for (const grabcraftState of split) {
+                                        switch (grabcraftState.toLowerCase().trim()) {
+                                            case 'north':
+                                                facing = 'north';
+                                                break;
+                                            case 'east':
+                                                facing = 'east';
+                                                break;
+                                            case 'south':
+                                                facing = 'south';
+                                                break;
+                                            case 'west':
+                                                facing = 'west';
+                                                break;
+                                        }
+                                    }
+
+                                    if (facing != null) {
+                                        blockState['facing'] = facing;
+                                    }
+
+                                    return blockState;
+                                })() as {
+                                    [key: string]: string;
+                                };
+
                                 const parsedX = Number(x);
                                 const parsedY = Number(y);
                                 const parsedZ = Number(z);
@@ -149,6 +190,7 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                                     y: parsedY - 1,
                                     z: parsedZ,
                                     name: name == null ? 'minecraft:dirt' : name,
+                                    state,
                                 });
                             }
                         }
@@ -158,11 +200,12 @@ function GrabcraftModal({hideModal, onBuild}: Props) {
                     const zOffset = Math.floor(largestZ / 2);
                     setBuildData({
                         image,
-                        blocks: blocks.map(({x, y, z, name}) => ({
+                        blocks: blocks.map(({x, y, z, name, state}) => ({
                             x: x - xOffset,
                             y,
                             z: z - zOffset,
                             name,
+                            state,
                         })),
                     });
                 })
