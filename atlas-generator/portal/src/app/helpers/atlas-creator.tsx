@@ -2,6 +2,7 @@ import {
   AtlasMap,
   AtlasMapBlockData,
   BlockstatesData,
+  Element,
   LoadedBlockstateFile,
   LoadedModelFile,
   ModelData,
@@ -83,6 +84,33 @@ export const createAtlas = async (
   ];
   const texturesMap = new Map([["unknown.png?dx=0&dy=0&dw=16&dh=16", 0]]);
   let nextTextureIndex = 1;
+
+  const shulkerElements: Element[] = [
+    {
+      from: [0, 0, 0],
+      to: [16, 8, 16],
+      faces: {
+        down: { uv: [8, 7, 12, 11], texture: "#texture" },
+        up: { uv: [4, 7, 8, 11], texture: "#texture" },
+        north: { uv: [0, 11, 4, 13], texture: "#texture" },
+        south: { uv: [8, 11, 12, 13], texture: "#texture" },
+        west: { uv: [12, 11, 16, 13], texture: "#texture" },
+        east: { uv: [4, 11, 8, 13], texture: "#texture" },
+      },
+    },
+    {
+      from: [0, 4, 0],
+      to: [16, 16, 16],
+      faces: {
+        down: { uv: [8, 0, 12, 4], texture: "#texture" },
+        up: { uv: [4, 0, 8, 4], texture: "#texture" },
+        north: { uv: [0, 4, 4, 7], texture: "#texture" },
+        south: { uv: [8, 4, 12, 7], texture: "#texture" },
+        west: { uv: [12, 4, 16, 7], texture: "#texture" },
+        east: { uv: [4, 4, 8, 7], texture: "#texture" },
+      },
+    },
+  ];
 
   const customConfig: CustomConfig = {
     add: {
@@ -186,6 +214,118 @@ export const createAtlas = async (
               },
             ],
           },
+          "black_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_black",
+            },
+            elements: [...shulkerElements],
+          },
+          "blue_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_blue",
+            },
+            elements: [...shulkerElements],
+          },
+          "brown_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_brown",
+            },
+            elements: [...shulkerElements],
+          },
+          "cyan_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_cyan",
+            },
+            elements: [...shulkerElements],
+          },
+          "gray_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_gray",
+            },
+            elements: [...shulkerElements],
+          },
+          "green_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_green",
+            },
+            elements: [...shulkerElements],
+          },
+          "light_blue_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_light_blue",
+            },
+            elements: [...shulkerElements],
+          },
+          "light_gray_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_light_gray",
+            },
+            elements: [...shulkerElements],
+          },
+          "lime_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_lime",
+            },
+            elements: [...shulkerElements],
+          },
+          "magenta_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_magenta",
+            },
+            elements: [...shulkerElements],
+          },
+          "orange_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_orange",
+            },
+            elements: [...shulkerElements],
+          },
+          "pink_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_pink",
+            },
+            elements: [...shulkerElements],
+          },
+          "purple_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_purple",
+            },
+            elements: [...shulkerElements],
+          },
+          "red_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_red",
+            },
+            elements: [...shulkerElements],
+          },
+          "white_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_white",
+            },
+            elements: [...shulkerElements],
+          },
+          "yellow_shulker_box.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/shulker/shulker_yellow",
+            },
+            elements: [...shulkerElements],
+          },
         },
       },
     },
@@ -233,6 +373,13 @@ export const createAtlas = async (
               },
             },
           ],
+        },
+        "shulker_box.json": {
+          parent: "block/block",
+          textures: {
+            texture: "minecraft:entity/shulker/shulker",
+          },
+          elements: [...shulkerElements],
         },
         "water.json": {
           parent: "block/cube_all",
