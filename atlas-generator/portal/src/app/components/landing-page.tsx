@@ -56,6 +56,22 @@ export type LoadedModelFile = ModelData & {
   asset: string;
 };
 
+export type BlockstatesData = {
+  variants: {
+    [key: string]: {
+      model: string;
+      x?: number;
+      y?: number;
+    };
+  };
+};
+
+export type LoadedBlockstateFile = BlockstatesData & {
+  file: string;
+  name: string;
+  asset: string;
+};
+
 type LoadedModel = {
   name: string;
 };
@@ -86,9 +102,23 @@ export type AtlasMapTextures = {
   };
 };
 
+export type AtlasMapBlockData = {
+  state?: {
+    [key: string]: string;
+  };
+  model: string;
+  x?: number;
+  y?: number;
+};
+
+export type AtlasMapBlockstates = {
+  [key: string]: AtlasMapBlockData[];
+};
+
 export interface AtlasMap {
   models: AtlasMapModels;
   textures: AtlasMapTextures;
+  blockstates: AtlasMapBlockstates;
 }
 
 function LandingPage() {

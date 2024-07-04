@@ -19,22 +19,17 @@ import {
 } from 'three';
 import {forwardRef, useEffect, useImperativeHandle, useMemo, useRef} from 'react';
 import {fragmentShader, vertexShader} from './CustomShader';
-import {Block, Blocks} from '../../../App';
+import {Block, BlockState, Blocks} from '../../../App';
 import {AtlasMap, useAtlas} from './TextureAtlas';
 import {useBlocks} from '../../../api/UseBlocks';
 import {useParams} from 'react-router-dom';
 import {WorldChunk} from './World';
-import {blockNameOverride} from './Helpers';
-
-const HALF_PI = Math.PI / 2;
-const ONE_AND_HALF_PI = Math.PI + HALF_PI;
 
 interface Cell {
     position: [number, number, number];
     type: string;
     visible: boolean;
-    facing?: 'north' | 'east' | 'south' | 'west';
-    axis?: 'x' | 'y' | 'z';
+    state?: BlockState;
 }
 
 const CreateTerrain = (dimensions: Vector3, fromX: number, fromY: number, fromZ: number, blocks: Blocks) => {
@@ -56,8 +51,7 @@ const CreateTerrain = (dimensions: Vector3, fromX: number, fromY: number, fromZ:
                         position: [x, y, z],
                         type: block.name,
                         visible: true,
-                        facing: block.facing,
-                        axis: block.axis,
+                        state: block.state,
                     });
                 }
             }
@@ -110,17 +104,38 @@ const BuildMeshDataFromVoxels = (
     const color = new Color(0xffffff);
     color.convertSRGBToLinear();
 
+    const blue = new Color(0x0000ff);
+    color.convertSRGBToLinear();
+
     const cellToIndexMap = new Map<string, number[]>();
-    const unknown = atlasMap.textures['unknown'];
+    const unknownTexture = atlasMap.textures['unknown'];
     let index = 0;
     let locationIndex = 0;
     for (const [key, cell] of cells) {
-        const atlasMapTexture = atlasMap.textures[blockNameOverride(cell.type)];
-        if (atlasMapTexture == null) {
+        const atlasMapBlock = atlasMap.blockstates[cell.type];
+        if (atlasMapBlock == null) {
             console.log(`${cell.type} is broken!`);
         }
-        const blockTextures = atlasMapTexture ?? unknown;
 
+        const matchingBlock =
+            atlasMapBlock?.find((block) => {
+                if (block == null) return false;
+
+                const {state} = block;
+                if (state == null) return true;
+
+                const {state: cellState} = cell;
+                if (cellState == null) return false;
+
+                const stateKeys = Object.keys(state);
+                for (const stateKey of stateKeys) {
+                    if (cellState[stateKey].toString() !== state[stateKey]) return false;
+                }
+
+                return true;
+            }) ?? null;
+
+        const blockTextures = (matchingBlock != null ? atlasMap.textures[matchingBlock.model] : null) ?? unknownTexture;
         const blockFaces = atlasMap.models[blockTextures.model];
         if (blockFaces == null) {
             console.log(`${cell.type} is broken!`);
@@ -133,36 +148,25 @@ const BuildMeshDataFromVoxels = (
         for (let i = 0; i < blockFaces.length; i++) {
             const blockFace = blockFaces[i];
             const bi = mesh.positions.length / 3;
-            const localPositions =
-                (cell.facing != null && cell.facing !== 'north') || (cell.axis != null && cell.axis !== 'y')
-                    ? (() => {
-                          const planeGeometry = new PlaneGeometry();
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          (planeGeometry.attributes.position as any).array = [...blockFace.face];
-                          switch (cell.facing) {
-                              case 'east':
-                                  planeGeometry.rotateY(ONE_AND_HALF_PI);
-                                  break;
-                              case 'south':
-                                  planeGeometry.rotateY(Math.PI);
-                                  break;
-                              case 'west':
-                                  planeGeometry.rotateY(HALF_PI);
-                                  break;
-                          }
+            const localPositions = (() => {
+                if (matchingBlock == null) return [...blockFace.face];
+                if (matchingBlock.x == null && matchingBlock.y == null) return [...blockFace.face];
 
-                          switch (cell.axis) {
-                              case 'x':
-                                  planeGeometry.rotateZ(HALF_PI);
-                                  break;
-                              case 'z':
-                                  planeGeometry.rotateX(HALF_PI);
-                                  break;
-                          }
+                const planeGeometry = new PlaneGeometry();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (planeGeometry.attributes.position as any).array = [...blockFace.face];
 
-                          return planeGeometry.attributes['position']['array'];
-                      })()
-                    : [...blockFace.face];
+                const {x, y} = matchingBlock;
+                if (x != null) {
+                    planeGeometry.rotateX(-(x * Math.PI) / 180);
+                }
+
+                if (y != null) {
+                    planeGeometry.rotateY(-(y * Math.PI) / 180);
+                }
+
+                return planeGeometry.attributes['position']['array'];
+            })();
             for (let j = 0; j < 3; j++) {
                 for (let v = 0; v < 4; v++) {
                     localPositions[v * 3 + j] += cell.position[j];
@@ -191,7 +195,11 @@ const BuildMeshDataFromVoxels = (
 
             for (let v = 0; v < 4; v++) {
                 mesh.uvSlices.push(textureOverrides[blockTexture]);
-                mesh.colors.push(color.r, color.g, color.b);
+                if (cell.state?.facing === 'foo') {
+                    mesh.colors.push(blue.r, blue.g, blue.b);
+                } else {
+                    mesh.colors.push(color.r, color.g, color.b);
+                }
             }
 
             for (let v = 0; v < 2; v++) {
@@ -335,18 +343,23 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(pr
         const uniqueTextures = new Set<number>([0]);
         const unknown = atlasMap.textures['unknown'];
         for (const block of uniqueBlocks.values()) {
-            const texture = atlasMap.textures[blockNameOverride(block.name)] ?? unknown;
-            const {model: _model, ...textureKeys} = texture;
-            Object.keys(textureKeys).forEach((key) => {
-                const textureIndex = texture[key];
-                if (typeof textureIndex === 'number') {
-                    uniqueTextures.add(textureIndex);
-                } else {
-                    Object.keys(textureIndex).forEach((textureIndexKey) =>
-                        uniqueTextures.add(textureIndex[textureIndexKey])
-                    );
-                }
-            });
+            const blockStates = atlasMap.blockstates[block.name];
+            if (blockStates == null) continue;
+
+            for (const blockState of blockStates) {
+                const texture = atlasMap.textures[blockState.model] ?? unknown;
+                const {model: _model, ...textureKeys} = texture;
+                Object.keys(textureKeys).forEach((key) => {
+                    const textureIndex = texture[key];
+                    if (typeof textureIndex === 'number') {
+                        uniqueTextures.add(textureIndex);
+                    } else {
+                        Object.keys(textureIndex).forEach((textureIndexKey) =>
+                            uniqueTextures.add(textureIndex[textureIndexKey])
+                        );
+                    }
+                });
+            }
         }
 
         const originalUintArray = new Uint8Array(atlas);

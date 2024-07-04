@@ -177,7 +177,7 @@ export const getBlocksSimple = (serverId: number, options: GetBlocksOptions) =>
             to_z: options.toZ,
             name: options.name,
         })
-        .map((block) => JSON.parse(block as string)) as Omit<Block, 'state' | 'tags'>[];
+        .map((block) => JSON.parse(block as string)) as Omit<Block, 'tags'>[];
 export const getBlock = (serverId: number, x: number, y: number, z: number) => {
     const block = selectBlock.get(serverId, x, y, z);
     if (!block) return null;

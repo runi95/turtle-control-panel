@@ -1,5 +1,8 @@
 import {
   AtlasMap,
+  AtlasMapBlockData,
+  BlockstatesData,
+  LoadedBlockstateFile,
   LoadedModelFile,
   ModelData,
 } from "../components/landing-page";
@@ -20,8 +23,21 @@ type Result = {
 };
 
 type CustomConfig = {
+  add: {
+    [key: string]: {
+      // Asset
+      models: {
+        [key: string]: ModelData;
+      };
+    };
+  };
   override: {
-    [key: string]: ModelData;
+    models: {
+      [key: string]: ModelData;
+    };
+    blockstates: {
+      [key: string]: BlockstatesData;
+    };
   };
 };
 
@@ -58,6 +74,7 @@ export const createAtlas = async (
         east: 0,
       },
     },
+    blockstates: {},
   };
   // let nextTextureIndex = 1;
   // let uvCount = 0;
@@ -68,98 +85,255 @@ export const createAtlas = async (
   let nextTextureIndex = 1;
 
   const customConfig: CustomConfig = {
+    add: {
+      minecraft: {
+        models: {
+          "chest_right.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/chest/normal_right",
+            },
+            elements: [
+              {
+                from: [0, 0, 1],
+                to: [15, 10, 15],
+                faces: {
+                  down: { uv: [7.25, 8.25, 3.5, 4.75], texture: "#texture" },
+                  up: { uv: [11, 8.25, 7.25, 4.75], texture: "#texture" },
+                  north: {
+                    uv: [14.5, 10.75, 10.75, 8.25],
+                    texture: "#texture",
+                  },
+                  south: {
+                    uv: [7.25, 10.75, 3.5, 8.25],
+                    texture: "#texture",
+                  },
+                  east: { uv: [0, 10.75, 3.5, 8.25], texture: "#texture" },
+                },
+              },
+              {
+                from: [0, 10, 1],
+                to: [15, 15, 15],
+                faces: {
+                  down: { uv: [7.25, 3.5, 3.5, 0], texture: "#texture" },
+                  up: { uv: [10.5, 3.5, 7.25, 0], texture: "#texture" },
+                  north: {
+                    uv: [14.5, 8.25, 10.75, 10.75],
+                    texture: "#texture",
+                  },
+                  south: { uv: [7.25, 8.25, 3.5, 10.75], texture: "#texture" },
+                  east: { uv: [0, 8.25, 3.5, 10.75], texture: "#texture" },
+                },
+              },
+              {
+                from: [0, 7, 0],
+                to: [1, 11, 1],
+                faces: {
+                  down: { uv: [0.25, 0, 0.75, 0.25], texture: "#texture" },
+                  up: { uv: [0.25, 0, 0.75, 0.25], texture: "#texture" },
+                  north: { uv: [0.5, 0.25, 0, 1.25], texture: "#texture" },
+                  east: { uv: [0.75, 0.25, 1, 1.25], texture: "#texture" },
+                },
+              },
+            ],
+          },
+          "chest_left.json": {
+            parent: "block/block",
+            textures: {
+              texture: "minecraft:entity/chest/normal_left",
+            },
+            elements: [
+              {
+                from: [1, 0, 1],
+                to: [16, 10, 15],
+                faces: {
+                  down: { uv: [7.25, 8.25, 3.5, 4.75], texture: "#texture" },
+                  up: { uv: [11, 8.25, 7.25, 4.75], texture: "#texture" },
+                  north: {
+                    uv: [14.5, 10.75, 10.75, 8.25],
+                    texture: "#texture",
+                  },
+                  south: {
+                    uv: [7.25, 10.75, 3.5, 8.25],
+                    texture: "#texture",
+                  },
+                  west: { uv: [7.25, 10.75, 10.75, 8.25], texture: "#texture" },
+                },
+              },
+              {
+                from: [1, 10, 1],
+                to: [16, 15, 15],
+                faces: {
+                  down: { uv: [7.25, 3.5, 3.5, 0], texture: "#texture" },
+                  up: { uv: [11, 3.5, 7.25, 0], texture: "#texture" },
+                  north: {
+                    uv: [14.5, 8.25, 10.75, 10.75],
+                    texture: "#texture",
+                  },
+                  south: { uv: [7.25, 8.25, 3.5, 10.75], texture: "#texture" },
+                  west: { uv: [7.25, 8.25, 10.75, 10.75], texture: "#texture" },
+                },
+              },
+              {
+                from: [15, 7, 0],
+                to: [16, 11, 1],
+                faces: {
+                  down: { uv: [0.25, 0, 0.75, 0.25], texture: "#texture" },
+                  up: { uv: [0.25, 0, 0.75, 0.25], texture: "#texture" },
+                  north: { uv: [1, 0.25, 0.75, 1.25], texture: "#texture" },
+                  west: { uv: [0.25, 0.25, 0.5, 1.25], texture: "#texture" },
+                },
+              },
+            ],
+          },
+        },
+      },
+    },
     override: {
-      "chest.json": {
-        parent: "block/block",
-        textures: {
-          texture: "minecraft:entity/chest/normal",
+      models: {
+        "chest.json": {
+          parent: "block/block",
+          textures: {
+            texture: "minecraft:entity/chest/normal",
+          },
+          elements: [
+            {
+              from: [1, 0, 1],
+              to: [15, 10, 15],
+              faces: {
+                down: { uv: [3.5, 8.25, 7, 4.75], texture: "#texture" },
+                up: { uv: [7, 8.25, 10.5, 4.75], texture: "#texture" },
+                north: { uv: [14, 10.75, 10.5, 8.25], texture: "#texture" },
+                south: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
+                west: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
+                east: { uv: [3.5, 8.25, 7, 10.75], texture: "#texture" },
+              },
+            },
+            {
+              from: [1, 10, 1],
+              to: [15, 15, 15],
+              faces: {
+                down: { uv: [7, 3.5, 3.5, 0], texture: "#texture" },
+                up: { uv: [10.5, 3.5, 7, 0], texture: "#texture" },
+                north: { uv: [14, 8.25, 10.5, 10.75], texture: "#texture" },
+                south: { uv: [3.5, 8.25, 7, 10.75], texture: "#texture" },
+                west: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
+                east: { uv: [0, 8.25, 3.5, 10.75], texture: "#texture" },
+              },
+            },
+            {
+              from: [7, 7, 0],
+              to: [9, 11, 1],
+              faces: {
+                down: { uv: [0.5, 0, 1, 0.25], texture: "#texture" },
+                up: { uv: [0.5, 0, 1, 0.25], texture: "#texture" },
+                north: { uv: [0.5, 0, 1, 1.25], texture: "#texture" },
+                west: { uv: [0.75, 0, 1, 1.25], texture: "#texture" },
+                east: { uv: [0.5, 0, 0.75, 1.25], texture: "#texture" },
+              },
+            },
+          ],
         },
-        elements: [
-          {
-            from: [1, 0, 1],
-            to: [15, 10, 15],
-            faces: {
-              down: { uv: [3.5, 8.25, 7, 4.75], texture: "#texture" },
-              up: { uv: [7, 8.25, 10.5, 4.75], texture: "#texture" },
-              north: { uv: [14, 10.75, 10.5, 8.25], texture: "#texture" },
-              south: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
-              west: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
-              east: { uv: [3.5, 8.25, 7, 10.75], texture: "#texture" },
-            },
+        "water.json": {
+          parent: "block/cube_all",
+          textures: {
+            all: "minecraft:block/water_still",
           },
-          {
-            from: [1, 10, 1],
-            to: [15, 15, 15],
-            faces: {
-              down: { uv: [7, 3.5, 3.5, 0], texture: "#texture" },
-              up: { uv: [10.5, 3.5, 7, 0], texture: "#texture" },
-              north: { uv: [14, 8.25, 10.5, 10.75], texture: "#texture" },
-              south: { uv: [3.5, 8.25, 7, 10.75], texture: "#texture" },
-              west: { uv: [7, 8.25, 10.5, 10.75], texture: "#texture" },
-              east: { uv: [0, 8.25, 3.5, 10.75], texture: "#texture" },
+          elements: [
+            {
+              from: [0, 0, 0],
+              to: [16, 16, 16],
+              faces: {
+                down: {
+                  texture: "#all",
+                  cullface: "down",
+                  color: "#005AFF",
+                },
+                up: {
+                  texture: "#all",
+                  cullface: "up",
+                  color: "#005AFF",
+                },
+                north: {
+                  texture: "#all",
+                  cullface: "north",
+                  color: "#005AFF",
+                },
+                south: {
+                  texture: "#all",
+                  cullface: "south",
+                  color: "#005AFF",
+                },
+                west: {
+                  texture: "#all",
+                  cullface: "west",
+                  color: "#005AFF",
+                },
+                east: {
+                  texture: "#all",
+                  cullface: "east",
+                  color: "#005AFF",
+                },
+              },
             },
-          },
-          {
-            from: [7, 7, 0],
-            to: [9, 11, 1],
-            faces: {
-              down: { uv: [0.5, 0, 1, 0.25], texture: "#texture" },
-              up: { uv: [0.5, 0, 1, 0.25], texture: "#texture" },
-              north: { uv: [0.5, 0, 1, 1.25], texture: "#texture" },
-              west: { uv: [0.75, 0, 1, 1.25], texture: "#texture" },
-              east: { uv: [0.5, 0, 0.75, 1.25], texture: "#texture" },
-            },
-          },
-        ],
-      },
-      "water.json": {
-        parent: "block/cube_all",
-        textures: {
-          all: "minecraft:block/water_still",
+          ],
         },
-        elements: [
-          {
-            from: [0, 0, 0],
-            to: [16, 16, 16],
-            faces: {
-              down: {
-                texture: "#all",
-                cullface: "down",
-                color: "#005AFF",
-              },
-              up: {
-                texture: "#all",
-                cullface: "up",
-                color: "#005AFF",
-              },
-              north: {
-                texture: "#all",
-                cullface: "north",
-                color: "#005AFF",
-              },
-              south: {
-                texture: "#all",
-                cullface: "south",
-                color: "#005AFF",
-              },
-              west: {
-                texture: "#all",
-                cullface: "west",
-                color: "#005AFF",
-              },
-              east: {
-                texture: "#all",
-                cullface: "east",
-                color: "#005AFF",
-              },
+        "lava.json": {
+          parent: "block/cube_all",
+          textures: {
+            all: "minecraft:block/lava_still",
+          },
+        },
+      },
+      blockstates: {
+        "chest.json": {
+          variants: {
+            "type=SINGLE,facing=east": {
+              model: "minecraft:block/chest",
+              y: 90,
+            },
+            "type=SINGLE,facing=north": {
+              model: "minecraft:block/chest",
+            },
+            "type=SINGLE,facing=south": {
+              model: "minecraft:block/chest",
+              y: 180,
+            },
+            "type=SINGLE,facing=west": {
+              model: "minecraft:block/chest",
+              y: 270,
+            },
+            "type=RIGHT,facing=east": {
+              model: "minecraft:block/chest_right",
+              y: 90,
+            },
+            "type=RIGHT,facing=north": {
+              model: "minecraft:block/chest_right",
+            },
+            "type=RIGHT,facing=south": {
+              model: "minecraft:block/chest_right",
+              y: 180,
+            },
+            "type=RIGHT,facing=west": {
+              model: "minecraft:block/chest_right",
+              y: 270,
+            },
+            "type=LEFT,facing=east": {
+              model: "minecraft:block/chest_left",
+              y: 90,
+            },
+            "type=LEFT,facing=north": {
+              model: "minecraft:block/chest_left",
+            },
+            "type=LEFT,facing=south": {
+              model: "minecraft:block/chest_left",
+              y: 180,
+            },
+            "type=LEFT,facing=west": {
+              model: "minecraft:block/chest_left",
+              y: 270,
             },
           },
-        ],
-      },
-      "lava.json": {
-        parent: "block/cube_all",
-        textures: {
-          all: "minecraft:block/lava_still",
         },
       },
     },
@@ -177,7 +351,7 @@ export const createAtlas = async (
     console.log(`Loading models from ${asset}/models...`);
 
     for (const key of Object.keys(block)) {
-      const override = customConfig?.override?.[key];
+      const override = customConfig?.override?.models?.[key];
       if (override != null) {
         promises.push(
           new Promise<LoadedModelFile>((resolve, reject) => {
@@ -252,6 +426,35 @@ export const createAtlas = async (
           reader.readAsArrayBuffer(file as File);
         })
       );
+    }
+
+    const customModelsToAdd = customConfig?.add?.[asset]?.models;
+    if (customModelsToAdd != null) {
+      const keys = Object.keys(customModelsToAdd);
+      for (const key of keys) {
+        const model = customModelsToAdd[key];
+        promises.push(
+          new Promise<LoadedModelFile>((resolve, reject) => {
+            const name = key.substring(0, key.length - 5);
+            if (Array.isArray(model.elements)) {
+              textureFacesMap.set(
+                name,
+                model.elements.reduce((acc, curr) => {
+                  return acc.concat(elementToTexturedFaces(curr));
+                }, [] as TexturedFace[])
+              );
+              model.elements = name as any;
+            }
+
+            resolve({
+              ...model,
+              asset,
+              name,
+              file: key,
+            });
+          })
+        );
+      }
     }
   }
 
@@ -475,6 +678,151 @@ export const createAtlas = async (
       console.error(`Failed to load textures for model: ${model.name}`);
       throw err;
     }
+  }
+
+  const blockStatePromises: Promise<LoadedBlockstateFile>[] = [];
+  for (const asset of Object.keys(fileTree)) {
+    const blockstates = (fileTree?.[asset] as FileTree)?.blockstates;
+    if (blockstates == null) continue;
+
+    console.log(`Loading blockstates from ${asset}/blockstates...`);
+    for (const key of Object.keys(blockstates)) {
+      const file = (blockstates as FileTree)[key] as File;
+      if (typeof file.size !== "number" || !(file.size > 0)) continue;
+      if (file.type !== "application/json") continue;
+
+      const override = customConfig?.override?.blockstates?.[key];
+      if (override != null) {
+        blockStatePromises.push(
+          new Promise<LoadedBlockstateFile>((resolve, reject) => {
+            const name = key.substring(0, key.length - 5);
+            resolve({
+              ...override,
+              asset,
+              name,
+              file: key,
+            });
+          })
+        );
+        continue;
+      }
+
+      blockStatePromises.push(
+        new Promise<LoadedBlockstateFile>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const result = e.target?.result;
+            if (result == null) {
+              reject(new Error("No data to load for file"));
+              return;
+            }
+            try {
+              const parsedData = JSON.parse(
+                typeof result === "string"
+                  ? result
+                  : new TextDecoder().decode(result)
+              ) as BlockstatesData;
+
+              const name = file.name.substring(0, file.name.length - 5);
+              resolve({
+                ...parsedData,
+                asset,
+                name,
+                file: file.name,
+              });
+            } catch (err) {
+              reject(err);
+            }
+          };
+
+          reader.onerror = (e) => {
+            reject(e);
+          };
+
+          reader.readAsArrayBuffer(file as File);
+        })
+      );
+    }
+  }
+
+  const blockStates = await Promise.all(blockStatePromises);
+  console.log(`Loading ${blockStates.length} blocks...`);
+
+  atlasMap.blockstates["unknown"] = [
+    {
+      model: "unknown",
+    },
+  ];
+  for (const blockState of blockStates) {
+    if (blockState.variants == null) continue;
+    const variants = Object.keys(blockState.variants);
+    if (variants.length < 1) continue;
+
+    const loadedStates: AtlasMapBlockData[] = [];
+    for (const variant of variants) {
+      const data = blockState.variants[variant];
+      const {
+        model: loadedModel,
+        x,
+        y,
+      } = (() => {
+        if (Array.isArray(data)) {
+          return data[0];
+        }
+
+        return data;
+      })();
+
+      if (loadedModel == null) {
+        console.log(blockState);
+        continue;
+      }
+
+      const model = (() => {
+        let model = loadedModel;
+        const parentSplit = loadedModel.split(":");
+        let parentAsset = "minecraft";
+        if (parentSplit.length > 1) {
+          model = parentSplit[parentSplit.length - 1];
+          parentAsset = parentSplit[0];
+        }
+
+        if (model.startsWith("block/")) {
+          model = model.substring(6);
+        }
+
+        return `${parentAsset}:${model}`;
+      })();
+
+      if (variant === "") {
+        loadedStates.push({
+          model,
+          x,
+          y,
+        });
+      } else {
+        const split = variant.split(",");
+        const state: {
+          [key: string]: string;
+        } = {};
+        for (const pair of split) {
+          const keyValues = pair.split("=");
+          if (keyValues.length !== 2) continue;
+          state[keyValues[0]] = keyValues[1];
+        }
+
+        loadedStates.push({
+          model,
+          x,
+          y,
+          state,
+        });
+      }
+    }
+
+    if (loadedStates.length < 1) continue;
+    atlasMap.blockstates[`${blockState.asset}:${blockState.name}`] =
+      loadedStates;
   }
 
   console.log(`Loading ${textures.length} textures...`);

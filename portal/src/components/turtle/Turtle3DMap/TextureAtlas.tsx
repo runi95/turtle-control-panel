@@ -23,9 +23,21 @@ export type AtlasMapTextures = {
     };
 };
 
+export type AtlasMapBlockstates = {
+    [key: string]: {
+        model: string;
+        x?: number;
+        y?: number;
+        state?: {
+            [key: string]: string;
+        };
+    }[];
+};
+
 export interface AtlasMap {
     models: AtlasMapModels;
     textures: AtlasMapTextures;
+    blockstates: AtlasMapBlockstates;
 }
 
 export const useAtlasMap = () => {
