@@ -17,7 +17,22 @@ export const config = {
   },
 };
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+const writeFile = (
+  path: fs.PathOrFileDescriptor,
+  data: string | NodeJS.ArrayBufferView
+): Promise<void> => {
+  return new Promise<void>((resolve, reject) => {
+    fs.writeFile(path, data, (err) => {
+      if (err != null) return reject(err);
+      return resolve();
+    });
+  });
+};
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   if (req.method !== "POST") {
     res.status(405).end();
     return;
@@ -45,15 +60,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   // Save atlas
-  fs.writeFileSync("../portal/public/atlas", new Uint8Array(body.atlas));
+  await writeFile("../portal/public/atlas", new Uint8Array(body.atlas));
 
   // Save atlas map
-  fs.writeFileSync(
+  await writeFile(
     "../portal/public/atlas.map.json",
     JSON.stringify(body.atlasMap)
   );
 
-  fs.writeFileSync(
+  await writeFile(
     "../portal/public/sprites.map.json",
     JSON.stringify(body.spritesMap)
   );
@@ -63,26 +78,24 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // Hacky fix to transparency issue:
   const png = new PNG();
-  png.parse(buffer, (err, data) => {
-    if (err) throw err;
+  return await new Promise<void>((resolve, reject) => {
+    png.parse(buffer, (err, data) => {
+      if (err) return reject(err);
 
-    for (let y = 0; y < data.height; y++) {
-      for (let x = 0; x < data.width; x++) {
-        const idx = (data.width * y + x) << 2;
-        if (data.data[idx + 3] > 50) {
-          data.data[idx + 3] = 255;
-        } else {
-          data.data[idx + 3] = 0;
+      for (let y = 0; y < data.height; y++) {
+        for (let x = 0; x < data.width; x++) {
+          const idx = (data.width * y + x) << 2;
+          if (data.data[idx + 3] > 50) {
+            data.data[idx + 3] = 255;
+          } else {
+            data.data[idx + 3] = 0;
+          }
         }
       }
-    }
 
-    data.pack().pipe(fs.createWriteStream("../portal/public/sprites.png"));
-    res.status(200).end();
+      data.pack().pipe(fs.createWriteStream("../portal/public/sprites.png"));
+      res.status(200).end();
+      return resolve();
+    });
   });
-
-  // Save sprite sheet
-  // fs.writeFileSync("../portal/public/sprites.png", buffer, {
-  //   encoding: "binary",
-  // });
 }
