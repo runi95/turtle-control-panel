@@ -65,6 +65,57 @@ export const createSpriteSheet = async (
       "chest.json": {
         parent: "minecraft:block/chest",
       },
+      "shulker_box.json": {
+        parent: "minecraft:block/shulker_box",
+      },
+      "black_shulker_box.json": {
+        parent: "minecraft:block/black_shulker_box",
+      },
+      "blue_shulker_box.json": {
+        parent: "minecraft:block/blue_shulker_box",
+      },
+      "brown_shulker_box.json": {
+        parent: "minecraft:block/brown_shulker_box",
+      },
+      "cyan_shulker_box.json": {
+        parent: "minecraft:block/cyan_shulker_box",
+      },
+      "gray_shulker_box.json": {
+        parent: "minecraft:block/gray_shulker_box",
+      },
+      "green_shulker_box.json": {
+        parent: "minecraft:block/green_shulker_box",
+      },
+      "light_blue_shulker_box.json": {
+        parent: "minecraft:block/light_blue_shulker_box",
+      },
+      "light_gray_shulker_box.json": {
+        parent: "minecraft:block/light_gray_shulker_box",
+      },
+      "lime_shulker_box.json": {
+        parent: "minecraft:block/lime_shulker_box",
+      },
+      "magenta_shulker_box.json": {
+        parent: "minecraft:block/magenta_shulker_box",
+      },
+      "orange_shulker_box.json": {
+        parent: "minecraft:block/orange_shulker_box",
+      },
+      "pink_shulker_box.json": {
+        parent: "minecraft:block/pink_shulker_box",
+      },
+      "purple_shulker_box.json": {
+        parent: "minecraft:block/purple_shulker_box",
+      },
+      "red_shulker_box.json": {
+        parent: "minecraft:block/red_shulker_box",
+      },
+      "white_shulker_box.json": {
+        parent: "minecraft:block/white_shulker_box",
+      },
+      "yellow_shulker_box.json": {
+        parent: "minecraft:block/yellow_shulker_box",
+      },
     },
   };
 
