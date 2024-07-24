@@ -36,11 +36,21 @@ function TurtleNameTag({position, text}: Props) {
 
             textGeometry.translate(-textWidth / 2, 0, 0);
 
-            const textMaterial = new MeshBasicMaterial({color: new Color('white')});
+            const textMaterial = new MeshBasicMaterial({
+                color: new Color('white'),
+                depthTest: false,
+                depthWrite: false,
+            });
             const textMesh = new Mesh(textGeometry, textMaterial);
 
             const boxGeometry = new BoxGeometry(textWidth + 0.1, 0.28, 0.01);
-            const boxMaterial = new MeshBasicMaterial({color: new Color('black'), transparent: true, opacity: 0.3});
+            const boxMaterial = new MeshBasicMaterial({
+                color: new Color('black'),
+                transparent: true,
+                opacity: 0.3,
+                depthTest: false,
+                depthWrite: false,
+            });
             const boxMesh = new Mesh(boxGeometry, boxMaterial);
             boxMesh.position.set(0.03, 0.1, 0);
 
