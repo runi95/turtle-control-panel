@@ -334,6 +334,7 @@ export class Turtle {
                         Object.entries(peripherals).every(([side, {types}]) => {
                             const existingTypes = existingPeripherals[side]?.types;
                             if (!existingTypes) return false;
+                            if (!types) return false;
                             return types.every((type, i) => existingTypes[i] === type);
                         })
                     )
