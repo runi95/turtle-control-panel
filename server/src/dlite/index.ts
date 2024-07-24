@@ -45,7 +45,7 @@ export default class DStarLite {
 
     constructor(serverId: number, options?: DStarLiteOptions) {
         this.serverId = serverId;
-        this.maxSteps = options?.maxSteps ?? 80000;
+        this.maxSteps = options?.maxSteps ?? 1000000;
         this.isBlockMineableFunc = options?.isBlockMineableFunc ?? null;
         this.boundaries = options?.boundaries ?? null;
     }
