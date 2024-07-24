@@ -87,8 +87,13 @@ function MineModal({turtle, action, hideModal, createdArea}: MineModalProps) {
                             </Form.Control>
                             {miningType === 3 &&
                             (turtle.peripherals == null ||
-                                !Object.values(turtle.peripherals).some(({types}) => types.includes('geoScanner'))) ? (
-                                <div className='text-danger'>* requires a Geo Scanner</div>
+                                !Object.values(turtle.peripherals).some(
+                                    ({types}) =>
+                                        types.includes('geoScanner') ||
+                                        types.includes('plethora:scanner') ||
+                                        types.includes('universal_scanner')
+                                )) ? (
+                                <div className='text-danger'>* requires a scanner</div>
                             ) : null}
                         </Col>
                         <Col className='ms-0 ps-0' sm={3}>
