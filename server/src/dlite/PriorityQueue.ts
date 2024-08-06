@@ -47,13 +47,13 @@ export class PriorityQueue<T> {
         this._queue[k] = key;
     }
 
-    private siftDown(k: number, key: T) {
+    private siftDown(k: number, key: T): void {
         const half = this._size >>> 1;
         while (k < half) {
             let child = (k << 1) + 1;
             let c = this._queue[child];
             const right = child + 1;
-            if (right < this._size && this.comparator(c, this._queue[right]) === 1) {
+            if (right < this._size && this.comparator(c, this._queue[right]) > 0) {
                 c = this._queue[(child = right)];
             }
             if (this.comparator(key, c) <= 0) break;
@@ -89,20 +89,19 @@ export class PriorityQueue<T> {
         }
     }
 
-    private removeAt(i: number): T | null {
+    private removeAt(i: number): void {
+        if (this._size <= i) return;
+
         const s = --this._size;
-        const moved = this._queue.pop() as T;
-        if (s !== i) {
+        if (s === i) {
+            this._queue.pop();
+        } else {
+            const moved = this._queue.pop() as T;
             this.siftDown(i, moved);
             if (this.comparator(this._queue[i], moved) === 0) {
                 this.siftUp(i, moved);
-                if (this.comparator(this._queue[i], moved) !== 0) {
-                    return moved;
-                }
             }
         }
-
-        return null;
     }
 
     get size(): number {
