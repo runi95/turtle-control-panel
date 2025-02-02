@@ -38,6 +38,7 @@ import {
     prepareSelectBlocksSimple,
     prepareSelectBlocksSimpleWithName,
     prepareSelectBlocksWithName,
+    prepareSelectBlocksWithNameLike,
 } from './queries/queries/blocks';
 import {prepareInsertChunk, prepareSelectChunk, prepareSelectChunks} from './queries/queries/chunks';
 
@@ -83,6 +84,7 @@ const setTurtleHome = prepareUpdateTurtleHome(db);
 // Blocks
 const selectBlocks = prepareSelectBlocks(db);
 const selectBlocksWithName = prepareSelectBlocksWithName(db);
+const selectBlocksWithNameLike = prepareSelectBlocksWithNameLike(db);
 const selectBlocksSimple = prepareSelectBlocksSimple(db);
 const selectBlocksSimpleWithName = prepareSelectBlocksSimpleWithName(db);
 const selectBlock = prepareSelectBlock(db);
@@ -167,6 +169,19 @@ export const getBlocks = (serverId: number, options: GetBlocksOptions) =>
         .map((block) => JSON.parse(block as string)) as Block[];
 export const getBlocksSimple = (serverId: number, options: GetBlocksOptions) =>
     (options.name != null ? selectBlocksSimpleWithName : selectBlocksSimple)
+        .all({
+            server_id: serverId,
+            from_x: options.fromX,
+            to_x: options.toX,
+            from_y: options.fromY,
+            to_y: options.toY,
+            from_z: options.fromZ,
+            to_z: options.toZ,
+            name: options.name,
+        })
+        .map((block) => JSON.parse(block as string)) as Omit<Block, 'tags'>[];
+export const getBlocksWithNameLike = (serverId: number, options: GetBlocksOptions & {name: string}) =>
+    selectBlocksWithNameLike
         .all({
             server_id: serverId,
             from_x: options.fromX,

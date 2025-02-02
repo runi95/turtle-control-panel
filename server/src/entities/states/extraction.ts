@@ -1,12 +1,18 @@
-import {upsertBlocks} from '../../db';
+import {getBlocksWithNameLike} from '../../db';
 import {Block} from '../../db/block.type';
 import {Location} from '../../db/turtle.type';
-import {DestinationError} from '../../dlite';
+import {DestinationError} from '../../dlite/index';
 import {Point} from '../../dlite/Point';
-import globalEventEmitter from '../../globalEventEmitter';
 import {Turtle} from '../turtle';
 import {TurtleBaseState} from './base';
 import {TURTLE_STATES} from './helpers';
+import {
+    geoScannerCooldown,
+    universalScannerCooldown,
+    useBlockScanner,
+    useGeoScanner,
+    useUniversalScanner,
+} from './scan';
 
 export interface ExtractionStateData {
     readonly id: TURTLE_STATES;
@@ -23,11 +29,12 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
     private readonly mineableBlockIncludeOrExcludeMap = new Map<string, boolean>();
     private readonly hasExclusions: boolean;
     private readonly isInExcludeMode: boolean;
-    private isInOrAdjacentToMiningArea: boolean = false;
+    private hasGeoScanner: boolean = false;
+    private hasUniversalScanner: boolean = false;
+    private hasBlockScanner: boolean = false;
     private area: Location[];
     private remainingAreaIndexes: number[] = [];
-    private chunkAnalysis = new Map<string, {[key: string]: number}>();
-    private scanIndexes: number[] = [];
+    private scanIndexes: number[] | null = null;
 
     constructor(turtle: Turtle, data: Omit<ExtractionStateData, 'id'>) {
         super(turtle);
@@ -50,76 +57,172 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
         for (const includeOrExclude of includeOrExcludeList) {
             this.mineableBlockIncludeOrExcludeMap.set(includeOrExclude, true);
         }
+    }
 
-        const locationsToScan = Array.from(this.data.area.keys());
-        while (locationsToScan.length > 0) {
-            const minX = locationsToScan.reduce(
-                (acc, curr) => (this.data.area[curr].x < acc.x ? this.data.area[curr] : acc),
-                this.data.area[locationsToScan[0]]
-            );
-            const locationIndexToCount = new Map<number, number[]>();
-            let bestLocationIndex: number = 0;
-            for (let i = 0; i < locationsToScan.length; i++) {
-                const loc = this.data.area[locationsToScan[i]];
-                const dist = Math.sqrt(Math.pow(loc.x - minX.x, 2) + Math.pow(loc.z - minX.z, 2));
-                const locationsWithinRange: number[] = [];
-                if (!(dist > 15)) {
-                    for (let j = i + locationsToScan.length - 1; j > i; j--) {
-                        const loc2 = this.data.area[locationsToScan[j % locationsToScan.length]];
-                        const dist2 = Math.sqrt(Math.pow(loc2.x - minX.x, 2) + Math.pow(loc2.z - minX.z, 2));
-                        if (!(dist2 > 15)) {
-                            locationsWithinRange.push(j);
-                        }
-                    }
+    private getBoundingBox(areaIndexes: number[]) {
+        return areaIndexes.reduce(
+            (acc, i) => {
+                const {x, y, z} = this.area[i];
+                if (x < acc.minX) {
+                    acc.minX = x;
+                }
+                if (x > acc.maxX) {
+                    acc.maxX = x;
                 }
 
-                const prevCount = locationIndexToCount.get(bestLocationIndex);
-                locationsWithinRange.push(i);
-                if (!prevCount || locationsWithinRange.length > prevCount.length) {
-                    bestLocationIndex = i;
+                if (y < acc.minY) {
+                    acc.minY = y;
                 }
-                locationIndexToCount.set(i, locationsWithinRange);
-            }
+                if (y > acc.maxY) {
+                    acc.maxY = y;
+                }
 
-            const from = this.area.reduce((acc, curr) => {
-                if (acc.y < curr.y) return curr;
+                if (z < acc.minZ) {
+                    acc.minZ = z;
+                }
+                if (z > acc.maxZ) {
+                    acc.maxZ = z;
+                }
+
                 return acc;
-            }, this.area[0]).y;
-            const to = this.area.reduce((acc, curr) => {
-                if (acc.y > curr.y) return curr;
-                return acc;
-            }, this.area[0]).y;
-            const yDiff = to - from;
-            if (yDiff < 16) {
-                this.scanIndexes.push(locationsToScan[bestLocationIndex]);
-            } else if (yDiff < 30) {
-                this.scanIndexes.push(16 + locationsToScan[bestLocationIndex] * yDiff);
-            } else {
-                for (let i = yDiff - 15; i > 0; i -= 30) {
-                    this.scanIndexes.push(i + 1 + locationsToScan[bestLocationIndex] * yDiff);
-                }
+            },
+            {
+                minX: Number.MAX_SAFE_INTEGER,
+                minY: Number.MAX_SAFE_INTEGER,
+                minZ: Number.MAX_SAFE_INTEGER,
+                maxX: Number.MIN_SAFE_INTEGER,
+                maxY: Number.MIN_SAFE_INTEGER,
+                maxZ: Number.MIN_SAFE_INTEGER,
             }
+        );
+    }
 
-            const locationsToRemove = locationIndexToCount.get(bestLocationIndex) as number[];
-            for (const locationToRemove of locationsToRemove) {
-                locationsToScan.splice(locationToRemove, 1);
+    private findBestScanIndex(remainingScanAreaIndexes: number[], scanRadius: number = 16) {
+        const {minX, minY, minZ, maxX, maxY, maxZ} = this.getBoundingBox(remainingScanAreaIndexes);
+        const borderLocationIndexes = remainingScanAreaIndexes.filter((i) => {
+            const {x, y, z} = this.area[i];
+            return x === minX || x === maxX || y === minY || y === maxY || z === minZ || z === maxZ;
+        });
+
+        let bestIndex: number | null = null;
+        let bestBorderCount: number | null = null;
+        for (const i of remainingScanAreaIndexes) {
+            const {x, y, z} = this.area[i];
+            const borderCount = borderLocationIndexes.reduce((acc, borderIndex) => {
+                const {x: borderX, y: borderY, z: borderZ} = this.area[borderIndex];
+                if (Math.abs(x - borderX) > scanRadius) return acc;
+                if (Math.abs(y - borderY) > scanRadius) return acc;
+                if (Math.abs(z - borderZ) > scanRadius) return acc;
+                return acc + 1;
+            });
+
+            if (bestBorderCount == null || bestBorderCount < borderCount) {
+                bestIndex = i;
+                bestBorderCount = borderCount;
             }
+        }
+
+        return bestIndex;
+    }
+
+    private async initializeScanIndexes() {
+        this.scanIndexes = [];
+
+        let remainingScanAreaIndexes = this.area.map((_, i) => i);
+        const {minX, minY, minZ, maxX, maxY, maxZ} = this.getBoundingBox(remainingScanAreaIndexes);
+        const blocks = getBlocksWithNameLike(this.turtle.serverId, {
+            fromX: minX,
+            fromY: minY,
+            fromZ: minZ,
+            toX: maxX,
+            toY: maxY,
+            toZ: maxZ,
+            name: '%_ore',
+        });
+
+        const areaMap = new Map<string, number>();
+        for (let i = 0; i < this.area.length; i++) {
+            const {x, y, z} = this.area[i];
+            areaMap.set(`${x},${y},${z}`, i);
+        }
+
+        for (const {x, y, z} of blocks) {
+            const areaIndex = areaMap.get(`${x},${y},${z}`);
+            if (areaIndex != null) {
+                this.remainingAreaIndexes.push(areaIndex);
+            }
+        }
+
+        const hasScanner = await this.getScanners();
+        if (!hasScanner) return;
+
+        let scanRadius = 16;
+        if (this.hasBlockScanner) {
+            scanRadius = 8;
+        }
+
+        while (remainingScanAreaIndexes.length > 0) {
+            const scanIndex = this.findBestScanIndex(remainingScanAreaIndexes, scanRadius);
+            if (scanIndex == null) break;
+
+            this.scanIndexes.push(scanIndex);
+            const {x: borderX, y: borderY, z: borderZ} = this.area[scanIndex];
+            remainingScanAreaIndexes = remainingScanAreaIndexes.filter((i) => {
+                const {x, y, z} = this.area[i];
+                return (
+                    Math.abs(x - borderX) > scanRadius ||
+                    Math.abs(y - borderY) > scanRadius ||
+                    Math.abs(z - borderZ) > scanRadius
+                );
+            });
         }
     }
 
-    private checkIfTurtleIsInOrAdjacentToArea(): boolean {
-        const {x, y, z} = this.turtle.location as Location;
-        return this.area.some(({x: areaX, y: areaY, z: areaZ}) => {
-            if (areaX === x && areaY === y && areaZ === z) return true;
-            if ((areaX === x + 1 || areaX === x - 1) && areaY === y && areaZ === z) return true;
-            if (areaX === x && (areaY === y + 1 || areaY === y - 1) && areaZ === z) return true;
-            if (areaX === x && areaY === y && (areaZ === z + 1 || areaZ === z - 1)) return true;
-            return false;
-        });
+    private async getScanners(): Promise<boolean> {
+        const [hasGeoScanner] = await this.turtle.hasPeripheralWithName('geoScanner');
+        if (hasGeoScanner) {
+            this.hasGeoScanner = true;
+            return true;
+        }
+
+        const [hasUniversalScanner] = await this.turtle.hasPeripheralWithName('universal_scanner');
+        if (hasUniversalScanner) {
+            this.hasUniversalScanner = true;
+            return true;
+        }
+
+        const [hasBlockScanner] = await this.turtle.hasPeripheralWithName('plethora:scanner');
+        if (hasBlockScanner) {
+            this.hasBlockScanner = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    private async scan(): Promise<(Block & Location)[]> {
+        if (this.hasGeoScanner) {
+            return await useGeoScanner(this.turtle);
+        }
+
+        if (this.hasUniversalScanner) {
+            return await useUniversalScanner(this.turtle);
+        }
+
+        if (this.hasBlockScanner) {
+            return await useBlockScanner(this.turtle);
+        }
+
+        return [];
     }
 
     public async *act() {
         while (true) {
+            if (this.scanIndexes == null) {
+                await this.initializeScanIndexes();
+                continue;
+            }
+
             if (this.scanIndexes.length === 0 && this.remainingAreaIndexes.length === 0) return; // Done!
 
             if (this.turtle.location === null) {
@@ -131,243 +234,152 @@ export class TurtleExtractionState extends TurtleBaseState<ExtractionStateData> 
                 yield;
             }
 
-            // Get to the extraction area!
-            if (!this.isInOrAdjacentToMiningArea) {
-                if (this.checkIfTurtleIsInOrAdjacentToArea()) {
-                    this.isInOrAdjacentToMiningArea = true;
-                    continue;
-                }
+            const {x, y, z} = this.turtle.location;
+            const matchingScanIndex = this.scanIndexes.findIndex((scanIndex) => {
+                const area = this.area[scanIndex];
+                return area.x === x && area.y === y && area.z === z;
+            });
+            if (matchingScanIndex > -1) {
+                this.scanIndexes.splice(matchingScanIndex, 1);
 
-                try {
-                    for await (const _ of this.goToDestinations(this.area, {
-                        isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`),
-                    })) {
-                        yield;
-
-                        if (this.checkIfTurtleIsInOrAdjacentToArea()) {
-                            this.isInOrAdjacentToMiningArea = true;
-                            break;
-                        }
-                    }
-                } catch (err) {
-                    if (err instanceof DestinationError && err.message === 'Movement obstructed') {
-                        yield;
-                        continue;
-                    } else if (typeof err === 'string') {
-                        throw new Error(err);
-                    } else {
-                        throw err;
-                    }
-                }
-            }
-
-            // Extract scanned ores
-            if (this.remainingAreaIndexes.length > 0) {
-                const {x, y, z} = this.turtle.location;
-                const areaIndexOfTurtle = this.remainingAreaIndexes.findIndex(
-                    (i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z
-                );
-                if (areaIndexOfTurtle > -1) {
-                    this.remainingAreaIndexes.splice(areaIndexOfTurtle, 1);
-                }
-
-                try {
-                    for await (const _ of this.goToDestinations(
-                        this.remainingAreaIndexes.map((i) => this.area[i]),
-                        {
-                            isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`),
-                        }
-                    )) {
-                        yield;
-
-                        // Go home?
-                        const hasAvailableSpaceInInventory = Object.values(this.turtle.inventory).some(
-                            (value) => value == null
-                        );
-                        const fuelPercentage = (100 * this.turtle.fuelLevel) / this.turtle.fuelLimit;
-                        if (fuelPercentage < 10 || !hasAvailableSpaceInInventory) {
-                            const home = this.turtle.home;
-                            if (home === null) {
-                                throw new Error('Inventory is full');
-                            }
-
-                            this.isInOrAdjacentToMiningArea = false;
-
-                            try {
-                                for await (const _ of this.goToDestinations([new Point(home.x, home.y, home.z)])) {
-                                    yield;
-                                }
-                            } catch (err) {
-                                if (err instanceof DestinationError && err.message === 'Movement obstructed') {
-                                    yield;
-                                    continue;
-                                } else if (typeof err === 'string') {
-                                    throw new Error(err);
-                                } else {
-                                    throw err;
-                                }
-                            }
-
-                            // Ensures we have access to peripherals
-                            await this.turtle.sleep(1);
-                            yield;
-
-                            for await (const _ of this.transferIntoNearbyInventories()) {
-                                yield;
-                            }
-
-                            if ((100 * this.turtle.fuelLevel) / this.turtle.fuelLimit < 10) {
-                                for await (const _ of this.refuelFromNearbyInventories()) {
-                                    yield;
-                                }
-                            }
-                        }
-                    }
-                } catch (err) {
-                    if (
-                        err instanceof DestinationError &&
-                        (err.message === 'Movement obstructed' || err.message === 'Cannot break unbreakable block')
-                    ) {
-                        const {x, y, z} = err.node.point;
-                        const areaIndexOfNode = this.remainingAreaIndexes.findIndex(
-                            (i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z
-                        );
-                        if (areaIndexOfNode > -1) {
-                            this.remainingAreaIndexes.splice(areaIndexOfNode, 1);
-                        }
-
-                        yield;
-                        continue;
-                    } else if (typeof err === 'string') {
-                        throw new Error(err);
-                    } else {
-                        throw err;
-                    }
-                }
-
-                continue;
-            }
-
-            // Scan unscanned blocks within the extraction area
-            if (this.scanIndexes.length > 0) {
-                const [hasGeoScanner] = await this.turtle.hasPeripheralWithName('geoScanner');
-                if (!hasGeoScanner) {
-                    throw new Error('No Geo Scanner to scan with (requires Advanced Peripherals mod)');
+                const hasScanner = await this.getScanners();
+                if (!hasScanner) {
+                    throw new Error('No Scanner to scan with');
                 }
 
                 yield;
 
-                try {
-                    for await (const _ of this.goToDestinations(
-                        this.scanIndexes.map((scanIndex) => this.area[scanIndex]),
-                        {
-                            isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`),
-                        }
-                    )) {
-                        yield;
-
-                        const {x, y, z} = this.turtle.location;
-                        const matchingScanIndex = this.scanIndexes.findIndex((scanIndex) => {
-                            const area = this.area[scanIndex];
-                            return area.x === x && area.y === y && area.z === z;
-                        });
-                        if (matchingScanIndex > -1) {
-                            this.scanIndexes.splice(matchingScanIndex, 1);
-                        }
-                    }
-                } catch (err) {
-                    if (
-                        err instanceof DestinationError &&
-                        (err.message === 'Movement obstructed' || err.message === 'Cannot break unbreakable block')
-                    ) {
-                        const {x, y, z} = err.node.point;
-                        const matchingScanIndex = this.scanIndexes.findIndex(
-                            (scanIndex) =>
-                                this.area[scanIndex].x === x &&
-                                this.area[scanIndex].y === y &&
-                                this.area[scanIndex].z === z
-                        );
-                        if (matchingScanIndex > -1) {
-                            this.scanIndexes.splice(matchingScanIndex, 1);
-                        }
-
-                        yield;
-                        continue;
-                    } else if (typeof err === 'string') {
-                        throw new Error(err);
-                    } else {
-                        throw err;
-                    }
+                if (this.hasGeoScanner) {
+                    yield* geoScannerCooldown(this.turtle);
+                } else if (this.hasUniversalScanner) {
+                    yield* universalScannerCooldown(this.turtle);
                 }
 
-                const [scannedBlocks, scanMessage] = await this.turtle.usePeripheralWithName<
-                    [(Block & {x: number; y: number; z: number})[], string]
-                >('geoScanner', 'scan', '16');
-                if (scannedBlocks === null) {
-                    throw new Error(scanMessage);
-                }
+                const scannedBlocks = await this.scan();
+                yield;
 
                 const {x, y, z} = this.turtle.location;
                 const blocks = scannedBlocks
-                    .filter((scannedBlock) => scannedBlock.x !== 0 || scannedBlock.y !== 0 || scannedBlock.z !== 0)
+                    .filter(
+                        ({name, x, y, z}) =>
+                            x !== 0 &&
+                            y !== 0 &&
+                            z !== 0 &&
+                            name !== 'minecraft:air' &&
+                            name !== 'minecraft:water' &&
+                            name !== 'minecraft:lava'
+                    )
                     .map((scannedBlock) => ({
                         ...scannedBlock,
                         x: scannedBlock.x + x,
                         y: scannedBlock.y + y,
                         z: scannedBlock.z + z,
                     }));
-                upsertBlocks(this.turtle.serverId, blocks);
-                globalEventEmitter.emit('wupdate', {
-                    serverId: this.turtle.serverId,
-                    blocks,
-                });
-
-                yield;
-                const [cooldown] = await this.turtle.usePeripheralWithName<[number]>(
-                    'geoScanner',
-                    'getOperationCooldown',
-                    '"scanBlocks"'
-                );
-                await this.turtle.sleep(0.1 + Math.ceil(cooldown / 100) / 10);
-                yield;
-
-                const [analysis, analysisFailMessage] = await this.turtle.usePeripheralWithName<
-                    [{[key: string]: number}, undefined] | [null, string]
-                >('geoScanner', 'chunkAnalyze');
-                if (analysis === null) {
-                    throw new Error(analysisFailMessage);
-                }
-
-                const {chunk} = this.turtle;
-                if (chunk === null) throw new Error('Unknown turtle location');
-
-                const [chunkX, chunkY] = chunk;
-                this.chunkAnalysis.set(`${chunkX},${chunkY}`, analysis);
 
                 yield;
 
-                const allAnalysisValues = new Set<string>();
-                Array.from(this.chunkAnalysis.values()).forEach((v) => {
-                    Object.keys(v).forEach((key) => {
-                        allAnalysisValues.add(key);
-                    });
-                });
-
-                this.remainingAreaIndexes = blocks.reduce((acc, curr) => {
-                    if (!allAnalysisValues.has(curr.name)) return acc;
+                for (const block of blocks) {
                     if (this.isInExcludeMode) {
-                        if (this.hasExclusions && !!this.mineableBlockIncludeOrExcludeMap.get(curr.name)) return acc;
-                    } else if (!this.mineableBlockIncludeOrExcludeMap.get(curr.name)) return acc;
+                        if (!block.name.endsWith('_ore')) continue;
+                        if (this.hasExclusions && !!this.mineableBlockIncludeOrExcludeMap.get(block.name)) continue;
+                    } else if (!this.mineableBlockIncludeOrExcludeMap.get(block.name)) continue;
 
-                    const areaIndex = this.area.findIndex(({x, y, z}) => curr.x === x && curr.y === y && curr.z === z);
-                    if (areaIndex > -1) {
-                        acc.push(areaIndex);
+                    const areaIndex = this.area.findIndex(
+                        ({x, y, z}) => block.x === x && block.y === y && block.z === z
+                    );
+                    if (areaIndex > -1 && !this.remainingAreaIndexes.includes(areaIndex)) {
+                        this.remainingAreaIndexes.push(areaIndex);
+                    }
+                }
+            }
+
+            // Extract scanned ores
+            const areaIndexOfTurtle = this.remainingAreaIndexes.findIndex(
+                (i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z
+            );
+            if (areaIndexOfTurtle > -1) {
+                this.remainingAreaIndexes.splice(areaIndexOfTurtle, 1);
+            }
+
+            try {
+                for await (const _ of this.goToDestinations(
+                    this.remainingAreaIndexes
+                        .map((i) => this.area[i])
+                        .concat(this.scanIndexes.map((i) => this.area[i])),
+                    {
+                        isBlockMineableFunc: (x, y, z, _block) => !!this.mineableBlockMap.get(`${x},${y},${z}`),
+                    }
+                )) {
+                    yield;
+
+                    // Go home?
+                    const hasAvailableSpaceInInventory = Object.values(this.turtle.inventory).some(
+                        (value) => value == null
+                    );
+                    const fuelPercentage = (100 * this.turtle.fuelLevel) / this.turtle.fuelLimit;
+                    if (fuelPercentage < 10 || !hasAvailableSpaceInInventory) {
+                        const home = this.turtle.home;
+                        if (home === null) {
+                            throw new Error('Inventory is full');
+                        }
+
+                        try {
+                            for await (const _ of this.goToDestinations([new Point(home.x, home.y, home.z)])) {
+                                yield;
+                            }
+                        } catch (err) {
+                            if (err instanceof DestinationError && err.message === 'Movement obstructed') {
+                                yield;
+                                continue;
+                            } else if (typeof err === 'string') {
+                                throw new Error(err);
+                            } else {
+                                throw err;
+                            }
+                        }
+
+                        // Ensures we have access to peripherals
+                        await this.turtle.sleep(1);
+                        yield;
+
+                        for await (const _ of this.transferIntoNearbyInventories()) {
+                            yield;
+                        }
+
+                        if ((100 * this.turtle.fuelLevel) / this.turtle.fuelLimit < 10) {
+                            for await (const _ of this.refuelFromNearbyInventories()) {
+                                yield;
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                if (
+                    err instanceof DestinationError &&
+                    (err.message === 'Movement obstructed' || err.message === 'Cannot break unbreakable block')
+                ) {
+                    const {x, y, z} = err.node.point;
+                    const areaIndexOfNode = this.remainingAreaIndexes.findIndex(
+                        (i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z
+                    );
+                    if (areaIndexOfNode > -1) {
+                        this.remainingAreaIndexes.splice(areaIndexOfNode, 1);
+                    } else {
+                        const scanIndexOfNode = this.scanIndexes.findIndex(
+                            (i) => this.area[i].x === x && this.area[i].y === y && this.area[i].z === z
+                        );
+                        if (scanIndexOfNode > -1) {
+                            this.scanIndexes.splice(scanIndexOfNode, 1);
+                        }
                     }
 
-                    return acc;
-                }, [] as number[]);
-
-                continue;
+                    yield;
+                    continue;
+                } else if (typeof err === 'string') {
+                    throw new Error(err);
+                } else {
+                    throw err;
+                }
             }
         }
     }
