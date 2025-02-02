@@ -1,5 +1,5 @@
 import {Location} from '../../db/turtle.type';
-import DStarLite, {Boundaries, DestinationError, IsBlockMineableFunc} from '../../dlite';
+import DStarLite, {Boundaries, DestinationError, IsBlockMineableFunc} from '../../dlite/index';
 import {Node} from '../../dlite/Node';
 import {Point} from '../../dlite/Point';
 import {PriorityQueue} from '../../dlite/PriorityQueue';

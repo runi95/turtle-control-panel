@@ -17,6 +17,21 @@
             "outFiles": [
                 "${workspaceFolder}/server/dist/**/*.js",
             ],
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Server Tests",
+            "program": "./node_modules/ava/entrypoints/cli.mjs",
+            "args": [
+                "${file}"
+            ],
+            "outputCapture": "std",
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "localRoot": "${workspaceFolder}/server"
         }
     ]
 }

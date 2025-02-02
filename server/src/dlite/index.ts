@@ -1,7 +1,7 @@
 import {PriorityQueue} from './PriorityQueue';
 import {Node} from './Node';
 import {Point} from './Point';
-import {getBlock} from '../db';
+import {getBlock} from '../db/index';
 import {Block} from '../db/block.type';
 import logger from '../logger/server';
 

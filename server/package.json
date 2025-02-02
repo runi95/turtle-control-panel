@@ -8,7 +8,8 @@
     "watch-compile": "swc src -w --out-dir dist",
     "watch-dev": "nodemon --watch \"dist/**/*\" -e js ./dist/index.js",
     "build": "swc src -d dist",
-    "start": "node dist/src/index.js"
+    "start": "node dist/src/index.js",
+    "test": "ava"
   },
   "author": "",
   "license": "ISC",
@@ -29,12 +30,22 @@
     "@types/better-sqlite3": "^7.6.9",
     "@types/uuid": "^9.0.8",
     "@types/ws": "^8.5.10",
+    "ava": "^6.2.0",
     "chokidar": "^3.5.3",
     "concurrently": "^8.2.2",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "nodemon": "^3.0.3",
     "prettier": "^3.2.4",
+    "tsimp": "^2.0.12",
     "typescript": "^5.3.3"
+  },
+  "ava": {
+    "extensions": {
+      "ts": "module"
+    },
+    "nodeArguments": [
+      "--import=tsimp"
+    ]
   }
 }

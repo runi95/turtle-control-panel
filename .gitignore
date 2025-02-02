@@ -1,6 +1,7 @@
 node_modules/
 server/db/server.db*
 server/dist
+server/.tsimp
 atlas-generator/assets
 
 .eslintcache

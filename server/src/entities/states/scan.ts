@@ -1,4 +1,4 @@
-import {deleteBlocks, upsertBlocks} from '../../db';
+import {deleteBlocks, upsertBlocks} from '../../db/index';
 import {Block} from '../../db/block.type';
 import {Location} from '../../db/turtle.type';
 import globalEventEmitter from '../../globalEventEmitter';
