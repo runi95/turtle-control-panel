@@ -129,7 +129,7 @@ const BuildMeshDataFromVoxels = (
 
                 const stateKeys = Object.keys(state);
                 for (const stateKey of stateKeys) {
-                    if (cellState[stateKey]?.toString() ?? 'false' !== state[stateKey]) return bestMatch;
+                    if (cellState?.[stateKey]?.toString() ?? 'false' !== state[stateKey]) return bestMatch;
                 }
 
                 return block;
