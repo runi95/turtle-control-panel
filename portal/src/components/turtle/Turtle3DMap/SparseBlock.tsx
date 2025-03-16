@@ -124,12 +124,11 @@ const BuildMeshDataFromVoxels = (
                 const {state} = block;
                 if (state == null) return true;
 
-                const {state: cellState} = cell;
-                if (cellState == null) return false;
+                const {state: cellState = {}} = cell;
 
                 const stateKeys = Object.keys(state);
                 for (const stateKey of stateKeys) {
-                    if (cellState[stateKey].toString() !== state[stateKey]) return false;
+                    if (cellState[stateKey]?.toString() ?? 'false' !== state[stateKey]) return false;
                 }
 
                 return true;
