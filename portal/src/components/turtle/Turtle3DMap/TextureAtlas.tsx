@@ -23,15 +23,17 @@ export type AtlasMapTextures = {
     };
 };
 
+export type AtlasMapBlockState = {
+    model: string;
+    x?: number;
+    y?: number;
+    state?: {
+        [key: string]: string;
+    };
+};
+
 export type AtlasMapBlockstates = {
-    [key: string]: {
-        model: string;
-        x?: number;
-        y?: number;
-        state?: {
-            [key: string]: string;
-        };
-    }[];
+    [key: string]: AtlasMapBlockState[];
 };
 
 export interface AtlasMap {

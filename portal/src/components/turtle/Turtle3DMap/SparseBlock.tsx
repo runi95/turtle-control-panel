@@ -117,22 +117,25 @@ const BuildMeshDataFromVoxels = (
             console.log(`${cell.type} is broken!`);
         }
 
-        const matchingBlock =
-            atlasMapBlock?.find((block) => {
-                if (block == null) return false;
+        const matchingBlock = atlasMapBlock?.reduce(
+            (bestMatch, block, index) => {
+                if (index === 0) return block;
+                if (block == null) return bestMatch;
 
                 const {state} = block;
-                if (state == null) return true;
+                if (state == null) return block;
 
                 const {state: cellState = {}} = cell;
 
                 const stateKeys = Object.keys(state);
                 for (const stateKey of stateKeys) {
-                    if (cellState[stateKey]?.toString() ?? 'false' !== state[stateKey]) return false;
+                    if (cellState[stateKey]?.toString() ?? 'false' !== state[stateKey]) return bestMatch;
                 }
 
-                return true;
-            }) ?? null;
+                return block;
+            },
+            null as AtlasMapBlockState | null
+        );
 
         const blockTextures = (matchingBlock != null ? atlasMap.textures[matchingBlock.model] : null) ?? unknownTexture;
         const blockFaces = atlasMap.models[blockTextures.model];
