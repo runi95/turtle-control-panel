@@ -50,10 +50,37 @@ const CreateTerrain = (dimensions: Vector3, fromX: number, fromY: number, fromZ:
                     cells.set(key, {
                         position: [x, y, z],
                         type: block.name,
-                        visible: true,
+                        visible: false,
                         state: block.state,
                     });
                 }
+            }
+        }
+    }
+
+    const setVisible = (x: number, y: number, z: number) => {
+        const key = `${fromX + x},${fromY + y},${fromZ + z}`;
+        const cell = cells.get(key);
+        if (cell == null) return;
+
+        cell.visible = true;
+    };
+
+    for (let x = xn; x < xp; x++) {
+        for (let z = zn; z < zp; z++) {
+            for (let y = yn; y < yp; y++) {
+                const key = `${fromX + x},${fromY + y},${fromZ + z}`;
+                const cell = cells.get(key);
+                if (cell != null) {
+                    continue;
+                }
+
+                setVisible(x + 1, y, z);
+                setVisible(x - 1, y, z);
+                setVisible(x, y + 1, z);
+                setVisible(x, y - 1, z);
+                setVisible(x, y, z + 1);
+                setVisible(x, y, z - 1);
             }
         }
     }
@@ -112,6 +139,7 @@ const BuildMeshDataFromVoxels = (
     let index = 0;
     let locationIndex = 0;
     for (const [key, cell] of cells) {
+        if (!cell.visible) continue;
         const atlasMapBlock = atlasMap.blockstates[cell.type];
         if (atlasMapBlock == null) {
             console.log(`${cell.type} is broken!`);
