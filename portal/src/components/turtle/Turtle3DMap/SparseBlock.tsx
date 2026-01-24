@@ -20,7 +20,7 @@ import {
 import {forwardRef, useEffect, useImperativeHandle, useMemo, useRef} from 'react';
 import {fragmentShader, vertexShader} from './CustomShader';
 import {Block, BlockState, Blocks} from '../../../App';
-import {AtlasMap, useAtlas} from './TextureAtlas';
+import {AtlasMap, AtlasMapBlockState, useAtlas} from './TextureAtlas';
 import {useBlocks} from '../../../api/UseBlocks';
 import {useParams} from 'react-router-dom';
 import {WorldChunk} from './World';
