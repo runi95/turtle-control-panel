@@ -1,0 +1,74 @@
+#root {
+  width: 100vw;
+  height: 100vh;
+}
+
+body {
+  --bs-body-bg: #1e1e2f;
+  --bs-body-color: #fff;
+  --bs-body-font-weight: 400;
+  --bs-body-line-height: 1.5;
+  --bs-body-text-align: left;
+  --bs-body-font-family: Poppins, sans-serif;
+
+  margin: 0;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 2.5s ease-in;
+}
+
+.blinking {
+  animation: blink 2s ease-in infinite;
+}
+
+.accordion-item {
+  --bs-accordion-bg: transparent;
+}
+
+.accordion-button {
+  --bs-accordion-btn-bg: rgb(39, 41, 61);
+  --bs-accordion-border-color: transparent;
+}
+
+.accordion-button:not(.collapsed) {
+  --bs-accordion-active-color: white;
+  --bs-accordion-active-bg: rgb(39, 41, 61);
+}
+
+.accordion-button:focus {
+  --bs-accordion-btn-focus-box-shadow: none;
+}
+
+.input-group > .form-control {
+  background-color: transparent;
+  color: white;
+}
+
+.input-group > .form-control:focus {
+  background-color: transparent;
+  color: white;
+}
+
+.input-group > .form-control > option {
+  background-color: #1e1e2f;
+  color: white;
+}
+
+.input-group > .form-control::placeholder {
+  color: grey;
+}
+
+@keyframes blink {
+  from,
+  to {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}

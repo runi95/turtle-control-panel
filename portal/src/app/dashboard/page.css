@@ -1,0 +1,29 @@
+hr {
+  border-color: #fff;
+}
+
+.table {
+  color: #fff;
+  table-layout: fixed;
+  word-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-hover tbody tr:hover {
+  color: #999;
+}
+
+.table th {
+  border-top: none;
+}
+
+.table tbody > tr {
+  cursor: pointer;
+}
+
+td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

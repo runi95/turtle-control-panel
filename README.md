@@ -66,13 +66,13 @@ cd portal
 npm install
 
 # Start the portal
-npm start
+npm run dev
 ```
 
 #### Environment variables (all optional)
 
-- `REACT_APP_HTTP_SERVER_URL` - URL to use when connecting to the HTTP server (defaults to http://localhost:6868)
-- `REACT_APP_WSS_SERVER_URL` - URL to use when connecting to the WebSocket server (defaults to ws://localhost:6868)
+- `NEXT_PUBLIC_HTTP_SERVER_URL` - URL to use when connecting to the HTTP server (defaults to http://localhost:6868)
+- `NEXT_PUBLIC_WSS_SERVER_URL` - URL to use when connecting to the WebSocket server (defaults to ws://localhost:6868)
 
 ### Turtle
 
