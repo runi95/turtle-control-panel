@@ -3,7 +3,7 @@
 import "./grabcraftModal.css";
 import { useState } from "react";
 import { Modal, Form, Button, Row, Col } from "react-bootstrap";
-import { grabcraftNameToBlockMap } from "./helpers";
+import { grabcraftNameToBlockMap } from "./grabcraftNameToBlockMap";
 import { Block } from "../../../../types/block";
 import { HTTP_SERVER_URL } from "../../../../env";
 
