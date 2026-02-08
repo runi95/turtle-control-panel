@@ -1,127 +1,218 @@
 import spriteTable from "./spriteTable";
+import { Models } from "../../../../hooks/useModels";
+import { Vector3 } from "three";
+import { Blocks } from "../../../../types/blocks";
+import { BlockState } from "../../../../types/block-state";
+import { Blockstates } from "../../../../hooks/useBlockstates";
+import { BlockBuilder } from "./blockBuilder";
+import { ModelBuilder } from "./modelBuilder";
+import { TextureInfo } from "../../../../hooks/useMinimizedAtlas";
+import { ModelFaceBuilder } from "./modelFaceBuilder";
 
-const textureDefs: {
-  block: string;
-  textures: string | string[];
-}[] = [
-  {
-    block: "unknown",
-    textures: "unknown",
-  },
-  {
-    block: "minecraft:sand",
-    textures: "sand",
-  },
-  {
-    block: "minecraft:cactus",
-    textures: [
-      "cactus_side",
-      "cactus_side",
-      "cactus_top",
-      "cactus_bottom",
-      "cactus_side",
-      "cactus_side",
-    ],
-  },
-  {
-    block: "minecraft:sandstone",
-    textures: [
-      "sandstone",
-      "sandstone",
-      "sandstone_top",
-      "sandstone_bottom",
-      "sandstone",
-      "sandstone",
-    ],
-  },
-  {
-    block: "minecraft:dirt",
-    textures: "dirt",
-  },
-  {
-    block: "minecraft:stone",
-    textures: "stone",
-  },
-];
+export const BlockNames: string[] = Object.keys(spriteTable).slice(2);
 
-export const getBlockTypes = () => {
-  const textureSet = new Set<string>();
-  for (const { textures } of textureDefs) {
-    const isArray = textures instanceof Array;
-    if (isArray) {
-      textures.forEach((texture) => textureSet.add(texture));
-    } else {
-      textureSet.add(textures);
+export const cleanStateValue = (value?: unknown) => {
+  if (value == null) return value;
+
+  const type = typeof value;
+  if (type === "boolean") return value.toString();
+  if (type === "string") return (value as string).toLowerCase();
+  return value;
+};
+
+export type Cell = {
+  position: [number, number, number];
+  type: string;
+  visible: boolean;
+  state?: BlockState;
+};
+
+export const CreateTerrain = (
+  dimensions: Vector3,
+  fromX: number,
+  fromY: number,
+  fromZ: number,
+  blocks: Blocks,
+) => {
+  const cells = new Map<string, Cell>();
+  const xn = 0;
+  const yn = 0;
+  const zn = 0;
+  const xp = dimensions.x;
+  const yp = dimensions.y;
+  const zp = dimensions.z;
+
+  for (let x = xn; x < xp; x++) {
+    for (let z = zn; z < zp; z++) {
+      for (let y = yn; y < yp; y++) {
+        const key = `${fromX + x},${fromY + y},${fromZ + z}`;
+        const block = blocks[key];
+        if (block) {
+          cells.set(key, {
+            position: [x, y, z],
+            type: block.name,
+            visible: false,
+            state: block.state,
+          });
+        }
+      }
     }
   }
 
-  const textures = Array.from(textureSet);
-  const textureMap = new Map<string, number[]>();
-  for (const { block, textures: texturesFromDef } of textureDefs) {
-    const isArray = texturesFromDef instanceof Array;
-    if (isArray) {
-      const textureIndexArray = [0, 0, 0, 0, 0, 0];
-      for (let i = 0; i < 6; i++) {
-        textureIndexArray[i] = textures.indexOf(texturesFromDef[i]);
+  const setVisible = (x: number, y: number, z: number) => {
+    const key = `${fromX + x},${fromY + y},${fromZ + z}`;
+    const cell = cells.get(key);
+    if (cell == null) return;
+
+    cell.visible = true;
+  };
+
+  for (let x = xn; x < xp; x++) {
+    for (let z = zn; z < zp; z++) {
+      for (let y = yn; y < yp; y++) {
+        const key = `${fromX + x},${fromY + y},${fromZ + z}`;
+        const cell = cells.get(key);
+        if (cell != null) {
+          continue;
+        }
+
+        setVisible(x + 1, y, z);
+        setVisible(x - 1, y, z);
+        setVisible(x, y + 1, z);
+        setVisible(x, y - 1, z);
+        setVisible(x, y, z + 1);
+        setVisible(x, y, z - 1);
       }
-      textureMap.set(block, textureIndexArray);
-    } else {
-      const index = textures.indexOf(texturesFromDef);
-      textureMap.set(block, [index, index, index, index, index, index]);
     }
+  }
+
+  return cells;
+};
+
+type CellMesh = {
+  positions: Float32Array;
+  uvs: Float32Array;
+  uvSlices: Float32Array;
+  normals: Float32Array;
+  colors: Float32Array;
+  indices: Uint32Array;
+  locationIndices: Uint32Array;
+  locations: Float32Array;
+  cellToIndexMap: Map<string, number[]>;
+};
+
+const bytesInFloat32 = 4;
+export const numbersToFloat32Array = (numbers: number[]) => {
+  const float32Array = new Float32Array(
+    new ArrayBuffer(bytesInFloat32 * numbers.length),
+  );
+  float32Array.set(numbers, 0);
+  return float32Array;
+};
+
+const bytesInInt32 = 4;
+export const numbersToUint32Array = (numbers: number[]) => {
+  const uint32Array = new Uint32Array(
+    new ArrayBuffer(bytesInInt32 * numbers.length),
+  );
+  uint32Array.set(numbers, 0);
+  return uint32Array;
+};
+
+export const BuildMeshDataFromVoxels = (
+  cells: Map<string, Cell>,
+  blockstates: Blockstates,
+  models: Models,
+  textureInfoMap: Record<string, TextureInfo>,
+): CellMesh => {
+  const mesh: {
+    positions: number[];
+    uvs: number[];
+    uvSlices: number[];
+    normals: number[];
+    colors: number[];
+    indices: number[];
+    locationIndices: number[];
+    locations: number[];
+  } = {
+    positions: [],
+    uvs: [],
+    uvSlices: [],
+    normals: [],
+    colors: [],
+    indices: [],
+    locationIndices: [],
+    locations: [],
+  };
+
+  const modelFaceBuilder = new ModelFaceBuilder(
+    mesh.positions,
+    mesh.uvs,
+    mesh.normals,
+    mesh.colors,
+    mesh.indices,
+    mesh.uvSlices,
+    textureInfoMap,
+  );
+  const modelBuilder = new ModelBuilder(models, modelFaceBuilder);
+  const blockBuilder = new BlockBuilder(blockstates, modelBuilder);
+
+  const cellToIndexMap = new Map<string, number[]>();
+  let locationIndex = 0;
+  for (const [key, cell] of cells) {
+    // if (!cell.visible) continue;
+
+    const prevFaceCount = modelFaceBuilder.getFaceCount();
+    mesh.locations.push(cell.position[0], cell.position[1], cell.position[2]);
+
+    const prevPositionsLength = mesh.positions.length;
+    blockBuilder.buildBlock(cell.type, cell.state);
+
+    const newPositionsLength = mesh.positions.length;
+    for (let i = prevPositionsLength; i < newPositionsLength; i += 3) {
+      mesh.positions[i] += cell.position[0];
+      mesh.positions[i + 1] += cell.position[1];
+      mesh.positions[i + 2] += cell.position[2];
+    }
+
+    const newFaceCount = modelFaceBuilder.getFaceCount();
+    const indexes: number[] = [];
+    for (let i = prevFaceCount; i < newFaceCount; i++) {
+      indexes.push(prevFaceCount + i);
+      mesh.locationIndices.push(locationIndex, locationIndex);
+    }
+    locationIndex++;
+    cellToIndexMap.set(key, indexes);
   }
 
   return {
-    textures,
-    textureMap,
+    positions: numbersToFloat32Array(mesh.positions),
+    uvs: numbersToFloat32Array(mesh.uvs),
+    uvSlices: numbersToFloat32Array(mesh.uvSlices),
+    normals: numbersToFloat32Array(mesh.normals),
+    colors: numbersToFloat32Array(mesh.colors),
+    indices: numbersToUint32Array(mesh.indices),
+    locationIndices: numbersToUint32Array(mesh.locationIndices),
+    locations: numbersToFloat32Array(mesh.locations),
+    cellToIndexMap,
   };
 };
 
-export const blockNameOverride = (blockName: string) => {
-  switch (blockName) {
-    case "minecraft:wheat":
-      return "minecraft:wheat_stage7";
-    case "minecraft:cocoa":
-      return "minecraft:cocoa_stage2";
-    case "minecraft:beetroots":
-      return "minecraft:beetroots_stage3";
-    case "minecraft:carrots":
-      return "minecraft:carrots_stage3";
-    case "minecraft:melon_stem":
-      return "minecraft:melon_stem_stage6";
-    case "minecraft:pumpkin_stem":
-      return "minecraft:pumpkin_stem_stage6";
-    case "minecraft:nether_wart":
-      return "minecraft:nether_wart_stage2";
-    case "minecraft:potatoes":
-      return "minecraft:potatoes_stage3";
-    case "minecraft:sweet_berry_bush":
-      return "minecraft:sweet_berry_bush_stage3";
-    case "minecraft:torchflower_crop":
-      return "minecraft:torchflower_crop_stage1";
-    case "minecraft:bamboo":
-      return "minecraft:bamboo4_age1";
-    case "minecraft:snow":
-      return "minecraft:snow_height2";
-    case "minecraft:tall_grass":
-      return "minecraft:tall_grass_bottom";
-    case "minecraft:tall_seagrass":
-      return "minecraft:tall_seagrass_bottom";
-    case "computercraft:wireless_modem_normal":
-      return "computercraft:wireless_modem_normal_on";
-    case "computercraft:wired_modem":
-      return "computercraft:wired_modem_on";
-    case "computercraft:computer_normal":
-      return "computercraft:computer_normal_on";
-    case "computercraft:disk_drive":
-      return "computercraft:disk_drive_full";
-    case "computercraft:printer":
-      return "computercraft:printer_both_full";
-    case "computercraft:wired_modem_full":
-      return "computercraft:wired_modem_full_off";
-    default:
-      return blockName;
-  }
+export const Rebuild = (
+  dimensions: Vector3,
+  fromX: number,
+  fromY: number,
+  fromZ: number,
+  blockstates: Blockstates,
+  models: Models,
+  textureInfoMap: Record<string, TextureInfo>,
+  blocks: Blocks,
+) => {
+  const terrainVoxels = CreateTerrain(dimensions, fromX, fromY, fromZ, blocks);
+  return BuildMeshDataFromVoxels(
+    terrainVoxels,
+    blockstates,
+    models,
+    textureInfoMap,
+  );
 };
-
-export const BlockNames: string[] = Object.keys(spriteTable).slice(2);

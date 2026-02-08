@@ -16,7 +16,6 @@ varying vec3 vColor;
 varying vec3 vWorldPosition;
 
 void main() {
-  // vec4 diffuse = sRGBToLinear(texture2D(diffuseMap, vUV));
   vec4 diffuse = texture2D(diffuseMap, vUV);
   if (diffuse.a <= 0.5) discard;
 

@@ -31,6 +31,10 @@ import { Location } from "../../../../types/location";
 import { useParams } from "next/navigation";
 import { Block } from "../../../../types/block";
 import { useWebSocket } from "../../../../contexts/webSocketContext";
+import { useAtlases } from "../../../../hooks/useAtlases";
+import { useModels } from "../../../../hooks/useModels";
+import { useBlockstates } from "../../../../hooks/useBlockstates";
+import { useTextures } from "../../../../hooks/useTextures";
 
 export enum WorldState {
   MOVE,
@@ -174,6 +178,10 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
   }, []);
 
   const { data: atlasMap } = useAtlasMap();
+  const { data: atlases } = useAtlases();
+  const { data: blockstates } = useBlockstates();
+  const { data: models } = useModels();
+  const { data: textures } = useTextures();
 
   const location = turtle?.location ?? null;
   const chunks = useMemo(() => {
@@ -254,6 +262,10 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
   }, [turtle?.direction]);
 
   if (atlasMap == null) return null;
+  if (atlases == null) return null;
+  if (blockstates == null) return null;
+  if (models == null) return null;
+  if (textures == null) return null;
   if (turtle == null) return null;
 
   const turtleRotation = (() => {
@@ -261,11 +273,11 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
       case Direction.North:
         return 0;
       case Direction.East:
-        return 1.5 * Math.PI;
+        return Math.PI * 0.5;
       case Direction.South:
         return Math.PI;
       case Direction.West:
-        return Math.PI * 0.5;
+        return 1.5 * Math.PI;
     }
   })();
 
@@ -845,19 +857,21 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
           }}
         >
           <Turtle3D
-            atlasMap={atlasMap}
             name={turtle.name}
             rotation={[0, turtleRotation, 0]}
+            atlasMap={atlasMap}
           />
           <BuildBlock
             ref={buildBlockRef}
-            atlasMap={atlasMap}
             geometries={geometries}
+            blockstates={blockstates}
+            models={models}
+            textures={textures}
           />
           <SchemaPlacer
             ref={schemaPlacerRef}
-            atlasMap={atlasMap}
             geometries={geometries}
+            atlasMap={atlasMap}
           />
           <group
             position={[
@@ -876,8 +890,10 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                 key={`${chunk.x},${chunk.y},${chunk.z}`}
                 dimensions={cellDimensions}
                 chunk={chunk}
-                geometries={geometries}
-                atlasMap={atlasMap}
+                atlases={atlases}
+                blockstates={blockstates}
+                models={models}
+                textures={textures}
               />
             ))}
           </group>
