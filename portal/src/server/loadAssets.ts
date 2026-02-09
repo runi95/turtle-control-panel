@@ -133,11 +133,6 @@ const getImageData = async (
     if (dir === "item/") return [16, 16];
     return [undefined, undefined];
   })();
-  if (key === "computercraft:block/turtle_advanced_back") {
-    console.log(`${key}:`);
-    console.log(w, h);
-    console.log(image.width, image.height);
-  }
 
   return context.getImageData(0, 0, w ?? image.width, h ?? image.height);
 };
