@@ -4,14 +4,21 @@ import { useMemo } from "react";
 import { Direction, Turtle, useTurtles } from "../../../../hooks/useTurtle";
 import Turtle3D from "./turtle3D";
 import { useParams } from "next/navigation";
-import { useAtlasMap } from "../../../../hooks/useAtlasMap";
+import { Blockstates } from "../../../../hooks/useBlockstates";
+import { Models } from "../../../../hooks/useModels";
+import { Textures } from "../../../../hooks/useTextures";
 
-const OtherTurtles = () => {
+export type Props = {
+  blockstates: Blockstates;
+  models: Models;
+  textures: Textures;
+};
+
+const OtherTurtles = ({ blockstates, models, textures }: Props) => {
   const { serverId, id } = useParams<{
     serverId: string;
     id: string;
   }>();
-  const { data: atlasMap } = useAtlasMap();
   const { data: turtles } = useTurtles(serverId);
   const { turtle, otherTurtles } = useMemo(() => {
     if (turtles == null) {
@@ -41,7 +48,6 @@ const OtherTurtles = () => {
     );
   }, [turtles]);
 
-  if (atlasMap == null) return null;
   if (turtle == null) return null;
 
   const turtleLocation = turtle.location;
@@ -74,7 +80,12 @@ const OtherTurtles = () => {
           otherTurtleLocation.z - turtleLocation.z,
         ]}
       >
-        <Turtle3D atlasMap={atlasMap} name={otherTurtle.name} />
+        <Turtle3D
+          name={otherTurtle.name}
+          blockstates={blockstates}
+          models={models}
+          textures={textures}
+        />
       </group>
     );
   });

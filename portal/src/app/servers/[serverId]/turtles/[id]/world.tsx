@@ -13,12 +13,10 @@ import {
   InstancedMesh,
   Matrix4,
   TextureLoader,
-  PlaneGeometry,
   Vector3,
   Group,
   Mesh,
 } from "three";
-import { useAtlasMap } from "../../../../hooks/useAtlasMap";
 import SparseBlock, { SparseBlockHandle } from "./sparseBlock";
 import { Direction, useTurtle } from "../../../../hooks/useTurtle";
 import { useLoader } from "@react-three/fiber";
@@ -35,6 +33,7 @@ import { useAtlases } from "../../../../hooks/useAtlases";
 import { useModels } from "../../../../hooks/useModels";
 import { useBlockstates } from "../../../../hooks/useBlockstates";
 import { useTextures } from "../../../../hooks/useTextures";
+import { Blocks } from "../../../../types/blocks";
 
 export enum WorldState {
   MOVE,
@@ -155,10 +154,10 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
         }
       },
       setBlocksToPlace(blocks: Omit<Block, "tags">[]) {
-        const blocksMap = new Map<string, Omit<Block, "tags">>();
+        const blocksMap: Blocks = {};
         for (const block of blocks) {
           const { x, y, z } = block;
-          blocksMap.set(`${x},${y},${z}`, block);
+          blocksMap[`${x},${y},${z}`] = block as Block;
         }
 
         schemaPlacerRef.current.setSchema(blocksMap);
@@ -177,7 +176,6 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
     };
   }, []);
 
-  const { data: atlasMap } = useAtlasMap();
   const { data: atlases } = useAtlases();
   const { data: blockstates } = useBlockstates();
   const { data: models } = useModels();
@@ -215,53 +213,10 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
     return chunks;
   }, [location, cellDimensions, visibleDimensions]);
 
-  const geometries = useMemo(() => {
-    const pxGeometry = new PlaneGeometry(1, 1);
-    pxGeometry.rotateY(Math.PI / 2);
-    pxGeometry.translate(0.5, 0, 0);
-
-    const nxGeometry = new PlaneGeometry(1, 1);
-    nxGeometry.rotateY(-Math.PI / 2);
-    nxGeometry.translate(-0.5, 0, 0);
-
-    const pyGeometry = new PlaneGeometry(1, 1);
-    pyGeometry.rotateX(-Math.PI / 2);
-    pyGeometry.translate(0, 0.5, 0);
-
-    const nyGeometry = new PlaneGeometry(1, 1);
-    nyGeometry.rotateX(Math.PI / 2);
-    nyGeometry.translate(0, -0.5, 0);
-
-    const pzGeometry = new PlaneGeometry(1, 1);
-    pzGeometry.translate(0, 0, 0.5);
-
-    const nzGeometry = new PlaneGeometry(1, 1);
-    nzGeometry.rotateY(Math.PI);
-    nzGeometry.translate(0, 0, -0.5);
-
-    const geometriesToInvert = [pxGeometry, nxGeometry, pzGeometry, nzGeometry];
-    for (const geometry of geometriesToInvert) {
-      for (let i = 0; i < geometry.attributes.uv.array.length; i += 2) {
-        geometry.attributes.uv.array[i + 1] =
-          1.0 - geometry.attributes.uv.array[i + 1];
-      }
-    }
-
-    return [
-      pxGeometry,
-      nxGeometry,
-      pyGeometry,
-      nyGeometry,
-      pzGeometry,
-      nzGeometry,
-    ];
-  }, []);
-
   useEffect(() => {
     turtleRotationRef.current = turtle?.direction ?? null;
   }, [turtle?.direction]);
 
-  if (atlasMap == null) return null;
   if (atlases == null) return null;
   if (blockstates == null) return null;
   if (models == null) return null;
@@ -295,7 +250,11 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
           />
         </Suspense>
       ) : null}
-      <OtherTurtles />
+      <OtherTurtles
+        blockstates={blockstates}
+        models={models}
+        textures={textures}
+      />
       <instancedMesh
         ref={indicatorMeshRef}
         args={[undefined, undefined, 1]}
@@ -658,7 +617,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                     const addedBlocks: Omit<Block, "tags">[] = [];
                     const meshPosition =
                       schemaPlacerRef.current.getMeshPosition();
-                    for (const block of schema.values()) {
+                    for (const block of Object.values(schema)) {
                       const { x, y, z, name, state } = block;
                       addedBlocks.push({
                         x: x + meshPosition.x,
@@ -859,19 +818,21 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
           <Turtle3D
             name={turtle.name}
             rotation={[0, turtleRotation, 0]}
-            atlasMap={atlasMap}
+            blockstates={blockstates}
+            models={models}
+            textures={textures}
           />
           <BuildBlock
             ref={buildBlockRef}
-            geometries={geometries}
             blockstates={blockstates}
             models={models}
             textures={textures}
           />
           <SchemaPlacer
             ref={schemaPlacerRef}
-            geometries={geometries}
-            atlasMap={atlasMap}
+            blockstates={blockstates}
+            models={models}
+            textures={textures}
           />
           <group
             position={[

@@ -6,7 +6,6 @@ import {
   Float32BufferAttribute,
   FrontSide,
   Mesh,
-  PlaneGeometry,
   ShaderMaterial,
   Vector3,
 } from "three";
@@ -29,7 +28,6 @@ import { useMinimizedAtlas } from "../../../../hooks/useMinimizedAtlas";
 import { Blocks } from "../../../../types/blocks";
 
 interface Props {
-  geometries: PlaneGeometry[];
   blockstates: Blockstates;
   models: Models;
   textures: Textures;
@@ -42,7 +40,7 @@ export type BuildBlockHandle = {
 };
 
 const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock(
-  { geometries, blockstates, models, textures },
+  { blockstates, models, textures },
   ref,
 ) {
   const meshRef = useRef<Mesh>(null!);
