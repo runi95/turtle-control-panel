@@ -113,8 +113,8 @@ export type Model = {
 
 const getImageData = async (
   source: Buffer<ArrayBuffer>,
-  w?: number,
-  h?: number,
+  dir: string,
+  key: string,
 ) => {
   const image = await loadImage(source);
   const canvas = createCanvas(image.width, image.height);
@@ -122,6 +122,22 @@ const getImageData = async (
 
   context.patternQuality = "nearest";
   context.drawImage(image, 0, 0);
+
+  const [w, h] = (() => {
+    if (image.width === 32 && image.height === 32)
+      return [undefined, undefined];
+    if (image.width === 64 && image.height === 64)
+      return [undefined, undefined];
+
+    if (dir === "block/") return [16, 16];
+    if (dir === "item/") return [16, 16];
+    return [undefined, undefined];
+  })();
+  if (key === "computercraft:block/turtle_advanced_back") {
+    console.log(`${key}:`);
+    console.log(w, h);
+    console.log(image.width, image.height);
+  }
 
   return context.getImageData(0, 0, w ?? image.width, h ?? image.height);
 };
@@ -444,12 +460,7 @@ export async function load() {
   const texturesToRawImageData = new Map<string, ImageData>();
   for (const [key, value] of textures) {
     const { dir, buffer } = value;
-    const [w, h] = (() => {
-      if (dir === "block/") return [16, 16];
-      if (dir === "item/") return [16, 16];
-      return [undefined, undefined];
-    })();
-    const imageData = await getImageData(buffer, w, h);
+    const imageData = await getImageData(buffer, dir, key);
 
     const isWhitelistedWidth = (() => {
       if (imageData.width === 16) return true;
