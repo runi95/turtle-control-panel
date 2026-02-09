@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { BaseState } from "./useTurtle";
-import { HTTP_SERVER_URL } from "../env";
 
 export interface OnlineStatuses {
   serverId: number;
@@ -47,7 +46,7 @@ export const useServers = () => {
   return useQuery<Servers>({
     queryKey: ["servers"],
     queryFn: () =>
-      fetch(`${HTTP_SERVER_URL}/servers`)
+      fetch(`/api/servers`)
         .then((res) => res.json())
         .then(
           (data: {

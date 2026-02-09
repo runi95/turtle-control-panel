@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { HTTP_SERVER_URL } from "../env";
 import { Blocks } from "../types/blocks";
 import { Block } from "../types/block";
 
@@ -24,7 +23,7 @@ export const useBlocks = (
     queryKey: ["blocks", serverId, { query }],
     queryFn: () =>
       fetch(
-        `${HTTP_SERVER_URL}/servers/${serverId}/blocks?fromX=${query.fromX}&toX=${query.toX}&fromY=${query.fromY}&toY=${query.toY}&fromZ=${query.fromZ}&toZ=${query.toZ}${query.simple ? "&simple" : ""}`,
+        `/api/servers/${serverId}/blocks?fromX=${query.fromX}&toX=${query.toX}&fromY=${query.fromY}&toY=${query.toY}&fromZ=${query.fromZ}&toZ=${query.toZ}${query.simple ? "&simple" : ""}`,
       )
         .then((res) => res.json())
         .then((data: Block[]) =>

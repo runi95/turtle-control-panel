@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Model } from "../../loadAssets";
+import { Model } from "../../server/loadAssets";
 
 export type Models = Record<string, Model>;
 

@@ -1,8 +1,0 @@
-extends:
-    - eslint:recommended
-    - plugin:prettier/recommended
-rules:
-    no-unused-vars:
-        - warn
-        - argsIgnorePattern: ^_
-          varsIgnorePattern: ^_

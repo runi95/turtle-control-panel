@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Blocks } from "../types/blocks";
 import { Block } from "../types/block";
-import { Model } from "../../loadAssets";
+import { Model } from "../../server/loadAssets";
 import { Blockstates } from "./useBlockstates";
 import { Textures } from "./useTextures";
 import {

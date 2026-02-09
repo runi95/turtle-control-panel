@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { HTTP_SERVER_URL } from "../env";
 import { Location } from "../types/location";
 
 export enum Direction {
@@ -74,9 +73,7 @@ export const useTurtle = (serverId: string, id: string) => {
   return useQuery<Turtle>({
     queryKey: ["turtles", serverId, id],
     queryFn: () =>
-      fetch(`${HTTP_SERVER_URL}/servers/${serverId}/turtles/${id}`).then(
-        (res) => res.json(),
-      ),
+      fetch(`/api/servers/${serverId}/turtles/${id}`).then((res) => res.json()),
   });
 };
 
@@ -84,8 +81,6 @@ export const useTurtles = (serverId: string) => {
   return useQuery<Turtle[]>({
     queryKey: ["turtles", serverId],
     queryFn: () =>
-      fetch(`${HTTP_SERVER_URL}/servers/${serverId}/turtles`).then((res) =>
-        res.json(),
-      ),
+      fetch(`/api/servers/${serverId}/turtles`).then((res) => res.json()),
   });
 };

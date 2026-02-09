@@ -1,6 +1,10 @@
 import { Color, PlaneGeometry } from "three";
-import { Model, ModelElement, ModelFace } from "../../../../../loadAssets";
 import { TextureInfo } from "../../../../hooks/useMinimizedAtlas";
+import {
+  Model,
+  ModelElement,
+  ModelFace,
+} from "../../../../../server/loadAssets";
 
 const defaultColor = new Color(0xffffff);
 defaultColor.convertSRGBToLinear();

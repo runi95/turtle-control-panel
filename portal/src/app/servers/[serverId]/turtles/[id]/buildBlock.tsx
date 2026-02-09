@@ -109,7 +109,7 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock(
           0,
           blockstates,
           models,
-          minimizedAtlas.textureToIndexMap,
+          minimizedAtlas.textureInfoMap,
           blocks ?? {},
         );
         geometry.current.setAttribute(

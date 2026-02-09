@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Blockstate } from "../../loadAssets";
+import { Blockstate } from "../../server/loadAssets";
 
 export type Blockstates = Record<string, Blockstate>;
 

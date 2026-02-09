@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Atlas } from "../../loadAssets";
+import { Atlas } from "../../server/loadAssets";
 
 export type Atlases = Record<string, Atlas>;
 

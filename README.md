@@ -20,38 +20,8 @@ The 3D map only shows you what the turtle can see (or have seen) and may not be 
 
 Before you begin make sure that [Node.js](https://nodejs.org/en/) is installed, then clone the project with `git clone` and make sure your working directory is within the cloned project.
 
-### Server
-
-```sh
-# Change the working directory
-cd server
-
-# Install dependencies
-npm install
-
-# Build the server
-npm run build
-
-# Start the server
-npm start
-```
-
-Or optionally run as dev
-
-```sh
-# Change the working directory
-cd server
-
-# Install dependencies
-npm install
-
-# Start the server in development mode
-npm run dev
-```
-
 #### Environment variables (all optional)
 
-- `WSS_PORT` - Port for the WebSocket server used by the portal (defaults to 6868)
 - `TURTLE_WSS_PORT` - Port for the second WebSocket server used by the turtles (defaults to 5757)
 - `LOG_LEVEL` - Log level for the server (defaults to info). Possible values are: emerg, alert, crit, error, warning, notice, info, debug
 - `TURTLE_LOG_LEVEL` - Log level for the connected turtles (defaults to INFO). Possible values are ERROR, WARNING, INFO, DEBUG
@@ -65,14 +35,12 @@ cd portal
 # Install dependencies
 npm install
 
+# Build the portal
+npm run build
+
 # Start the portal
-npm run dev
+npm run start
 ```
-
-#### Environment variables (all optional)
-
-- `NEXT_PUBLIC_HTTP_SERVER_URL` - URL to use when connecting to the HTTP server (defaults to http://localhost:6868)
-- `NEXT_PUBLIC_WSS_SERVER_URL` - URL to use when connecting to the WebSocket server (defaults to ws://localhost:6868)
 
 ### Turtle
 

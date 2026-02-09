@@ -1,4 +1,4 @@
-import { Model } from "../../../../../loadAssets";
+import { Model } from "../../../../../server/loadAssets";
 import { Models } from "../../../../hooks/useModels";
 import deepAssign from "assign-deep";
 import { ModelFaceBuilder } from "./modelFaceBuilder";

@@ -8,7 +8,6 @@ import {
   useState,
 } from "react";
 import io, { Socket } from "socket.io-client";
-import { WSS_SERVER_URL } from "../env";
 import { Action } from "../types/action";
 import { ActionMessage } from "../types/action-message";
 
@@ -39,7 +38,7 @@ export const WebSocketProvider = ({ children }: Props) => {
 
   useEffect(() => {
     // Initialize WebSocket connection
-    const socketIo = io(WSS_SERVER_URL, {
+    const socketIo = io({
       transports: ["websocket"],
     });
 

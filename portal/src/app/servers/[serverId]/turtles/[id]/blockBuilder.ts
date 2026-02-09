@@ -3,7 +3,7 @@ import {
   BlockstateMultipart,
   BlockstateVariant,
   BlockstateVariants,
-} from "../../../../../loadAssets";
+} from "../../../../../server/loadAssets";
 import { cleanStateValue } from "./helpers";
 import { ModelBuilder } from "./modelBuilder";
 

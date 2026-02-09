@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Modal, Form, Button, Row, Col } from "react-bootstrap";
 import { grabcraftNameToBlockMap } from "./grabcraftNameToBlockMap";
 import { Block } from "../../../../types/block";
-import { HTTP_SERVER_URL } from "../../../../env";
 
 const levenshteinDistance = (a: string, b: string): number => {
   const arr = [];
@@ -58,9 +57,7 @@ function GrabcraftModal({ hideModal, onBuild }: Props) {
     const form = e.currentTarget;
     if (form.checkValidity() === true) {
       setIsLoading(true);
-      fetch(
-        `${HTTP_SERVER_URL}/grabcraft?url=${encodeURIComponent(grabcraftUrl)}`,
-      )
+      fetch(`/api/grabcraft?url=${encodeURIComponent(grabcraftUrl)}`)
         .then((res) => res.text())
         .then((body) => {
           const doc = new DOMParser().parseFromString(body, "text/html");
@@ -89,7 +86,7 @@ function GrabcraftModal({ hideModal, onBuild }: Props) {
             throw new Error("Failed to fetch render object");
 
           return fetch(
-            `${HTTP_SERVER_URL}/grabcraft?url=${encodeURIComponent(myRenderObjectScript.src)}`,
+            `/api/grabcraft?url=${encodeURIComponent(myRenderObjectScript.src)}`,
           )
             .then((res) => res.text())
             .then((body) => JSON.parse(body.substring(21)) as RenderObject)
