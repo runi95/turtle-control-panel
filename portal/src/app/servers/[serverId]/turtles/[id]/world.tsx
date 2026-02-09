@@ -890,7 +890,6 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                 key={`${chunk.x},${chunk.y},${chunk.z}`}
                 dimensions={cellDimensions}
                 chunk={chunk}
-                atlases={atlases}
                 blockstates={blockstates}
                 models={models}
                 textures={textures}

@@ -6,7 +6,6 @@ import {
   Color,
   Float32BufferAttribute,
   FrontSide,
-  GLSL3,
   Mesh,
   ShaderMaterial,
   Vector3,
@@ -29,12 +28,10 @@ import { Models } from "../../../../hooks/useModels";
 import { Textures } from "../../../../hooks/useTextures";
 import { Rebuild } from "./helpers";
 import { useMinimizedAtlas } from "../../../../hooks/useMinimizedAtlas";
-import { useThree } from "@react-three/fiber";
 
 interface Props {
   dimensions: Vector3;
   chunk: WorldChunk;
-  atlases: Atlases;
   blockstates: Blockstates;
   models: Models;
   textures: Textures;
@@ -75,7 +72,6 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
     () =>
       new ShaderMaterial({
         name: "shaderMaterial - materialOpqaque",
-        // glslVersion: GLSL3,
         uniforms: {
           diffuseMap: {
             value: null,
@@ -106,7 +102,6 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
   useEffect(() => {
     if (!minimizedAtlas) return;
     shaderMaterial.uniforms.diffuseMap.value = minimizedAtlas.atlasTexture;
-    shaderMaterial.uniformsNeedUpdate = true;
   }, [minimizedAtlas, shaderMaterial]);
 
   const cellToIndexMap = useRef<Map<string, number[]>>(null!);
