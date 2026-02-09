@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon",
+    "dev": "concurrently -k \"tsc -w --project tsconfig.server.json\" \"nodemon dist/index.js\"",
     "build": "next build && tsc --project tsconfig.server.json",
     "start": "cross-env NODE_ENV=production node dist",
     "lint": "eslint"
@@ -39,6 +39,7 @@
     "@types/three": "^0.182.0",
     "@types/ws": "^8.18.1",
     "@types/yauzl": "^2.10.3",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "nodemon": "^3.1.11",
