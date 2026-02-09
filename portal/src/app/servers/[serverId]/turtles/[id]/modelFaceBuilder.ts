@@ -226,8 +226,8 @@ export class ModelFaceBuilder {
       u1p *= 0.5;
       v1p *= 0.5;
 
-      const offsetX = (offset * 16) % 32;
-      const offsetY = Math.floor(offset / 16) * 16;
+      const offsetX = (offset * 8) % 16;
+      const offsetY = Math.floor(offset / 2) * 8;
 
       u0p += offsetX;
       v0p += offsetY;
