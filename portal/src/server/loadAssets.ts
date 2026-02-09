@@ -247,7 +247,6 @@ const hackModel = (model: Model, key: string): Model => {
 };
 
 export async function load() {
-  if (process.env.NEXT_RUNTIME !== "nodejs") return;
   if (process.env.SKIP_ASSET_GENERATION != null) {
     logger.warn(
       "SKIP_ASSET_GENERATION has been set, skipping asset generation...",
