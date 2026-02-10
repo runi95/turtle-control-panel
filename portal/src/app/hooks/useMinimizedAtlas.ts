@@ -169,7 +169,6 @@ export const createMinimizedAtlas = (
   for (let i = 0; i < mediumEntries.length; i += 4) {
     for (let j = 0; j < 4 && i + j < mediumEntries.length; j++) {
       const [key, tex] = mediumEntries[i + j];
-      console.log(key);
       textureInfoMap[key] = { layer, offset: j, tileSize: 32 };
       writeTile(newUintArray, layer, j, tex, 32);
     }
