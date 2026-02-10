@@ -6,7 +6,6 @@ import {
   Color,
   Float32BufferAttribute,
   FrontSide,
-  Mesh,
   ShaderMaterial,
   Vector3,
 } from "three";
@@ -48,7 +47,6 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
 ) {
   const { x: chunkX, y: chunkY, z: chunkZ, offsetX, offsetY, offsetZ } = chunk;
   const { serverId } = useParams<{ serverId: string }>();
-  const meshRef = useRef<Mesh>(null!);
   const fromX = chunkX * dimensions.x;
   const toX = fromX + dimensions.x - 1;
   const fromY = chunkY * dimensions.y;
@@ -104,11 +102,9 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
     shaderMaterial.uniforms.diffuseMap.value = minimizedAtlas.atlasTexture;
   }, [minimizedAtlas, shaderMaterial]);
 
-  const cellToIndexMap = useRef<Map<string, number[]>>(null!);
-  const geometry = useRef<BufferGeometry>(new BufferGeometry());
-  useEffect(() => {
-    if (blocks == null) return;
-    if (minimizedAtlas == null) return;
+  const { geometry, cellToIndexMap } = useMemo(() => {
+    if (blocks == null) return {};
+    if (minimizedAtlas == null) return {};
 
     const build = Rebuild(
       dimensions,
@@ -121,44 +117,39 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
       blocks,
     );
 
-    geometry.current.setAttribute(
+    const geometry = new BufferGeometry();
+    geometry.setAttribute(
       "position",
       new Float32BufferAttribute(build.positions, 3),
     );
-    geometry.current.setAttribute(
+    geometry.setAttribute(
       "normal",
       new Float32BufferAttribute(build.normals, 3),
     );
-    geometry.current.setAttribute(
-      "uv",
-      new Float32BufferAttribute(build.uvs, 2),
-    );
-    geometry.current.setAttribute(
+    geometry.setAttribute("uv", new Float32BufferAttribute(build.uvs, 2));
+    geometry.setAttribute(
       "uvSlice",
       new Float32BufferAttribute(build.uvSlices, 1),
     );
-    geometry.current.setAttribute(
-      "color",
-      new Float32BufferAttribute(build.colors, 3),
-    );
-    geometry.current.setAttribute(
+    geometry.setAttribute("color", new Float32BufferAttribute(build.colors, 3));
+    geometry.setAttribute(
       "locationIndex",
       new BufferAttribute(build.locationIndices, 1),
     );
-    geometry.current.setAttribute(
+    geometry.setAttribute(
       "location",
       new Float32BufferAttribute(build.locations, 3),
     );
-    geometry.current.setIndex(new BufferAttribute(build.indices, 1));
+    geometry.setIndex(new BufferAttribute(build.indices, 1));
 
-    geometry.current.attributes.position.needsUpdate = true;
-    geometry.current.attributes.normal.needsUpdate = true;
-    geometry.current.attributes.color.needsUpdate = true;
+    geometry.attributes.position.needsUpdate = true;
+    geometry.attributes.normal.needsUpdate = true;
+    geometry.attributes.color.needsUpdate = true;
 
-    geometry.current.computeBoundingBox();
-    geometry.current.computeBoundingSphere();
+    geometry.computeBoundingBox();
+    geometry.computeBoundingSphere();
 
-    cellToIndexMap.current = build.cellToIndexMap;
+    return { geometry, cellToIndexMap: build.cellToIndexMap };
   }, [
     dimensions,
     fromX,
@@ -173,56 +164,49 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
   useImperativeHandle(ref, () => {
     return {
       setBlockColor(x: number, y: number, z: number, color: Color) {
-        if (meshRef.current == null) return;
+        if (geometry == null) return;
 
-        const cell = cellToIndexMap.current?.get(`${x},${y},${z}`);
+        const cell = cellToIndexMap?.get(`${x},${y},${z}`);
         if (cell == null) return;
 
         for (const cellIndex of cell) {
           for (let i = 0; i < 4; i++) {
-            meshRef.current.geometry.attributes.color.array[
-              12 * cellIndex + 3 * i
-            ] = color.r;
-            meshRef.current.geometry.attributes.color.array[
-              12 * cellIndex + 3 * i + 1
-            ] = color.g;
-            meshRef.current.geometry.attributes.color.array[
-              12 * cellIndex + 3 * i + 2
-            ] = color.b;
+            geometry.attributes.color.array[12 * cellIndex + 3 * i] = color.r;
+            geometry.attributes.color.array[12 * cellIndex + 3 * i + 1] =
+              color.g;
+            geometry.attributes.color.array[12 * cellIndex + 3 * i + 2] =
+              color.b;
           }
         }
 
-        meshRef.current.geometry.attributes.color.needsUpdate = true;
+        geometry.attributes.color.needsUpdate = true;
       },
       setChunkColor(color: Color) {
-        if (meshRef.current == null) return;
+        if (geometry == null) return;
 
-        for (
-          let i = 0;
-          i < meshRef.current.geometry.attributes.color.array.length;
-          i++
-        ) {
+        for (let i = 0; i < geometry.attributes.color.array.length; i++) {
           const mod = i % 3;
           if (mod === 0) {
-            meshRef.current.geometry.attributes.color.array[i] = color.r;
+            geometry.attributes.color.array[i] = color.r;
           } else if (mod === 1) {
-            meshRef.current.geometry.attributes.color.array[i] = color.g;
+            geometry.attributes.color.array[i] = color.g;
           } else {
-            meshRef.current.geometry.attributes.color.array[i] = color.b;
+            geometry.attributes.color.array[i] = color.b;
           }
         }
 
-        meshRef.current.geometry.attributes.color.needsUpdate = true;
+        geometry.attributes.color.needsUpdate = true;
       },
     };
-  }, []);
+  }, [geometry, cellToIndexMap]);
 
   return (
     <mesh
       key="main-mesh"
-      ref={meshRef}
-      args={[geometry.current, shaderMaterial]}
+      geometry={geometry}
+      material={shaderMaterial}
       position={[offsetX, offsetY, offsetZ]}
+      dispose={null}
       userData={{
         isBlocks: false,
         isTurtle: false,
