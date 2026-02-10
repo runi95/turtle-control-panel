@@ -1,10 +1,12 @@
-import { createServer } from "node:http";
 import next from "next";
+import Fastify from "fastify";
 import { Server } from "socket.io";
 import {
   addArea,
   deleteTurtle,
   getDashboard,
+  getTurtle,
+  getTurtlesByServerId,
   renameServer,
   upsertChunk,
 } from "./db";
@@ -34,11 +36,14 @@ import Database from "better-sqlite3";
 import { load } from "./loadAssets";
 import { WebSocketServer } from "ws";
 
-const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
 const port = 3000;
 // when using middleware `hostname` and `port` must be provided below
-const app = next({ dev, hostname, port });
+const app = next({
+  dev: process.env.NODE_ENV !== "production",
+  hostname,
+  port,
+});
 const handler = app.getRequestHandler();
 
 const endAutomataLocationRegex = new RegExp(
@@ -53,8 +58,107 @@ const startServer = async () => {
   await app.prepare();
   await load();
 
-  const httpServer = createServer(handler);
+  const fastify = Fastify({ logger: false });
 
+  fastify.get("/api/servers/:id/turtles/:turtleId", async (request, reply) => {
+    const { id, turtleId } = request.params as { id: string; turtleId: string };
+    const turtle = getOnlineTurtleById(Number(id), Number(turtleId));
+    if (turtle !== undefined) {
+      const {
+        name,
+        fuelLevel,
+        fuelLimit,
+        selectedSlot,
+        inventory,
+        stepsSinceLastRefuel,
+        state,
+        location,
+        direction,
+        peripherals,
+        home,
+        error,
+      } = turtle;
+      return {
+        id: turtleId,
+        serverId: id,
+        name,
+        isOnline: true,
+        fuelLevel,
+        fuelLimit,
+        selectedSlot,
+        inventory,
+        stepsSinceLastRefuel,
+        state: state?.data ?? null,
+        location,
+        direction,
+        peripherals,
+        home,
+        error,
+      };
+    }
+
+    const dbTurtle = getTurtle(Number(id), Number(turtleId));
+    if (dbTurtle === null) {
+      return reply.code(404).send("Not Found");
+    }
+
+    const {
+      name,
+      fuelLevel,
+      fuelLimit,
+      selectedSlot,
+      inventory,
+      stepsSinceLastRefuel,
+      state,
+      location,
+      direction,
+      home,
+    } = dbTurtle;
+    return {
+      id: turtleId,
+      serverId: id,
+      name,
+      isOnline: false,
+      fuelLevel,
+      fuelLimit,
+      selectedSlot,
+      inventory,
+      stepsSinceLastRefuel,
+      state,
+      location,
+      direction,
+      peripherals: null,
+      home,
+      error: null,
+    };
+  });
+
+  fastify.get("/api/servers/:id/turtles", (request, _reply) => {
+    const { id } = request.params as { id: string };
+    const turtles = getTurtlesByServerId(Number(id));
+
+    return turtles.map((turtle) => ({
+      ...turtle,
+      isOnline: getOnlineTurtleById(Number(id), turtle.id) == null,
+    }));
+  });
+
+  fastify.get("/api/servers", (_reqest, _reply) => ({
+    dashboard: getDashboard(),
+    onlineStatuses: getOnlineTurtles().map((turtle) => ({
+      serverId: turtle.serverId,
+      id: turtle.id,
+      isOnline: turtle.isOnline,
+    })),
+  }));
+
+  fastify.all("*", async (request, reply) => {
+    return handler(request.raw, reply.raw);
+  });
+
+  await fastify.ready();
+
+  const httpServer = fastify.server;
   const io = new Server(httpServer);
   const turtleWebsocketServer = new WebSocketServer({ port: turtleWssPort });
 
