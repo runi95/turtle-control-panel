@@ -226,13 +226,13 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
   const turtleRotation = (() => {
     switch (turtle.direction) {
       case Direction.North:
-        return 0;
-      case Direction.East:
         return Math.PI * 0.5;
+      case Direction.East:
+        return 0;
       case Direction.South:
-        return Math.PI;
-      case Direction.West:
         return 1.5 * Math.PI;
+      case Direction.West:
+        return Math.PI;
     }
   })();
 
