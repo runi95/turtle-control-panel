@@ -315,7 +315,10 @@ export class Turtle {
         }] has disconnected with code ${code} and message ${message?.toString() || "<none>"}`,
       );
       if (this.id) {
-        connectedTurtlesMap.delete(this.id);
+        if (this.serverId) {
+          const serverMap = connectedTurtlesMap.get(this.serverId);
+          serverMap?.delete(this.id);
+        }
         globalEventEmitter.emit("tdisconnect", {
           id: this.id,
           serverId: this.serverId,
@@ -329,7 +332,10 @@ export class Turtle {
         }] has disconnected with code ${code} and message ${message?.toString() || "<none>"}`,
       );
       if (this.id) {
-        connectedTurtlesMap.delete(this.id);
+        if (this.serverId) {
+          const serverMap = connectedTurtlesMap.get(this.serverId);
+          serverMap?.delete(this.id);
+        }
         this.isOnline = false;
         globalEventEmitter.emit("tdisconnect", {
           id: this.id,
