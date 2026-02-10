@@ -9,19 +9,12 @@ import {
   ShaderMaterial,
   Vector3,
 } from "three";
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-} from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo } from "react";
 import { fragmentShader } from "./shaders/fragmentShader";
 import { vertexShader } from "./shaders/vertexShader";
 import { useBlocks } from "../../../../hooks/useBlocks";
 import { WorldChunk } from "./world";
 import { useParams } from "next/navigation";
-import { Atlases } from "../../../../hooks/useAtlases";
 import { Blockstates } from "../../../../hooks/useBlockstates";
 import { Models } from "../../../../hooks/useModels";
 import { Textures } from "../../../../hooks/useTextures";
