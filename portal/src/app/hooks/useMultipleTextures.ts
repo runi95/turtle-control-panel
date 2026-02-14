@@ -1,65 +1,81 @@
 "use client";
 
-import { useQueries } from "@tanstack/react-query";
 import { ImageData } from "canvas";
+import { useEffect, useState } from "react";
 
 export type MultipleTexturesResult = {
-  isSuccess: boolean;
-  isLoading: boolean;
   smallTextures: Map<string, ImageData>;
   mediumTextures: Map<string, ImageData>;
   largeTextures: Map<string, ImageData>;
 };
 
-export const useMultipleTextures = (uniqueTextures: string[]) =>
-  useQueries({
-    queries: [...uniqueTextures].map((textureName) => ({
-      queryKey: ["textures", textureName],
-      queryFn: () =>
-        fetch(`/api/assets/textures/${textureName}`)
-          .then((res) => res.json() as Promise<ImageData>)
-          .then((texture) => ({
-            name: textureName,
-            texture,
-          })),
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-      refetchOnWindowFocus: false,
-      staleTime: Number.POSITIVE_INFINITY,
-    })),
-    combine: (results) =>
-      results.reduce<MultipleTexturesResult>(
-        (acc, curr) => {
-          if (curr.isLoading) {
-            acc.isLoading = true;
-            return acc;
-          }
-          if (!curr.isSuccess) return acc;
+const cache = new Map<string, ImageData>();
 
-          const { data } = curr;
-          if (data == null) return acc;
+export const useMultipleTextures = (uniqueTextures: string[]) => {
+  const [textures, setTextures] = useState<MultipleTexturesResult | null>(null);
 
-          const { texture } = data;
+  useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
+
+    const loadTextures = async () => {
+      try {
+        const results = await Promise.all(
+          uniqueTextures.map(async (name) => {
+            const cachedTexture = cache.get(name);
+            if (cachedTexture != null) {
+              return {
+                name,
+                texture: cachedTexture,
+              };
+            }
+
+            const res = await fetch(`/api/assets/textures/${name}`, {
+              signal: controller.signal,
+            });
+
+            if (!res.ok) throw new Error(`Failed to fetch texture ${name}`);
+
+            const texture = (await res.json()) as ImageData;
+            cache.set(name, texture);
+            return { name, texture };
+          }),
+        );
+
+        if (cancelled) return;
+
+        const smallTextures = new Map<string, ImageData>();
+        const mediumTextures = new Map<string, ImageData>();
+        const largeTextures = new Map<string, ImageData>();
+        for (const { name, texture } of results) {
           const { width, height } = texture;
           if (width === 16 && height === 16) {
-            acc.smallTextures.set(data.name, texture);
+            smallTextures.set(name, texture);
           } else if (width === 32 && height === 32) {
-            acc.mediumTextures.set(data.name, texture);
+            mediumTextures.set(name, texture);
           } else if (width === 64 && height === 64) {
-            acc.largeTextures.set(data.name, texture);
-          } else {
-            return acc;
+            largeTextures.set(name, texture);
           }
+        }
 
-          acc.isSuccess = true;
-          return acc;
-        },
-        {
-          isSuccess: false,
-          isLoading: false,
-          smallTextures: new Map<string, ImageData>(),
-          mediumTextures: new Map<string, ImageData>(),
-          largeTextures: new Map<string, ImageData>(),
-        },
-      ),
-  });
+        setTextures({
+          smallTextures,
+          mediumTextures,
+          largeTextures,
+        });
+      } catch (err: any) {
+        if (err?.name === "AbortError") return;
+        console.error(err);
+      }
+    };
+
+    loadTextures();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [uniqueTextures]);
+
+  return textures;
+};

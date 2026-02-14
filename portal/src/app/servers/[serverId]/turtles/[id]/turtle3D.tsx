@@ -56,12 +56,20 @@ function Turtle3D({
     [],
   );
 
-  const minimizedAtlas = useMinimizedAtlas(blockstates, models, {
-    [turtleBlockName]: {
-      name: turtleBlockName,
-      state: {},
-    },
-  });
+  const memoizedTurtleBlocks = useMemo(
+    () => ({
+      [turtleBlockName]: {
+        name: turtleBlockName,
+        state: {},
+      },
+    }),
+    [],
+  );
+  const minimizedAtlas = useMinimizedAtlas(
+    blockstates,
+    models,
+    memoizedTurtleBlocks,
+  );
   useEffect(() => {
     if (!minimizedAtlas) return;
     shaderMaterial.uniforms.diffuseMap.value = minimizedAtlas.atlasTexture;

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Blocks } from "../types/blocks";
 import { Model } from "../../server/loadAssets";
 import { Blockstates } from "./useBlockstates";
@@ -208,15 +208,13 @@ export const useMinimizedAtlas = (
   blocks?: Record<string, Omit<Block, "x" | "y" | "z" | "tags">>,
 ) => {
   const textureNames = useMemo(() => {
-    if (blocks == null) return null;
-    return collectTextureNames(blockstates, models, blocks);
+    if (blocks == null) return [];
+    return Array.from(collectTextureNames(blockstates, models, blocks));
   }, [blockstates, models, blocks]);
 
-  const multipleTextures = useMultipleTextures([...(textureNames ?? [])]);
+  const multipleTextures = useMultipleTextures(textureNames);
   return useMemo(() => {
     if (multipleTextures == null) return null;
-    if (!multipleTextures.isSuccess) return null;
-    if (multipleTextures.isLoading) return null;
 
     return createMinimizedAtlas(
       multipleTextures.smallTextures,
