@@ -32,7 +32,6 @@ import { useWebSocket } from "../../../../contexts/webSocketContext";
 import { useAtlases } from "../../../../hooks/useAtlases";
 import { useModels } from "../../../../hooks/useModels";
 import { useBlockstates } from "../../../../hooks/useBlockstates";
-import { useTextures } from "../../../../hooks/useTextures";
 import { Blocks } from "../../../../types/blocks";
 
 export enum WorldState {
@@ -176,7 +175,6 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
   const { data: atlases } = useAtlases();
   const { data: blockstates } = useBlockstates();
   const { data: models } = useModels();
-  const { data: textures } = useTextures();
 
   const location = turtle?.location ?? null;
   const chunks = useMemo(() => {
@@ -217,7 +215,6 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
   if (atlases == null) return null;
   if (blockstates == null) return null;
   if (models == null) return null;
-  if (textures == null) return null;
   if (turtle == null) return null;
 
   const turtleRotation = (() => {
@@ -247,11 +244,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
           />
         </Suspense>
       ) : null}
-      <OtherTurtles
-        blockstates={blockstates}
-        models={models}
-        textures={textures}
-      />
+      <OtherTurtles blockstates={blockstates} models={models} />
       <instancedMesh
         ref={indicatorMeshRef}
         args={[undefined, undefined, 1]}
@@ -818,19 +811,16 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
             rotation={[0, turtleRotation, 0]}
             blockstates={blockstates}
             models={models}
-            textures={textures}
           />
           <BuildBlock
             ref={buildBlockRef}
             blockstates={blockstates}
             models={models}
-            textures={textures}
           />
           <SchemaPlacer
             ref={schemaPlacerRef}
             blockstates={blockstates}
             models={models}
-            textures={textures}
           />
           <group
             position={[
@@ -851,7 +841,6 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                 chunk={chunk}
                 blockstates={blockstates}
                 models={models}
-                textures={textures}
               />
             ))}
           </group>

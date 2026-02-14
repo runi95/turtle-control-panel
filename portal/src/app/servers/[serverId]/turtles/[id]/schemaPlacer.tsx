@@ -21,7 +21,6 @@ import { fragmentShader } from "./shaders/fragmentShader";
 import { vertexShader } from "./shaders/vertexShader";
 import { Blockstates } from "../../../../hooks/useBlockstates";
 import { Models } from "../../../../hooks/useModels";
-import { Textures } from "../../../../hooks/useTextures";
 import { useMinimizedAtlas } from "../../../../hooks/useMinimizedAtlas";
 import { Blocks } from "../../../../types/blocks";
 import { BuildMeshDataFromVoxels, Cell } from "./helpers";
@@ -76,7 +75,6 @@ export const blockNameOverride = (blockName: string) => {
 interface Props {
   blockstates: Blockstates;
   models: Models;
-  textures: Textures;
 }
 
 export type SchemaPlacerHandle = {
@@ -90,7 +88,7 @@ export type SchemaPlacerHandle = {
 };
 
 const SchemaPlacer = forwardRef<SchemaPlacerHandle, Props>(
-  function SchemaPlacer({ blockstates, models, textures }, ref) {
+  function SchemaPlacer({ blockstates, models }, ref) {
     const meshRef = useRef<Mesh>(null!);
     const shaderMaterial = useMemo(
       () =>
@@ -117,12 +115,7 @@ const SchemaPlacer = forwardRef<SchemaPlacerHandle, Props>(
       [],
     );
     const [schema, setSchema] = useState<Blocks | undefined>(undefined);
-    const minimizedAtlas = useMinimizedAtlas(
-      blockstates,
-      textures,
-      models,
-      schema,
-    );
+    const minimizedAtlas = useMinimizedAtlas(blockstates, models, schema);
     useEffect(() => {
       if (!minimizedAtlas) return;
       shaderMaterial.uniforms.diffuseMap.value = minimizedAtlas.atlasTexture;

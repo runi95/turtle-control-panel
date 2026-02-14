@@ -12,6 +12,9 @@ import {
   UnsignedByteType,
 } from "three";
 import { Models } from "./useModels";
+import { useMultipleTextures } from "./useMultipleTextures";
+import { ImageData } from "canvas";
+import { Block } from "../types/block";
 
 const LAYER_W = 64;
 const LAYER_H = 64;
@@ -47,15 +50,19 @@ const writeTile = (
   }
 };
 
-export const createMinimizedAtlas = (
+const collectTextureNames = (
   blockstates: Blockstates,
-  textures: Textures,
   models: Models,
-  uniqueBlocks: Set<string>,
+  blocks: Record<string, Omit<Block, "x" | "y" | "z" | "tags">>,
 ) => {
-  const smallTextures = new Map<string, Uint8ClampedArray<ArrayBufferLike>>();
-  const mediumTextures = new Map<string, Uint8ClampedArray<ArrayBufferLike>>();
-  const largeTextures = new Map<string, Uint8ClampedArray<ArrayBufferLike>>();
+  const blockKeys = Object.keys(blocks);
+  const uniqueBlocks = blockKeys.reduce((acc, curr) => {
+    const block = blocks[curr];
+    acc.add(block.name);
+    return acc;
+  }, new Set<string>());
+
+  const uniqueTextureNames = new Set<string>();
   const collectTextures = (model: Model, noNamespace?: boolean) => {
     const { textures: modelTextures } = model;
     if (modelTextures != null) {
@@ -63,29 +70,11 @@ export const createMinimizedAtlas = (
         if (texture.startsWith("#")) continue;
 
         const textureNamespaceSplit = texture.split(":");
-        const imageData =
-          textures[
-            textureNamespaceSplit.length > 1 || noNamespace
-              ? texture
-              : `minecraft:${texture}`
-          ];
-        if (imageData == null) {
-          console.log(`Unable to find texture for ${texture}`);
-          continue;
-        }
-
-        if (imageData.height === 16 && imageData.width === 16) {
-          if (smallTextures.has(texture)) continue;
-          smallTextures.set(texture, imageData.data);
-        } else if (imageData.height === 32 && imageData.width === 32) {
-          if (mediumTextures.has(texture)) continue;
-          mediumTextures.set(texture, imageData.data);
-        } else if (imageData.height === 64 && imageData.width === 64) {
-          if (largeTextures.has(texture)) continue;
-          largeTextures.set(texture, imageData.data);
-        } else {
-          continue;
-        }
+        uniqueTextureNames.add(
+          textureNamespaceSplit.length > 1 || noNamespace
+            ? texture
+            : `minecraft:${texture}`,
+        );
       }
     }
 
@@ -145,6 +134,14 @@ export const createMinimizedAtlas = (
     }
   }
 
+  return uniqueTextureNames;
+};
+
+export const createMinimizedAtlas = (
+  smallTextures: Map<string, ImageData>,
+  mediumTextures: Map<string, ImageData>,
+  largeTextures: Map<string, ImageData>,
+) => {
   const textureInfoMap: Record<string, TextureInfo> = {};
 
   const depth =
@@ -160,7 +157,7 @@ export const createMinimizedAtlas = (
     for (let j = 0; j < 16 && i + j < smallEntries.length; j++) {
       const [key, tex] = smallEntries[i + j];
       textureInfoMap[key] = { layer, offset: j, tileSize: 16 };
-      writeTile(newUintArray, layer, j, tex, 16);
+      writeTile(newUintArray, layer, j, tex.data, 16);
     }
     layer++;
   }
@@ -170,7 +167,7 @@ export const createMinimizedAtlas = (
     for (let j = 0; j < 4 && i + j < mediumEntries.length; j++) {
       const [key, tex] = mediumEntries[i + j];
       textureInfoMap[key] = { layer, offset: j, tileSize: 32 };
-      writeTile(newUintArray, layer, j, tex, 32);
+      writeTile(newUintArray, layer, j, tex.data, 32);
     }
     layer++;
   }
@@ -179,7 +176,7 @@ export const createMinimizedAtlas = (
   for (let i = 0; i < largeEntries.length; i++) {
     const [key, tex] = largeEntries[i];
     textureInfoMap[key] = { layer, offset: 0, tileSize: 64 };
-    newUintArray.set(tex, layer * BYTES_PER_LAYER);
+    newUintArray.set(tex.data, layer * BYTES_PER_LAYER);
     layer++;
   }
 
@@ -207,21 +204,24 @@ export const createMinimizedAtlas = (
 
 export const useMinimizedAtlas = (
   blockstates: Blockstates,
-  textures: Textures,
   models: Models,
-  blocks?: Blocks,
-) =>
-  useMemo(() => {
+  blocks?: Record<string, Omit<Block, "x" | "y" | "z" | "tags">>,
+) => {
+  const textureNames = useMemo(() => {
     if (blocks == null) return null;
+    return collectTextureNames(blockstates, models, blocks);
+  }, [blockstates, models, blocks]);
 
-    const blockKeys = Object.keys(blocks);
-    if (blockKeys.length < 1) return null;
+  const multipleTextures = useMultipleTextures([...(textureNames ?? [])]);
+  return useMemo(() => {
+    if (multipleTextures == null) return null;
+    if (!multipleTextures.isSuccess) return null;
+    if (multipleTextures.isLoading) return null;
 
-    const uniqueBlocks = blockKeys.reduce((acc, curr) => {
-      const block = blocks[curr];
-      acc.add(block.name);
-      return acc;
-    }, new Set<string>());
-
-    return createMinimizedAtlas(blockstates, textures, models, uniqueBlocks);
-  }, [blockstates, textures, models, blocks]);
+    return createMinimizedAtlas(
+      multipleTextures.smallTextures,
+      multipleTextures.mediumTextures,
+      multipleTextures.largeTextures,
+    );
+  }, [multipleTextures]);
+};

@@ -155,7 +155,15 @@ export class ModelFaceBuilder {
       return undefined;
     }
 
-    const textureIndex = this.textureInfoMap[texture];
+    let fullTextureName = texture;
+    if (texture !== "unknown") {
+      const textureNamespaceSplit = texture.split(":");
+      if (textureNamespaceSplit.length < 2) {
+        fullTextureName = `minecraft:${fullTextureName}`;
+      }
+    }
+
+    const textureIndex = this.textureInfoMap[fullTextureName];
     if (textureIndex == null) {
       console.log(
         `Texture index does not exist for ${texture} on ${blockName}`,

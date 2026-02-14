@@ -6,15 +6,13 @@ import Turtle3D from "./turtle3D";
 import { useParams } from "next/navigation";
 import { Blockstates } from "../../../../hooks/useBlockstates";
 import { Models } from "../../../../hooks/useModels";
-import { Textures } from "../../../../hooks/useTextures";
 
 export type Props = {
   blockstates: Blockstates;
   models: Models;
-  textures: Textures;
 };
 
-const OtherTurtles = ({ blockstates, models, textures }: Props) => {
+const OtherTurtles = ({ blockstates, models }: Props) => {
   const { serverId, id } = useParams<{
     serverId: string;
     id: string;
@@ -84,7 +82,6 @@ const OtherTurtles = ({ blockstates, models, textures }: Props) => {
           name={otherTurtle.name}
           blockstates={blockstates}
           models={models}
-          textures={textures}
         />
       </group>
     );

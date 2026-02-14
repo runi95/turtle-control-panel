@@ -1,5 +1,3 @@
 import { Block } from "./block";
 
-export interface Blocks {
-  [key: string]: Block;
-}
+export type Blocks = Record<string, Block>;

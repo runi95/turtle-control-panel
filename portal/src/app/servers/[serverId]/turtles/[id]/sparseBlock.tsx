@@ -17,7 +17,6 @@ import { WorldChunk } from "./world";
 import { useParams } from "next/navigation";
 import { Blockstates } from "../../../../hooks/useBlockstates";
 import { Models } from "../../../../hooks/useModels";
-import { Textures } from "../../../../hooks/useTextures";
 import { Rebuild } from "./helpers";
 import { useMinimizedAtlas } from "../../../../hooks/useMinimizedAtlas";
 
@@ -26,7 +25,6 @@ interface Props {
   chunk: WorldChunk;
   blockstates: Blockstates;
   models: Models;
-  textures: Textures;
 }
 
 export type SparseBlockHandle = {
@@ -40,7 +38,7 @@ export type SparseBlockHandle = {
 };
 
 const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
-  { dimensions, chunk, blockstates, models, textures },
+  { dimensions, chunk, blockstates, models },
   ref,
 ) {
   const { x: chunkX, y: chunkY, z: chunkZ, offsetX, offsetY, offsetZ } = chunk;
@@ -85,12 +83,7 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
     [],
   );
 
-  const minimizedAtlas = useMinimizedAtlas(
-    blockstates,
-    textures,
-    models,
-    blocks,
-  );
+  const minimizedAtlas = useMinimizedAtlas(blockstates, models, blocks);
   useEffect(() => {
     if (!minimizedAtlas) return;
     shaderMaterial.uniforms.diffuseMap.value = minimizedAtlas.atlasTexture;

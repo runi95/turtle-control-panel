@@ -12,17 +12,15 @@ import { fragmentShader } from "./shaders/fragmentShader";
 import { vertexShader } from "./shaders/vertexShader";
 import NameTag from "./nameTag";
 import { ThreeElements } from "@react-three/fiber";
-import { createMinimizedAtlas } from "../../../../hooks/useMinimizedAtlas";
+import { useMinimizedAtlas } from "../../../../hooks/useMinimizedAtlas";
 import { Blockstates } from "../../../../hooks/useBlockstates";
 import { Models } from "../../../../hooks/useModels";
-import { Textures } from "../../../../hooks/useTextures";
 import { BuildMeshDataFromVoxels, Cell } from "./helpers";
 
 type Props = {
   name: string;
   blockstates: Blockstates;
   models: Models;
-  textures: Textures;
 };
 
 const turtleBlockName = "computercraft:turtle_advanced";
@@ -31,7 +29,6 @@ function Turtle3D({
   name,
   blockstates,
   models,
-  textures,
   ...meshProps
 }: Props & ThreeElements["mesh"]) {
   const shaderMaterial = useMemo(
@@ -59,14 +56,12 @@ function Turtle3D({
     [],
   );
 
-  const minimizedAtlas = useMemo(() => {
-    return createMinimizedAtlas(
-      blockstates,
-      textures,
-      models,
-      new Set<string>([turtleBlockName]),
-    );
-  }, []);
+  const minimizedAtlas = useMinimizedAtlas(blockstates, models, {
+    [turtleBlockName]: {
+      name: turtleBlockName,
+      state: {},
+    },
+  });
   useEffect(() => {
     if (!minimizedAtlas) return;
     shaderMaterial.uniforms.diffuseMap.value = minimizedAtlas.atlasTexture;

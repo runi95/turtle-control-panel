@@ -23,14 +23,12 @@ import { Rebuild } from "./helpers";
 import { Block } from "../../../../types/block";
 import { Blockstates } from "../../../../hooks/useBlockstates";
 import { Models } from "../../../../hooks/useModels";
-import { Textures } from "../../../../hooks/useTextures";
 import { useMinimizedAtlas } from "../../../../hooks/useMinimizedAtlas";
 import { Blocks } from "../../../../types/blocks";
 
 interface Props {
   blockstates: Blockstates;
   models: Models;
-  textures: Textures;
 }
 
 export type BuildBlockHandle = {
@@ -40,7 +38,7 @@ export type BuildBlockHandle = {
 };
 
 const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock(
-  { blockstates, models, textures },
+  { blockstates, models },
   ref,
 ) {
   const meshRef = useRef<Mesh>(null!);
@@ -70,12 +68,7 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock(
   );
 
   const [blocks, setBlocks] = useState<Blocks | undefined>(undefined);
-  const minimizedAtlas = useMinimizedAtlas(
-    blockstates,
-    textures,
-    models,
-    blocks,
-  );
+  const minimizedAtlas = useMinimizedAtlas(blockstates, models, blocks);
   useEffect(() => {
     if (minimizedAtlas == null) return;
     shaderMaterial.uniforms.diffuseMap.value = minimizedAtlas.atlasTexture;
