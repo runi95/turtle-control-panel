@@ -5,7 +5,6 @@ precision mediump sampler2DArray;
 #define saturate(a) clamp( a, 0.0, 1.0 )
 
 uniform float fade;
-uniform float flow;
 
 uniform sampler2DArray diffuseMap;
 uniform sampler2D noiseMap;

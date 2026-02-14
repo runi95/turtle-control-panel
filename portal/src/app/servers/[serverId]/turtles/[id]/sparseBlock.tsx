@@ -78,9 +78,6 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
           fade: {
             value: 1.0,
           },
-          flow: {
-            value: 0.0,
-          },
           selectionColor: { value: new Color("#4287f5").convertSRGBToLinear() },
           selectionStrength: { value: 0.5 },
         },
