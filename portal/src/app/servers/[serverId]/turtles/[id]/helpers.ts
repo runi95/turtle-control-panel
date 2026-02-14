@@ -97,7 +97,6 @@ type CellMesh = {
   colors: Float32Array;
   indices: Uint32Array;
   locationIndices: Uint32Array;
-  locations: Float32Array;
   cellToIndexMap: Map<string, number[]>;
 };
 
@@ -133,7 +132,6 @@ export const BuildMeshDataFromVoxels = (
     colors: number[];
     indices: number[];
     locationIndices: number[];
-    locations: number[];
   } = {
     positions: [],
     uvs: [],
@@ -142,7 +140,6 @@ export const BuildMeshDataFromVoxels = (
     colors: [],
     indices: [],
     locationIndices: [],
-    locations: [],
   };
 
   const modelFaceBuilder = new ModelFaceBuilder(
@@ -158,30 +155,33 @@ export const BuildMeshDataFromVoxels = (
   const blockBuilder = new BlockBuilder(blockstates, modelBuilder);
 
   const cellToIndexMap = new Map<string, number[]>();
-  let locationIndex = 0;
   for (const [key, cell] of cells) {
     // if (!cell.visible) continue;
 
+    const prevVertexCount = mesh.positions.length / 3;
     const prevFaceCount = modelFaceBuilder.getFaceCount();
-    mesh.locations.push(cell.position[0], cell.position[1], cell.position[2]);
-
     const prevPositionsLength = mesh.positions.length;
     blockBuilder.buildBlock(cell.type, cell.state);
 
     const newPositionsLength = mesh.positions.length;
+    const [x, y, z] = cell.position;
     for (let i = prevPositionsLength; i < newPositionsLength; i += 3) {
-      mesh.positions[i] += cell.position[0];
-      mesh.positions[i + 1] += cell.position[1];
-      mesh.positions[i + 2] += cell.position[2];
+      mesh.positions[i] += x;
+      mesh.positions[i + 1] += y;
+      mesh.positions[i + 2] += z;
+    }
+
+    const newVertexCount = mesh.positions.length / 3;
+    const locationIndex = z * 256 + y * 16 + x;
+    for (let i = prevVertexCount; i < newVertexCount; i++) {
+      mesh.locationIndices.push(locationIndex);
     }
 
     const newFaceCount = modelFaceBuilder.getFaceCount();
     const indexes: number[] = [];
     for (let i = prevFaceCount; i < newFaceCount; i++) {
-      indexes.push(prevFaceCount);
-      mesh.locationIndices.push(locationIndex, locationIndex);
+      indexes.push(i);
     }
-    locationIndex++;
     cellToIndexMap.set(key, indexes);
   }
 
@@ -193,7 +193,6 @@ export const BuildMeshDataFromVoxels = (
     colors: numbersToFloat32Array(mesh.colors),
     indices: numbersToUint32Array(mesh.indices),
     locationIndices: numbersToUint32Array(mesh.locationIndices),
-    locations: numbersToFloat32Array(mesh.locations),
     cellToIndexMap,
   };
 };

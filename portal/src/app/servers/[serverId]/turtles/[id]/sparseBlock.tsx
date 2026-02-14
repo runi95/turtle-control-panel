@@ -129,10 +129,6 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
       "locationIndex",
       new BufferAttribute(build.locationIndices, 1),
     );
-    geometry.setAttribute(
-      "location",
-      new Float32BufferAttribute(build.locations, 3),
-    );
     geometry.setIndex(new BufferAttribute(build.indices, 1));
 
     geometry.attributes.position.needsUpdate = true;
@@ -193,6 +189,8 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
     };
   }, [geometry, cellToIndexMap]);
 
+  if (geometry == null) return null;
+
   return (
     <mesh
       key="main-mesh"
@@ -203,6 +201,13 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
       userData={{
         isBlocks: false,
         isTurtle: false,
+        isChunkMesh: true,
+        chunkX,
+        chunkY,
+        chunkZ,
+        offsetX,
+        offsetY,
+        offsetZ,
       }}
       receiveShadow
     />

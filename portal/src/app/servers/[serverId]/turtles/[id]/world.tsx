@@ -289,7 +289,6 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                 intersection.object?.userData?.isSchema !== true,
             );
             if (intersection?.faceIndex == null) return;
-            // if (intersection.faceIndex === previousFaceIndex.current) return;
             const schema = schemaPlacerRef.current.getSchema();
             if (previousFaceIndex.current === null) {
               if (schema != null) {
@@ -302,15 +301,27 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
 
             previousFaceIndex.current = intersection.faceIndex ?? null;
 
-            const locationIndex = (intersection.object as Mesh)?.geometry
-              ?.attributes.locationIndex?.array?.[intersection.faceIndex];
+            const intersectionObject = intersection.object as Mesh;
+            if (intersectionObject == null) return;
+
+            const geom = intersectionObject.geometry;
+            const idxAttr = geom.index;
+            if (idxAttr == null || idxAttr.array == null) return;
+
+            const idxArray = idxAttr.array as ArrayLike<number>;
+            const tri = intersection.faceIndex;
+            const a = idxArray[tri * 3];
+
+            const locAttr = geom.attributes?.locationIndex;
+            if (locAttr == null || locAttr.array == null) return;
+
+            const locArray = locAttr.array as ArrayLike<number>;
+            const locationIndex = locArray[a];
             if (locationIndex == null) return;
-            let x = (intersection.object as Mesh).geometry.attributes.location
-              .array[3 * locationIndex];
-            let y = (intersection.object as Mesh).geometry.attributes.location
-              .array[3 * locationIndex + 1];
-            let z = (intersection.object as Mesh).geometry.attributes.location
-              .array[3 * locationIndex + 2];
+
+            let x = locationIndex % 16;
+            let y = Math.floor(locationIndex / 16) % 16;
+            let z = Math.floor(locationIndex / 256);
 
             switch (worldStateRef.current) {
               case WorldState.MOVE:
@@ -321,9 +332,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                   const absY = Math.abs(intersection.face.normal.y);
                   const absZ = Math.abs(intersection.face.normal.z);
 
-                  if (
-                    (intersection.object as Mesh).userData?.isTurtle === true
-                  ) {
+                  if (intersectionObject.userData?.isTurtle === true) {
                     if (absX > absZ && absX > absZ) {
                       if (intersection.face.normal.x > 0) {
                         switch (turtleRotationRef.current) {
@@ -421,17 +430,17 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
             }
 
             if (
-              (intersection.object as Mesh).userData?.isBlocks !== true &&
-              (intersection.object as Mesh).userData?.isTurtle !== true
+              intersectionObject.userData?.isBlocks !== true &&
+              intersectionObject.userData?.isTurtle !== true
             ) {
               x +=
-                (intersection.object as Mesh).position.x -
+                intersectionObject.position.x -
                 mathematicalModulo(turtle.location.x, cellDimensions.x);
               y +=
-                (intersection.object as Mesh).position.y -
+                intersectionObject.position.y -
                 mathematicalModulo(turtle.location.y, cellDimensions.y);
               z +=
-                (intersection.object as Mesh).position.z -
+                intersectionObject.position.z -
                 mathematicalModulo(turtle.location.z, cellDimensions.z);
             }
 
@@ -462,15 +471,27 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
             );
             if (intersection?.faceIndex == null) return;
 
-            const locationIndex = (intersection.object as Mesh)?.geometry
-              ?.attributes?.locationIndex?.array?.[intersection.faceIndex];
+            const intersectionObject = intersection.object as Mesh;
+            if (intersectionObject == null) return;
+
+            const geom = intersectionObject.geometry;
+            const idxAttr = geom.index;
+            if (idxAttr == null || idxAttr.array == null) return;
+
+            const idxArray = idxAttr.array as ArrayLike<number>;
+            const tri = intersection.faceIndex;
+            const a = idxArray[tri * 3];
+
+            const locAttr = geom.attributes?.locationIndex;
+            if (locAttr == null || locAttr.array == null) return;
+
+            const locArray = locAttr.array as ArrayLike<number>;
+            const locationIndex = locArray[a];
             if (locationIndex == null) return;
-            let x = (intersection.object as Mesh).geometry.attributes.location
-              .array[3 * locationIndex];
-            let y = (intersection.object as Mesh).geometry.attributes.location
-              .array[3 * locationIndex + 1];
-            let z = (intersection.object as Mesh).geometry.attributes.location
-              .array[3 * locationIndex + 2];
+
+            let x = locationIndex % 16;
+            let y = Math.floor(locationIndex / 16) % 16;
+            let z = Math.floor(locationIndex / 256);
 
             switch (worldStateRef.current) {
               case WorldState.MOVE:
@@ -481,9 +502,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                   const absY = Math.abs(intersection.face.normal.y);
                   const absZ = Math.abs(intersection.face.normal.z);
 
-                  if (
-                    (intersection.object as Mesh).userData?.isTurtle === true
-                  ) {
+                  if (intersectionObject.userData?.isTurtle === true) {
                     if (absX > absZ && absX > absZ) {
                       if (intersection.face.normal.x > 0) {
                         switch (turtleRotationRef.current) {
@@ -581,17 +600,17 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
             }
 
             if (
-              (intersection.object as Mesh).userData?.isBlocks !== true &&
-              (intersection.object as Mesh).userData?.isTurtle !== true
+              intersectionObject.userData?.isBlocks !== true &&
+              intersectionObject.userData?.isTurtle !== true
             ) {
               x +=
-                (intersection.object as Mesh).position.x -
+                intersectionObject.position.x -
                 mathematicalModulo(turtle.location.x, cellDimensions.x);
               y +=
-                (intersection.object as Mesh).position.y -
+                intersectionObject.position.y -
                 mathematicalModulo(turtle.location.y, cellDimensions.y);
               z +=
-                (intersection.object as Mesh).position.z -
+                intersectionObject.position.z -
                 mathematicalModulo(turtle.location.z, cellDimensions.z);
             }
 

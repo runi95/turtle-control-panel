@@ -20,7 +20,6 @@ function Turtle3DMap(props: Props) {
       }}
       camera={{
         fov: 60,
-        aspect: 1920 / 1080,
         near: 0.5,
         far: 10000.0,
         position: [15, 50, 15],
