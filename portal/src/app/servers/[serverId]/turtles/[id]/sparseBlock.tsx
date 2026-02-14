@@ -30,8 +30,13 @@ interface Props {
 }
 
 export type SparseBlockHandle = {
-  setBlockColor: (x: number, y: number, z: number, color: Color) => void;
-  setChunkColor: (color: Color) => void;
+  setBlockSelected: (
+    x: number,
+    y: number,
+    z: number,
+    isSelected: boolean,
+  ) => void;
+  setChunkSelected: (isSelected: boolean) => void;
 };
 
 const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
@@ -76,6 +81,8 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
           flow: {
             value: 0.0,
           },
+          selectionColor: { value: new Color("#4287f5").convertSRGBToLinear() },
+          selectionStrength: { value: 0.5 },
         },
         vertexShader,
         fragmentShader,
@@ -129,6 +136,13 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
       "locationIndex",
       new BufferAttribute(build.locationIndices, 1),
     );
+    geometry.setAttribute(
+      "selected",
+      new Float32BufferAttribute(
+        new Float32Array(geometry.attributes.position.count),
+        1,
+      ),
+    );
     geometry.setIndex(new BufferAttribute(build.indices, 1));
 
     geometry.attributes.position.needsUpdate = true;
@@ -152,39 +166,33 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
 
   useImperativeHandle(ref, () => {
     return {
-      setBlockColor(x: number, y: number, z: number, color: Color) {
-        if (geometry == null) return;
-
+      setBlockSelected(x: number, y: number, z: number, isSelected: boolean) {
+        if (!geometry) return;
         const cell = cellToIndexMap?.get(`${x},${y},${z}`);
-        if (cell == null) return;
+        if (!cell) return;
+
+        const sel = geometry.attributes.selected.array as Float32Array;
+        const v = isSelected ? 1 : 0;
 
         for (const cellIndex of cell) {
-          for (let i = 0; i < 4; i++) {
-            geometry.attributes.color.array[12 * cellIndex + 3 * i] = color.r;
-            geometry.attributes.color.array[12 * cellIndex + 3 * i + 1] =
-              color.g;
-            geometry.attributes.color.array[12 * cellIndex + 3 * i + 2] =
-              color.b;
-          }
+          const base = 4 * cellIndex; // 4 vertices per quad
+          sel[base + 0] = v;
+          sel[base + 1] = v;
+          sel[base + 2] = v;
+          sel[base + 3] = v;
         }
 
-        geometry.attributes.color.needsUpdate = true;
+        geometry.attributes.selected.needsUpdate = true;
       },
-      setChunkColor(color: Color) {
+      setChunkSelected(isSelected: boolean) {
         if (geometry == null) return;
 
-        for (let i = 0; i < geometry.attributes.color.array.length; i++) {
-          const mod = i % 3;
-          if (mod === 0) {
-            geometry.attributes.color.array[i] = color.r;
-          } else if (mod === 1) {
-            geometry.attributes.color.array[i] = color.g;
-          } else {
-            geometry.attributes.color.array[i] = color.b;
-          }
+        const v = isSelected ? 1 : 0;
+        for (let i = 0; i < geometry.attributes.selected.array.length; i++) {
+          geometry.attributes.selected.array[i] = v;
         }
 
-        geometry.attributes.color.needsUpdate = true;
+        geometry.attributes.selected.needsUpdate = true;
       },
     };
   }, [geometry, cellToIndexMap]);

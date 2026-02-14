@@ -7,12 +7,14 @@ precision mediump float;
 // attribute vec2 uv;
 attribute vec3 color;
 attribute float uvSlice;
+attribute float selected;
 
 // Outputs
 varying vec3 vNormal;
 varying vec3 vColor;
 varying vec3 vWorldPosition;
 varying vec3 vUV;
+varying float vSelected;
 
 #define saturate(a) clamp( a, 0.0, 1.0 )
 
@@ -23,5 +25,6 @@ void main(){
   vColor = color;
   vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
   vUV = vec3(uv, uvSlice);
+  vSelected = selected;
 }
 `;

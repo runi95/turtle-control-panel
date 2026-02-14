@@ -10,10 +10,14 @@ uniform float flow;
 uniform sampler2DArray diffuseMap;
 uniform sampler2D noiseMap;
 
+uniform vec3 selectionColor;
+uniform float selectionStrength;
+
 varying vec3 vUV;
 varying vec3 vNormal;
 varying vec3 vColor;
 varying vec3 vWorldPosition;
+varying float vSelected;
 
 void main() {
   vec4 diffuse = texture2D(diffuseMap, vUV);
@@ -22,6 +26,7 @@ void main() {
   vec3 hemiLight1 = vec3(1.0, 1.0, 1.0);
   vec3 hemiLight2 = vec3(0.5, 0.1, 0.5);
   vec3 sunLightDir = normalize(vec3(0.1, 1.0, 0.0));
+
   vec3 lighting = saturate(dot(vNormal, sunLightDir)) * 0.25 + vColor * 1.0;
   vec4 outColor = vec4(diffuse.xyz * lighting, 0.75 * fade);
 
@@ -33,6 +38,10 @@ void main() {
 
   vec4 noisePixel = texture2D(noiseMap, noiseCoords / 64.0) * 0.2 + 0.8;
   outColor.xyz *= noisePixel.xyz;
+
+  float sel = saturate(vSelected);
+  float amount = sel * selectionStrength;
+  outColor.xyz = mix(outColor.xyz, selectionColor, amount);
 
   gl_FragColor = outColor;
   #include <colorspace_fragment>

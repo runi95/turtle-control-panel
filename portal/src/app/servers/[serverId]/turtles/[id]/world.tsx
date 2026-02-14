@@ -125,9 +125,6 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
             indicatorMeshRef.current.visible = false;
             indicatorMeshVisibleRef.current = false;
             if (selectedBlocks.current.size > 0) {
-              tempColor.set(0xffffff);
-              tempColor.convertSRGBToLinear();
-
               const locations = Array.from(selectedBlocks.current.values());
               for (const location of locations) {
                 const { x, y, z } = location;
@@ -141,7 +138,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                     chunk.z === chunkZ,
                 );
                 if (chunkIndex === -1) continue;
-                chunkRefs.current[chunkIndex].setBlockColor(x, y, z, tempColor);
+                chunkRefs.current[chunkIndex].setBlockSelected(x, y, z, false);
               }
             }
 
@@ -686,25 +683,19 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                       y: ky,
                       z: kz,
                     });
-                    tempColor.set("#4287f5");
-                    tempColor.convertSRGBToLinear();
-
-                    chunkRefs.current[chunkIndex].setBlockColor(
+                    chunkRefs.current[chunkIndex].setBlockSelected(
                       kx,
                       ky,
                       kz,
-                      tempColor,
+                      true,
                     );
                   } else {
                     selectedBlocks.current.delete(key);
-                    tempColor.set(0xffffff);
-                    tempColor.convertSRGBToLinear();
-
-                    chunkRefs.current[chunkIndex].setBlockColor(
+                    chunkRefs.current[chunkIndex].setBlockSelected(
                       kx,
                       ky,
                       kz,
-                      tempColor,
+                      false,
                     );
                   }
                 })();
@@ -743,10 +734,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         }
                       }
                     }
-                    tempColor.set("#4287f5");
-                    tempColor.convertSRGBToLinear();
-
-                    chunkRefs.current[chunkIndex].setChunkColor(tempColor);
+                    chunkRefs.current[chunkIndex].setChunkSelected(true);
                   } else {
                     const chunk = chunks[chunkIndex];
                     for (let x = 0; x < cellDimensions.x; x++) {
@@ -759,11 +747,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         }
                       }
                     }
-
-                    tempColor.set(0xffffff);
-                    tempColor.convertSRGBToLinear();
-
-                    chunkRefs.current[chunkIndex].setChunkColor(tempColor);
+                    chunkRefs.current[chunkIndex].setChunkSelected(false);
                   }
                 })();
                 break;
@@ -790,8 +774,6 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                       y: ky,
                       z: kz,
                     });
-                    tempColor.set("#4287f5");
-                    tempColor.convertSRGBToLinear();
 
                     filteredChunks.forEach(({ chunk, i: chunkIndex }) => {
                       for (let x = 0; x < cellDimensions.x; x++) {
@@ -808,12 +790,9 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                           }
                         }
                       }
-                      chunkRefs.current[chunkIndex].setChunkColor(tempColor);
+                      chunkRefs.current[chunkIndex].setChunkSelected(true);
                     });
                   } else {
-                    tempColor.set(0xffffff);
-                    tempColor.convertSRGBToLinear();
-
                     filteredChunks.forEach(({ chunk, i: chunkIndex }) => {
                       for (let x = 0; x < cellDimensions.x; x++) {
                         for (let y = 0; y < cellDimensions.y; y++) {
@@ -826,7 +805,7 @@ const World = forwardRef<WorldHandle, Props>(function World(props: Props, ref) {
                         }
                       }
 
-                      chunkRefs.current[chunkIndex].setChunkColor(tempColor);
+                      chunkRefs.current[chunkIndex].setChunkSelected(false);
                     });
                   }
                 })();
