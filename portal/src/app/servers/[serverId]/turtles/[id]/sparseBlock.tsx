@@ -72,9 +72,6 @@ const SparseBlock = forwardRef<SparseBlockHandle, Props>(function SparseBlock(
           diffuseMap: {
             value: null,
           },
-          noiseMap: {
-            value: null,
-          },
           fade: {
             value: 1.0,
           },

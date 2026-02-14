@@ -7,7 +7,6 @@ precision mediump sampler2DArray;
 uniform float fade;
 
 uniform sampler2DArray diffuseMap;
-uniform sampler2D noiseMap;
 
 uniform vec3 selectionColor;
 uniform float selectionStrength;
@@ -28,15 +27,6 @@ void main() {
 
   vec3 lighting = saturate(dot(vNormal, sunLightDir)) * 0.25 + vColor * 1.0;
   vec4 outColor = vec4(diffuse.xyz * lighting, 0.75 * fade);
-
-  vec3 noiseDir = abs(vNormal);
-  vec2 noiseCoords = (
-      noiseDir.x * vWorldPosition.yz +
-      noiseDir.y * vWorldPosition.xz +
-      noiseDir.z * vWorldPosition.xy);
-
-  vec4 noisePixel = texture2D(noiseMap, noiseCoords / 64.0) * 0.2 + 0.8;
-  outColor.xyz *= noisePixel.xyz;
 
   float sel = saturate(vSelected);
   float amount = sel * selectionStrength;
