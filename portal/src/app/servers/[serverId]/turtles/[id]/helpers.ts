@@ -178,7 +178,7 @@ export const BuildMeshDataFromVoxels = (
     const newFaceCount = modelFaceBuilder.getFaceCount();
     const indexes: number[] = [];
     for (let i = prevFaceCount; i < newFaceCount; i++) {
-      indexes.push(prevFaceCount + i);
+      indexes.push(prevFaceCount);
       mesh.locationIndices.push(locationIndex, locationIndex);
     }
     locationIndex++;
