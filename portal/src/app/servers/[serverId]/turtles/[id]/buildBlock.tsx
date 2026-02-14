@@ -134,10 +134,6 @@ const BuildBlock = forwardRef<BuildBlockHandle, Props>(function SparseBlock(
           "locationIndex",
           new BufferAttribute(build.locationIndices, 1),
         );
-        geometry.current.setAttribute(
-          "location",
-          new Float32BufferAttribute(build.locations, 3),
-        );
         geometry.current.setIndex(new BufferAttribute(build.indices, 1));
 
         geometry.current.attributes.position.needsUpdate = true;
