@@ -3,10 +3,6 @@ import { promises as fs } from "fs";
 import { Textures } from "../../../../hooks/useTextures";
 import unknown from "./unknown";
 
-type Params = {
-  textureName: string;
-};
-
 const pathSubstrLength = "/api/assets/textures/".length;
 
 const readTextureCache = new Promise<Textures>((resolve, reject) => {
