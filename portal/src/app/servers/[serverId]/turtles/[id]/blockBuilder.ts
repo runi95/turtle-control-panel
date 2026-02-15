@@ -6,14 +6,42 @@ import {
 } from "../../../../../server/loadAssets";
 import { cleanStateValue } from "./helpers";
 import { ModelBuilder } from "./modelBuilder";
+import { FaceBuildInfo } from "./modelFaceBuilder";
 
 export class BlockBuilder {
+  private readonly cache = new Map<string, Record<string, FaceBuildInfo[]>>();
   private readonly blockstates: Blockstates;
   private readonly modelBuilder: ModelBuilder;
+  private readonly positions: number[];
+  private readonly uvs: number[];
+  private readonly normals: number[];
+  private readonly colors: number[];
+  private readonly indices: number[];
+  private readonly uvSlices: number[];
+  private faceCount = 0;
 
-  constructor(blockstates: Blockstates, modelBuilder: ModelBuilder) {
+  constructor(
+    blockstates: Blockstates,
+    modelBuilder: ModelBuilder,
+    positions: number[],
+    uvs: number[],
+    normals: number[],
+    colors: number[],
+    indices: number[],
+    uvSlices: number[],
+  ) {
     this.blockstates = blockstates;
     this.modelBuilder = modelBuilder;
+    this.positions = positions;
+    this.uvs = uvs;
+    this.normals = normals;
+    this.colors = colors;
+    this.indices = indices;
+    this.uvSlices = uvSlices;
+  }
+
+  public getFaceCount(): number {
+    return this.faceCount;
   }
 
   private buildModelsFromVariants(
@@ -51,7 +79,12 @@ export class BlockBuilder {
       variantModel = this.blockstates["unknown"].variants![""].model;
     }
 
-    this.modelBuilder.buildModel(blockName, variantModel, variant.x, variant.y);
+    return this.modelBuilder.buildModel(
+      blockName,
+      variantModel,
+      variant.x,
+      variant.y,
+    );
   }
 
   private buildModelsFromMultipart(
@@ -59,24 +92,29 @@ export class BlockBuilder {
     blockName: string,
     state?: Record<string, string>,
   ) {
+    const builds: FaceBuildInfo[][] = [];
     for (const part of multipart) {
       const { when, apply } = part;
       if (when == null) {
         if (Array.isArray(apply)) {
           for (let i = 0; i < apply.length; i++) {
-            this.modelBuilder.buildModel(
-              blockName,
-              apply[i].model,
-              apply[i].x,
-              apply[i].y,
+            builds.push(
+              this.modelBuilder.buildModel(
+                blockName,
+                apply[i].model,
+                apply[i].x,
+                apply[i].y,
+              ),
             );
           }
         } else {
-          this.modelBuilder.buildModel(
-            blockName,
-            apply.model,
-            apply.x,
-            apply.y,
+          builds.push(
+            this.modelBuilder.buildModel(
+              blockName,
+              apply.model,
+              apply.x,
+              apply.y,
+            ),
           );
         }
       } else {
@@ -121,26 +159,75 @@ export class BlockBuilder {
 
         if (Array.isArray(apply)) {
           for (let i = 0; i < apply.length; i++) {
-            this.modelBuilder.buildModel(
-              blockName,
-              apply[i].model,
-              apply[i].x,
-              apply[i].y,
+            builds.push(
+              this.modelBuilder.buildModel(
+                blockName,
+                apply[i].model,
+                apply[i].x,
+                apply[i].y,
+              ),
             );
           }
         } else {
-          this.modelBuilder.buildModel(
-            blockName,
-            apply.model,
-            apply.x,
-            apply.y,
+          builds.push(
+            this.modelBuilder.buildModel(
+              blockName,
+              apply.model,
+              apply.x,
+              apply.y,
+            ),
           );
         }
       }
     }
+
+    return builds;
+  }
+
+  private buildFromFaceBuildInfo(faceBuildInfo: FaceBuildInfo[]) {
+    for (const {
+      layer,
+      localPositions,
+      uvs,
+      normals,
+      color,
+    } of faceBuildInfo) {
+      this.uvSlices.push(layer, layer, layer, layer);
+
+      const bi = this.positions.length / 3;
+      this.positions.push(...localPositions);
+
+      for (const [u, v] of uvs) {
+        this.uvs.push(u, v);
+      }
+
+      this.normals.push(...normals);
+
+      for (let v = 0; v < 4; v++) {
+        this.colors.push(color.r, color.g, color.b);
+      }
+
+      const localIndices = [0, 1, 2, 2, 1, 3];
+      for (let j = 0; j < localIndices.length; j++) {
+        localIndices[j] += bi;
+      }
+      this.indices.push(...localIndices);
+
+      this.faceCount++;
+    }
   }
 
   public buildBlock(blockName: string, state?: Record<string, string>) {
+    const stringifiedState = JSON.stringify(state);
+    const cachedBlockType = this.cache.get(blockName);
+    if (cachedBlockType != null) {
+      const cachedBlock = cachedBlockType[stringifiedState];
+      if (cachedBlock != null) {
+        this.buildFromFaceBuildInfo(cachedBlock);
+        return;
+      }
+    }
+
     let blockstate = this.blockstates[blockName];
     if (blockstate == null) {
       console.log(`${blockName} is broken!`);
@@ -148,8 +235,36 @@ export class BlockBuilder {
     }
 
     const { variants, multipart } = blockstate;
-    if (variants != null)
-      return this.buildModelsFromVariants(variants, blockName, state);
-    return this.buildModelsFromMultipart(multipart, blockName, state);
+    if (variants != null) {
+      const faceBuildInfo = this.buildModelsFromVariants(
+        variants,
+        blockName,
+        state,
+      );
+      if (cachedBlockType != null) {
+        cachedBlockType[stringifiedState] = faceBuildInfo;
+      } else {
+        this.cache.set(blockName, {
+          [stringifiedState]: faceBuildInfo,
+        });
+      }
+
+      this.buildFromFaceBuildInfo(faceBuildInfo);
+    } else {
+      const faceBuildInfo = this.buildModelsFromMultipart(
+        multipart,
+        blockName,
+        state,
+      ).flat();
+      if (cachedBlockType != null) {
+        cachedBlockType[stringifiedState] = faceBuildInfo;
+      } else {
+        this.cache.set(blockName, {
+          [stringifiedState]: faceBuildInfo,
+        });
+      }
+
+      this.buildFromFaceBuildInfo(faceBuildInfo);
+    }
   }
 }

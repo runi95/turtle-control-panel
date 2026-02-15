@@ -142,24 +142,25 @@ export const BuildMeshDataFromVoxels = (
     locationIndices: [],
   };
 
-  const modelFaceBuilder = new ModelFaceBuilder(
+  const modelFaceBuilder = new ModelFaceBuilder(textureInfoMap);
+  const modelBuilder = new ModelBuilder(models, modelFaceBuilder);
+  const blockBuilder = new BlockBuilder(
+    blockstates,
+    modelBuilder,
     mesh.positions,
     mesh.uvs,
     mesh.normals,
     mesh.colors,
     mesh.indices,
     mesh.uvSlices,
-    textureInfoMap,
   );
-  const modelBuilder = new ModelBuilder(models, modelFaceBuilder);
-  const blockBuilder = new BlockBuilder(blockstates, modelBuilder);
 
   const cellToIndexMap = new Map<string, number[]>();
   for (const [key, cell] of cells) {
     // if (!cell.visible) continue;
 
     const prevVertexCount = mesh.positions.length / 3;
-    const prevFaceCount = modelFaceBuilder.getFaceCount();
+    const prevFaceCount = blockBuilder.getFaceCount();
     const prevPositionsLength = mesh.positions.length;
     blockBuilder.buildBlock(cell.type, cell.state);
 
@@ -177,7 +178,7 @@ export const BuildMeshDataFromVoxels = (
       mesh.locationIndices.push(locationIndex);
     }
 
-    const newFaceCount = modelFaceBuilder.getFaceCount();
+    const newFaceCount = blockBuilder.getFaceCount();
     const indexes: number[] = [];
     for (let i = prevFaceCount; i < newFaceCount; i++) {
       indexes.push(i);

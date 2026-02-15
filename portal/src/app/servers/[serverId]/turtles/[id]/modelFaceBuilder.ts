@@ -1,4 +1,4 @@
-import { Color, PlaneGeometry } from "three";
+import { Color, PlaneGeometry, TypedArray } from "three";
 import { TextureInfo } from "../../../../hooks/useMinimizedAtlas";
 import {
   Model,
@@ -9,36 +9,19 @@ import {
 const defaultColor = new Color(0xffffff);
 defaultColor.convertSRGBToLinear();
 
+export type FaceBuildInfo = {
+  layer: number;
+  localPositions: TypedArray;
+  uvs: [[number, number], [number, number], [number, number], [number, number]];
+  normals: TypedArray;
+  color: Color;
+};
+
 export class ModelFaceBuilder {
-  private readonly positions: number[];
-  private readonly uvs: number[];
-  private readonly normals: number[];
-  private readonly colors: number[];
-  private readonly indices: number[];
-  private readonly uvSlices: number[];
   private readonly textureInfoMap: Record<string, TextureInfo>;
-  private faceCount: number = 0;
 
-  constructor(
-    positions: number[],
-    uvs: number[],
-    normals: number[],
-    colors: number[],
-    indices: number[],
-    uvSlices: number[],
-    textureInfoMap: Record<string, TextureInfo>,
-  ) {
-    this.positions = positions;
-    this.uvs = uvs;
-    this.normals = normals;
-    this.colors = colors;
-    this.indices = indices;
-    this.uvSlices = uvSlices;
+  constructor(textureInfoMap: Record<string, TextureInfo>) {
     this.textureInfoMap = textureInfoMap;
-  }
-
-  public getFaceCount(): number {
-    return this.faceCount;
   }
 
   private applyRotation(
@@ -195,10 +178,10 @@ export class ModelFaceBuilder {
     face: ModelFace,
     rotateX?: number,
     rotateY?: number,
-  ) {
+  ): FaceBuildInfo {
     const textureInfo = this.getTextureIndex(face.texture, model, blockName);
     const layer = textureInfo?.layer ?? 0;
-    this.uvSlices.push(layer, layer, layer, layer);
+    // this.uvSlices.push(layer, layer, layer, layer);
 
     const offset = textureInfo?.offset ?? 0;
     const tileSize = textureInfo?.tileSize ?? 16;
@@ -210,8 +193,8 @@ export class ModelFaceBuilder {
     this.applyRotation(planeGeometry, element, rotateX, rotateY);
     const localPositions = planeGeometry.attributes["position"]["array"];
 
-    const bi = this.positions.length / 3;
-    this.positions.push(...localPositions);
+    // const bi = this.positions.length / 3;
+    // this.positions.push(...localPositions);
 
     let [u0p, v0p, u1p, v1p] = face.uv ?? [0, 0, 16, 16];
 
@@ -257,7 +240,15 @@ export class ModelFaceBuilder {
     const v0 = vMin / 16;
     const v1 = vMax / 16;
 
-    const rotateAndFlipUVs = (uvs: [number, number][], rotation?: number) => {
+    const rotateAndFlipUVs = (
+      uvs: [
+        [number, number],
+        [number, number],
+        [number, number],
+        [number, number],
+      ],
+      rotation?: number,
+    ) => {
       if (flipU) {
         uvs = [uvs[1], uvs[0], uvs[3], uvs[2]];
       }
@@ -267,14 +258,13 @@ export class ModelFaceBuilder {
       }
 
       if (rotation == null) return uvs;
-      let result = [...uvs];
       const steps = (rotation % 360) / 90;
 
       for (let i = 0; i < steps; i++) {
-        result = [result[1], result[3], result[0], result[2]];
+        uvs = [uvs[1], uvs[3], uvs[0], uvs[2]];
       }
 
-      return result;
+      return uvs;
     };
 
     const uvs = rotateAndFlipUVs(
@@ -288,22 +278,30 @@ export class ModelFaceBuilder {
     );
 
     for (const [u, v] of uvs) {
-      this.uvs.push(u, v);
+      // this.uvs.push(u, v);
     }
 
     planeGeometry.computeVertexNormals();
-    this.normals.push(...planeGeometry.attributes["normal"]["array"]);
+    // this.normals.push(...planeGeometry.attributes["normal"]["array"]);
 
     const color = this.getFaceColor(blockName, face.tintindex);
     for (let v = 0; v < 4; v++) {
-      this.colors.push(color.r, color.g, color.b);
+      // this.colors.push(color.r, color.g, color.b);
     }
 
     const localIndices = [0, 1, 2, 2, 1, 3];
     for (let j = 0; j < localIndices.length; j++) {
-      localIndices[j] += bi;
+      // localIndices[j] += bi;
     }
-    this.indices.push(...localIndices);
-    this.faceCount++;
+    // this.indices.push(...localIndices);
+    // this.faceCount++;
+
+    return {
+      layer,
+      localPositions,
+      uvs,
+      normals: planeGeometry.attributes["normal"]["array"],
+      color,
+    };
   }
 }
