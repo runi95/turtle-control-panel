@@ -42,6 +42,8 @@ npm run build
 npm run start
 ```
 
+After starting the server up you can go to http://localhost:3000 to check it out, but keep in mind there won't be much here until we connect the first turtle.
+
 ### Turtle
 
 Run the following command inside your turtle:
