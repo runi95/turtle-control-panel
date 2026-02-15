@@ -50,7 +50,16 @@ Run the following command inside your turtle:
 
 ```
 > wget run https://raw.githubusercontent.com/runi95/turtle-control-panel/master/turtle/downloader.lua
+```
+
+NOTE: If you're not on a local server running as `localhost` then make sure to edit the `connectionURL` variable in `startup.lua` (on the turtle) to your own IP address (or server URL). If you're on a local server then this step can be skipped.
+
+```
 > edit startup.lua
 ```
 
-NOTE: Make sure to edit the `connectionURL` variable in `startup.lua` (on the turtle) to your own IP address (or server URL). If you want to run this on a local server on localhost then check out this CC:Tweaked guide on [Allowing access to local IPs](https://tweaked.cc/guide/local_ips.html).
+NOTE: If you want to run this on a local server running as `localhost` then check out this CC:Tweaked guide on [Allowing access to local IPs](https://tweaked.cc/guide/local_ips.html) before you reboot the turtle or the connection will fail.
+
+```
+> reboot
+```
