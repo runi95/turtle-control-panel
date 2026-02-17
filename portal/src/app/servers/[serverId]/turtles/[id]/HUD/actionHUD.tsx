@@ -25,6 +25,8 @@ import { Location } from "../../../../../types/location";
 import { Block } from "../../../../../types/block";
 import { useWebSocket } from "../../../../../contexts/webSocketContext";
 import { useParams } from "next/navigation";
+import XYZIcon from "../../../../../components/icons/xyzIcon";
+import MoveModal from "../moveModal";
 
 enum HUDControlState {
   MOVE,
@@ -39,7 +41,7 @@ type HUDState = {
 };
 
 type ModalState = {
-  modal: "build" | "mine" | "grabcraft";
+  modal: "build" | "mine" | "grabcraft" | "move";
   data: unknown;
 };
 
@@ -341,50 +343,93 @@ function ActionHUD({
       );
     case HUDControlState.MOVE:
       return (
-        <Container>
-          <OverlayTrigger
-            placement="top"
-            overlay={<FixedTooltip data-bs-theme="light">Cancel</FixedTooltip>}
-          >
-            <ActionButtonContainer onClick={() => setHudWorldState(null)}>
-              <StopIcon color="#202020" />
-            </ActionButtonContainer>
-          </OverlayTrigger>
-          <OverlayTrigger
-            placement="top"
-            overlay={
-              <FixedTooltip data-bs-theme="light">Return home</FixedTooltip>
-            }
-          >
-            <ActionButtonContainer
-              onClick={() =>
+        <>
+          {modalState?.modal === "move" ? (
+            <MoveModal
+              hideModal={() => setModalState(null)}
+              onSubmit={(x: number, y: number, z: number) =>
                 action({
                   type: "ACTION",
-                  action: "go-home",
-                  data: { serverId, id },
+                  action: "move",
+                  data: {
+                    serverId: turtle.serverId,
+                    id: turtle.id,
+                    x,
+                    y,
+                    z,
+                  },
                 })
               }
-            >
-              <HomeIcon color="#202020" />
-            </ActionButtonContainer>
-          </OverlayTrigger>
-          <OverlayTrigger
-            placement="top"
-            overlay={<FixedTooltip data-bs-theme="light">Explore</FixedTooltip>}
-          >
-            <ActionButtonContainer
-              onClick={() =>
-                action({
-                  type: "ACTION",
-                  action: "explore",
-                  data: { serverId, id },
-                })
+            />
+          ) : null}
+          <Container>
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <FixedTooltip data-bs-theme="light">Cancel</FixedTooltip>
               }
             >
-              <ExploreIcon color="#202020" />
-            </ActionButtonContainer>
-          </OverlayTrigger>
-        </Container>
+              <ActionButtonContainer onClick={() => setHudWorldState(null)}>
+                <StopIcon color="#202020" />
+              </ActionButtonContainer>
+            </OverlayTrigger>
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <FixedTooltip data-bs-theme="light">Return home</FixedTooltip>
+              }
+            >
+              <ActionButtonContainer
+                onClick={() =>
+                  action({
+                    type: "ACTION",
+                    action: "go-home",
+                    data: { serverId, id },
+                  })
+                }
+              >
+                <HomeIcon color="#202020" />
+              </ActionButtonContainer>
+            </OverlayTrigger>
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <FixedTooltip data-bs-theme="light">Explore</FixedTooltip>
+              }
+            >
+              <ActionButtonContainer
+                onClick={() =>
+                  action({
+                    type: "ACTION",
+                    action: "explore",
+                    data: { serverId, id },
+                  })
+                }
+              >
+                <ExploreIcon color="#202020" />
+              </ActionButtonContainer>
+            </OverlayTrigger>
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <FixedTooltip data-bs-theme="light">
+                  Move to coordinates
+                </FixedTooltip>
+              }
+            >
+              <ActionButtonContainer
+                onClick={() =>
+                  setModalState({
+                    modal: "move",
+                    data: null,
+                  })
+                }
+              >
+                <XYZIcon color="#202020" />
+              </ActionButtonContainer>
+            </OverlayTrigger>
+          </Container>
+        </>
       );
   }
 
