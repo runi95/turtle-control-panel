@@ -44,6 +44,33 @@ import { BuildStateData, TurtleBuildingState } from "./states/building";
 import { ExploreStateData, TurtleExploringState } from "./states/explore";
 import { IncomingMessage } from "http";
 
+export interface Item {
+  name: string;
+  count: number;
+  displayName?: string;
+  maxCount?: number;
+  damage?: number;
+  maxDamage?: number;
+  durability?: number;
+  unbreakable?: boolean;
+  enchantments?: {
+    name: string;
+    level: number;
+    displayName: string;
+  }[];
+  potionEffects?: {
+    name: string;
+    displayName: string;
+    duration?: number;
+    potency?: number;
+  }[];
+  mapColour?: number;
+  mapColor?: number;
+  nbt?: string;
+  itemGroups?: Record<string, string>;
+  tags?: Record<string, boolean>;
+}
+
 export interface Peripherals {
   [key: string]: {
     data?: unknown;
@@ -1812,6 +1839,24 @@ export class Turtle {
   async equipRight() {
     return await this.#exec<[true, undefined] | [false, "Not a valid upgrade"]>(
       "turtle.equipRight()",
+    );
+  }
+
+  /**
+   * Get the upgrade currently equipped on the left of the turtle.
+   */
+  async getEquippedLeft() {
+    return await this.#exec<[Item, undefined] | null>(
+      "turtle.getEquippedLeft()",
+    );
+  }
+
+  /**
+   * Get the upgrade currently equipped on the right of the turtle.
+   */
+  async getEquippedRight() {
+    return await this.#exec<[Item, undefined] | null>(
+      "turtle.getEquippedRight()",
     );
   }
 
