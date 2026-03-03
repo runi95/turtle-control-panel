@@ -111,11 +111,7 @@ export type Model = {
   elements?: ModelElement[];
 };
 
-const getImageData = async (
-  source: Buffer<ArrayBuffer>,
-  dir: string,
-  key: string,
-) => {
+const getImageData = async (source: Buffer<ArrayBuffer>, dir: string) => {
   const image = await loadImage(source);
   const canvas = createCanvas(image.width, image.height);
   const context = canvas.getContext("2d");
@@ -455,7 +451,7 @@ export async function load() {
   const texturesToRawImageData = new Map<string, ImageData>();
   for (const [key, value] of textures) {
     const { dir, buffer } = value;
-    const imageData = await getImageData(buffer, dir, key);
+    const imageData = await getImageData(buffer, dir);
 
     const isWhitelistedWidth = (() => {
       if (imageData.width === 16) return true;
